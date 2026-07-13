@@ -212,3 +212,17 @@ button:disabled,input:disabled{cursor:not-allowed}
   .week-day small{font-size:.66rem}
   .tabbar span{font-size:.69rem}
 }
+
+/* v1.11 — final polish only. No layout dimensions or spacing changed. */
+@media (max-width:600px){
+  /* Lower the heading content within its existing safe-area/header box. */
+  .topbar{transform:translateY(7px)}
+
+  /* 20% reduction from the v1.10 percentage type size. */
+  .metric-percent{font-size:.75rem;line-height:1}
+}
+
+@media (display-mode:standalone) and (max-width:600px){
+  .topbar{transform:translateY(7px)}
+  .metric-percent{font-size:.78rem;line-height:1}
+}
