@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#050507" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Daily Accountability" />
+  <meta name="description" content="A private daily sales accountability tracker." />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <title>Daily Accountability</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #f8fbff;
+      --muted: rgba(235, 244, 255, .68);
+      --glass: rgba(20, 20, 24, .68);
+      --glass-strong: rgba(28, 28, 34, .84);
+      --stroke: rgba(255, 255, 255, .12);
+      --stroke-bright: rgba(255, 255, 255, .22);
+      --blue: #5e9cff;
+      --cyan: #70d7ff;
+      --green: #65e6a7;
+      --amber: #ffd36a;
+      --danger: #ff8d8d;
+      --shadow: 0 22px 60px rgba(0, 8, 24, .35);
+      --radius: 25px;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      min-height: 100dvh;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 12% 0%, rgba(77, 124, 255, .25), transparent 28%),
+        radial-gradient(circle at 96% 22%, rgba(106, 68, 255, .18), transparent 30%),
+        radial-gradient(circle at 50% 100%, rgba(31, 188, 255, .11), transparent 38%),
+        linear-gradient(180deg, #050507 0%, #09090d 54%, #030305 100%);
+      padding: max(16px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom));
+      overflow-x: hidden;
+    }
+
+    body::before, body::after {
+      content: "";
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(1px);
+      pointer-events: none;
+      opacity: .55;
+    }
+    body::before { width: 170px; height: 170px; top: 12%; right: -78px; background: rgba(126, 232, 255, .28); }
+    body::after { width: 210px; height: 210px; bottom: -95px; left: -80px; background: rgba(109, 121, 255, .24); }
+
+    button, input { font: inherit; }
+    button { color: inherit; touch-action: manipulation; }
+
+    .app { width: min(100%, 520px); margin: 0 auto; display: grid; gap: 11px; position: relative; z-index: 1; }
+    .glass {
+      background: linear-gradient(155deg, rgba(255,255,255,.12), rgba(255,255,255,.025) 42%), var(--glass);
+      border: 1px solid var(--stroke);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.16), inset 0 -1px 0 rgba(255,255,255,.025), 0 18px 50px rgba(0,0,0,.42);
+      backdrop-filter: blur(30px) saturate(180%);
+      -webkit-backdrop-filter: blur(30px) saturate(180%);
+    }
+
+    .topbar { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; padding: 3px 4px 2px; }
+    .eyebrow { color: var(--cyan); font-size: .68rem; font-weight: 800; letter-spacing: .17em; text-transform: uppercase; }
+    h1 { font-size: 1.28rem; line-height: 1.05; margin: 4px 0 0; letter-spacing: -.025em; }
+    .date { color: var(--muted); font-size: .76rem; margin-top: 5px; font-weight: 650; }
+    .icon-btn {
+      width: 48px; height: 48px; border: 1px solid var(--stroke-bright); border-radius: 50%;
+      background: rgba(255,255,255,.10); box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 10px 25px rgba(0,0,0,.2);
+      font-size: 1.05rem;
+    }
+
+    .summary { border-radius: 30px; padding: 17px 18px 15px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; }
+    .summary-label { color: var(--muted); font-size: .68rem; font-weight: 750; text-transform: uppercase; letter-spacing: .11em; }
+    .completion { font-size: 2.65rem; font-weight: 850; line-height: .98; letter-spacing: -.055em; margin-top: 5px; }
+    .streak { text-align: right; min-width: 86px; }
+    .streak strong { display: block; font-size: 1.6rem; color: var(--amber); line-height: 1; }
+    .streak span { display: block; margin-top: 5px; color: var(--muted); font-size: .63rem; font-weight: 750; text-transform: uppercase; letter-spacing: .08em; }
+    .progress { grid-column: 1 / -1; height: 10px; margin-top: 4px; overflow: hidden; border-radius: 999px; background: rgba(0,0,0,.22); border: 1px solid rgba(255,255,255,.10); }
+    .progress > div { height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, var(--blue), var(--cyan), var(--green)); box-shadow: 0 0 18px rgba(124,231,255,.55); transition: width .28s ease; }
+
+    .recommendations { border-radius: 24px; overflow: hidden; }
+    .recommendations summary { list-style: none; cursor: pointer; padding: 14px 15px; display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; }
+    .recommendations summary::-webkit-details-marker { display: none; }
+    .recommendation-label { color: var(--muted); font-size: .64rem; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; }
+    .recommendation-current { font-size: .95rem; font-weight: 820; margin-top: 4px; letter-spacing: -.01em; }
+    .recommendation-time { color: var(--cyan); font-size: .72rem; font-weight: 780; margin-top: 3px; }
+    .pace-note { color: var(--muted); font-size: .66rem; font-weight: 700; margin-top: 5px; }
+    .pace-note.ahead { color: var(--green); }
+    .pace-note.behind { color: var(--amber); }
+    .chevron { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,.08); border: 1px solid var(--stroke); transition: transform .2s ease; }
+    .recommendations[open] .chevron { transform: rotate(180deg); }
+    .recommendation-list { padding: 0 10px 10px; display: grid; gap: 6px; }
+    .recommendation-row { display: grid; grid-template-columns: 68px 1fr auto; gap: 10px; align-items: center; min-height: 48px; padding: 8px 10px; border-radius: 15px; background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.07); }
+    .recommendation-row.active { background: rgba(94,156,255,.16); border-color: rgba(112,215,255,.34); }
+    .recommendation-row .slot { color: var(--muted); font-size: .67rem; font-weight: 750; }
+    .recommendation-row .call-type { font-size: .76rem; font-weight: 780; }
+    .recommendation-row .goal { color: var(--cyan); font-size: .65rem; font-weight: 800; }
+
+    .trackers { display: grid; gap: 9px; }
+    .tracker { border-radius: var(--radius); padding: 12px 12px 12px 16px; display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; position: relative; overflow: hidden; }
+    .tracker::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: rgba(255,255,255,.20); }
+    .tracker.complete::before { background: var(--green); box-shadow: 0 0 16px var(--green); }
+    .metric-name { font-size: .78rem; font-weight: 820; letter-spacing: .12em; text-transform: uppercase; }
+    .metric-sub { color: var(--muted); font-size: .68rem; margin-top: 4px; }
+    .metric-remaining { color: var(--cyan); font-size: .64rem; margin-top: 3px; font-weight: 750; }
+    .metric-value { font-size: 1.48rem; font-weight: 850; line-height: 1.05; margin-top: 6px; letter-spacing: -.035em; }
+    .counter-controls { display: grid; grid-template-columns: 52px 58px 52px; gap: 7px; align-items: center; }
+    .tap-btn, .count-box, .start-btn, .reset-btn {
+      min-height: 56px; border-radius: 18px; border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.095); box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 8px 18px rgba(0,0,0,.14);
+    }
+    .tap-btn { font-size: 1.55rem; font-weight: 650; }
+    .tap-btn:active, .start-btn:active, .reset-btn:active { transform: scale(.96); }
+    .count-box { display: grid; place-items: center; font-size: .8rem; font-weight: 850; color: var(--cyan); }
+    .stopwatch-controls { display: grid; grid-template-columns: 100px 52px; gap: 7px; }
+    .start-btn { background: linear-gradient(145deg, rgba(124,231,255,.92), rgba(119,183,255,.78)); color: #061426; font-weight: 850; border-color: rgba(255,255,255,.42); }
+    .start-btn.running { background: linear-gradient(145deg, rgba(255,211,106,.96), rgba(255,166,87,.85)); }
+    .reset-btn { font-size: 1.1rem; }
+
+    .history { border-radius: var(--radius); padding: 13px; }
+    .section-title { display: flex; align-items: center; justify-content: space-between; margin: 0 2px 10px; }
+    .section-title h2 { margin: 0; font-size: .75rem; letter-spacing: .11em; text-transform: uppercase; }
+    .week-label { color: var(--muted); font-size: .65rem; font-weight: 700; text-align:right; }
+    .history-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .day { min-height: 62px; border-radius: 18px; display: grid; place-items: center; align-content: center; gap: 4px; background: rgba(0,0,0,.16); border: 1px solid rgba(255,255,255,.11); }
+    .day strong { font-size: .75rem; letter-spacing: .05em; }
+    .day span { color: var(--muted); font-size: .63rem; font-weight: 700; }
+    .day.full { background: rgba(101,230,167,.16); border-color: rgba(101,230,167,.55); }
+    .day.partial { background: rgba(255,211,106,.13); border-color: rgba(255,211,106,.50); }
+    .day.today { outline: 2px solid rgba(124,231,255,.95); outline-offset: 2px; }
+    .day.future { opacity: .48; }
+
+    .footnote { color: rgba(235,244,255,.52); font-size: .62rem; font-weight: 650; text-align: center; padding-top: 1px; }
+    .day { cursor: pointer; }
+    .day.selected { outline: 2px solid #fff; outline-offset: 2px; }
+    .view-actions { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+    .calendar-btn, .today-btn { min-height: 46px; border-radius: 17px; border: 1px solid var(--stroke); background: rgba(255,255,255,.09); font-weight: 800; box-shadow: inset 0 1px 0 rgba(255,255,255,.14); }
+    .calendar-btn { padding: 0 16px; }
+    .today-btn { padding: 0 14px; color: var(--cyan); }
+    .today-btn[hidden] { display: none; }
+
+    .calendar-panel { position: fixed; inset: 0; display: none; z-index: 40; background: rgba(2,8,18,.76); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); overflow: auto; padding: max(14px, env(safe-area-inset-top)) 12px max(20px, env(safe-area-inset-bottom)); }
+    .calendar-panel.open { display: block; }
+    .calendar-shell { width: min(100%, 720px); margin: 0 auto; border-radius: 30px; padding: 16px; background: rgba(15,28,48,.92); border: 1px solid var(--stroke-bright); box-shadow: var(--shadow); }
+    .calendar-head { display: grid; grid-template-columns: 48px 1fr 48px; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .calendar-head h2 { margin: 0; text-align: center; font-size: 1.08rem; }
+    .calendar-head button { width: 48px; height: 44px; border-radius: 15px; border: 1px solid var(--stroke); background: rgba(255,255,255,.08); font-size: 1.15rem; }
+    .year-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+    .month { border-radius: 20px; padding: 10px; background: rgba(255,255,255,.055); border: 1px solid rgba(255,255,255,.10); }
+    .month h3 { margin: 0 0 8px; font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; }
+    .month-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+    .weekday { color: var(--muted); font-size: .48rem; text-align: center; font-weight: 800; }
+    .cal-day { aspect-ratio: 1; min-width: 0; padding: 0; border: 1px solid rgba(255,255,255,.08); border-radius: 6px; background: rgba(0,0,0,.16); color: var(--muted); font-size: .52rem; display: grid; place-items: center; }
+    .cal-day.blank { visibility: hidden; }
+    .cal-day.unscheduled { opacity: .28; }
+    .cal-day.p1 { background: rgba(255,141,141,.22); border-color: rgba(255,141,141,.45); color: #fff; }
+    .cal-day.p2 { background: rgba(255,211,106,.25); border-color: rgba(255,211,106,.50); color: #fff; }
+    .cal-day.p3 { background: rgba(124,231,255,.25); border-color: rgba(124,231,255,.50); color: #fff; }
+    .cal-day.p4 { background: rgba(101,230,167,.34); border-color: rgba(101,230,167,.70); color: #fff; }
+    .cal-day.today { outline: 1px solid var(--cyan); }
+    .cal-day.selected { outline: 2px solid #fff; }
+    .calendar-legend { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; color: var(--muted); font-size: .58rem; font-weight: 700; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 4px; display: inline-block; vertical-align: -1px; margin-right: 4px; }
+    @media (min-width: 620px) { .year-grid { grid-template-columns: repeat(3, minmax(0,1fr)); } }
+
+
+    .settings { position: fixed; inset: 0; display: none; align-items: flex-end; justify-content: center; background: rgba(2,8,18,.62); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 30; }
+    .settings.open { display: flex; }
+    .sheet { width: min(100%, 520px); border-radius: 30px 30px 0 0; padding: 18px 17px max(22px, env(safe-area-inset-bottom)); background: rgba(18,31,52,.91); border: 1px solid var(--stroke-bright); box-shadow: 0 -20px 70px rgba(0,0,0,.46); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); }
+    .sheet h2 { margin: 0 0 13px; font-size: 1.02rem; }
+    .target-row { display: grid; grid-template-columns: 1fr 110px; gap: 10px; align-items: center; margin: 9px 0; }
+    .target-row label { color: var(--muted); font-size: .84rem; font-weight: 700; }
+    .target-row input { width: 100%; height: 48px; padding: 0 12px; text-align: right; color: var(--ink); border-radius: 16px; border: 1px solid var(--stroke); background: rgba(0,0,0,.20); }
+    .sheet-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 15px; }
+    .sheet-actions button { min-height: 52px; border-radius: 17px; border: 1px solid var(--stroke); background: rgba(255,255,255,.09); font-weight: 800; }
+    .sheet-actions .save { color: #061426; background: linear-gradient(145deg, var(--cyan), var(--blue)); }
+
+    .alarm-toast { position: fixed; left: 50%; bottom: max(24px, env(safe-area-inset-bottom)); transform: translate(-50%, 20px); width: min(calc(100% - 28px), 480px); padding: 15px 18px; border-radius: 22px; background: rgba(19,44,54,.94); border: 1px solid rgba(124,231,255,.58); box-shadow: 0 18px 55px rgba(0,0,0,.42); text-align: center; font-weight: 820; opacity: 0; pointer-events: none; transition: .25s ease; z-index: 50; }
+    .alarm-toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    @media (max-height: 780px) {
+      body { padding-top: max(10px, env(safe-area-inset-top)); }
+      .app { gap: 7px; }
+      .summary { padding: 13px 16px 12px; }
+      .completion { font-size: 2.25rem; }
+      .tracker { padding-top: 9px; padding-bottom: 9px; }
+      .tap-btn, .count-box, .start-btn, .reset-btn { min-height: 50px; }
+      .day { min-height: 54px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">Sales field system</div>
+        <h1>Daily Accountability</h1>
+        <div class="date" id="todayLabel"></div>
+      </div>
+      <button class="icon-btn" id="settingsBtn" aria-label="Edit targets">⚙︎</button>
+    </header>
+
+    <details class="recommendations glass" id="recommendationsPanel">
+      <summary>
+        <div>
+          <div class="recommendation-label">Call Recommendations</div>
+          <div class="recommendation-current" id="currentRecommendation">Review priority follow-up</div>
+          <div class="recommendation-time" id="currentRecommendationTime">Based on the current time</div>
+          <div class="pace-note" id="callPaceNote"></div>
+        </div>
+        <span class="chevron">⌄</span>
+      </summary>
+      <div class="recommendation-list" id="recommendationList"></div>
+    </details>
+
+    <section class="summary glass" aria-label="Daily summary">
+      <div>
+        <div class="summary-label">Daily completion</div>
+        <div class="completion" id="completionPct">0%</div>
+      </div>
+      <div class="streak">
+        <strong id="streakCount">0</strong>
+        <span>workday streak</span>
+      </div>
+      <div class="progress"><div id="overallProgress"></div></div>
+    </section>
+
+    <section class="trackers" id="trackers"></section>
+
+    <section class="history glass">
+      <div class="section-title">
+        <h2>This week</h2>
+        <span class="week-label" id="weekLabel"></span>
+      </div>
+      <div class="history-grid" id="historyGrid"></div>
+    </section>
+
+    <div class="view-actions">
+      <button class="calendar-btn glass" id="calendarBtn">View yearly calendar</button>
+      <button class="today-btn glass" id="todayBtn" hidden>Back to today</button>
+    </div>
+    <div class="footnote">Monday · Tuesday · Thursday · Friday</div>
+  </main>
+
+  <div class="settings" id="settingsPanel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="sheet">
+      <h2 id="settingsTitle">Daily targets</h2>
+      <div class="target-row"><label for="targetCalls">Calls</label><input id="targetCalls" type="number" min="1" step="1" inputmode="numeric"></div>
+      <div class="target-row"><label for="targetConnects">Connects</label><input id="targetConnects" type="number" min="1" step="1" inputmode="numeric"></div>
+      <div class="target-row"><label for="targetData">Data</label><input id="targetData" type="number" min="1" step="1" inputmode="numeric"></div>
+      <div class="target-row"><label for="targetKnockMinutes">Weekly knock minutes</label><input id="targetKnockMinutes" type="number" min="60" step="15" inputmode="numeric"></div>
+      <div class="sheet-actions">
+        <button id="cancelSettings">Cancel</button>
+        <button class="save" id="saveSettings">Save targets</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="calendar-panel" id="calendarPanel" role="dialog" aria-modal="true" aria-labelledby="calendarTitle">
+    <div class="calendar-shell glass">
+      <div class="calendar-head">
+        <button id="prevYear" aria-label="Previous year">‹</button>
+        <h2 id="calendarTitle">2026 Accountability</h2>
+        <button id="nextYear" aria-label="Next year">›</button>
+      </div>
+      <div class="year-grid" id="yearGrid"></div>
+      <div class="calendar-legend">
+        <span><i class="legend-dot" style="background:rgba(255,141,141,.45)"></i>1–25%</span>
+        <span><i class="legend-dot" style="background:rgba(255,211,106,.50)"></i>26–50%</span>
+        <span><i class="legend-dot" style="background:rgba(124,231,255,.50)"></i>51–99%</span>
+        <span><i class="legend-dot" style="background:rgba(101,230,167,.70)"></i>100%</span>
+      </div>
+      <button class="calendar-btn" id="closeCalendar" style="width:100%;margin-top:12px">Done</button>
+    </div>
+  </div>
+
+  <div class="alarm-toast" id="alarmToast">Today’s required knocking time is complete. Keep going if you can.</div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const STORAGE_KEY = 'fieldLog.v1';
+      const DEFAULTS = { calls: 50, connects: 25, data: 10, weeklyKnockMinutes: 240 };
+      const WORK_DAYS = [1, 2, 4, 5]; // Monday, Tuesday, Thursday, Friday
+      const state = loadState();
+      let timerId = null;
+      let audioContext = null;
+      let toastTimer = null;
+      let selectedDate = new Date();
+      let calendarYear = selectedDate.getFullYear();
+
+      const els = Object.fromEntries([
+        'todayLabel','completionPct','streakCount','overallProgress','trackers','historyGrid','weekLabel',
+        'settingsBtn','settingsPanel','cancelSettings','saveSettings','targetCalls','targetConnects',
+        'targetData','targetKnockMinutes','alarmToast','currentRecommendation','currentRecommendationTime','callPaceNote','recommendationList','calendarBtn','todayBtn','calendarPanel','yearGrid','calendarTitle','prevYear','nextYear','closeCalendar'
+      ].map(id => [id, document.getElementById(id)]));
+
+      const CALL_BLOCKS = [
+        { start: 9, end: 10, label: 'Active Buyer Calls', note: 'Hot buyers, offers and immediate campaign follow-up' },
+        { start: 10, end: 11, label: 'Past OFI Follow-Up', note: 'Recent open home attendees and inspection feedback' },
+        { start: 11, end: 12, label: 'Pipeline Calls', note: 'Upcoming sellers, nurtures and appraisal opportunities' },
+        { start: 12, end: 13, label: 'Past Appraisal Follow-Up', note: 'Reconnect with appraisals not yet committed' },
+        { start: 13, end: 14, label: 'Just Listed & Coming Soon', note: 'Matching buyers, neighbours and local database' },
+        { start: 14, end: 15, label: 'Just Sold Calls', note: 'Result-based owner conversations and market updates' },
+        { start: 15, end: 16, label: 'Database Reconnects', note: 'Older buyers, owners and dormant opportunities' },
+        { start: 16, end: 17, label: 'Priority Follow-Up', note: 'Return calls, active deals and next-day appointments' }
+      ];
+
+      function hourLabel(hour) {
+        const suffix = hour >= 12 ? 'PM' : 'AM';
+        const shown = hour % 12 || 12;
+        return `${shown}:00 ${suffix}`;
+      }
+
+      function renderCallRecommendations() {
+        const now = new Date();
+        const hour = now.getHours();
+        const activeIndex = CALL_BLOCKS.findIndex(block => hour >= block.start && hour < block.end);
+        const active = activeIndex >= 0 ? CALL_BLOCKS[activeIndex] : null;
+        els.currentRecommendation.textContent = active ? active.label : (hour < 9 ? 'Prepare priority call list' : 'Review follow-up and plan tomorrow');
+        els.currentRecommendationTime.textContent = active ? `${hourLabel(active.start)}–${hourLabel(active.end)} · Target 10 calls` : (hour < 9 ? 'Starts at 9:00 AM' : '9:00 AM–5:00 PM call day complete');
+        const today = state.days[localDateKey()] || { calls: 0 };
+        const minutesIntoDay = Math.max(0, Math.min(480, (now.getHours() * 60 + now.getMinutes()) - 540));
+        const paceTarget = Math.round(state.targets.calls * (minutesIntoDay / 480));
+        const paceDiff = (today.calls || 0) - paceTarget;
+        if (hour < 9) {
+          els.callPaceNote.textContent = `Daily target ${state.targets.calls} calls`;
+          els.callPaceNote.className = 'pace-note';
+        } else if (hour >= 17) {
+          const remaining = Math.max(0, state.targets.calls - (today.calls || 0));
+          els.callPaceNote.textContent = remaining ? `${remaining} calls short of today’s target` : 'Daily call target achieved';
+          els.callPaceNote.className = `pace-note ${remaining ? 'behind' : 'ahead'}`;
+        } else {
+          els.callPaceNote.textContent = paceDiff >= 0 ? `${paceDiff} calls ahead of pace` : `${Math.abs(paceDiff)} calls behind pace`;
+          els.callPaceNote.className = `pace-note ${paceDiff >= 0 ? 'ahead' : 'behind'}`;
+        }
+        els.recommendationList.innerHTML = CALL_BLOCKS.map((block, index) => `
+          <div class="recommendation-row ${index === activeIndex ? 'active' : ''}">
+            <span class="slot">${hourLabel(block.start)}–${hourLabel(block.end)}</span>
+            <span class="call-type">${block.label}<small style="display:block;color:var(--muted);font-size:.61rem;font-weight:600;margin-top:2px">${block.note}</small></span>
+            <span class="goal">10 calls</span>
+          </div>`).join('');
+      }
+
+      function localDateKey(date = new Date()) {
+        return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+      }
+
+      function loadState() {
+        try {
+          const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
+          const migratedTargets = { ...DEFAULTS, ...(raw?.targets || {}) };
+          if (!raw?.defaultsUpdated2026) {
+            migratedTargets.calls = 50;
+            migratedTargets.connects = 25;
+            migratedTargets.data = 10;
+            migratedTargets.weeklyKnockMinutes = 240;
+          }
+          if (!migratedTargets.weeklyKnockMinutes) migratedTargets.weeklyKnockMinutes = (migratedTargets.knockMinutes || 60) * 4;
+          delete migratedTargets.knockMinutes;
+          return { targets: migratedTargets, days: raw?.days || {}, defaultsUpdated2026: true };
+        } catch {
+          return { targets: { ...DEFAULTS }, days: {}, defaultsUpdated2026: true };
+        }
+      }
+
+      function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+      function haptic(pattern = 12) { if (navigator.vibrate) navigator.vibrate(pattern); }
+
+      function ensureDay(date = new Date()) {
+        const key = localDateKey(date);
+        if (!state.days[key]) state.days[key] = { calls: 0, connects: 0, data: 0, knockSeconds: 0, running: false, lastStart: null, alarmed: false };
+        return state.days[key];
+      }
+
+      function isWorkDay(date) { return WORK_DAYS.includes(date.getDay()); }
+      function selectedKey() { return localDateKey(selectedDate); }
+      function isTodaySelected() { return selectedKey() === localDateKey(); }
+      function setSelectedDate(date) {
+        selectedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        calendarYear = selectedDate.getFullYear();
+        render();
+      }
+
+      function scheduledDatesForWeek(date = new Date()) {
+        const monday = mondayOf(date);
+        return [0,1,3,4].map(offset => { const d = new Date(monday); d.setDate(monday.getDate() + offset); return d; });
+      }
+
+      function dailyBaseKnockSeconds() { return Math.round((state.targets.weeklyKnockMinutes * 60) / 4); }
+
+      function knockTargetForDate(date) {
+        const dates = scheduledDatesForWeek(date);
+        const index = dates.findIndex(d => localDateKey(d) === localDateKey(date));
+        if (index < 0) return dailyBaseKnockSeconds();
+        const requiredByToday = dailyBaseKnockSeconds() * (index + 1);
+        const priorActual = dates.slice(0, index).reduce((sum, d) => sum + (state.days[localDateKey(d)]?.knockSeconds || 0), 0);
+        return Math.max(0, requiredByToday - priorActual);
+      }
+
+      function weeklyKnockSeconds(date = new Date()) {
+        return scheduledDatesForWeek(date).reduce((sum, d) => sum + (state.days[localDateKey(d)]?.knockSeconds || 0), 0);
+      }
+
+      function syncRunningTimer(day, date = new Date()) {
+        if (!day.running || !day.lastStart) return false;
+        const target = knockTargetForDate(date);
+        const before = day.knockSeconds || 0;
+        day.knockSeconds = before + Math.max(0, Math.floor((Date.now() - day.lastStart) / 1000));
+        day.lastStart = Date.now();
+        return target > 0 && before < target && day.knockSeconds >= target;
+      }
+
+      function initAudio() {
+        if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioContext.state === 'suspended') audioContext.resume();
+      }
+
+      function playAlarm() {
+        initAudio();
+        const now = audioContext.currentTime;
+        [0, .28, .56].forEach((offset, index) => {
+          const osc = audioContext.createOscillator();
+          const gain = audioContext.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(index === 2 ? 1046 : 880, now + offset);
+          gain.gain.setValueAtTime(.0001, now + offset);
+          gain.gain.exponentialRampToValueAtTime(.35, now + offset + .02);
+          gain.gain.exponentialRampToValueAtTime(.0001, now + offset + .20);
+          osc.connect(gain).connect(audioContext.destination);
+          osc.start(now + offset);
+          osc.stop(now + offset + .22);
+        });
+        if (navigator.vibrate) navigator.vibrate([300, 140, 300, 140, 500]);
+        els.alarmToast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => els.alarmToast.classList.remove('show'), 4200);
+      }
+
+      function triggerAlarmIfNeeded(day, date, crossed = false) {
+        const target = knockTargetForDate(date);
+        if (target > 0 && (crossed || day.knockSeconds >= target) && !day.alarmed) {
+          day.alarmed = true;
+          saveState();
+          playAlarm();
+          return true;
+        }
+        return false;
+      }
+
+      function formatTime(totalSeconds) {
+        const h = Math.floor(totalSeconds / 3600);
+        const m = Math.floor((totalSeconds % 3600) / 60);
+        const s = totalSeconds % 60;
+        return h ? `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}` : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      }
+
+      const ratio = (value, target) => Math.min(1, target > 0 ? value / target : 0);
+      function completion(day, date = selectedDate) {
+        if (!day) return 0;
+        const knockTarget = knockTargetForDate(date);
+        const knockRatio = knockTarget === 0 ? 1 : ratio(day.knockSeconds||0, knockTarget);
+        return Math.round(([ratio(day.calls||0,state.targets.calls), ratio(day.connects||0,state.targets.connects), ratio(day.data||0,state.targets.data), knockRatio].reduce((a,b)=>a+b,0)/4)*100);
+      }
+      function complete(day, date = selectedDate) {
+        const knockTarget = knockTargetForDate(date);
+        return !!day && (day.calls||0)>=state.targets.calls && (day.connects||0)>=state.targets.connects && (day.data||0)>=state.targets.data && (day.knockSeconds||0)>=knockTarget;
+      }
+
+      function previousWorkDay(date) {
+        const d = new Date(date);
+        do { d.setDate(d.getDate() - 1); } while (!isWorkDay(d));
+        return d;
+      }
+
+      function calculateStreak() {
+        let cursor = new Date();
+        if (!isWorkDay(cursor) || !complete(state.days[localDateKey(cursor)], cursor)) cursor = previousWorkDay(cursor);
+        let streak = 0;
+        while (complete(state.days[localDateKey(cursor)], cursor)) {
+          streak++;
+          cursor = previousWorkDay(cursor);
+        }
+        return streak;
+      }
+
+      function mondayOf(date = new Date()) {
+        const d = new Date(date);
+        const offset = d.getDay() === 0 ? -6 : 1 - d.getDay();
+        d.setDate(d.getDate() + offset);
+        d.setHours(0,0,0,0);
+        return d;
+      }
+
+      function renderHistory() {
+        const monday = mondayOf();
+        const todayKey = localDateKey();
+        const offsets = [0,1,3,4];
+        els.weekLabel.textContent = `${monday.getDate()} ${monday.toLocaleDateString('en-AU',{month:'short'})}`;
+        els.historyGrid.innerHTML = offsets.map(offset => {
+          const d = new Date(monday); d.setDate(monday.getDate()+offset);
+          const key = localDateKey(d);
+          const entry = state.days[key];
+          const pct = completion(entry, d);
+          const status = complete(entry, d) ? 'full' : pct > 0 ? 'partial' : '';
+          const future = d > new Date() ? 'future' : '';
+          return `<button class="day ${status} ${future} ${key===todayKey?'today':''} ${key===selectedKey()?'selected':''}" data-date="${key}"><strong>${d.toLocaleDateString('en-AU',{weekday:'short'}).toUpperCase()}</strong><span>${pct}%</span></button>`;
+        }).join('');
+        const weekDates = offsets.map(offset => { const d = new Date(monday); d.setDate(monday.getDate()+offset); return d; });
+        const completedDays = weekDates.filter(d => complete(state.days[localDateKey(d)], d)).length;
+        const average = Math.round(weekDates.reduce((sum, d) => sum + completion(state.days[localDateKey(d)], d), 0) / 4);
+        const weeklyMinutes = Math.floor(weeklyKnockSeconds(monday) / 60);
+        els.weekLabel.textContent += ` · ${completedDays}/4 complete · ${average}% avg · ${weeklyMinutes}/${state.targets.weeklyKnockMinutes} knock min`;
+      }
+
+      function render() {
+        renderCallRecommendations();
+        const day = ensureDay(selectedDate);
+        if (isTodaySelected()) {
+          const crossed = syncRunningTimer(day, selectedDate);
+          triggerAlarmIfNeeded(day, selectedDate, crossed);
+          saveState();
+        }
+
+        els.todayLabel.textContent = new Intl.DateTimeFormat('en-AU',{weekday:'long',day:'numeric',month:'long',year: selectedDate.getFullYear() === new Date().getFullYear() ? undefined : 'numeric'}).format(selectedDate);
+        els.todayBtn.hidden = isTodaySelected();
+        const pct = completion(day, selectedDate);
+        els.completionPct.textContent = `${pct}%`;
+        els.overallProgress.style.width = `${pct}%`;
+        els.streakCount.textContent = calculateStreak();
+
+        const metrics = [
+          {key:'calls',label:'Calls',value:day.calls,target:state.targets.calls},
+          {key:'connects',label:'Connects',value:day.connects,target:state.targets.connects},
+          {key:'data',label:'Data',value:day.data,target:state.targets.data}
+        ];
+
+        els.trackers.innerHTML = metrics.map(item => `
+          <article class="tracker glass ${item.value>=item.target?'complete':''}">
+            <div><div class="metric-name">${item.label}</div><div class="metric-sub">Daily target ${item.target}</div><div class="metric-remaining">${Math.max(0,item.target-item.value)} remaining</div><div class="metric-value">${item.value} / ${item.target}</div></div>
+            <div class="counter-controls">
+              <button class="tap-btn" data-action="decrement" data-key="${item.key}" aria-label="Decrease ${item.label}">−</button>
+              <div class="count-box">${Math.round(ratio(item.value,item.target)*100)}%</div>
+              <button class="tap-btn" data-action="increment" data-key="${item.key}" aria-label="Increase ${item.label}">+</button>
+            </div>
+          </article>`).join('') + `
+          <article class="tracker glass ${day.knockSeconds>=knockTargetForDate(selectedDate)?'complete':''}">
+            <div><div class="metric-name">Knocking</div><div class="metric-sub">Rolling target ${Math.ceil(knockTargetForDate(selectedDate)/60)} min · Weekly minimum ${state.targets.weeklyKnockMinutes} min</div><div class="metric-remaining">${day.knockSeconds>=knockTargetForDate(selectedDate) ? `${Math.floor((day.knockSeconds-knockTargetForDate(selectedDate))/60)} minutes ahead` : `${Math.ceil((knockTargetForDate(selectedDate)-day.knockSeconds)/60)} minutes remaining`}</div><div class="metric-value">${formatTime(day.knockSeconds)}</div></div>
+            <div class="stopwatch-controls">
+              <button class="start-btn ${day.running?'running':''}" data-action="timer" ${isTodaySelected()?'':'disabled'}>${isTodaySelected()?(day.running?'Pause':'Start'):'Today only'}</button>
+              <button class="reset-btn" data-action="reset-timer" aria-label="Reset stopwatch">↺</button>
+            </div>
+          </article>`;
+
+        renderHistory();
+        manageTimer(isTodaySelected() && day.running);
+      }
+
+      function manageTimer(shouldRun) {
+        if (shouldRun && !timerId) timerId = setInterval(render, 1000);
+        if (!shouldRun && timerId) { clearInterval(timerId); timerId = null; }
+      }
+
+      els.trackers.addEventListener('click', event => {
+        const button = event.target.closest('button[data-action]');
+        if (!button) return;
+        initAudio();
+        haptic();
+        const day = ensureDay(selectedDate);
+        const action = button.dataset.action;
+        const key = button.dataset.key;
+        if (action==='increment') day[key]=(day[key]||0)+1;
+        if (action==='decrement') day[key]=Math.max(0,(day[key]||0)-1);
+        if (action==='timer') {
+          syncRunningTimer(day, selectedDate);
+          day.running=!day.running;
+          day.lastStart=day.running?Date.now():null;
+        }
+        if (action==='reset-timer') { day.running=false; day.lastStart=null; day.knockSeconds=0; day.alarmed=false; }
+        saveState(); render();
+      });
+
+      els.historyGrid.addEventListener('click', event => {
+        const button = event.target.closest('[data-date]');
+        if (!button) return;
+        haptic();
+        const [y,m,d] = button.dataset.date.split('-').map(Number);
+        setSelectedDate(new Date(y,m-1,d));
+      });
+
+      function completionClass(pct) {
+        if (pct >= 100) return 'p4';
+        if (pct >= 51) return 'p3';
+        if (pct >= 26) return 'p2';
+        if (pct > 0) return 'p1';
+        return '';
+      }
+
+      function renderYearCalendar() {
+        els.calendarTitle.textContent = `${calendarYear} Accountability`;
+        const weekdays = ['M','T','W','T','F','S','S'];
+        els.yearGrid.innerHTML = Array.from({length:12}, (_,month) => {
+          const first = new Date(calendarYear, month, 1);
+          const days = new Date(calendarYear, month + 1, 0).getDate();
+          const lead = (first.getDay() + 6) % 7;
+          const headers = weekdays.map(w => `<span class="weekday">${w}</span>`).join('');
+          const blanks = Array.from({length:lead},()=>'<span class="cal-day blank"></span>').join('');
+          const cells = Array.from({length:days}, (_,i) => {
+            const d = new Date(calendarYear, month, i+1);
+            const key = localDateKey(d);
+            const pct = completion(state.days[key], d);
+            return `<button class="cal-day ${isWorkDay(d)?'':'unscheduled'} ${completionClass(pct)} ${key===localDateKey()?'today':''} ${key===selectedKey()?'selected':''}" data-calendar-date="${key}" title="${d.toLocaleDateString('en-AU')} · ${pct}%">${i+1}</button>`;
+          }).join('');
+          return `<section class="month"><h3>${first.toLocaleDateString('en-AU',{month:'long'})}</h3><div class="month-grid">${headers}${blanks}${cells}</div></section>`;
+        }).join('');
+      }
+
+      function openCalendar() { renderYearCalendar(); els.calendarPanel.classList.add('open'); }
+      function closeCalendar() { els.calendarPanel.classList.remove('open'); }
+      els.calendarBtn.addEventListener('click', openCalendar);
+      els.todayBtn.addEventListener('click', () => setSelectedDate(new Date()));
+      els.prevYear.addEventListener('click', () => { calendarYear--; renderYearCalendar(); });
+      els.nextYear.addEventListener('click', () => { calendarYear++; renderYearCalendar(); });
+      els.closeCalendar.addEventListener('click', closeCalendar);
+      els.calendarPanel.addEventListener('click', event => {
+        const dayButton = event.target.closest('[data-calendar-date]');
+        if (dayButton) {
+          haptic();
+          const [y,m,d] = dayButton.dataset.calendarDate.split('-').map(Number);
+          setSelectedDate(new Date(y,m-1,d));
+          closeCalendar();
+          return;
+        }
+        if (event.target === els.calendarPanel) closeCalendar();
+      });
+
+      function openSettings() {
+        els.targetCalls.value=state.targets.calls; els.targetConnects.value=state.targets.connects;
+        els.targetData.value=state.targets.data; els.targetKnockMinutes.value=state.targets.weeklyKnockMinutes;
+        els.settingsPanel.classList.add('open');
+      }
+      const closeSettings=()=>els.settingsPanel.classList.remove('open');
+      els.settingsBtn.addEventListener('click',openSettings);
+      els.cancelSettings.addEventListener('click',closeSettings);
+      els.settingsPanel.addEventListener('click',e=>{if(e.target===els.settingsPanel)closeSettings();});
+      els.saveSettings.addEventListener('click',()=>{
+        state.targets={calls:Math.max(1,Number(els.targetCalls.value)||DEFAULTS.calls),connects:Math.max(1,Number(els.targetConnects.value)||DEFAULTS.connects),data:Math.max(1,Number(els.targetData.value)||DEFAULTS.data),weeklyKnockMinutes:Math.max(60,Number(els.targetKnockMinutes.value)||DEFAULTS.weeklyKnockMinutes)};
+        Object.values(state.days).forEach(day => day.alarmed = false);
+        saveState(); closeSettings(); render();
+      });
+
+      document.addEventListener('visibilitychange',()=>{
+        const day=ensureDay(new Date());
+        if(document.visibilityState==='visible') render(); else { syncRunningTimer(day, new Date()); saveState(); }
+      });
+      window.addEventListener('beforeunload',()=>{const day=ensureDay(new Date());syncRunningTimer(day, new Date());saveState();});
+      if('serviceWorker' in navigator && location.protocol.startsWith('http')) window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js'));
+      render();
+      setInterval(renderCallRecommendations, 60000);
+    })();
+  </script>
+</body>
+</html>
