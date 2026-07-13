@@ -66,3 +66,17 @@ main{height:100%;min-height:0}
   #todayView .score{min-height:130px}
   #todayView .metric{padding:18px 20px}
 }
+/* v1.2 — restored stacked iPhone dashboard + appointments */
+.app{max-width:560px;grid-template-rows:auto minmax(0,1fr) auto;gap:10px}
+.topbar h1{font-size:1.52rem}.eyebrow{font-size:.68rem}.date{font-size:.82rem}.live-dot{margin-left:8px;color:var(--green);font-size:.56rem;letter-spacing:.04em}.live-dot:not(.online){color:var(--muted)}
+#todayView.view.active.no-scroll{display:block;height:100%;overflow:auto;padding:0 2px 8px}
+#todayView .recommendations,#todayView .score,#todayView .metric,#todayView .week-strip{margin:0 0 12px}
+#todayView .recommendations{border-radius:28px}#todayView .recommendations summary{min-height:122px;padding:20px 24px}#todayView .recommendations strong{font-size:1.13rem;margin-top:8px}#todayView .recommendations small{font-size:.79rem;margin-top:6px}
+#todayView .score{min-height:150px;padding:24px 28px;border-radius:32px}#todayView .score strong{font-size:3.05rem}#todayView .score-side b{font-size:2rem}#todayView .bar{height:10px}
+#todayView .metrics{display:grid;grid-template-columns:1fr;gap:12px;min-height:auto}
+#todayView .metric{min-height:145px;height:auto;padding:20px 24px;border-radius:30px;display:grid;grid-template-columns:1fr auto;align-items:center}
+#todayView .metric>div:first-child>span{font-size:.82rem}#todayView .metric strong{font-size:2.25rem;margin-top:13px}#todayView .metric strong small{font-size:1rem}#todayView .metric em{font-size:.78rem;margin-top:7px}
+#todayView .actions{display:grid;grid-template-columns:82px 92px;gap:12px}#todayView .actions button{min-height:82px;border-radius:24px;font-size:1.9rem}#todayView .timer-actions{grid-template-columns:140px 82px}#todayView .timer-actions .timer{font-size:1.05rem}
+#todayView .week-strip{min-height:112px;padding:18px 20px;border-radius:28px}
+.appointment-form{border-radius:26px;padding:16px;margin-bottom:12px}.appointment-form label{display:grid;gap:7px;color:var(--muted);font-size:.72rem}.appointment-form input[type=text]{width:100%;background:rgba(255,255,255,.07);border:1px solid var(--line);color:var(--ink);border-radius:14px;padding:13px}.appointment-types{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:12px}.appointment-types label{display:flex;align-items:center;justify-content:center;gap:6px;text-align:center;background:rgba(255,255,255,.055);border:1px solid var(--line);border-radius:14px;padding:10px 6px;font-size:.62rem}.appointment-types input{accent-color:var(--blue)}.appointments-list{display:grid;gap:9px}.appointment-card{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:rgba(255,255,255,.055);border:1px solid var(--line);border-radius:19px;padding:13px}.appointment-card strong,.appointment-card small{display:block}.appointment-card strong{font-size:.83rem}.appointment-card small{color:var(--muted);font-size:.62rem;margin-top:4px}.appointment-card button{border:0;background:transparent;color:var(--red);font-size:1.2rem}
+@media(max-height:760px){#todayView .recommendations summary{min-height:96px;padding:14px 18px}#todayView .score{min-height:122px;padding:18px 22px}#todayView .metric{min-height:122px;padding:15px 19px}#todayView .actions button{min-height:65px}#todayView .week-strip{min-height:92px}}
