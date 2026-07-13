@@ -1,12 +1,12 @@
-# Daily Accountability v1.9
+# Daily Accountability v1.10
 
-This version uses the measured iPhone standalone viewport and locks past calendar dates.
+Typography and button-label optimisation only.
 
-## Upload
-1. Extract the ZIP.
-2. Upload all files and the `icons` folder to the root of the GitHub repository.
-3. Commit the changes and wait for GitHub Pages deployment.
-4. Delete the previous Home Screen app, open the live URL in Safari, and use Add to Home Screen again.
+This release keeps the v1.9 layout, dimensions, spacing, Firebase sync, past-date locking, appointments, insights and calendar behaviour unchanged.
 
-## Past-day lock
-Once the local calendar date changes, prior dates become read-only. Calls, connects, data, knocking and appointments can be viewed but not edited. Any knocking timer still running at midnight is automatically stopped and saved to the day it began.
+## Update
+1. Upload every file and the `icons` folder to the root of the existing GitHub repository.
+2. Replace the existing files and commit.
+3. Wait for GitHub Pages to deploy.
+4. Fully close and reopen the installed Home Screen app.
+5. If the previous text sizing remains cached, remove the Home Screen app and add it again from Safari.

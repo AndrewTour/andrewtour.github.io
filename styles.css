@@ -142,3 +142,73 @@ button:disabled,input:disabled{cursor:not-allowed}
   .app{padding-bottom:calc(var(--nav-space) + max(7px,env(safe-area-inset-bottom)))}
   .tabbar{bottom:max(7px,env(safe-area-inset-bottom));min-height:58px}
 }
+
+/* v1.10 — typography and control legibility only. Layout, spacing and dimensions unchanged. */
+@media (max-width:600px){
+  .eyebrow{font-size:.69rem;line-height:1.05;letter-spacing:.17em}
+  .sync-badge{font-size:.67rem}
+  .topbar h1{font-size:1.48rem;line-height:1.03}
+  .date{font-size:.84rem;line-height:1.15}
+  .icon-btn{font-size:1.22rem}
+  .back-today{font-size:.76rem}
+  .lock-badge{font-size:.61rem}
+
+  .score span,.metric span,.week-head span,.view-head span,.insight span{
+    font-size:.76rem;line-height:1;letter-spacing:.18em
+  }
+  .score strong{font-size:3rem;line-height:.9}
+  .score-side b{font-size:2rem;line-height:1}
+  .score-side small{font-size:.67rem;line-height:1.1;letter-spacing:.14em}
+
+  .metric-copy>small{font-size:.71rem;line-height:1.12}
+  .metric em{font-size:.72rem;line-height:1.1}
+  .metric strong{font-size:1.88rem;line-height:.95}
+  .metric strong small{font-size:.91rem}
+  .metric-percent{font-size:.94rem;line-height:1}
+  .actions button{font-size:1.78rem;line-height:1}
+  .timer{font-size:.92rem!important;line-height:1}
+  .reset{font-size:1.22rem!important}
+  .knock #knockValue{font-size:1.95rem;line-height:.95}
+  .knock #knockTargetText{font-size:.7rem;line-height:1.15}
+  .knock #knockRemaining{font-size:.73rem}
+
+  .week-head span{font-size:.72rem}
+  .week-head small{font-size:.63rem;line-height:1.1}
+  .week-day b{font-size:.75rem;line-height:1}
+  .week-day small{font-size:.64rem;line-height:1}
+
+  .tabbar b{font-size:1.14rem;line-height:1}
+  .tabbar span{font-size:.67rem;line-height:1}
+
+  .view-head h2{font-size:1.35rem}
+  .view-head input{font-size:.8rem}
+  .appointment-form label{font-size:.78rem}
+  .appointment-form input[type=text]{font-size:.88rem}
+  .appointment-types label{font-size:.68rem}
+  .primary,.secondary,.danger,.file-btn{font-size:.84rem}
+  .appointment-card strong{font-size:.92rem}
+  .appointment-card small{font-size:.7rem}
+
+  .insight strong{font-size:1.7rem}
+  .insight small{font-size:.7rem}
+  .year-head strong{font-size:1rem}
+  .mini-month h3{font-size:.69rem}
+  .mini-weekdays b{font-size:.42rem}
+  .mini-day{font-size:.44rem}
+
+  .settings h2{font-size:1.4rem}
+  .account-email,.settings label{font-size:.76rem}
+  .settings input{font-size:.86rem}
+}
+
+@media (display-mode:standalone) and (max-width:600px){
+  .topbar h1{font-size:1.52rem}
+  .date{font-size:.86rem}
+  .metric strong{font-size:1.94rem}
+  .metric strong small{font-size:.94rem}
+  .metric-percent{font-size:.98rem}
+  .actions button{font-size:1.84rem}
+  .week-day b{font-size:.77rem}
+  .week-day small{font-size:.66rem}
+  .tabbar span{font-size:.69rem}
+}
