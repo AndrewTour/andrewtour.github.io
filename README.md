@@ -15,7 +15,3 @@ Sign in with the same Firebase email/password on every device. The badge should 
 
 
 Version 1.5 removes Call Recommendations, fixes standalone iPhone viewport whitespace, and replaces the unlabeled yearly heatmap with dated mini calendars.
-
-
-## v1.6
-Home Screen-first viewport sizing and bottom-anchored navigation.
