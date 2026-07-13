@@ -25,6 +25,9 @@ function fmtDate(k){return parseKey(k).toLocaleDateString('en-AU',{weekday:'long
 function fmtTimer(sec){const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=Math.floor(sec%60);return h?`${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`}
 function uuid(){return crypto.randomUUID?.()||`${Date.now()}-${Math.random()}`}
 function configured(){return firebaseConfig?.apiKey&&!firebaseConfig.apiKey.startsWith('PASTE_')}
+function isPastDate(k){return k<todayKey()}
+function canEditDate(k){return !isPastDate(k)}
+function lockedToast(){haptic(20);toast('This day is complete and locked')}
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove('show'),1800)}
 function setSync(state,label){const b=$('#syncBadge');b.className=`sync-badge ${state}`;b.textContent=label}
 
@@ -39,22 +42,50 @@ function completion(k){const d=dayData(k),kt=rollingKnockTarget(k);return Math.r
 function weekSummary(base=parseKey(selectedDate)){const ks=weekKeys(base);let calls=0,connects=0,data=0,knock=0,complete=0,total=0;ks.forEach(k=>{const d=dayData(k);calls+=d.calls;connects+=d.connects;data+=d.data;knock+=liveKnockSeconds(d);const c=completion(k);total+=c;if(c>=100)complete++});return{calls,connects,data,knock,complete,avg:Math.round(total/4),score:Math.round((pct(calls,targets.calls*4)+pct(connects,targets.connects*4)+pct(data,targets.data*4)+pct(knock/60,targets.weeklyKnock))/4)}}
 function streak(){let n=0,d=new Date();for(let i=0;i<730;i++){if(WORK_DAYS.includes(d.getDay())){const k=dateKey(d);if(k===todayKey()&&completion(k)<100){d.setDate(d.getDate()-1);continue}if(completion(k)>=100)n++;else break}d.setDate(d.getDate()-1)}return n}
 
-async function changeMetric(metric,delta){const d=dayData(selectedDate);d[metric]=Math.max(0,d[metric]+delta);addEvent(d,metric,`${metric} ${delta>0?'+1':'−1'}`,delta);days[selectedDate]=d;haptic();await saveDay(selectedDate)}
-async function toggleTimer(){const d=dayData(selectedDate);if(d.timerStartedAt){d.knockSeconds=liveKnockSeconds(d);d.timerStartedAt=null;addEvent(d,'knock','Knocking paused')}else{d.timerStartedAt=Date.now();d.alarmPlayed=false;addEvent(d,'knock','Knocking started')}days[selectedDate]=d;haptic(18);await saveDay(selectedDate);ensureTick()}
-async function resetKnock(){if(!confirm('Reset knocking time for this date?'))return;const d=dayData(selectedDate);d.knockSeconds=0;d.timerStartedAt=null;d.alarmPlayed=false;addEvent(d,'knock','Knocking reset');days[selectedDate]=d;await saveDay(selectedDate);ensureTick()}
+async function changeMetric(metric,delta){if(!canEditDate(selectedDate))return lockedToast();const d=dayData(selectedDate);d[metric]=Math.max(0,d[metric]+delta);addEvent(d,metric,`${metric} ${delta>0?'+1':'−1'}`,delta);days[selectedDate]=d;haptic();await saveDay(selectedDate)}
+async function toggleTimer(){if(!canEditDate(selectedDate))return lockedToast();const d=dayData(selectedDate);if(d.timerStartedAt){d.knockSeconds=liveKnockSeconds(d);d.timerStartedAt=null;addEvent(d,'knock','Knocking paused')}else{d.timerStartedAt=Date.now();d.alarmPlayed=false;addEvent(d,'knock','Knocking started')}days[selectedDate]=d;haptic(18);await saveDay(selectedDate);ensureTick()}
+async function resetKnock(){if(!canEditDate(selectedDate))return lockedToast();if(!confirm('Reset knocking time for this date?'))return;const d=dayData(selectedDate);d.knockSeconds=0;d.timerStartedAt=null;d.alarmPlayed=false;addEvent(d,'knock','Knocking reset');days[selectedDate]=d;await saveDay(selectedDate);ensureTick()}
+async function finaliseExpiredTimers(){const today=todayKey();for(const [k,raw] of Object.entries(days)){if(k<today&&raw?.timerStartedAt){const d=dayData(k);d.knockSeconds=liveKnockSeconds(d);d.timerStartedAt=null;d.alarmPlayed=true;addEvent(d,'knock','Knocking stopped automatically at day close');days[k]=d;await saveDay(k,{quiet:true})}}}
 function ensureTick(){clearInterval(timerTick);if(dayData(selectedDate).timerStartedAt)timerTick=setInterval(()=>{renderToday();const d=dayData(selectedDate),target=rollingKnockTarget(selectedDate)*60;if(liveKnockSeconds(d)>=target&&!d.alarmPlayed){d.alarmPlayed=true;days[selectedDate]=d;saveDay(selectedDate,{quiet:true});alarm()}},1000)}
 function alarm(){haptic([180,100,180]);toast('Today’s knocking target reached');try{const c=new AudioContext(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=880;g.gain.value=.17;o.start();o.stop(c.currentTime+.7)}catch{}}
 
 function formatHour(h){return `${h%12||12}:00 ${h>=12?'PM':'AM'}`}
 function renderCallPlan(){const now=new Date(),h=now.getHours();let current=CALL_PLAN.find(x=>x[0]===h);if(h<9)current=[8,'Prepare your priority list','Before 9:00 AM'];if(h>=17)current=[17,'Review follow-up and plan tomorrow','9:00 AM–5:00 PM call day complete'];$('#currentCall').textContent=current[1];$('#currentSlot').textContent=h>=9&&h<17?`${formatHour(h)}–${formatHour(h+1)} · 10 call target`:current[2];$('#callPlan').innerHTML=CALL_PLAN.map(([hour,title,note])=>`<div class="call-row ${hour===h?'active':''}"><b>${formatHour(hour)}</b><span><strong>${title}</strong><small>${note}</small></span><em>10</em></div>`).join('')}
 function callsPaceText(value){if(selectedDate!==todayKey())return `${Math.max(0,targets.calls-value)} remaining`;const now=new Date(),h=now.getHours()+now.getMinutes()/60;if(h<9)return `${targets.calls-value} remaining`;if(h>=17)return value>=targets.calls?'Target complete':`${targets.calls-value} short today`;const expected=Math.min(targets.calls,Math.round((h-9)*10)),diff=value-expected;return diff===0?'On pace':diff>0?`${diff} ahead of pace`:`${Math.abs(diff)} behind pace`}
-function renderToday(){const d=dayData(selectedDate),score=completion(selectedDate),kt=rollingKnockTarget(selectedDate),secs=liveKnockSeconds(d),wk=weekSummary();$('#dateLabel').textContent=fmtDate(selectedDate);$('#backToday').classList.toggle('hidden',selectedDate===todayKey());$('#dailyScore').textContent=`${score}%`;$('#scoreBar').style.width=`${score}%`;$('#streak').textContent=streak();for(const m of ['calls','connects','data']){const val=d[m],target=targets[m],p=pct(val,target),rem=Math.max(0,target-val);$(`#${m}Value`).textContent=val;$(`#${m}TargetLabel`).textContent=`/${target}`;$(`#${m}TargetText`).textContent=`Daily target ${target}`;$(`#${m}Percent`).textContent=`${p}%`;$(`#${m}Pace`).textContent=m==='calls'?callsPaceText(val):(rem?`${rem} remaining`:'Target complete');document.querySelector(`[data-metric="${m}"]`).classList.toggle('complete',rem===0)}$('#knockValue').textContent=fmtTimer(secs);$('#knockTargetText').textContent=`Rolling target ${kt} min · Weekly minimum ${targets.weeklyKnock} min`;$('#knockRemaining').textContent=Math.max(0,kt-Math.floor(secs/60))?`${Math.max(0,kt-Math.floor(secs/60))} minutes remaining`:'Target complete';$('#timerButton').textContent=d.timerStartedAt?'Pause':'Start';$('#timerButton').classList.toggle('running',!!d.timerStartedAt);$('#weekSummary').textContent=`${wk.complete}/4 complete · ${wk.avg}% avg · ${Math.floor(wk.knock/60)}/${targets.weeklyKnock} knock min`;renderWeekDays()}
+function renderToday(){
+  const d=dayData(selectedDate),score=completion(selectedDate),kt=rollingKnockTarget(selectedDate),secs=liveKnockSeconds(d),wk=weekSummary();
+  const locked=isPastDate(selectedDate);
+  $('#dateLabel').textContent=fmtDate(selectedDate);
+  $('#backToday').classList.toggle('hidden',selectedDate===todayKey());
+  $('#lockBadge').classList.toggle('hidden',!locked);
+  $('#todayView').classList.toggle('date-locked',locked);
+  $('#dailyScore').textContent=`${score}%`;
+  $('#scoreBar').style.width=`${score}%`;
+  $('#streak').textContent=streak();
+  for(const m of ['calls','connects','data']){
+    const val=d[m],target=targets[m],p=pct(val,target),rem=Math.max(0,target-val);
+    $(`#${m}Value`).textContent=val;
+    $(`#${m}TargetLabel`).textContent=`/${target}`;
+    $(`#${m}TargetText`).textContent=`Daily target ${target}`;
+    $(`#${m}Percent`).textContent=`${p}%`;
+    $(`#${m}Pace`).textContent=locked?'Day locked':(m==='calls'?callsPaceText(val):(rem?`${rem} remaining`:'Target complete'));
+    document.querySelector(`[data-metric="${m}"]`).classList.toggle('complete',rem===0);
+  }
+  $('#knockValue').textContent=fmtTimer(secs);
+  $('#knockTargetText').textContent=`Rolling target ${kt} min · Weekly minimum ${targets.weeklyKnock} min`;
+  $('#knockRemaining').textContent=locked?'Day locked':(Math.max(0,kt-Math.floor(secs/60))?`${Math.max(0,kt-Math.floor(secs/60))} minutes remaining`:'Target complete');
+  $('#timerButton').textContent=locked?'Locked':(d.timerStartedAt?'Pause':'Start');
+  $('#timerButton').classList.toggle('running',!!d.timerStartedAt&&!locked);
+  $$('[data-action], #timerButton, #resetKnock').forEach(el=>{el.disabled=locked;el.setAttribute('aria-disabled',String(locked))});
+  $('#weekSummary').textContent=`${wk.complete}/4 complete · ${wk.avg}% avg · ${Math.floor(wk.knock/60)}/${targets.weeklyKnock} knock min`;
+  renderWeekDays();
+}
 function renderWeekDays(){const names=['MON','TUE','THU','FRI'];$('#weekDays').innerHTML=weekKeys().map((k,i)=>{const p=completion(k);return `<button class="week-day ${k===selectedDate?'selected':''} ${p>=100?'complete':''}" data-date="${k}"><b>${names[i]}</b><small>${parseKey(k).getDate()} · ${p}%</small></button>`}).join('')}
 
-function renderAppointments(){appointmentDate=$('#appointmentDatePicker').value||appointmentDate;$('#appointmentDateLabel').textContent=fmtDate(appointmentDate);const list=dayData(appointmentDate).appointments;$('#appointmentsList').innerHTML=list.length?list.slice().sort((a,b)=>b.at-a.at).map(a=>`<article class="appointment-card"><div><strong>${escapeHtml(a.address)}</strong><small>${a.types.join(' · ')} · ${new Date(a.at).toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'})}</small></div><button data-delete-appointment="${a.id}" aria-label="Delete">×</button></article>`).join(''):`<div class="empty">No appointments logged for this date.</div>`}
+function renderAppointments(){appointmentDate=$('#appointmentDatePicker').value||appointmentDate;const locked=isPastDate(appointmentDate);$('#appointmentForm').classList.toggle('date-locked',locked);$$('#appointmentForm input, #appointmentForm button').forEach(el=>el.disabled=locked);$('#appointmentLock').classList.toggle('hidden',!locked);$('#appointmentDateLabel').textContent=fmtDate(appointmentDate);const list=dayData(appointmentDate).appointments;$('#appointmentsList').innerHTML=list.length?list.slice().sort((a,b)=>b.at-a.at).map(a=>`<article class="appointment-card"><div><strong>${escapeHtml(a.address)}</strong><small>${a.types.join(' · ')} · ${new Date(a.at).toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'})}</small></div><button data-delete-appointment="${a.id}" aria-label="Delete" ${locked?'disabled':''}>×</button></article>`).join(''):`<div class="empty">No appointments logged for this date.</div>`}
 function escapeHtml(s){return s.replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
-async function addAppointment(address,types){const d=dayData(appointmentDate);d.appointments.push({id:uuid(),address,types,at:Date.now()});addEvent(d,'appointment',`${types.join(', ')} · ${address}`);days[appointmentDate]=d;await saveDay(appointmentDate);renderAppointments();toast('Appointment added')}
-async function deleteAppointment(id){const d=dayData(appointmentDate);d.appointments=d.appointments.filter(a=>a.id!==id);days[appointmentDate]=d;await saveDay(appointmentDate);renderAppointments()}
+async function addAppointment(address,types){if(!canEditDate(appointmentDate))return lockedToast();const d=dayData(appointmentDate);d.appointments.push({id:uuid(),address,types,at:Date.now()});addEvent(d,'appointment',`${types.join(', ')} · ${address}`);days[appointmentDate]=d;await saveDay(appointmentDate);renderAppointments();toast('Appointment added')}
+async function deleteAppointment(id){if(!canEditDate(appointmentDate))return lockedToast();const d=dayData(appointmentDate);d.appointments=d.appointments.filter(a=>a.id!==id);days[appointmentDate]=d;await saveDay(appointmentDate);renderAppointments()}
 
 function renderInsights(){const w=weekSummary(),m=mondayOf(parseKey(selectedDate));$('#insightWeekScore').textContent=`${w.score}%`;$('#insightWeekLabel').textContent=`Week of ${m.toLocaleDateString('en-AU',{day:'numeric',month:'short'})}`;$('#insightCalls').textContent=w.calls;$('#insightCallsAvg').textContent=`${Math.round(w.calls/4)}/day`;$('#insightConnects').textContent=w.connects;$('#insightConnectRate').textContent=`${w.calls?Math.round(w.connects/w.calls*100):0}% connect rate`;$('#insightData').textContent=w.data;$('#insightDataAvg').textContent=`${Math.round(w.data/4)}/day`;$('#insightKnock').textContent=`${Math.floor(w.knock/60)} min`;$('#knockBar').style.width=`${pct(w.knock/60,targets.weeklyKnock)}%`;renderMonth();$('#yearLabel').textContent=year;renderYearOverview()}
 function renderYearOverview(){const labels=['M','T','W','T','F','S','S'];const months=[];for(let m=0;m<12;m++){const first=new Date(year,m,1),pad=(first.getDay()+6)%7;let cells=`<div class="mini-weekdays">${labels.map(x=>`<b>${x}</b>`).join('')}</div><div class="mini-days">${'<i></i>'.repeat(pad)}`;for(let d=1;d<=new Date(year,m+1,0).getDate();d++){const dt=new Date(year,m,d),k=dateKey(dt),p=completion(k),off=!WORK_DAYS.includes(dt.getDay());cells+=`<button class="mini-day ${levelClass(p)} ${off?'off':''} ${k===todayKey()?'today':''} ${k===selectedDate?'selected':''}" data-date="${k}" aria-label="${fmtDate(k)}, ${p}% complete">${d}</button>`}cells+='</div>';months.push(`<section class="mini-month"><h3>${new Date(year,m,1).toLocaleDateString('en-AU',{month:'short'})}</h3>${cells}</section>`)}$('#yearHeatmap').innerHTML=months.join('')}
@@ -66,7 +97,29 @@ function renderAll(){renderToday();renderAppointments();renderInsights();renderS
 
 async function startCloud(user){currentUser=user;uid=user.uid;cloud=true;setSync('','Connecting');clearTimeout(syncTimer);syncTimer=setTimeout(()=>{if($('#syncBadge').textContent==='Connecting')setSync(navigator.onLine?'':'offline',navigator.onLine?'Connected':'Offline')},3500);unsubDays?.();unsubProfile?.();unsubDays=onSnapshot(collection(db,'users',uid,'days'),{includeMetadataChanges:true},snap=>{snap.docChanges().forEach(ch=>{if(ch.type==='removed')delete days[ch.doc.id];else{const incoming=ch.doc.data();days[ch.doc.id]={...blankDay(),...incoming,appointments:incoming.appointments||[],events:incoming.events||[]}}});saveLocal();renderAll();ensureTick();clearTimeout(syncTimer);setSync(snap.metadata.fromCache&&!navigator.onLine?'offline':'live',snap.metadata.hasPendingWrites?'Saving':'Live')},err=>{console.error(err);setSync('error','Sync error');toast('Firestore access failed. Check rules and login.');showAuthMessage(err.message)});unsubProfile=onSnapshot(doc(db,'users',uid),snap=>{if(snap.exists()&&snap.data().targets){targets={...DEFAULTS,...snap.data().targets};saveLocal();renderAll()}},err=>console.error(err));setSync(navigator.onLine?'live':'offline',navigator.onLine?'Live':'Offline');showApp()}
 function showApp(){loadLocal();$('#authGate').classList.add('hidden');$('#app').classList.remove('hidden');$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()}
-async function init(){loadLocal();if(!configured()){showAuthMessage('Firebase is not configured. You can still use device-only mode.');return}try{const fb=initializeApp(firebaseConfig);auth=getAuth(fb);await setPersistence(auth,browserLocalPersistence);db=initializeFirestore(fb,{experimentalAutoDetectLongPolling:true,localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});onAuthStateChanged(auth,u=>u?startCloud(u):$('#authGate').classList.remove('hidden'))}catch(err){console.error(err);showAuthMessage(err.message)}}
+let viewportFrame=0;
+function updateAppViewport(){
+  cancelAnimationFrame(viewportFrame);
+  viewportFrame=requestAnimationFrame(()=>{
+    const standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+    const vv=window.visualViewport;
+    const candidates=[window.innerHeight,document.documentElement.clientHeight];
+    if(vv)candidates.push(vv.height+vv.offsetTop);
+    if(standalone)candidates.push(window.screen?.height||0,window.screen?.availHeight||0);
+    const height=Math.round(Math.max(...candidates.filter(Number.isFinite)));
+    document.documentElement.style.setProperty('--app-height',`${height}px`);
+    document.documentElement.style.setProperty('--visual-height',`${Math.round(vv?.height||window.innerHeight)}px`);
+  });
+}
+function bindViewport(){
+  updateAppViewport();
+  window.addEventListener('resize',updateAppViewport,{passive:true});
+  window.addEventListener('orientationchange',()=>setTimeout(updateAppViewport,180),{passive:true});
+  window.visualViewport?.addEventListener('resize',updateAppViewport,{passive:true});
+  window.visualViewport?.addEventListener('scroll',updateAppViewport,{passive:true});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){updateAppViewport();finaliseExpiredTimers().then(()=>renderAll())}});
+}
+async function init(){bindViewport();loadLocal();await finaliseExpiredTimers();if(!configured()){showAuthMessage('Firebase is not configured. You can still use device-only mode.');return}try{const fb=initializeApp(firebaseConfig);auth=getAuth(fb);await setPersistence(auth,browserLocalPersistence);db=initializeFirestore(fb,{experimentalAutoDetectLongPolling:true,localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});onAuthStateChanged(auth,u=>u?startCloud(u):$('#authGate').classList.remove('hidden'))}catch(err){console.error(err);showAuthMessage(err.message)}}
 function showAuthMessage(msg){$('#authMessage').textContent=msg}
 function switchView(id){$$('.tabbar button').forEach(b=>b.classList.toggle('active',b.dataset.view===id));$$('.view').forEach(v=>v.classList.toggle('active',v.id===id));const label=document.querySelector(`.tabbar button[data-view="${id}"] span`)?.textContent||'Daily Accountability';$('#viewTitle').textContent=id==='todayView'?'Daily Accountability':label;if(id==='appointmentsView')renderAppointments();if(id==='insightsView')renderInsights()}
 function openCalendar(){$('#calendarModal').classList.add('open');renderCalendar()}
@@ -91,4 +144,5 @@ $('#yearHeatmap').onclick=e=>{const b=e.target.closest('[data-date]');if(!b)retu
 $('#prevMonth').onclick=()=>{monthCursor.setMonth(monthCursor.getMonth()-1);renderMonth()};$('#nextMonth').onclick=()=>{monthCursor.setMonth(monthCursor.getMonth()+1);renderMonth()};
 window.addEventListener('online',()=>{if(cloud)setSync('live','Live')});window.addEventListener('offline',()=>setSync('offline','Offline'));
 if('serviceWorker'in navigator)window.addEventListener('load',async()=>{const reg=await navigator.serviceWorker.register('./service-worker.js');reg.update()});
+setInterval(()=>{finaliseExpiredTimers().then(()=>{if(selectedDate<todayKey())renderAll()});updateAppViewport()},30000);
 init();

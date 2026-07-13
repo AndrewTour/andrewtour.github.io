@@ -35,7 +35,7 @@
       <div id="dateLabel" class="date"></div>
     </div>
     <div class="top-actions">
-      <button id="backToday" class="back-today hidden" type="button">Today</button>
+      <span id="lockBadge" class="lock-badge hidden">LOCKED</span><button id="backToday" class="back-today hidden" type="button">Today</button>
       <button id="settingsShortcut" class="icon-btn" type="button" aria-label="Settings">⚙</button>
     </div>
   </header>
@@ -84,7 +84,7 @@
         <div><span>APPOINTMENTS</span><h2 id="appointmentDateLabel"></h2></div>
         <input id="appointmentDatePicker" type="date">
       </div>
-      <form id="appointmentForm" class="appointment-form glass">
+      <div id="appointmentLock" class="appointment-lock hidden">Past dates are locked and read-only.</div><form id="appointmentForm" class="appointment-form glass">
         <label>Property address<input id="appointmentAddress" type="text" placeholder="14 Calla Grove, Pendle Hill" required></label>
         <div class="appointment-types">
           <label><input type="checkbox" value="Appraisal"><span>Appraisal</span></label>

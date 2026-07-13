@@ -103,70 +103,42 @@ body{min-height:100%;background:radial-gradient(circle at 18% 5%,#102447 0,trans
 .mini-day.selected{outline:2px solid #fff;outline-offset:1px}
 @media(max-width:390px){.heatmap{gap:6px}.mini-month{padding:6px 5px}.mini-day{font-size:.35rem}}
 
-/* v1.8 — iPhone Home Screen viewport correction.
-   Preserve the v1.7 dashboard proportions; only anchor navigation to the
-   actual standalone safe-area bottom and give the reclaimed height to main. */
-@media (display-mode: standalone) {
-  html,
-  body {
-    width: 100%;
-    height: 100dvh;
-    min-height: 100dvh;
-    overflow: hidden;
-    overscroll-behavior: none;
-  }
 
-  body {
-    position: fixed;
-    inset: 0;
-  }
 
-  .app {
-    position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100dvh;
-    min-height: 100dvh;
-    max-width: 560px;
-    padding-top: max(12px, env(safe-area-inset-top));
-    padding-right: 18px;
-    padding-bottom: calc(84px + max(8px, env(safe-area-inset-bottom)));
-    padding-left: 18px;
-    grid-template-rows: auto minmax(0, 1fr);
-    gap: 9px;
-  }
+/* v1.9 — measured standalone viewport and immutable past dates */
+:root{--app-height:100dvh;--visual-height:100dvh;--nav-space:86px}
+.lock-badge{display:inline-grid;place-items:center;align-self:center;padding:6px 9px;border:1px solid rgba(255,208,105,.35);border-radius:999px;background:rgba(255,208,105,.1);color:var(--amber);font-size:.52rem;font-weight:900;letter-spacing:.11em}
+.date-locked .actions button,.date-locked .timer,.date-locked .reset{opacity:.42;filter:saturate(.35);cursor:not-allowed}
+.date-locked .metric em{color:var(--amber)}
+.appointment-lock{margin:0 0 9px;padding:10px 12px;border-radius:14px;border:1px solid rgba(255,208,105,.25);background:rgba(255,208,105,.08);color:var(--amber);font-size:.67rem;font-weight:750}
+.appointment-form.date-locked{opacity:.58}
+button:disabled,input:disabled{cursor:not-allowed}
 
-  .app > main {
-    min-height: 0;
-    height: 100%;
+@media (display-mode: standalone){
+  html,body{
+    width:100%;height:var(--app-height);min-height:var(--app-height);max-height:var(--app-height);
+    overflow:hidden;overscroll-behavior:none;background:#03050a;
   }
-
-  .tabbar {
-    position: fixed;
-    z-index: 25;
-    left: 50%;
-    bottom: max(8px, env(safe-area-inset-bottom));
-    transform: translateX(-50%);
-    width: calc(100% - 36px);
-    max-width: 524px;
-    min-height: 67px;
-    margin: 0;
+  body{position:fixed;inset:0;width:100%;}
+  .app{
+    position:fixed;inset:0;margin:0 auto;width:100%;max-width:560px;
+    height:var(--app-height);min-height:var(--app-height);max-height:var(--app-height);
+    padding:max(12px,env(safe-area-inset-top)) 18px calc(var(--nav-space) + max(8px,env(safe-area-inset-bottom))) 18px;
+    grid-template-rows:auto minmax(0,1fr);gap:9px;overflow:hidden;
   }
-
-  .toast {
-    bottom: calc(88px + max(8px, env(safe-area-inset-bottom)));
+  .app>main{height:100%;min-height:0;overflow:hidden}
+  .view.active{height:100%;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+  .view.active::-webkit-scrollbar{display:none}
+  .dashboard.active{overflow:hidden}
+  .tabbar{
+    position:fixed;z-index:25;left:50%;bottom:max(8px,env(safe-area-inset-bottom));
+    transform:translateX(-50%);width:calc(100% - 36px);max-width:524px;min-height:67px;margin:0;
   }
+  .toast{bottom:calc(var(--nav-space) + max(8px,env(safe-area-inset-bottom)))}
+  .modal{height:var(--app-height)}
 }
-
-/* Small standalone screens keep the same layout language, with only the
-   navigation reservation adjusted to match the compact tab bar. */
-@media (display-mode: standalone) and (max-height: 760px) {
-  .app {
-    padding-bottom: calc(72px + max(7px, env(safe-area-inset-bottom)));
-  }
-
-  .tabbar {
-    bottom: max(7px, env(safe-area-inset-bottom));
-    min-height: 58px;
-  }
+@media (display-mode: standalone) and (max-height:760px){
+  :root{--nav-space:74px}
+  .app{padding-bottom:calc(var(--nav-space) + max(7px,env(safe-area-inset-bottom)))}
+  .tabbar{bottom:max(7px,env(safe-area-inset-bottom));min-height:58px}
 }

@@ -1,21 +1,12 @@
-# Daily Accountability v1.3
+# Daily Accountability v1.9
 
-Firebase-connected PWA for GitHub Pages.
+This version uses the measured iPhone standalone viewport and locks past calendar dates.
 
 ## Upload
 1. Extract the ZIP.
-2. Upload every extracted file and the `icons` folder to the root of your GitHub repository.
-3. Commit the changes.
-4. Wait for GitHub Pages deployment to finish.
-5. Open the live URL in Safari and refresh once.
-6. Remove and re-add the Home Screen app if an older cached layout remains.
+2. Upload all files and the `icons` folder to the root of the GitHub repository.
+3. Commit the changes and wait for GitHub Pages deployment.
+4. Delete the previous Home Screen app, open the live URL in Safari, and use Add to Home Screen again.
 
-## Live sync
-Sign in with the same Firebase email/password on every device. The badge should show **Live**. If it shows **Sync error**, check Firestore Rules and Authentication.
-
-
-Version 1.5 removes Call Recommendations, fixes standalone iPhone viewport whitespace, and replaces the unlabeled yearly heatmap with dated mini calendars.
-
-
-## v1.8
-Standalone Home Screen viewport correction. The v1.7 dashboard sizing is unchanged; the bottom navigation is pinned to the iPhone safe-area bottom and the unused space is reclaimed.
+## Past-day lock
+Once the local calendar date changes, prior dates become read-only. Calls, connects, data, knocking and appointments can be viewed but not edited. Any knocking timer still running at midnight is automatically stopped and saved to the day it began.
