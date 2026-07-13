@@ -12,3 +12,6 @@ Firebase-connected PWA for GitHub Pages.
 
 ## Live sync
 Sign in with the same Firebase email/password on every device. The badge should show **Live**. If it shows **Sync error**, check Firestore Rules and Authentication.
+
+
+Version 1.5 removes Call Recommendations, fixes standalone iPhone viewport whitespace, and replaces the unlabeled yearly heatmap with dated mini calendars.
