@@ -102,3 +102,96 @@ body{min-height:100%;background:radial-gradient(circle at 18% 5%,#102447 0,trans
 .mini-day.today{outline:1px solid var(--cyan);outline-offset:1px}
 .mini-day.selected{outline:2px solid #fff;outline-offset:1px}
 @media(max-width:390px){.heatmap{gap:6px}.mini-month{padding:6px 5px}.mini-day{font-size:.35rem}}
+
+/* v1.6 Home Screen-first layout: true viewport height and bottom-anchored navigation */
+:root{--app-height:100dvh;--nav-height:70px}
+@media (display-mode: standalone){
+  html,body{
+    width:100%;
+    height:var(--app-height);
+    min-height:var(--app-height);
+    max-height:var(--app-height);
+    overflow:hidden;
+    overscroll-behavior:none;
+  }
+  body{
+    position:fixed;
+    inset:0;
+  }
+  .app{
+    position:fixed;
+    top:0;
+    left:50%;
+    bottom:auto;
+    transform:translateX(-50%);
+    width:min(100%,560px);
+    max-width:560px;
+    height:var(--app-height);
+    min-height:var(--app-height);
+    max-height:var(--app-height);
+    margin:0;
+    padding:
+      max(8px,env(safe-area-inset-top))
+      18px
+      calc(var(--nav-height) + max(8px,env(safe-area-inset-bottom)) + 10px);
+    grid-template-rows:auto minmax(0,1fr);
+    gap:8px;
+    overflow:hidden;
+  }
+  .app main{min-height:0;height:100%;overflow:hidden}
+  .dashboard.active{
+    height:100%;
+    grid-template-rows:minmax(116px,.9fr) minmax(0,4fr) minmax(88px,.8fr);
+    gap:9px;
+  }
+  .score{height:100%;min-height:0}
+  .metrics{height:100%;min-height:0;gap:9px}
+  .metric{height:100%;min-height:0}
+  .week-card{height:100%;min-height:0}
+  .tabbar{
+    position:absolute;
+    z-index:20;
+    left:18px;
+    right:18px;
+    bottom:max(6px,env(safe-area-inset-bottom));
+    min-height:var(--nav-height);
+    margin:0;
+  }
+  .view:not(.dashboard){padding-bottom:6px}
+  .toast{bottom:calc(var(--nav-height) + max(14px,env(safe-area-inset-bottom)))}
+}
+
+@media (display-mode: standalone) and (max-width:600px) and (max-height:950px){
+  :root{--nav-height:66px}
+  .app{
+    padding-left:12px;
+    padding-right:12px;
+    padding-bottom:calc(var(--nav-height) + max(7px,env(safe-area-inset-bottom)) + 9px);
+  }
+  .dashboard.active{
+    grid-template-rows:minmax(105px,.9fr) minmax(0,4.15fr) minmax(82px,.8fr);
+    gap:7px;
+  }
+  .score{padding:12px 16px;border-radius:24px}
+  .score strong{font-size:2.35rem}
+  .metrics{gap:7px}
+  .metric{padding:8px 12px;border-radius:21px}
+  .metric strong{font-size:1.42rem}
+  .actions{grid-template-columns:48px 52px 48px}
+  .actions button,.metric-percent{height:48px;border-radius:16px}
+  .knock-actions{grid-template-columns:92px 48px}
+  .week-card{padding:9px 10px;border-radius:21px}
+  .week-day{min-height:50px}
+  .tabbar{left:12px;right:12px}
+}
+
+@media (display-mode: standalone) and (max-width:390px) and (max-height:850px){
+  :root{--nav-height:62px}
+  .dashboard.active{grid-template-rows:minmax(94px,.85fr) minmax(0,4.2fr) minmax(74px,.75fr)}
+  .score strong{font-size:2.05rem}
+  .metric{padding:6px 10px}
+  .actions{grid-template-columns:42px 47px 42px}
+  .actions button,.metric-percent{height:42px}
+  .knock-actions{grid-template-columns:80px 42px}
+  .week-day{min-height:44px}
+}

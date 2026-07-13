@@ -11,6 +11,16 @@ let targets={...DEFAULTS}, days={}, selectedDate=dateKey(new Date()), appointmen
 let year=new Date().getFullYear(), monthCursor=new Date(), uid='local', currentUser=null, cloud=false, db=null, auth=null;
 let unsubDays=null, unsubProfile=null, timerTick=null, syncTimer=null;
 
+function syncAppViewport(){
+  const height=Math.round(window.innerHeight || document.documentElement.clientHeight || 0);
+  if(height) document.documentElement.style.setProperty('--app-height',`${height}px`);
+}
+syncAppViewport();
+window.addEventListener('resize',syncAppViewport,{passive:true});
+window.addEventListener('orientationchange',()=>setTimeout(syncAppViewport,120),{passive:true});
+window.addEventListener('pageshow',syncAppViewport,{passive:true});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden) setTimeout(syncAppViewport,50)});
+
 function dateKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 function parseKey(k){const [y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d)}
 function todayKey(){return dateKey(new Date())}
