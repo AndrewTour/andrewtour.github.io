@@ -1,55 +1,159 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#050507"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Daily Accountability"><link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css"><title>Daily Accountability</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#05070d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Daily Accountability">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="styles.css">
+<title>Daily Accountability</title>
 </head>
 <body>
 <div id="authGate" class="auth-gate">
   <form id="authForm" class="auth-card glass">
-    <div class="brand-mark">DA</div><h1>Daily Accountability</h1><p>Private live sync across every signed-in device.</p>
+    <div class="brand-mark">DA</div>
+    <h1>Daily Accountability</h1>
+    <p>Sign in once and your data stays live across your devices.</p>
     <input id="email" type="email" autocomplete="email" placeholder="Email" required>
     <input id="password" type="password" autocomplete="current-password" placeholder="Password" minlength="6" required>
     <button class="primary" type="submit">Sign in</button>
     <button id="createAccount" class="secondary" type="button">Create account</button>
-    <button id="localMode" class="text-btn" type="button">Continue in local mode</button>
+    <button id="localMode" class="text-btn" type="button">Continue on this device only</button>
     <small id="authMessage"></small>
   </form>
 </div>
 
 <div id="app" class="app hidden">
-<header class="topbar"><div><div class="eyebrow">DAILY ACCOUNTABILITY <span id="syncBtn" class="live-dot">Offline</span></div><h1 id="viewTitle">Daily Accountability</h1><div id="dateLabel" class="date"></div></div><div class="top-actions"><button id="voiceBtn" class="icon-btn" aria-label="Voice log">◉</button><button id="settingsShortcut" class="icon-btn" aria-label="Settings">⚙</button></div></header>
+  <header class="topbar">
+    <div>
+      <div class="eyebrow">DAILY ACCOUNTABILITY <span id="syncBadge" class="sync-badge">Connecting</span></div>
+      <h1 id="viewTitle">Daily Accountability</h1>
+      <div id="dateLabel" class="date"></div>
+    </div>
+    <div class="top-actions">
+      <button id="backToday" class="back-today hidden" type="button">Today</button>
+      <button id="settingsShortcut" class="icon-btn" type="button" aria-label="Settings">⚙</button>
+    </div>
+  </header>
 
-<main>
-<section id="todayView" class="view active no-scroll">
-  <details class="recommendations glass"><summary><div><span>CALL RECOMMENDATIONS</span><strong id="currentCall">Prepare your priority list</strong><small id="currentSlot">Before 9:00 AM</small></div><b>⌄</b></summary><div id="callPlan" class="call-plan"></div></details>
+  <main>
+    <section id="todayView" class="view active dashboard">
+      <details class="recommendations glass">
+        <summary>
+          <div>
+            <span>CALL RECOMMENDATIONS</span>
+            <strong id="currentCall">Prepare your priority list</strong>
+            <small id="currentSlot">Before 9:00 AM</small>
+          </div>
+          <b>⌄</b>
+        </summary>
+        <div id="callPlan" class="call-plan"></div>
+      </details>
 
-  <div class="score glass"><div><span>DAILY SCORE</span><strong id="dailyScore">0%</strong></div><div class="score-side"><b id="streak">0</b><small>DAY STREAK</small></div><div class="bar"><i id="scoreBar"></i></div></div>
+      <section class="score glass">
+        <div>
+          <span>DAILY COMPLETION</span>
+          <strong id="dailyScore">0%</strong>
+        </div>
+        <div class="score-side">
+          <b id="streak">0</b>
+          <small>WORKDAY STREAK</small>
+        </div>
+        <div class="bar"><i id="scoreBar"></i></div>
+      </section>
 
-  <div class="metrics">
-    <article class="metric glass" data-metric="calls"><div><span>CALLS</span><strong><i id="callsValue">0</i><small id="callsTargetLabel">/50</small></strong><em id="callsPace">50 remaining</em></div><div class="actions"><button data-action="minus" data-metric="calls">−</button><button data-action="plus" data-metric="calls">+</button></div></article>
-    <article class="metric glass" data-metric="connects"><div><span>CONNECTS</span><strong><i id="connectsValue">0</i><small id="connectsTargetLabel">/25</small></strong><em id="connectsPace">25 remaining</em></div><div class="actions"><button data-action="minus" data-metric="connects">−</button><button data-action="plus" data-metric="connects">+</button></div></article>
-    <article class="metric glass" data-metric="data"><div><span>DATA</span><strong><i id="dataValue">0</i><small id="dataTargetLabel">/10</small></strong><em id="dataPace">10 remaining</em></div><div class="actions"><button data-action="minus" data-metric="data">−</button><button data-action="plus" data-metric="data">+</button></div></article>
-    <article class="metric knock glass"><div><span>KNOCKING</span><strong id="knockValue">00:00</strong><em id="knockTarget">60 min today · 240 weekly</em></div><div class="actions timer-actions"><button id="timerButton" class="timer">Start</button><button id="addKnock" aria-label="Add five minutes">+5</button></div></article>
-  </div>
+      <section class="metrics">
+        <article class="metric glass" data-metric="calls">
+          <div class="metric-copy"><span>CALLS</span><small id="callsTargetText">Daily target 50</small><em id="callsPace">50 remaining</em><strong><i id="callsValue">0</i><small id="callsTargetLabel">/50</small></strong></div>
+          <div class="actions"><button data-action="minus" data-metric="calls">−</button><div id="callsPercent" class="metric-percent">0%</div><button data-action="plus" data-metric="calls">+</button></div>
+        </article>
+        <article class="metric glass" data-metric="connects">
+          <div class="metric-copy"><span>CONNECTS</span><small id="connectsTargetText">Daily target 25</small><em id="connectsPace">25 remaining</em><strong><i id="connectsValue">0</i><small id="connectsTargetLabel">/25</small></strong></div>
+          <div class="actions"><button data-action="minus" data-metric="connects">−</button><div id="connectsPercent" class="metric-percent">0%</div><button data-action="plus" data-metric="connects">+</button></div>
+        </article>
+        <article class="metric glass" data-metric="data">
+          <div class="metric-copy"><span>DATA</span><small id="dataTargetText">Daily target 10</small><em id="dataPace">10 remaining</em><strong><i id="dataValue">0</i><small id="dataTargetLabel">/10</small></strong></div>
+          <div class="actions"><button data-action="minus" data-metric="data">−</button><div id="dataPercent" class="metric-percent">0%</div><button data-action="plus" data-metric="data">+</button></div>
+        </article>
+        <article class="metric knock glass">
+          <div class="metric-copy"><span>KNOCKING</span><small id="knockTargetText">Rolling target 60 min · Weekly minimum 240 min</small><em id="knockRemaining">60 minutes remaining</em><strong id="knockValue">00:00</strong></div>
+          <div class="actions knock-actions"><button id="timerButton" class="timer">Start</button><button id="resetKnock" class="reset" aria-label="Reset today’s knocking">↶</button></div>
+        </article>
+      </section>
 
-  <div class="week-strip glass"><div><span>THIS WEEK</span><strong id="weekScore">0%</strong></div><div><span>KNOCKING</span><strong id="weekKnock">0/240m</strong></div><button id="reviewBtn">Review</button><button id="openCalendar">Calendar</button></div>
-</section>
+      <section class="week-card glass">
+        <div class="week-head"><span>THIS WEEK</span><small id="weekSummary">0/4 complete · 0% avg · 0/240 knock min</small></div>
+        <div id="weekDays" class="week-days"></div>
+      </section>
+    </section>
 
-<section id="appointmentsView" class="view"><div class="view-head"><div><span>APPOINTMENTS</span><h2 id="appointmentDateLabel"></h2></div><input id="appointmentDatePicker" type="date"></div><form id="appointmentForm" class="appointment-form glass"><label>Property address<input id="appointmentAddress" type="text" placeholder="e.g. 14 Calla Grove, Pendle Hill" required></label><div class="appointment-types"><label><input type="checkbox" value="Appraisal">Appraisal</label><label><input type="checkbox" value="Listing appointment">Listing appointment</label><label><input type="checkbox" value="Price update">Price update</label></div><button class="primary" type="submit">Add appointment</button></form><div id="appointmentsList" class="appointments-list"></div></section>
+    <section id="appointmentsView" class="view">
+      <div class="view-head">
+        <div><span>APPOINTMENTS</span><h2 id="appointmentDateLabel"></h2></div>
+        <input id="appointmentDatePicker" type="date">
+      </div>
+      <form id="appointmentForm" class="appointment-form glass">
+        <label>Property address<input id="appointmentAddress" type="text" placeholder="14 Calla Grove, Pendle Hill" required></label>
+        <div class="appointment-types">
+          <label><input type="checkbox" value="Appraisal"><span>Appraisal</span></label>
+          <label><input type="checkbox" value="Listing appointment"><span>Listing appointment</span></label>
+          <label><input type="checkbox" value="Price update"><span>Price update</span></label>
+        </div>
+        <button class="primary" type="submit">Add appointment</button>
+      </form>
+      <div id="appointmentsList" class="appointments-list"></div>
+    </section>
 
-<section id="insightsView" class="view"><div class="insight-grid"><article class="insight glass"><span>WEEKLY SCORE</span><strong id="insightWeekScore">0%</strong><small id="insightWeekLabel"></small></article><article class="insight glass"><span>CALLS</span><strong id="insightCalls">0</strong><small id="insightCallsAvg">0/day</small></article><article class="insight glass"><span>CONNECTS</span><strong id="insightConnects">0</strong><small id="insightConnectRate">0% connect rate</small></article><article class="insight glass"><span>DATA</span><strong id="insightData">0</strong><small id="insightDataAvg">0/day</small></article><article class="insight glass wide"><span>KNOCKING</span><strong id="insightKnock">0 min</strong><small>Minimum 240 minutes each week</small><div class="bar"><i id="knockBar"></i></div></article><article class="insight glass wide"><span>PERSONAL BESTS</span><div id="personalBests" class="pb-grid"></div></article></div><div class="month-card glass"><div class="year-head"><button id="prevMonth">‹</button><strong id="monthLabel"></strong><button id="nextMonth">›</button></div><div id="monthBars" class="month-bars"></div></div><div class="year-card glass"><div class="year-head"><button id="prevYear">‹</button><strong id="yearLabel"></strong><button id="nextYear">›</button></div><div id="yearHeatmap" class="heatmap"></div></div><button id="printReport" class="primary full">Print / Save weekly report</button></section>
+    <section id="insightsView" class="view">
+      <div class="insight-grid">
+        <article class="insight glass"><span>WEEKLY SCORE</span><strong id="insightWeekScore">0%</strong><small id="insightWeekLabel"></small></article>
+        <article class="insight glass"><span>CALLS</span><strong id="insightCalls">0</strong><small id="insightCallsAvg">0/day</small></article>
+        <article class="insight glass"><span>CONNECTS</span><strong id="insightConnects">0</strong><small id="insightConnectRate">0% connect rate</small></article>
+        <article class="insight glass"><span>DATA</span><strong id="insightData">0</strong><small id="insightDataAvg">0/day</small></article>
+        <article class="insight glass wide"><span>KNOCKING</span><strong id="insightKnock">0 min</strong><small>Minimum 240 minutes each week</small><div class="bar"><i id="knockBar"></i></div></article>
+      </div>
+      <section class="month-card glass"><div class="year-head"><button id="prevMonth">‹</button><strong id="monthLabel"></strong><button id="nextMonth">›</button></div><div id="monthBars" class="month-bars"></div></section>
+      <section class="year-card glass"><div class="year-head"><button id="prevYear">‹</button><strong id="yearLabel"></strong><button id="nextYear">›</button></div><div id="yearHeatmap" class="heatmap"></div></section>
+      <button id="openCalendarFromInsights" class="secondary full">Open full calendar</button>
+    </section>
 
-<section id="settingsView" class="view"><div class="settings glass"><h2>Settings</h2><label>Calls target<input id="callsTarget" type="number" min="1"></label><label>Connects target<input id="connectsTarget" type="number" min="1"></label><label>Data target<input id="dataTarget" type="number" min="1"></label><label>Weekly knocking target<input id="weeklyKnockTarget" type="number" min="1"></label><label class="toggle-row">Break reminder after 50 minutes<input id="breakReminder" type="checkbox"></label><button id="saveSettings" class="primary">Save settings</button><button id="exportData" class="secondary">Export backup</button><label class="file-btn secondary">Import backup<input id="importData" type="file" accept="application/json"></label><button id="signOut" class="danger">Sign out</button><p id="modeNote"></p></div></section>
-</main>
+    <section id="settingsView" class="view">
+      <div class="settings glass">
+        <h2>Settings</h2>
+        <div id="accountEmail" class="account-email"></div>
+        <label>Calls target<input id="callsTarget" type="number" min="1"></label>
+        <label>Connects target<input id="connectsTarget" type="number" min="1"></label>
+        <label>Data target<input id="dataTarget" type="number" min="1"></label>
+        <label>Weekly knocking target<input id="weeklyKnockTarget" type="number" min="1"></label>
+        <button id="saveSettings" class="primary">Save settings</button>
+        <button id="exportData" class="secondary">Export backup</button>
+        <label class="file-btn secondary">Import backup<input id="importData" type="file" accept="application/json"></label>
+        <button id="signOut" class="danger">Sign out</button>
+        <p id="modeNote"></p>
+      </div>
+    </section>
+  </main>
 
-<nav class="tabbar glass"><button class="active" data-view="todayView"><b>●</b><span>Today</span></button><button data-view="appointmentsView"><b>▣</b><span>Appointments</span></button><button data-view="insightsView"><b>▦</b><span>Insights</span></button><button data-view="settingsView"><b>⚙</b><span>Settings</span></button></nav>
+  <nav class="tabbar glass">
+    <button class="active" data-view="todayView"><b>●</b><span>Today</span></button>
+    <button data-view="appointmentsView"><b>▣</b><span>Appointments</span></button>
+    <button data-view="insightsView"><b>▦</b><span>Insights</span></button>
+    <button data-view="settingsView"><b>⚙</b><span>Settings</span></button>
+  </nav>
 </div>
 
-<div id="calendarModal" class="modal"><div class="calendar-shell glass"><div class="modal-head"><button id="calendarPrev">‹</button><strong id="calendarYear"></strong><button id="calendarNext">›</button><button id="closeCalendar">Done</button></div><div id="calendarGrid" class="calendar-grid"></div></div></div>
-<div id="reviewModal" class="modal"><form id="reviewForm" class="review-shell glass"><div class="modal-head"><strong>End-of-day review</strong><button type="button" id="closeReview">Done</button></div><label>What worked?<textarea id="reviewWins" rows="3" placeholder="Best conversations, momentum, wins..."></textarea></label><label>What needs follow-up?<textarea id="reviewFollowup" rows="3" placeholder="Buyers, vendors, appointments, loose ends..."></textarea></label><label>Tomorrow’s first priority<input id="reviewPriority" placeholder="The first call or task tomorrow"></label><button class="primary" type="submit">Save review</button></form></div>
+<div id="calendarModal" class="modal">
+  <div class="calendar-shell glass">
+    <div class="modal-head"><button id="calendarPrev">‹</button><strong id="calendarYear"></strong><button id="calendarNext">›</button><button id="closeCalendar">Done</button></div>
+    <div class="calendar-legend"><span><i class="l1"></i>Started</span><span><i class="l2"></i>Progress</span><span><i class="l3"></i>Nearly there</span><span><i class="l4"></i>Complete</span></div>
+    <div id="calendarGrid" class="calendar-grid"></div>
+  </div>
+</div>
 <div id="toast" class="toast"></div>
 <script type="module" src="app.js"></script>
-</body></html>
+</body>
+</html>
