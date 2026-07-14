@@ -57,6 +57,7 @@
           <div><span>LEADERBOARD POSITION</span><small id="leaderboardPositionMeta">Waiting for today’s rankings</small></div>
           <strong id="leaderboardPosition">—</strong>
         </div>
+        <div id="todayAtGlance" class="today-at-glance" aria-live="polite">Loading today’s focus…</div>
       </section>
 
       <section class="metrics">
@@ -110,6 +111,19 @@
         <article class="insight glass"><span>DATA</span><strong id="insightData">0</strong><small id="insightDataAvg">0/day</small></article>
         <article class="insight glass wide"><span>KNOCKING</span><strong id="insightKnock">0 min</strong><small>Minimum 240 minutes each week</small><div class="bar"><i id="knockBar"></i></div></article>
       </div>
+      <section class="personal-bests glass">
+        <div class="section-label"><span>PERSONAL BESTS</span><small>Based on your saved accountability days</small></div>
+        <div class="personal-best-grid">
+          <article><span>BEST DAY</span><strong id="bestDayScore">0%</strong><small id="bestDayDate">No completed days yet</small></article>
+          <article><span>MOST CALLS</span><strong id="bestCallsValue">0</strong><small id="bestCallsDate">No activity yet</small></article>
+          <article><span>LONGEST KNOCK</span><strong id="bestKnockValue">0 min</strong><small id="bestKnockDate">No activity yet</small></article>
+        </div>
+      </section>
+      <section class="monday-review glass">
+        <div class="section-label"><span>MONDAY REVIEW</span><small id="mondayReviewWeek">Last completed week</small></div>
+        <strong id="mondayReviewScore">0%</strong>
+        <p id="mondayReviewText">Your weekly summary will appear once activity is logged.</p>
+      </section>
       <section class="month-card glass"><div class="year-head"><button id="prevMonth">‹</button><strong id="monthLabel"></strong><button id="nextMonth">›</button></div><div id="monthBars" class="month-bars"></div></section>
       <section class="year-card glass"><div class="year-head"><button id="prevYear">‹</button><strong id="yearLabel"></strong><button id="nextYear">›</button></div><div id="yearHeatmap" class="heatmap"></div></section>
       <button id="openCalendarFromInsights" class="secondary full">Open full calendar</button>
