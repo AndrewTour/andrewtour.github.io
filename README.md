@@ -30,10 +30,17 @@ No Firebase rule changes are required. Upload all files in this folder to the ro
 - Improvement Focus rows now use the same rounded glass-card design as the leaderboard sections.
 
 
-## v1.20 quality-of-life update
+## v1.21 quality-of-life update
 - Added a compact Today at a Glance focus line.
 - Added ahead/behind pace guidance to calls, connects and data.
 - Added day-on-day momentum indicators to the daily leaderboard.
 - Added personal best cards inside Insights.
 - Added an automatic previous-week Monday Review summary.
 - No Firebase rules or login changes are required.
+
+
+## v1.21 additions
+- Dynamic performance colour across daily score and KPI cards
+- Completion rings for Calls, Connects and Data
+- Compact Prospecting OS coaching banner using existing daily data
+- No Firebase, authentication, storage or logging-path changes
