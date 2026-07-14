@@ -293,29 +293,3 @@ button:disabled,input:disabled{cursor:not-allowed}
   .leaderboard-row>span{font-size:.62rem}
   .leaderboard-row>em{font-size:.77rem}
 }
-
-
-/* v2.0 — strict authenticated workspace isolation */
-.workspace-loader{position:absolute;inset:0;z-index:80;display:grid;place-items:center;padding:24px;background:linear-gradient(180deg,rgba(3,5,10,.92),rgba(3,5,10,.98));backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
-.workspace-loader-card{width:min(86vw,340px);border-radius:26px;padding:24px;text-align:center}
-.workspace-loader-card strong,.workspace-loader-card small{display:block}
-.workspace-loader-card strong{font-size:1rem;margin-top:15px}
-.workspace-loader-card small{font-size:.7rem;color:var(--muted);margin-top:7px}
-.workspace-spinner{width:34px;height:34px;margin:auto;border-radius:50%;border:3px solid rgba(255,255,255,.12);border-top-color:var(--cyan);animation:workspace-spin .8s linear infinite}
-@keyframes workspace-spin{to{transform:rotate(360deg)}}
-
-
-/* v2.2 — UI-only update applied to stable v2.0 authentication build. */
-.date-row{display:flex;align-items:center;gap:8px;margin-top:3px}
-.date-row .sync-badge{margin-left:0}
-.leaderboard-position{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08)}
-.leaderboard-position>div{min-width:0}
-.leaderboard-position span{display:block;font-size:.72rem;line-height:1;letter-spacing:.17em;font-weight:850;color:#dbe0ec}
-.leaderboard-position small{display:block;margin-top:6px;color:var(--muted);font-size:.63rem;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.leaderboard-position>strong{flex:0 0 auto;font-size:2rem;line-height:1;color:var(--cyan);font-variant-numeric:tabular-nums}
-@media(max-height:760px){
-  .leaderboard-position{margin-top:7px;padding-top:7px}
-  .leaderboard-position span{font-size:.65rem}
-  .leaderboard-position small{font-size:.56rem;margin-top:4px}
-  .leaderboard-position>strong{font-size:1.65rem}
-}

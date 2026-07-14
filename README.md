@@ -1,27 +1,19 @@
-# Daily Accountability v2.0
+# Daily Accountability v1.13
 
-This release fixes user switching and keeps each Firebase login fully isolated.
+Adds a live team leaderboard as a second page inside Insights.
 
-## Upload
-1. Extract the ZIP.
-2. Upload every file and the `icons` folder to the root of the existing GitHub repository.
-3. Commit the changes and wait for GitHub Pages to deploy.
-4. Delete the old Home Screen app and install it again from Safari.
+## Important Firebase rules update
+Before using the leaderboard, replace your Firestore Rules with the contents of `firestore.rules` in this folder and click **Publish**. This keeps each agent's detailed data private while allowing all signed-in agents to see the shared leaderboard summaries.
 
-No Firebase rule changes are required if the leaderboard rules are already published.
+## Agent setup
+1. Add each login in Firebase Authentication.
+2. Each agent signs into the app using their own login.
+3. Each agent opens **Settings**, enters their name under **Agent name**, and taps **Save settings**.
+4. Their current-day metrics will then appear live under **Insights → Leaderboard**.
 
-## Expected behaviour
-- After sign-in, a loading screen appears briefly.
-- The dashboard does not show another user's cached data.
-- A new user with no records starts at zero.
-- Agent name, targets, appointments and daily stats remain private to that Firebase UID.
-- The shared leaderboard remains visible to signed-in users.
+## GitHub update
+Upload every file and the `icons` folder to the root of the existing GitHub repository, replacing the current files, then commit.
 
 
-## Version 2.3
-Built from the stable v2.0 authentication and sync foundation. Only the requested header and leaderboard-position UI changes were applied.
-
-
-## v2.3 login fix
-
-Firebase now uses standard Firestore initialisation for maximum iPhone and iOS beta compatibility. The app retains UID-separated local caching for offline use. No Firebase console or rule changes are required.
+## v1.14 user isolation fix
+Local cache keys are now namespaced by Firebase UID. Signing out clears the active in-memory session, and signing into another account loads only that user's cached and cloud data.
