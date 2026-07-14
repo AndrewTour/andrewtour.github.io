@@ -63,7 +63,7 @@ function formatHour(h){return `${h%12||12}:00 ${h>=12?'PM':'AM'}`}
 function renderCallPlan(){const now=new Date(),h=now.getHours();let current=CALL_PLAN.find(x=>x[0]===h);if(h<9)current=[8,'Prepare your priority list','Before 9:00 AM'];if(h>=17)current=[17,'Review follow-up and plan tomorrow','9:00 AM–5:00 PM call day complete'];$('#currentCall').textContent=current[1];$('#currentSlot').textContent=h>=9&&h<17?`${formatHour(h)}–${formatHour(h+1)} · 10 call target`:current[2];$('#callPlan').innerHTML=CALL_PLAN.map(([hour,title,note])=>`<div class="call-row ${hour===h?'active':''}"><b>${formatHour(hour)}</b><span><strong>${title}</strong><small>${note}</small></span><em>10</em></div>`).join('')}
 function callsPaceText(value){if(selectedDate!==todayKey())return `${Math.max(0,targets.calls-value)} remaining`;const now=new Date(),h=now.getHours()+now.getMinutes()/60;if(h<9)return `${targets.calls-value} remaining`;if(h>=17)return value>=targets.calls?'Target complete':`${targets.calls-value} short today`;const expected=Math.min(targets.calls,Math.round((h-9)*10)),diff=value-expected;return diff===0?'On pace':diff>0?`${diff} ahead of pace`:`${Math.abs(diff)} behind pace`}
 function renderToday(){
-  const d=dayData(selectedDate),score=completion(selectedDate),kt=rollingKnockTarget(selectedDate),secs=liveKnockSeconds(d);
+  const d=dayData(selectedDate),score=completion(selectedDate),kt=rollingKnockTarget(selectedDate),secs=liveKnockSeconds(d),wk=weekSummary();
   const locked=isPastDate(selectedDate);
   $('#dateLabel').textContent=fmtDate(selectedDate);
   $('#backToday').classList.toggle('hidden',selectedDate===todayKey());
@@ -118,28 +118,29 @@ async function addAppointment(address,types){if(!canEditDate(appointmentDate))re
 async function deleteAppointment(id){if(!canEditDate(appointmentDate))return lockedToast();const d=dayData(appointmentDate);d.appointments=d.appointments.filter(a=>a.id!==id);days[appointmentDate]=d;await saveDay(appointmentDate);renderAppointments()}
 
 
-function renderLeaderboardPosition(){
-  const date=todayKey();
-  const rows=leaderboardEntries.filter(x=>x.date===date).sort((a,b)=>(b.score||0)-(a.score||0)||(b.calls||0)-(a.calls||0)||(b.connects||0)-(a.connects||0)||(b.data||0)-(a.data||0));
-  const index=rows.findIndex(r=>r.uid===uid);
-  const pos=$('#leaderboardPosition'),summary=$('#leaderboardPositionSummary');
-  if(!pos||!summary)return;
-  if(!cloud){pos.textContent='—';summary.textContent='Available when live sync is active';return}
-  if(index<0){pos.textContent='—';summary.textContent=rows.length?`Not ranked yet · ${rows.length} agent${rows.length===1?'':'s'} active`:'Waiting for live team data';return}
-  const me=rows[index];
-  pos.textContent=`#${index+1}`;
-  summary.textContent=`${me.score||0}% today · ${rows.length} agent${rows.length===1?'':'s'} ranked`;
+function sortedTodayLeaderboard(){
+  return leaderboardEntries.filter(x=>x.date===todayKey()).sort((a,b)=>(b.score||0)-(a.score||0)||(b.calls||0)-(a.calls||0)||(b.connects||0)-(a.connects||0)||(b.data||0)-(a.data||0));
 }
-
+function renderLeaderboardPosition(){
+  const position=$('#leaderboardPosition'),meta=$('#leaderboardPositionMeta');
+  if(!position||!meta)return;
+  if(!cloud){position.textContent='—';meta.textContent='Sign in to view live ranking';return;}
+  const rows=sortedTodayLeaderboard(),index=rows.findIndex(r=>r.uid===uid);
+  if(index<0){position.textContent='—';meta.textContent=rows.length?`${rows.length} agent${rows.length===1?'':'s'} ranked today`:'Waiting for today’s rankings';return;}
+  const me=rows[index];
+  position.textContent=`#${index+1}`;
+  meta.textContent=`${me.score||0}% complete · ${rows.length} agent${rows.length===1?'':'s'} ranked`;
+}
 function renderLeaderboard(){
   const date=todayKey();
   $('#leaderboardDate').textContent=fmtDate(date);
-  const rows=leaderboardEntries.filter(x=>x.date===date).sort((a,b)=>(b.score||0)-(a.score||0)||(b.calls||0)-(a.calls||0)||(b.connects||0)-(a.connects||0)||(b.data||0)-(a.data||0));
+  const rows=sortedTodayLeaderboard();
   $('#leaderboardStatus').textContent=cloud?'LIVE':'DEVICE ONLY';
   $('#leaderboardList').innerHTML=rows.length?rows.map((r,i)=>{
     const t=r.targets||{};
     return `<article class="leaderboard-row ${r.uid===uid?'me':''}"><b class="rank">${i+1}</b><div class="agent"><strong>${escapeHtml(r.name||r.email?.split('@')[0]||'Agent')}</strong>${r.uid===uid?'<small>You</small>':''}</div><span>${r.calls||0}<small>/${t.calls||50}</small></span><span>${r.connects||0}<small>/${t.connects||25}</small></span><span>${r.data||0}<small>/${t.data||10}</small></span><span>${r.knockMinutes||0}<small>m</small></span><em>${r.score||0}%</em></article>`
-  }).join(''):`<div class="empty">No agents have logged activity today.</div>`
+  }).join(''):`<div class="empty">No agents have logged activity today.</div>`;
+  renderLeaderboardPosition();
 }
 function switchInsightsPage(id){$$('.insights-switch button').forEach(b=>b.classList.toggle('active',b.dataset.insightsPage===id));$$('.insights-page').forEach(p=>p.classList.toggle('active',p.id===id));if(id==='leaderboardInsights')renderLeaderboard()}
 function renderInsights(){const w=weekSummary(),m=mondayOf(parseKey(selectedDate));$('#insightWeekScore').textContent=`${w.score}%`;$('#insightWeekLabel').textContent=`Week of ${m.toLocaleDateString('en-AU',{day:'numeric',month:'short'})}`;$('#insightCalls').textContent=w.calls;$('#insightCallsAvg').textContent=`${Math.round(w.calls/4)}/day`;$('#insightConnects').textContent=w.connects;$('#insightConnectRate').textContent=`${w.calls?Math.round(w.connects/w.calls*100):0}% connect rate`;$('#insightData').textContent=w.data;$('#insightDataAvg').textContent=`${Math.round(w.data/4)}/day`;$('#insightKnock').textContent=`${Math.floor(w.knock/60)} min`;$('#knockBar').style.width=`${pct(w.knock/60,targets.weeklyKnock)}%`;renderMonth();$('#yearLabel').textContent=year;renderYearOverview();renderLeaderboard()}
@@ -186,7 +187,6 @@ $$('[data-action]').forEach(b=>b.onclick=()=>changeMetric(b.dataset.metric,b.dat
 $('#timerButton').onclick=toggleTimer;$('#resetKnock').onclick=resetKnock;$('#settingsShortcut').onclick=()=>switchView('settingsView');$('#backToday').onclick=()=>{selectedDate=todayKey();appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()};
 $('.tabbar').onclick=e=>{const b=e.target.closest('button[data-view]');if(b)switchView(b.dataset.view)};
 $('.insights-switch').onclick=e=>{const b=e.target.closest('button[data-insights-page]');if(b)switchInsightsPage(b.dataset.insightsPage)};
-$('#weekDays').onclick=e=>{const b=e.target.closest('[data-date]');if(!b)return;selectedDate=b.dataset.date;appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick();haptic()};
 $('#appointmentDatePicker').onchange=e=>{appointmentDate=e.target.value;renderAppointments()};
 $('#appointmentForm').onsubmit=async e=>{e.preventDefault();const address=$('#appointmentAddress').value.trim(),types=$$('.appointment-types input:checked').map(x=>x.value);if(!address)return toast('Add a property address');if(!types.length)return toast('Choose an appointment type');await addAppointment(address,types);e.target.reset()};
 $('#appointmentsList').onclick=e=>{const b=e.target.closest('[data-delete-appointment]');if(b&&confirm('Delete this appointment?'))deleteAppointment(b.dataset.deleteAppointment)};
