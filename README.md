@@ -1,24 +1,15 @@
-# Daily Accountability v1.10
+# Daily Accountability v1.13
 
-Typography and button-label optimisation only.
+Adds a live team leaderboard as a second page inside Insights.
 
-This release keeps the v1.9 layout, dimensions, spacing, Firebase sync, past-date locking, appointments, insights and calendar behaviour unchanged.
+## Important Firebase rules update
+Before using the leaderboard, replace your Firestore Rules with the contents of `firestore.rules` in this folder and click **Publish**. This keeps each agent's detailed data private while allowing all signed-in agents to see the shared leaderboard summaries.
 
-## Update
-1. Upload every file and the `icons` folder to the root of the existing GitHub repository.
-2. Replace the existing files and commit.
-3. Wait for GitHub Pages to deploy.
-4. Fully close and reopen the installed Home Screen app.
-5. If the previous text sizing remains cached, remove the Home Screen app and add it again from Safari.
+## Agent setup
+1. Add each login in Firebase Authentication.
+2. Each agent signs into the app using their own login.
+3. Each agent opens **Settings**, enters their name under **Agent name**, and taps **Save settings**.
+4. Their current-day metrics will then appear live under **Insights → Leaderboard**.
 
-
-## v1.12 final polish
-- Header content lowered slightly within the existing safe area.
-- KPI percentage text reduced by 20%.
-- No layout, spacing, Firebase or data logic changes.
-
-
-## v1.12 changes
-- Daily completion and weekly date selector are merged into one card.
-- Workday streak has been removed.
-- Added a rolling eight-workday line graph based on each day's completion percentage.
+## GitHub update
+Upload every file and the `icons` folder to the root of the existing GitHub repository, replacing the current files, then commit.

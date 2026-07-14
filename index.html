@@ -97,6 +97,11 @@
     </section>
 
     <section id="insightsView" class="view">
+      <div class="insights-switch glass" role="tablist" aria-label="Insights pages">
+        <button class="active" type="button" data-insights-page="personalInsights">Insights</button>
+        <button type="button" data-insights-page="leaderboardInsights">Leaderboard</button>
+      </div>
+      <div id="personalInsights" class="insights-page active">
       <div class="insight-grid">
         <article class="insight glass"><span>WEEKLY SCORE</span><strong id="insightWeekScore">0%</strong><small id="insightWeekLabel"></small></article>
         <article class="insight glass"><span>CALLS</span><strong id="insightCalls">0</strong><small id="insightCallsAvg">0/day</small></article>
@@ -107,12 +112,25 @@
       <section class="month-card glass"><div class="year-head"><button id="prevMonth">‹</button><strong id="monthLabel"></strong><button id="nextMonth">›</button></div><div id="monthBars" class="month-bars"></div></section>
       <section class="year-card glass"><div class="year-head"><button id="prevYear">‹</button><strong id="yearLabel"></strong><button id="nextYear">›</button></div><div id="yearHeatmap" class="heatmap"></div></section>
       <button id="openCalendarFromInsights" class="secondary full">Open full calendar</button>
+      </div>
+      <div id="leaderboardInsights" class="insights-page">
+        <section class="leaderboard-card glass">
+          <div class="leaderboard-head">
+            <div><span>DAILY LEADERBOARD</span><h2 id="leaderboardDate"></h2></div>
+            <div id="leaderboardStatus" class="leaderboard-live">LIVE</div>
+          </div>
+          <div class="leaderboard-columns" aria-hidden="true"><span></span><span>Agent</span><span>Calls</span><span>Connects</span><span>Data</span><span>Knock</span><span>Score</span></div>
+          <div id="leaderboardList" class="leaderboard-list"><div class="empty">Waiting for team data…</div></div>
+          <p class="leaderboard-note">Ranked by today’s overall completion percentage. Updates appear live as each agent logs activity.</p>
+        </section>
+      </div>
     </section>
 
     <section id="settingsView" class="view">
       <div class="settings glass">
         <h2>Settings</h2>
         <div id="accountEmail" class="account-email"></div>
+        <label>Agent name<input id="agentName" type="text" maxlength="40" placeholder="Your name"></label>
         <label>Calls target<input id="callsTarget" type="number" min="1"></label>
         <label>Connects target<input id="connectsTarget" type="number" min="1"></label>
         <label>Data target<input id="dataTarget" type="number" min="1"></label>
