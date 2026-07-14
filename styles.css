@@ -332,3 +332,114 @@ button:disabled,input:disabled{cursor:not-allowed}
 .improvement-row:first-child{border-top:1px solid rgba(255,255,255,.08)}
 .improvement-row.me{border-color:rgba(84,180,255,.24);box-shadow:inset 3px 0 0 var(--cyan),inset 0 1px 0 rgba(255,255,255,.035)}
 @media(max-width:390px){.improvement-row{padding:10px 8px;border-radius:14px}}
+
+
+/* ============================================================
+   v1.19 — Liquid Glass visual refresh (visual-only, additive).
+   Overrides cosmetic properties on existing selectors: fills,
+   borders, radii, shadows, motion. No layout/grid/IDs/classes
+   used by app.js are touched, no new DOM structure required.
+   ============================================================ */
+
+/* Ambient grain, adds the matte "glass on a lit surface" depth
+   real Liquid Glass renders have instead of a flat gradient. */
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  opacity:.045;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+body{background:radial-gradient(circle at 14% 0%,#132a52 0,transparent 38%),radial-gradient(circle at 100% 38%,#3a1552 0,transparent 34%),radial-gradient(circle at 30% 100%,#0f2e3c 0,transparent 40%),linear-gradient(180deg,#080b14,#03050a)}
+.app{position:relative;z-index:1}
+
+/* Core glass material: brighter refractive fill + gradient-stroke
+   edge (a real border can't fade, so we fake it with a masked
+   gradient layer) + layered specular + ambient shadow. */
+.glass{
+  position:relative;
+  background:linear-gradient(158deg,rgba(255,255,255,.115) 0%,rgba(255,255,255,.035) 32%,rgba(20,22,30,.55) 78%,rgba(10,11,16,.62) 100%);
+  border:1px solid rgba(255,255,255,.09);
+  box-shadow:0 1px 0 rgba(255,255,255,.16) inset,0 -18px 30px -20px rgba(0,0,0,.4) inset,0 22px 46px -14px rgba(0,0,0,.5),0 2px 8px rgba(0,0,0,.22);
+  backdrop-filter:blur(30px) saturate(168%);
+  -webkit-backdrop-filter:blur(30px) saturate(168%);
+}
+.glass::before{
+  content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;
+  background:linear-gradient(155deg,rgba(255,255,255,.62) 0%,rgba(255,255,255,0) 26%,rgba(255,255,255,.05) 60%,rgba(255,255,255,.28) 100%);
+  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;opacity:.85;
+}
+.glass::after{
+  content:"";position:absolute;left:6%;right:6%;top:0;height:1px;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);
+}
+
+/* Rounder, more "continuous curvature" corners across surfaces. */
+.score-week,.leaderboard-card,.improvement-card,.month-card,.year-card,.settings,.auth-card,.appointment-form,.calendar-shell{border-radius:30px}
+.metric{border-radius:26px}
+.insight{border-radius:24px}
+.appointment-card{border-radius:22px}
+.tabbar{border-radius:30px}
+.recommendations{border-radius:26px}
+.actions button,.metric-percent{border-radius:20px}
+.primary,.secondary,.danger,.file-btn{border-radius:18px}
+.icon-btn,.back-today,.lock-badge{border-radius:999px}
+
+/* Buttons get real glass surfaces and iOS-style press feedback. */
+button{transition:transform .16s cubic-bezier(.34,1.56,.64,1),filter .16s,background .2s,box-shadow .2s}
+button:active:not(:disabled){transform:scale(.955);filter:brightness(.93)}
+.actions button{background:linear-gradient(160deg,rgba(255,255,255,.14),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.14);box-shadow:0 1px 0 rgba(255,255,255,.22) inset,0 6px 14px rgba(0,0,0,.22)}
+.actions button:last-child{background:linear-gradient(160deg,#86bcff,#4b73e0);border-color:rgba(255,255,255,.22);box-shadow:0 1px 0 rgba(255,255,255,.45) inset,0 8px 20px rgba(75,115,224,.4)}
+.metric-percent{background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.015));border:1px solid rgba(255,255,255,.1)}
+.timer{background:linear-gradient(160deg,#8fe6fb,#6ca3f5)!important;box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 8px 18px rgba(108,163,245,.4)!important}
+.timer.running{background:linear-gradient(160deg,#ffc98a,#ff7d68)!important;animation:knockPulse 1.9s ease-in-out infinite}
+@keyframes knockPulse{0%,100%{box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 0 0 0 rgba(255,125,104,.45)}50%{box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 0 0 9px rgba(255,125,104,0)}}
+.primary{background:linear-gradient(160deg,#8fbcff,#4c75df);box-shadow:0 1px 0 rgba(255,255,255,.45) inset,0 10px 22px rgba(76,117,223,.35)}
+.secondary,.file-btn{background:linear-gradient(160deg,rgba(255,255,255,.11),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.14)}
+.danger{background:linear-gradient(160deg,rgba(255,127,143,.2),rgba(255,127,143,.08));border:1px solid rgba(255,127,143,.22)}
+.icon-btn,.back-today{background:linear-gradient(160deg,rgba(255,255,255,.14),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.16);box-shadow:0 1px 0 rgba(255,255,255,.28) inset}
+
+/* Progress bars get a glossy sheen instead of a flat fill. */
+.bar{background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.06)}
+.bar i{position:relative;overflow:hidden}
+.bar i::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,0) 65%)}
+.metric.complete:before{background:linear-gradient(180deg,#7cf0c2,#3ec98f);box-shadow:0 0 14px rgba(94,228,173,.55);width:4px}
+
+/* Tabbar: floating glass dock with a lifted active pill. */
+.tabbar{padding:6px}
+.tabbar button{transition:.25s cubic-bezier(.25,1,.5,1)}
+.tabbar button.active{background:linear-gradient(160deg,rgba(255,255,255,.24),rgba(255,255,255,.07));box-shadow:0 1px 0 rgba(255,255,255,.4) inset,0 8px 18px rgba(0,0,0,.28);color:#fff}
+.tabbar button.active b{transform:translateY(-1px) scale(1.06)}
+.tabbar b{display:inline-block;transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
+
+/* Segmented control (Leaderboard / Insights) matches the dock. */
+.insights-switch button{transition:.25s cubic-bezier(.25,1,.5,1)}
+.insights-switch button.active{background:linear-gradient(160deg,rgba(255,255,255,.24),rgba(255,255,255,.07));box-shadow:0 1px 0 rgba(255,255,255,.4) inset,0 6px 16px rgba(0,0,0,.26);color:#fff}
+
+/* Leaderboard: gold / silver / bronze rank badges for the top 3. */
+.leaderboard-row:nth-child(1) .rank{background:linear-gradient(160deg,#ffe9ab,#cf9d34);color:#402a06;box-shadow:0 1px 0 rgba(255,255,255,.55) inset,0 3px 8px rgba(207,157,52,.4)}
+.leaderboard-row:nth-child(2) .rank{background:linear-gradient(160deg,#f1f4f9,#aab2c2);color:#262a34;box-shadow:0 1px 0 rgba(255,255,255,.55) inset,0 3px 8px rgba(170,178,194,.35)}
+.leaderboard-row:nth-child(3) .rank{background:linear-gradient(160deg,#f3bd8c,#b9752f);color:#3b2004;box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 3px 8px rgba(185,117,47,.35)}
+.leaderboard-row:first-child{background:linear-gradient(90deg,rgba(255,212,110,.12),transparent)}
+
+/* Toast becomes a compact iOS notification banner. */
+.toast{border-radius:22px;padding:11px 18px;background:linear-gradient(160deg,rgba(54,56,68,.92),rgba(22,23,30,.94));border:1px solid rgba(255,255,255,.12);box-shadow:0 1px 0 rgba(255,255,255,.14) inset,0 14px 30px rgba(0,0,0,.45);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%)}
+
+/* Inputs: inset glass fields instead of flat translucent boxes. */
+.settings input,.appointment-form input[type=text],.view-head input,.auth-card input{
+  background:linear-gradient(180deg,rgba(0,0,0,.22),rgba(0,0,0,.12));
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 1px 2px rgba(0,0,0,.3) inset;
+}
+.workday-options input:checked+span{box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 6px 14px rgba(75,115,224,.3)}
+
+/* Gentle view-switch and modal-open motion. */
+.view.active{animation:daViewIn .28s cubic-bezier(.25,1,.5,1)}
+@keyframes daViewIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.modal.open .calendar-shell{animation:daModalIn .22s cubic-bezier(.25,1,.5,1)}
+@keyframes daModalIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+
+@media (prefers-reduced-motion:reduce){
+  .view.active,.modal.open .calendar-shell{animation:none}
+  .timer.running{animation:none}
+  button{transition:none}
+}
