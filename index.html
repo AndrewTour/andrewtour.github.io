@@ -124,6 +124,19 @@
           <div id="leaderboardList" class="leaderboard-list"><div class="empty">Waiting for team data…</div></div>
           <p class="leaderboard-note">Ranked by today’s overall completion percentage. Updates appear live as each agent logs activity.</p>
         </section>
+        <section class="leaderboard-card glass weekly-leaderboard-card">
+          <div class="leaderboard-head">
+            <div><span>WEEKLY LEADERBOARD</span><h2 id="weeklyLeaderboardDate"></h2></div>
+            <div class="week-history-controls"><button id="weekPrev" type="button" aria-label="Previous week">‹</button><button id="weekLast" type="button">Last week</button><button id="weekNext" type="button" aria-label="Next week">›</button></div>
+          </div>
+          <div class="leaderboard-columns" aria-hidden="true"><span></span><span>Agent</span><span>Calls</span><span>Connects</span><span>Data</span><span>Knock</span><span>Score</span></div>
+          <div id="weeklyLeaderboardList" class="leaderboard-list"><div class="empty">Waiting for weekly team data…</div></div>
+          <p class="leaderboard-note">Use the arrows to review prior weeks during Monday meetings.</p>
+        </section>
+        <section class="improvement-card glass">
+          <div class="leaderboard-head"><div><span>IMPROVEMENT FOCUS</span><h2>Lowest metric by agent</h2></div></div>
+          <div id="improvementList" class="improvement-list"><div class="empty">Waiting for weekly team data…</div></div>
+        </section>
       </div>
     </section>
 
@@ -136,6 +149,19 @@
         <label>Connects target<input id="connectsTarget" type="number" min="1"></label>
         <label>Data target<input id="dataTarget" type="number" min="1"></label>
         <label>Weekly knocking target<input id="weeklyKnockTarget" type="number" min="1"></label>
+        <fieldset class="workday-settings">
+          <legend>Accountability days</legend>
+          <p>Select the days included in your targets, insights and leaderboard.</p>
+          <div class="workday-options">
+            <label><input type="checkbox" name="workDay" value="1"><span>Mon</span></label>
+            <label><input type="checkbox" name="workDay" value="2"><span>Tue</span></label>
+            <label><input type="checkbox" name="workDay" value="3"><span>Wed</span></label>
+            <label><input type="checkbox" name="workDay" value="4"><span>Thu</span></label>
+            <label><input type="checkbox" name="workDay" value="5"><span>Fri</span></label>
+            <label><input type="checkbox" name="workDay" value="6"><span>Sat</span></label>
+            <label><input type="checkbox" name="workDay" value="0"><span>Sun</span></label>
+          </div>
+        </fieldset>
         <button id="saveSettings" class="primary">Save settings</button>
         <button id="exportData" class="secondary">Export backup</button>
         <label class="file-btn secondary">Import backup<input id="importData" type="file" accept="application/json"></label>
