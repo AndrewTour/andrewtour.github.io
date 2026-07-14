@@ -51,3 +51,10 @@ No Firebase rule changes are required. Upload all files in this folder to the ro
 - The first supporting line now shows the remaining amount.
 - The highlighted supporting line now shows live pace and the next checkpoint action.
 - Firebase, authentication, storage, sync and logging behaviour are unchanged.
+
+
+## v1.21.2
+- DAILY COMPLETION remains a single-line uppercase heading.
+- Metric line 1 shows remaining work.
+- Blue metric line 2 shows the next checkpoint action, pace advantage, or daily goal status.
+- Firebase, authentication, storage and sync are unchanged.

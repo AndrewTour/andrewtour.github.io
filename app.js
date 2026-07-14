@@ -86,37 +86,41 @@ function metricRemainingText(value,target){
   return remaining===0?'Target complete':`${remaining} remaining`;
 }
 function metricPaceText(value,target,metric){
-  if(selectedDate!==todayKey())return value>=target?'Target met':'Final result';
+  if(selectedDate!==todayKey())return value>=target?'Daily goal achieved':'Final result';
   const now=new Date(),hour=now.getHours()+now.getMinutes()/60;
-  if(value>=target)return 'Target complete';
-  if(hour<9)return 'Ready for 9:00am';
-  if(hour>=17)return `${Math.max(0,target-value)} short today`;
+  if(value>=target)return 'Daily goal achieved';
+  if(hour<9)return 'Start at 9:00am';
+  if(hour>=17)return 'Accountability day complete';
   const expected=expectedAt(metric,target,hour),diff=value-expected,checkpoint=nextPaceCheckpoint(now);
   const checkpointHour=checkpoint.getHours()+checkpoint.getMinutes()/60;
   const checkpointExpected=expectedAt(metric,target,checkpointHour);
   const action=Math.max(0,Math.min(target-value,checkpointExpected-value));
-  const pace=diff===0?'On pace':diff>0?`${diff} ahead`:`${Math.abs(diff)} behind`;
-  if(action>0)return `${pace} · ${action} by ${shortTime(checkpoint)}`;
-  return pace;
+  if(diff>0)return `${diff} ahead of pace`;
+  if(action>0){
+    const labels={calls:'calls',connects:'connects',data:'data records'};
+    const unit=action===1?{calls:'call',connects:'connect',data:'data record'}[metric]:labels[metric];
+    return `${action} ${unit} by ${shortTime(checkpoint)}`;
+  }
+  return 'On pace';
 }
 function knockRemainingText(minutes,target){
   const remaining=Math.max(0,target-minutes);
   return remaining===0?'Target complete':`${remaining} min remaining today`;
 }
 function knockPaceText(minutes,target){
-  if(selectedDate!==todayKey())return minutes>=target?'Target met':'Final result';
+  if(selectedDate!==todayKey())return minutes>=target?'Daily goal achieved':'Final result';
   const now=new Date(),hour=now.getHours()+now.getMinutes()/60;
-  if(minutes>=target)return 'Target complete';
-  if(hour<9)return 'Ready for 9:00am';
-  if(hour>=17)return `${Math.max(0,target-minutes)} min short today`;
+  if(minutes>=target)return 'Daily goal achieved';
+  if(hour<9)return 'Start at 9:00am';
+  if(hour>=17)return 'Accountability day complete';
   const elapsed=Math.max(0,Math.min(8,hour-9));
   const expected=Math.min(target,Math.round(target*(elapsed/8))),diff=minutes-expected,checkpoint=nextPaceCheckpoint(now);
   const checkpointHour=checkpoint.getHours()+checkpoint.getMinutes()/60;
   const checkpointExpected=Math.min(target,Math.round(target*(Math.max(0,Math.min(8,checkpointHour-9))/8)));
   const action=Math.max(0,Math.min(target-minutes,checkpointExpected-minutes));
-  const pace=diff===0?'On pace':diff>0?`${diff} min ahead`:`${Math.abs(diff)} min behind`;
-  if(action>0)return `${pace} · ${action} min by ${shortTime(checkpoint)}`;
-  return pace;
+  if(diff>0)return `${diff} min ahead of pace`;
+  if(action>0)return `${action} min by ${shortTime(checkpoint)}`;
+  return 'On pace';
 }
 function momentumWhisper(){
   if(selectedDate!==todayKey()){
