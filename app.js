@@ -68,18 +68,23 @@ function previousScheduledKey(k,daysList=workDays){
   }
   return null;
 }
-function endOfAccountabilityDay(now=new Date()){
-  const end=new Date(now);end.setHours(23,59,0,0);return end;
+function workdayStart(now=new Date()){
+  const start=new Date(now);start.setHours(9,0,0,0);return start;
+}
+function workdayEnd(now=new Date()){
+  const end=new Date(now);end.setHours(17,0,0,0);return end;
 }
 function accountabilityDayProgress(now=new Date()){
-  const start=new Date(now);start.setHours(0,1,0,0);
-  const end=endOfAccountabilityDay(now);
+  const start=workdayStart(now),end=workdayEnd(now);
+  if(now<=start)return 0;
+  if(now>=end)return 1;
   return Math.max(0,Math.min(1,(now-start)/(end-start)));
 }
 function nextPaceCheckpoint(now=new Date()){
+  const start=workdayStart(now),closing=workdayEnd(now);
+  if(now<start){const checkpoint=new Date(start);checkpoint.setMinutes(30,0,0);return checkpoint}
   const mins=now.getMinutes(),checkpoint=new Date(now);
-  if(mins<30)checkpoint.setMinutes(30,0,0);else{checkpoint.setHours(now.getHours()+1,0,0,0)}
-  const closing=endOfAccountabilityDay(now);
+  if(mins<30)checkpoint.setMinutes(30,0,0);else checkpoint.setHours(now.getHours()+1,0,0,0);
   if(checkpoint>closing)checkpoint.setTime(closing.getTime());
   return checkpoint;
 }
@@ -98,18 +103,20 @@ function metricRemainingText(value,target){
 }
 function metricPaceText(value,target,metric){
   if(selectedDate!==todayKey())return value>=target?'Daily goal achieved':'Final result';
-  const now=new Date();
+  const now=new Date(),start=workdayStart(now),end=workdayEnd(now);
   if(value>=target)return 'Daily goal achieved';
+  if(now<start)return 'Ready to start';
+  if(now>=end)return `${Math.max(0,target-value)} remaining today`;
   const expected=expectedAt(metric,target,now),diff=value-expected,checkpoint=nextPaceCheckpoint(now);
   const checkpointExpected=expectedAt(metric,target,checkpoint);
   const action=Math.max(0,Math.min(target-value,checkpointExpected-value));
-  if(diff>0)return `${diff} ahead of pace`;
+  if(diff>0)return `${diff} ahead of target`;
   if(action>0){
     const labels={calls:'calls',connects:'connects',data:'data records'};
     const unit=action===1?{calls:'call',connects:'connect',data:'data record'}[metric]:labels[metric];
-    return `${action} ${unit} by ${shortTime(checkpoint)}`;
+    return `${action} ${unit} needed by ${shortTime(checkpoint)}`;
   }
-  return 'On pace';
+  return 'On track';
 }
 function knockRemainingText(minutes,target){
   const remaining=Math.max(0,target-minutes);
@@ -117,14 +124,16 @@ function knockRemainingText(minutes,target){
 }
 function knockPaceText(minutes,target){
   if(selectedDate!==todayKey())return minutes>=target?'Daily goal achieved':'Final result';
-  const now=new Date();
+  const now=new Date(),start=workdayStart(now),end=workdayEnd(now);
   if(minutes>=target)return 'Daily goal achieved';
+  if(now<start)return 'Ready to start';
+  if(now>=end)return `${Math.max(0,target-minutes)} min remaining today`;
   const expected=Math.min(target,Math.round(target*accountabilityDayProgress(now))),diff=minutes-expected,checkpoint=nextPaceCheckpoint(now);
   const checkpointExpected=Math.min(target,Math.round(target*accountabilityDayProgress(checkpoint)));
   const action=Math.max(0,Math.min(target-minutes,checkpointExpected-minutes));
-  if(diff>0)return `${diff} min ahead of pace`;
-  if(action>0)return `${action} min by ${shortTime(checkpoint)}`;
-  return 'On pace';
+  if(diff>0)return `${diff} min ahead of target`;
+  if(action>0)return `${action} min needed by ${shortTime(checkpoint)}`;
+  return 'On track';
 }
 function momentumWhisper(){
   if(selectedDate!==todayKey()){
@@ -188,7 +197,7 @@ function alarm(){haptic([180,100,180]);toast('Today’s knocking target reached'
 
 function formatHour(h){return `${h%12||12}:00 ${h>=12?'PM':'AM'}`}
 function renderCallPlan(){const now=new Date(),h=now.getHours();let current=CALL_PLAN.find(x=>x[0]===h);if(h<9)current=[8,'Prepare your priority list','Before 9:00 AM'];if(h>=17)current=[17,'Review follow-up and plan tomorrow','9:00 AM–5:00 PM call day complete'];$('#currentCall').textContent=current[1];$('#currentSlot').textContent=h>=9&&h<17?`${formatHour(h)}–${formatHour(h+1)} · 10 call target`:current[2];$('#callPlan').innerHTML=CALL_PLAN.map(([hour,title,note])=>`<div class="call-row ${hour===h?'active':''}"><b>${formatHour(hour)}</b><span><strong>${title}</strong><small>${note}</small></span><em>10</em></div>`).join('')}
-function callsPaceText(value){if(selectedDate!==todayKey())return `${Math.max(0,targets.calls-value)} remaining`;const expected=expectedAt('calls',targets.calls,new Date()),diff=value-expected;return value>=targets.calls?'Target complete':diff===0?'On pace':diff>0?`${diff} ahead of pace`:`${Math.abs(diff)} behind pace`}
+function callsPaceText(value){if(selectedDate!==todayKey())return `${Math.max(0,targets.calls-value)} remaining`;const expected=expectedAt('calls',targets.calls,new Date()),diff=value-expected;return value>=targets.calls?'Target complete':diff===0?'On track':diff>0?`${diff} ahead of target`:`${Math.abs(diff)} behind target`}
 function renderToday(){
   const d=dayData(selectedDate),score=completion(selectedDate),kt=rollingKnockTarget(selectedDate),secs=liveKnockSeconds(d),wk=weekSummary();
   const past=isPastDate(selectedDate),scheduled=isWorkDayKey(selectedDate),locked=past||!scheduled;
