@@ -105,7 +105,7 @@ function metricPaceText(value,target,metric){
   if(selectedDate!==todayKey())return value>=target?'Daily goal achieved':'Final result';
   const now=new Date(),start=workdayStart(now),end=workdayEnd(now);
   if(value>=target)return 'Daily goal achieved';
-  if(now<start)return 'Ready to start';
+  if(now<start)return value>0?`${value} ahead of target`:'Ready to start';
   if(now>=end)return `${Math.max(0,target-value)} remaining today`;
   const expected=expectedAt(metric,target,now),diff=value-expected,checkpoint=nextPaceCheckpoint(now);
   const checkpointExpected=expectedAt(metric,target,checkpoint);
@@ -126,7 +126,7 @@ function knockPaceText(minutes,target){
   if(selectedDate!==todayKey())return minutes>=target?'Daily goal achieved':'Final result';
   const now=new Date(),start=workdayStart(now),end=workdayEnd(now);
   if(minutes>=target)return 'Daily goal achieved';
-  if(now<start)return 'Ready to start';
+  if(now<start)return minutes>0?`${minutes} min ahead of target`:'Ready to start';
   if(now>=end)return `${Math.max(0,target-minutes)} min remaining today`;
   const expected=Math.min(target,Math.round(target*accountabilityDayProgress(now))),diff=minutes-expected,checkpoint=nextPaceCheckpoint(now);
   const checkpointExpected=Math.min(target,Math.round(target*accountabilityDayProgress(checkpoint)));

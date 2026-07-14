@@ -11,3 +11,9 @@ Incremental pacing refinement built from v1.21.3.
 - After 5:00pm, incomplete metrics show the remaining amount for today.
 
 Firebase configuration, Firestore rules, authentication, storage paths, sync and layout remain unchanged.
+
+
+## v1.21.5
+- Activity logged before 9:00am now shows as ahead of target rather than Ready to start.
+- Early activity automatically carries into the 9:00am-5:00pm pacing calculation.
+- No Firebase, storage, sync, layout or logging changes.
