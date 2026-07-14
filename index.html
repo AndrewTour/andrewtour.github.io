@@ -98,11 +98,11 @@
     </section>
 
     <section id="insightsView" class="view">
-      <div class="insights-switch glass" role="tablist" aria-label="Insights pages">
-        <button class="active" type="button" data-insights-page="personalInsights">Insights</button>
-        <button type="button" data-insights-page="leaderboardInsights">Leaderboard</button>
+      <div class="insights-switch glass" role="tablist" aria-label="Leaderboard pages">
+        <button class="active" type="button" data-insights-page="leaderboardInsights">Leaderboard</button>
+        <button type="button" data-insights-page="personalInsights">Insights</button>
       </div>
-      <div id="personalInsights" class="insights-page active">
+      <div id="personalInsights" class="insights-page">
       <div class="insight-grid">
         <article class="insight glass"><span>WEEKLY SCORE</span><strong id="insightWeekScore">0%</strong><small id="insightWeekLabel"></small></article>
         <article class="insight glass"><span>CALLS</span><strong id="insightCalls">0</strong><small id="insightCallsAvg">0/day</small></article>
@@ -114,7 +114,7 @@
       <section class="year-card glass"><div class="year-head"><button id="prevYear">‹</button><strong id="yearLabel"></strong><button id="nextYear">›</button></div><div id="yearHeatmap" class="heatmap"></div></section>
       <button id="openCalendarFromInsights" class="secondary full">Open full calendar</button>
       </div>
-      <div id="leaderboardInsights" class="insights-page">
+      <div id="leaderboardInsights" class="insights-page active">
         <section class="leaderboard-card glass">
           <div class="leaderboard-head">
             <div><span>DAILY LEADERBOARD</span><h2 id="leaderboardDate"></h2></div>
@@ -174,7 +174,7 @@
   <nav class="tabbar glass">
     <button class="active" data-view="todayView"><b>●</b><span>Today</span></button>
     <button data-view="appointmentsView"><b>▣</b><span>Appointments</span></button>
-    <button data-view="insightsView"><b>▦</b><span>Insights</span></button>
+    <button data-view="insightsView"><b>▦</b><span>Leaderboard</span></button>
     <button data-view="settingsView"><b>⚙</b><span>Settings</span></button>
   </nav>
 </div>

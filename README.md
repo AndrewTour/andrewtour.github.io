@@ -21,3 +21,10 @@ No Firebase rule changes are required. Upload all files in this folder to the ro
 - Added 12 weeks of selectable team history for Monday reviews.
 - Added an Improvement Focus section showing each agent's weakest weekly metric and gap to target.
 - No Firestore rule changes are required because weekly summaries are stored inside each agent's existing leaderboard document.
+
+
+## v1.18 changes
+- Renamed the bottom Insights tab to Leaderboard.
+- Leaderboard is now the first page shown in that section.
+- Insights remains available as the secondary page tab.
+- Improvement Focus rows now use the same rounded glass-card design as the leaderboard sections.
