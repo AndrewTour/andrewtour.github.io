@@ -588,104 +588,51 @@ button:not(:disabled):active,.file-btn:active{
   .monday-review>p{font-size:.56rem}
 }
 
-/* v1.21 — cosmetic Prospecting OS, dynamic performance colour and completion rings. */
-:root{
-  --performance-red:#ff7d83;
-  --performance-amber:#ffc66b;
-  --performance-blue:#62b5ff;
-  --performance-green:#68e5a0;
-}
-.score-week{
-  transition:border-color .3s ease,box-shadow .3s ease,background .3s ease;
-}
-.score-week[data-performance="behind"]{border-color:rgba(255,125,131,.25);box-shadow:inset 0 1px 0 rgba(255,255,255,.13),0 16px 42px rgba(255,83,105,.08)}
-.score-week[data-performance="building"]{border-color:rgba(255,198,107,.25);box-shadow:inset 0 1px 0 rgba(255,255,255,.13),0 16px 42px rgba(255,177,71,.08)}
-.score-week[data-performance="strong"]{border-color:rgba(98,181,255,.27);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 16px 42px rgba(64,137,255,.09)}
-.score-week[data-performance="complete"]{border-color:rgba(104,229,160,.3);box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 16px 42px rgba(67,220,142,.1)}
-#scoreBar{
-  background:linear-gradient(90deg,var(--score-color,var(--cyan)),color-mix(in srgb,var(--score-color,var(--cyan)) 70%,#fff));
-  box-shadow:0 0 14px color-mix(in srgb,var(--score-color,var(--cyan)) 38%,transparent),inset 0 1px 0 rgba(255,255,255,.38);
-  transition:width .35s cubic-bezier(.22,.8,.24,1),background .25s ease,box-shadow .25s ease;
-}
-.metric{
-  transition:border-color .25s ease,box-shadow .25s ease,background .25s ease;
-}
-.metric[data-performance="behind"]{border-color:rgba(255,125,131,.2)}
-.metric[data-performance="building"]{border-color:rgba(255,198,107,.2)}
-.metric[data-performance="strong"]{border-color:rgba(98,181,255,.22)}
-.metric[data-performance="complete"]{border-color:rgba(104,229,160,.25)}
-.metric-percent{
+/* v1.21 — subtle completion rings and time-aware focus line.
+   Cosmetic only: existing card layout, controls and Firebase behaviour are preserved. */
+.metric-ring{
+  --ring-progress:0deg;
+  --ring-colour:#ff7184;
   position:relative;
-  isolation:isolate;
-  border-color:color-mix(in srgb,var(--ring-color,var(--cyan)) 42%,rgba(255,255,255,.1));
-  background:conic-gradient(var(--ring-color,var(--cyan)) 0 var(--ring-progress,0deg),rgba(255,255,255,.075) var(--ring-progress,0deg) 360deg);
-  color:#f8fbff;
-  text-shadow:0 1px 7px rgba(0,0,0,.65);
-  box-shadow:0 0 15px color-mix(in srgb,var(--ring-color,var(--cyan)) 20%,transparent),inset 0 1px 0 rgba(255,255,255,.2);
-  transition:background .35s cubic-bezier(.22,.8,.24,1),border-color .25s ease,box-shadow .25s ease;
+  display:grid;
+  place-items:center;
+  height:100%;
+  aspect-ratio:1;
+  border-radius:50%;
+  color:var(--ink);
+  font-variant-numeric:tabular-nums;
+  font-weight:900;
+  background:
+    radial-gradient(circle at center,rgba(9,12,20,.96) 0 54%,transparent 56%),
+    conic-gradient(from -90deg,var(--ring-colour) 0 var(--ring-progress),rgba(255,255,255,.095) var(--ring-progress) 360deg);
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.2),
+    inset 0 -1px 0 rgba(0,0,0,.38),
+    0 4px 14px rgba(0,0,0,.24),
+    0 0 12px color-mix(in srgb,var(--ring-colour) 22%,transparent);
+  transition:background .28s ease,box-shadow .28s ease,transform .16s ease;
 }
-.metric-percent:before{
+.metric-ring:after{
   content:"";
   position:absolute;
-  inset:5px;
+  inset:3px;
   border-radius:inherit;
-  z-index:-1;
-  background:linear-gradient(145deg,rgba(18,23,37,.95),rgba(5,8,15,.92));
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.09),inset 0 -1px 0 rgba(0,0,0,.48);
+  border-top:1px solid rgba(255,255,255,.24);
+  pointer-events:none;
 }
-.metric-percent[data-performance="complete"]{box-shadow:0 0 20px rgba(104,229,160,.24),inset 0 1px 0 rgba(255,255,255,.2)}
+.metric-ring span{position:relative;z-index:1;font-size:.66rem;letter-spacing:-.02em}
+.metric-ring[data-tone="behind"]{--ring-colour:#ff7184}
+.metric-ring[data-tone="building"]{--ring-colour:#ffc14d}
+.metric-ring[data-tone="strong"]{--ring-colour:#5aa7ff}
+.metric-ring[data-tone="complete"]{--ring-colour:#5ee4ad}
+.metric.complete .metric-ring{box-shadow:inset 0 1px 0 rgba(255,255,255,.24),0 0 16px rgba(94,228,173,.24)}
 .today-at-glance{
-  display:grid;
-  grid-template-columns:auto 1fr;
-  grid-template-areas:"eyebrow title" "eyebrow detail";
-  align-items:center;
-  column-gap:9px;
-  white-space:normal;
-  overflow:visible;
-  text-overflow:clip;
-  color:var(--ink);
-  border:1px solid rgba(255,255,255,.09);
-  border-radius:15px;
-  background:linear-gradient(145deg,rgba(255,255,255,.075),rgba(255,255,255,.025));
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.11);
-  padding:7px 9px;
+  border-color:rgba(255,255,255,.1);
+  background:linear-gradient(135deg,rgba(255,255,255,.072),rgba(255,255,255,.025));
 }
-.today-at-glance>span{
-  grid-area:eyebrow;
-  align-self:stretch;
-  display:flex;
-  align-items:center;
-  color:var(--cyan);
-  font-size:.48rem;
-  letter-spacing:.12em;
-  font-weight:900;
-  writing-mode:vertical-rl;
-  transform:rotate(180deg);
-  border-left:1px solid rgba(255,255,255,.08);
-  padding-left:7px;
-}
-.today-at-glance>strong{
-  grid-area:title;
-  color:var(--ink);
-  font-size:.68rem;
-  line-height:1.15;
-}
-.today-at-glance>small{
-  grid-area:detail;
-  color:var(--muted);
-  font-size:.53rem;
-  line-height:1.25;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-.today-at-glance[data-performance="behind"]>span{color:var(--performance-red)}
-.today-at-glance[data-performance="building"]>span{color:var(--performance-amber)}
-.today-at-glance[data-performance="strong"]>span{color:var(--performance-blue)}
-.today-at-glance[data-performance="complete"]>span{color:var(--performance-green)}
-@keyframes ringCompletePulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.16)}}
-.metric-percent[data-performance="complete"]{animation:ringCompletePulse 2.8s ease-in-out infinite}
-@media(prefers-reduced-motion:reduce){
-  .metric-percent[data-performance="complete"]{animation:none}
-  #scoreBar,.metric,.score-week,.metric-percent{transition:none}
-}
+@media (prefers-reduced-motion:reduce){.metric-ring{transition:none}}
+.metric-ring{width:54px;height:54px;justify-self:center}
+@media(max-height:760px){.metric-ring{width:45px;height:45px}}
+@media (max-width:600px) and (max-height:950px){.metric-ring{width:42px;height:42px}}
+@media (max-width:390px) and (max-height:850px){.metric-ring{width:38px;height:38px}.metric-ring span{font-size:.6rem}}
