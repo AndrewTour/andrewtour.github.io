@@ -85,35 +85,18 @@ function metricPaceText(value,target,metric){
 function todayGuidance(){
   if(selectedDate!==todayKey())return `${fmtDate(selectedDate)} · ${completion(selectedDate)}% complete`;
   if(!isWorkDayKey(selectedDate))return 'No accountability targets scheduled today';
-  const d=dayData(selectedDate),kt=rollingKnockTarget(selectedDate),now=new Date(),hour=now.getHours()+now.getMinutes()/60;
-  const remaining={
+  const d=dayData(selectedDate),kt=rollingKnockTarget(selectedDate),remaining={
     calls:Math.max(0,targets.calls-d.calls),
     connects:Math.max(0,targets.connects-d.connects),
     data:Math.max(0,targets.data-d.data),
     knocking:Math.max(0,kt-Math.floor(liveKnockSeconds(d)/60))
   };
-  const pcts={
-    calls:pct(d.calls,targets.calls),
-    connects:pct(d.connects,targets.connects),
-    data:pct(d.data,targets.data),
-    knocking:pct(liveKnockSeconds(d)/60,kt)
-  };
-  const phoneMetrics=['calls','connects','data'];
-  const candidates=hour>=14?[...phoneMetrics,'knocking']:phoneMetrics;
-  const incomplete=candidates.filter(metric=>remaining[metric]>0);
-  if(!incomplete.length){
-    if(hour<14&&remaining.knocking>0)return 'Phone activity is on track. Keep building the pipeline; knocking starts after 2:00 pm.';
-    if(remaining.knocking===0)return 'All daily targets complete. Keep building tomorrow’s pipeline.';
-  }
-  let weakest=incomplete.sort((a,b)=>pcts[a]-pcts[b])[0]||'calls';
-  if(hour<11&&remaining.calls>0&&metricPaceText(d.calls,targets.calls,'calls').includes('behind'))weakest='calls';
-  const guidance={
-    calls:`Focus: Calls · ${remaining.calls} remaining. Prioritise active buyers and past OFI follow-up.`,
-    connects:`Focus: Connects · ${remaining.connects} remaining. Stay on quality conversations, not just dial volume.`,
-    data:`Focus: Data · ${remaining.data} remaining. Capture owner details from every useful conversation.`,
-    knocking:`Focus: Knocking · ${remaining.knocking} min remaining. Move into the field and build the weekly total.`
-  };
-  return guidance[weakest];
+  const labels={calls:'calls',connects:'connects',data:'data',knocking:'knocking minutes'};
+  const pcts={calls:pct(d.calls,targets.calls),connects:pct(d.connects,targets.connects),data:pct(d.data,targets.data),knocking:pct(liveKnockSeconds(d)/60,kt)};
+  const weakest=Object.entries(pcts).sort((a,b)=>a[1]-b[1])[0]?.[0]||'calls';
+  const total=Object.values(remaining).reduce((a,b)=>a+b,0);
+  if(total===0)return 'All daily targets complete. Keep building tomorrow’s pipeline.';
+  return `Focus now: ${metricLabel(weakest)} · ${remaining[weakest]} ${labels[weakest]} remaining`;
 }
 function rollingKnockTarget(k){const date=parseKey(k),m=mondayOf(date);let prior=0,seen=0;for(const n of workDays){const x=new Date(m);x.setDate(m.getDate()+n-1);const key=dateKey(x);if(key===k)break;prior+=Math.floor(liveKnockSeconds(dayData(key))/60);seen++}return Math.ceil(Math.max(0,targets.weeklyKnock-prior)/Math.max(1,workDays.length-seen))}
 function completion(k){if(!isWorkDayKey(k))return 0;const d=dayData(k),kt=rollingKnockTarget(k);return Math.round((pct(d.calls,targets.calls)+pct(d.connects,targets.connects)+pct(d.data,targets.data)+pct(liveKnockSeconds(d)/60,kt))/4)}
@@ -162,11 +145,7 @@ function renderToday(){
     $(`#${m}Value`).textContent=val;
     $(`#${m}TargetLabel`).textContent=`/${target}`;
     $(`#${m}TargetText`).textContent=`Daily target ${target}`;
-    const ring=$(`#${m}Percent`),ringValue=Math.max(0,Math.min(100,p));
-    ring.querySelector('span').textContent=`${p}%`;
-    ring.style.setProperty('--ring-progress',`${ringValue*3.6}deg`);
-    ring.dataset.tone=p>=100?'complete':p>=70?'strong':p>=40?'building':'behind';
-    ring.setAttribute('aria-label',`${metricLabel(m)} completion ${p} percent`);
+    $(`#${m}Percent`).textContent=`${p}%`;
     $(`#${m}Pace`).textContent=past?'Day locked':(!scheduled?'Not scheduled':metricPaceText(val,target,m));
     document.querySelector(`[data-metric="${m}"]`).classList.toggle('complete',rem===0);
   }
