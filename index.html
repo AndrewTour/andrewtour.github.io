@@ -42,16 +42,20 @@
 
   <main>
     <section id="todayView" class="view active dashboard">
-      <section class="score glass">
-        <div>
-          <span>DAILY COMPLETION</span>
-          <strong id="dailyScore">0%</strong>
-        </div>
-        <div class="score-side">
-          <b id="streak">0</b>
-          <small>WORKDAY STREAK</small>
+      <section class="score-week glass">
+        <div class="score-overview">
+          <div class="score-copy">
+            <span>DAILY COMPLETION</span>
+            <strong id="dailyScore">0%</strong>
+          </div>
+          <div class="trend-wrap">
+            <span>DAY-ON-DAY</span>
+            <svg id="dayTrend" class="day-trend" viewBox="0 0 180 62" role="img" aria-label="Recent daily completion trend"></svg>
+          </div>
         </div>
         <div class="bar"><i id="scoreBar"></i></div>
+        <div class="week-head"><span>THIS WEEK</span><small id="weekSummary">0/4 complete · 0% avg · 0/240 knock min</small></div>
+        <div id="weekDays" class="week-days"></div>
       </section>
 
       <section class="metrics">
@@ -73,10 +77,6 @@
         </article>
       </section>
 
-      <section class="week-card glass">
-        <div class="week-head"><span>THIS WEEK</span><small id="weekSummary">0/4 complete · 0% avg · 0/240 knock min</small></div>
-        <div id="weekDays" class="week-days"></div>
-      </section>
     </section>
 
     <section id="appointmentsView" class="view">

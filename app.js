@@ -61,7 +61,6 @@ function renderToday(){
   $('#todayView').classList.toggle('date-locked',locked);
   $('#dailyScore').textContent=`${score}%`;
   $('#scoreBar').style.width=`${score}%`;
-  $('#streak').textContent=streak();
   for(const m of ['calls','connects','data']){
     const val=d[m],target=targets[m],p=pct(val,target),rem=Math.max(0,target-val);
     $(`#${m}Value`).textContent=val;
@@ -78,7 +77,29 @@ function renderToday(){
   $('#timerButton').classList.toggle('running',!!d.timerStartedAt&&!locked);
   $$('[data-action], #timerButton, #resetKnock').forEach(el=>{el.disabled=locked;el.setAttribute('aria-disabled',String(locked))});
   $('#weekSummary').textContent=`${wk.complete}/4 complete · ${wk.avg}% avg · ${Math.floor(wk.knock/60)}/${targets.weeklyKnock} knock min`;
+  renderDayTrend();
   renderWeekDays();
+}
+function recentWorkKeys(endKey=selectedDate,count=8){
+  const out=[],d=parseKey(endKey);
+  for(let i=0;i<40&&out.length<count;i++){
+    if(WORK_DAYS.includes(d.getDay()))out.unshift(dateKey(d));
+    d.setDate(d.getDate()-1);
+  }
+  return out
+}
+function renderDayTrend(){
+  const svg=$('#dayTrend');if(!svg)return;
+  const keys=recentWorkKeys(selectedDate,8),w=180,h=62,pad={l:7,r:7,t:8,b:15};
+  const usableW=w-pad.l-pad.r,usableH=h-pad.t-pad.b;
+  const values=keys.map(k=>Math.max(0,Math.min(100,completion(k))));
+  const pts=values.map((v,i)=>({x:pad.l+(keys.length===1?usableW/2:i*usableW/(keys.length-1)),y:pad.t+(100-v)*usableH/100,v,k:keys[i]}));
+  const path=pts.map((p,i)=>`${i?'L':'M'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+  const area=pts.length?`${path} L ${pts[pts.length-1].x.toFixed(1)} ${(pad.t+usableH).toFixed(1)} L ${pts[0].x.toFixed(1)} ${(pad.t+usableH).toFixed(1)} Z`:'';
+  const grid=[0,50,100].map(v=>{const y=pad.t+(100-v)*usableH/100;return `<line x1="${pad.l}" y1="${y}" x2="${w-pad.r}" y2="${y}" class="trend-grid"/>`}).join('');
+  const circles=pts.map(p=>`<circle cx="${p.x}" cy="${p.y}" r="${p.k===selectedDate?3.8:2.5}" class="trend-point ${p.k===selectedDate?'selected':''}"><title>${fmtDate(p.k)} · ${p.v}%</title></circle>`).join('');
+  const labels=pts.map((p,i)=>{if(i%2&&i!==pts.length-1)return'';const d=parseKey(p.k);return `<text x="${p.x}" y="${h-2}" text-anchor="middle" class="trend-label">${d.getDate()}</text>`}).join('');
+  svg.innerHTML=`<defs><linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#69dbf2" stop-opacity=".28"/><stop offset="100%" stop-color="#5e8fff" stop-opacity="0"/></linearGradient></defs>${grid}${area?`<path d="${area}" fill="url(#trendFill)"/>`:''}${path?`<path d="${path}" class="trend-line"/>`:''}${circles}${labels}`;
 }
 function renderWeekDays(){const names=['MON','TUE','THU','FRI'];$('#weekDays').innerHTML=weekKeys().map((k,i)=>{const p=completion(k);return `<button class="week-day ${k===selectedDate?'selected':''} ${p>=100?'complete':''}" data-date="${k}"><b>${names[i]}</b><small>${parseKey(k).getDate()} · ${p}%</small></button>`}).join('')}
 

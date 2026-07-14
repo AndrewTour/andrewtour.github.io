@@ -226,3 +226,36 @@ button:disabled,input:disabled{cursor:not-allowed}
   .topbar{transform:translateY(7px)}
   .metric-percent{font-size:.78rem;line-height:1}
 }
+
+/* v1.12 — merge daily completion and weekly selector; add day-on-day trend. */
+.dashboard.active{grid-template-rows:auto minmax(0,1fr);gap:9px}
+.score-week{border-radius:28px;padding:14px 18px 12px;min-height:0}
+.score-overview{display:grid;grid-template-columns:minmax(0,.78fr) minmax(145px,1.22fr);gap:14px;align-items:end}
+.score-copy>span,.trend-wrap>span{display:block;font-size:.76rem;line-height:1;letter-spacing:.18em;font-weight:850;color:#dbe0ec}
+.score-copy strong{display:block;font-size:3rem;line-height:.9;margin-top:9px}
+.trend-wrap>span{text-align:right;font-size:.62rem;color:var(--muted);letter-spacing:.14em;margin-bottom:2px}
+.day-trend{display:block;width:100%;height:62px;overflow:visible}
+.trend-grid{stroke:rgba(255,255,255,.075);stroke-width:1}
+.trend-line{fill:none;stroke:#69dbf2;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 5px rgba(105,219,242,.28))}
+.trend-point{fill:#69dbf2;stroke:#101522;stroke-width:1.5}
+.trend-point.selected{fill:#ffd46e;stroke:#fff;stroke-width:1.5}
+.trend-label{fill:#8f97aa;font-size:7px;font-weight:700}
+.score-week>.bar{height:8px;margin-top:8px}
+.score-week .week-head{margin-top:10px}
+.score-week .week-days{margin-top:8px}
+
+@media(max-height:760px){
+  .score-week{padding:10px 14px 9px;border-radius:22px}
+  .score-copy strong{font-size:2.35rem;margin-top:5px}
+  .day-trend{height:48px}
+  .score-overview{grid-template-columns:minmax(0,.72fr) minmax(130px,1.28fr);gap:9px}
+  .score-week>.bar{height:6px;margin-top:5px}
+  .score-week .week-head{margin-top:7px}
+  .score-week .week-days{margin-top:5px}
+}
+@media(max-width:390px){
+  .score-week{padding-left:14px;padding-right:14px}
+  .score-overview{grid-template-columns:minmax(0,.7fr) minmax(126px,1.3fr);gap:8px}
+  .score-copy>span{font-size:.68rem}
+  .trend-wrap>span{font-size:.55rem}
+}

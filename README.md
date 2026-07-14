@@ -12,7 +12,13 @@ This release keeps the v1.9 layout, dimensions, spacing, Firebase sync, past-dat
 5. If the previous text sizing remains cached, remove the Home Screen app and add it again from Safari.
 
 
-## v1.11 final polish
+## v1.12 final polish
 - Header content lowered slightly within the existing safe area.
 - KPI percentage text reduced by 20%.
 - No layout, spacing, Firebase or data logic changes.
+
+
+## v1.12 changes
+- Daily completion and weekly date selector are merged into one card.
+- Workday streak has been removed.
+- Added a rolling eight-workday line graph based on each day's completion percentage.
