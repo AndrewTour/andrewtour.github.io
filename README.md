@@ -1,5 +1,7 @@
-# Daily Accountability v2.5
+# Daily Accountability v2.6
 
-Authentication and Firestore sync have been restored to the proven v1.14 implementation. The current v2 UI and leaderboard position remain. No Firebase rule changes are required.
+This release replaces Firebase modular CDN imports with the stable browser compat SDK to fix the Safari/iOS `t.app` authentication error.
 
-Upload every file and the icons folder to the root of GitHub Pages. After deployment, remove and reinstall the Home Screen app to clear older cached scripts.
+No Firebase Console or Firestore rule changes are required.
+
+Upload all files in this folder to the root of the GitHub Pages repository. After deployment, remove the existing Home Screen app, clear website data for the domain, open the site in Safari, and add it to the Home Screen again.
