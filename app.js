@@ -68,18 +68,29 @@ function previousScheduledKey(k,daysList=workDays){
   }
   return null;
 }
+function endOfAccountabilityDay(now=new Date()){
+  const end=new Date(now);end.setHours(23,59,0,0);return end;
+}
+function accountabilityDayProgress(now=new Date()){
+  const start=new Date(now);start.setHours(0,1,0,0);
+  const end=endOfAccountabilityDay(now);
+  return Math.max(0,Math.min(1,(now-start)/(end-start)));
+}
 function nextPaceCheckpoint(now=new Date()){
   const mins=now.getMinutes(),checkpoint=new Date(now);
   if(mins<30)checkpoint.setMinutes(30,0,0);else{checkpoint.setHours(now.getHours()+1,0,0,0)}
-  const closing=new Date(now);closing.setHours(17,0,0,0);
+  const closing=endOfAccountabilityDay(now);
   if(checkpoint>closing)checkpoint.setTime(closing.getTime());
   return checkpoint;
 }
 function shortTime(d){return d.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true}).replace(' ','').toLowerCase()}
-function expectedAt(metric,target,hour){
-  const elapsed=Math.max(0,Math.min(8,hour-9));
-  if(metric==='calls')return Math.min(target,Math.round(elapsed*10));
-  return Math.min(target,Math.round(target*Math.min(1,elapsed/5)));
+function expectedAt(metric,target,when=new Date()){
+  return Math.min(target,Math.round(target*accountabilityDayProgress(when)));
+}
+function welcomeMessage(){
+  const hour=new Date().getHours(),name=(displayAgentName().split(/\s+/)[0]||'AGENT').toUpperCase();
+  const greeting=hour<12?'GOOD MORNING':hour<17?'GOOD AFTERNOON':'GOOD EVENING';
+  return `${greeting}, ${name}`;
 }
 function metricRemainingText(value,target){
   const remaining=Math.max(0,target-value);
@@ -87,13 +98,10 @@ function metricRemainingText(value,target){
 }
 function metricPaceText(value,target,metric){
   if(selectedDate!==todayKey())return value>=target?'Daily goal achieved':'Final result';
-  const now=new Date(),hour=now.getHours()+now.getMinutes()/60;
+  const now=new Date();
   if(value>=target)return 'Daily goal achieved';
-  if(hour<9)return 'Start at 9:00am';
-  if(hour>=17)return 'Accountability day complete';
-  const expected=expectedAt(metric,target,hour),diff=value-expected,checkpoint=nextPaceCheckpoint(now);
-  const checkpointHour=checkpoint.getHours()+checkpoint.getMinutes()/60;
-  const checkpointExpected=expectedAt(metric,target,checkpointHour);
+  const expected=expectedAt(metric,target,now),diff=value-expected,checkpoint=nextPaceCheckpoint(now);
+  const checkpointExpected=expectedAt(metric,target,checkpoint);
   const action=Math.max(0,Math.min(target-value,checkpointExpected-value));
   if(diff>0)return `${diff} ahead of pace`;
   if(action>0){
@@ -109,14 +117,10 @@ function knockRemainingText(minutes,target){
 }
 function knockPaceText(minutes,target){
   if(selectedDate!==todayKey())return minutes>=target?'Daily goal achieved':'Final result';
-  const now=new Date(),hour=now.getHours()+now.getMinutes()/60;
+  const now=new Date();
   if(minutes>=target)return 'Daily goal achieved';
-  if(hour<9)return 'Start at 9:00am';
-  if(hour>=17)return 'Accountability day complete';
-  const elapsed=Math.max(0,Math.min(8,hour-9));
-  const expected=Math.min(target,Math.round(target*(elapsed/8))),diff=minutes-expected,checkpoint=nextPaceCheckpoint(now);
-  const checkpointHour=checkpoint.getHours()+checkpoint.getMinutes()/60;
-  const checkpointExpected=Math.min(target,Math.round(target*(Math.max(0,Math.min(8,checkpointHour-9))/8)));
+  const expected=Math.min(target,Math.round(target*accountabilityDayProgress(now))),diff=minutes-expected,checkpoint=nextPaceCheckpoint(now);
+  const checkpointExpected=Math.min(target,Math.round(target*accountabilityDayProgress(checkpoint)));
   const action=Math.max(0,Math.min(target-minutes,checkpointExpected-minutes));
   if(diff>0)return `${diff} min ahead of pace`;
   if(action>0)return `${action} min by ${shortTime(checkpoint)}`;
@@ -184,7 +188,7 @@ function alarm(){haptic([180,100,180]);toast('Today’s knocking target reached'
 
 function formatHour(h){return `${h%12||12}:00 ${h>=12?'PM':'AM'}`}
 function renderCallPlan(){const now=new Date(),h=now.getHours();let current=CALL_PLAN.find(x=>x[0]===h);if(h<9)current=[8,'Prepare your priority list','Before 9:00 AM'];if(h>=17)current=[17,'Review follow-up and plan tomorrow','9:00 AM–5:00 PM call day complete'];$('#currentCall').textContent=current[1];$('#currentSlot').textContent=h>=9&&h<17?`${formatHour(h)}–${formatHour(h+1)} · 10 call target`:current[2];$('#callPlan').innerHTML=CALL_PLAN.map(([hour,title,note])=>`<div class="call-row ${hour===h?'active':''}"><b>${formatHour(hour)}</b><span><strong>${title}</strong><small>${note}</small></span><em>10</em></div>`).join('')}
-function callsPaceText(value){if(selectedDate!==todayKey())return `${Math.max(0,targets.calls-value)} remaining`;const now=new Date(),h=now.getHours()+now.getMinutes()/60;if(h<9)return `${targets.calls-value} remaining`;if(h>=17)return value>=targets.calls?'Target complete':`${targets.calls-value} short today`;const expected=Math.min(targets.calls,Math.round((h-9)*10)),diff=value-expected;return diff===0?'On pace':diff>0?`${diff} ahead of pace`:`${Math.abs(diff)} behind pace`}
+function callsPaceText(value){if(selectedDate!==todayKey())return `${Math.max(0,targets.calls-value)} remaining`;const expected=expectedAt('calls',targets.calls,new Date()),diff=value-expected;return value>=targets.calls?'Target complete':diff===0?'On pace':diff>0?`${diff} ahead of pace`:`${Math.abs(diff)} behind pace`}
 function renderToday(){
   const d=dayData(selectedDate),score=completion(selectedDate),kt=rollingKnockTarget(selectedDate),secs=liveKnockSeconds(d),wk=weekSummary();
   const past=isPastDate(selectedDate),scheduled=isWorkDayKey(selectedDate),locked=past||!scheduled;
@@ -192,6 +196,7 @@ function renderToday(){
   $('#backToday').classList.toggle('hidden',selectedDate===todayKey());
   $('#lockBadge').classList.toggle('hidden',!locked);$('#lockBadge').textContent=past?'LOCKED':'NOT SCHEDULED';
   $('#todayView').classList.toggle('date-locked',locked);
+  if($('#welcomeMessage'))$('#welcomeMessage').textContent=welcomeMessage();
   $('#dailyScore').textContent=`${score}%`;
   $('#scoreBar').style.width=`${score}%`;
   for(const m of ['calls','connects','data']){

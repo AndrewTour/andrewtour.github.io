@@ -58,3 +58,10 @@ No Firebase rule changes are required. Upload all files in this folder to the ro
 - Metric line 1 shows remaining work.
 - Blue metric line 2 shows the next checkpoint action, pace advantage, or daily goal status.
 - Firebase, authentication, storage and sync are unchanged.
+
+
+## v1.21.3 update
+- Accountability pacing now spans the full selected calendar day (12:01 AM to 11:59 PM).
+- The Daily Completion heading is replaced with a personalised, time-aware one-line welcome using the name saved in Settings.
+- The second metric guidance line now matches the blue Focus styling and weight.
+- Firebase, authentication, storage paths, rules and sync logic are unchanged.

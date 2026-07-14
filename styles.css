@@ -657,3 +657,16 @@ main,
   color:var(--green);
   text-shadow:0 0 14px rgba(80,225,164,.16);
 }
+
+
+/* v1.21.3 — full-day pacing, personalised welcome and coaching-line colour alignment. */
+.metric-copy>em{
+  color:var(--cyan);
+  font-weight:800;
+  letter-spacing:.015em;
+  text-shadow:0 1px 12px rgba(78,149,255,.14);
+}
+.metric.complete .metric-copy>em{
+  color:var(--green);
+  font-weight:800;
+}
