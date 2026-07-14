@@ -18,5 +18,10 @@ No Firebase rule changes are required if the leaderboard rules are already publi
 - The shared leaderboard remains visible to signed-in users.
 
 
-## Version 2.2
+## Version 2.3
 Built from the stable v2.0 authentication and sync foundation. Only the requested header and leaderboard-position UI changes were applied.
+
+
+## v2.3 login fix
+
+Firebase now uses standard Firestore initialisation for maximum iPhone and iOS beta compatibility. The app retains UID-separated local caching for offline use. No Firebase console or rule changes are required.
