@@ -31,11 +31,32 @@ function lockedToast(){haptic(20);toast('This day is complete and locked')}
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove('show'),1800)}
 function setSync(state,label){const b=$('#syncBadge');b.className=`sync-badge ${state}`;b.textContent=label}
 
-function storagePrefix(userId=uid){return `da:${userId||'local'}:`}
+function storagePrefix(userId=uid){return `da-v2:${userId||'local'}:`}
 function resetState(){days={};targets={...DEFAULTS};agentName='';leaderboardEntries=[];selectedDate=todayKey();appointmentDate=selectedDate}
 function loadLocal(userId=uid){resetState();const prefix=storagePrefix(userId);try{days=JSON.parse(localStorage.getItem(prefix+'days')||'{}');targets={...DEFAULTS,...JSON.parse(localStorage.getItem(prefix+'targets')||'{}')};agentName=localStorage.getItem(prefix+'agent-name')||''}catch{resetState()}}
 function saveLocal(){const prefix=storagePrefix(uid);localStorage.setItem(prefix+'days',JSON.stringify(days));localStorage.setItem(prefix+'targets',JSON.stringify(targets));localStorage.setItem(prefix+'agent-name',agentName)}
-function clearActiveSession(){unsubDays?.();unsubProfile?.();unsubLeaderboard?.();unsubDays=unsubProfile=unsubLeaderboard=null;clearInterval(timerTick);clearTimeout(syncTimer);clearTimeout(leaderboardPublishTimer);currentUser=null;uid='local';cloud=false;resetState()}
+function clearActiveSession(){
+  unsubDays?.();unsubProfile?.();unsubLeaderboard?.();
+  unsubDays=unsubProfile=unsubLeaderboard=null;
+  clearInterval(timerTick);clearTimeout(syncTimer);clearTimeout(leaderboardPublishTimer);
+  currentUser=null;uid='local';cloud=false;resetState();
+  hideWorkspaceLoader();
+}
+function showWorkspaceLoader(user){
+  const name=(user?.email||'your account').split('@')[0];
+  $('#workspaceLoaderTitle').textContent=`Loading ${name}'s workspace…`;
+  $('#workspaceLoaderDetail').textContent='Loading private stats, settings and appointments';
+  $('#workspaceLoader').classList.remove('hidden');
+}
+function hideWorkspaceLoader(){ $('#workspaceLoader')?.classList.add('hidden') }
+function resetVisibleWorkspace(){
+  resetState();
+  selectedDate=todayKey();appointmentDate=selectedDate;
+  $('#appointmentDatePicker').value=appointmentDate;
+  renderAll();
+  ensureTick();
+}
+
 function displayAgentName(){return (agentName||currentUser?.displayName||currentUser?.email?.split('@')[0]||'Agent').trim()}
 function leaderboardPayload(){
   const k=todayKey(),d=dayData(k),knockMinutes=Math.floor(liveKnockSeconds(d)/60),knockTarget=rollingKnockTarget(k);
@@ -63,7 +84,7 @@ function formatHour(h){return `${h%12||12}:00 ${h>=12?'PM':'AM'}`}
 function renderCallPlan(){const now=new Date(),h=now.getHours();let current=CALL_PLAN.find(x=>x[0]===h);if(h<9)current=[8,'Prepare your priority list','Before 9:00 AM'];if(h>=17)current=[17,'Review follow-up and plan tomorrow','9:00 AM–5:00 PM call day complete'];$('#currentCall').textContent=current[1];$('#currentSlot').textContent=h>=9&&h<17?`${formatHour(h)}–${formatHour(h+1)} · 10 call target`:current[2];$('#callPlan').innerHTML=CALL_PLAN.map(([hour,title,note])=>`<div class="call-row ${hour===h?'active':''}"><b>${formatHour(hour)}</b><span><strong>${title}</strong><small>${note}</small></span><em>10</em></div>`).join('')}
 function callsPaceText(value){if(selectedDate!==todayKey())return `${Math.max(0,targets.calls-value)} remaining`;const now=new Date(),h=now.getHours()+now.getMinutes()/60;if(h<9)return `${targets.calls-value} remaining`;if(h>=17)return value>=targets.calls?'Target complete':`${targets.calls-value} short today`;const expected=Math.min(targets.calls,Math.round((h-9)*10)),diff=value-expected;return diff===0?'On pace':diff>0?`${diff} ahead of pace`:`${Math.abs(diff)} behind pace`}
 function renderToday(){
-  const d=dayData(selectedDate),score=completion(selectedDate),kt=rollingKnockTarget(selectedDate),secs=liveKnockSeconds(d),wk=weekSummary();
+  const d=dayData(selectedDate),score=completion(selectedDate),kt=rollingKnockTarget(selectedDate),secs=liveKnockSeconds(d);
   const locked=isPastDate(selectedDate);
   $('#dateLabel').textContent=fmtDate(selectedDate);
   $('#backToday').classList.toggle('hidden',selectedDate===todayKey());
@@ -86,9 +107,8 @@ function renderToday(){
   $('#timerButton').textContent=locked?'Locked':(d.timerStartedAt?'Pause':'Start');
   $('#timerButton').classList.toggle('running',!!d.timerStartedAt&&!locked);
   $$('[data-action], #timerButton, #resetKnock').forEach(el=>{el.disabled=locked;el.setAttribute('aria-disabled',String(locked))});
-  $('#weekSummary').textContent=`${wk.complete}/4 complete · ${wk.avg}% avg · ${Math.floor(wk.knock/60)}/${targets.weeklyKnock} knock min`;
   renderDayTrend();
-  renderWeekDays();
+  renderLeaderboardPosition();
 }
 function recentWorkKeys(endKey=selectedDate,count=8){
   const out=[],d=parseKey(endKey);
@@ -118,6 +138,20 @@ function escapeHtml(s){return s.replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','
 async function addAppointment(address,types){if(!canEditDate(appointmentDate))return lockedToast();const d=dayData(appointmentDate);d.appointments.push({id:uuid(),address,types,at:Date.now()});addEvent(d,'appointment',`${types.join(', ')} · ${address}`);days[appointmentDate]=d;await saveDay(appointmentDate);renderAppointments();toast('Appointment added')}
 async function deleteAppointment(id){if(!canEditDate(appointmentDate))return lockedToast();const d=dayData(appointmentDate);d.appointments=d.appointments.filter(a=>a.id!==id);days[appointmentDate]=d;await saveDay(appointmentDate);renderAppointments()}
 
+
+function renderLeaderboardPosition(){
+  const date=todayKey();
+  const rows=leaderboardEntries.filter(x=>x.date===date).sort((a,b)=>(b.score||0)-(a.score||0)||(b.calls||0)-(a.calls||0)||(b.connects||0)-(a.connects||0)||(b.data||0)-(a.data||0));
+  const index=rows.findIndex(r=>r.uid===uid);
+  const pos=$('#leaderboardPosition'),summary=$('#leaderboardPositionSummary');
+  if(!pos||!summary)return;
+  if(!cloud){pos.textContent='—';summary.textContent='Available when live sync is active';return}
+  if(index<0){pos.textContent='—';summary.textContent=rows.length?`Not ranked yet · ${rows.length} agent${rows.length===1?'':'s'} active`:'Waiting for live team data';return}
+  const me=rows[index];
+  pos.textContent=`#${index+1}`;
+  summary.textContent=`${me.score||0}% today · ${rows.length} agent${rows.length===1?'':'s'} ranked`;
+}
+
 function renderLeaderboard(){
   const date=todayKey();
   $('#leaderboardDate').textContent=fmtDate(date);
@@ -137,7 +171,82 @@ function renderCalendar(){const labels=['M','T','W','T','F','S','S'];$('#calenda
 function renderSettings(){$('#agentName').value=displayAgentName();$('#callsTarget').value=targets.calls;$('#connectsTarget').value=targets.connects;$('#dataTarget').value=targets.data;$('#weeklyKnockTarget').value=targets.weeklyKnock;$('#accountEmail').textContent=currentUser?.email||'Device-only mode';$('#modeNote').textContent=cloud?'Live sync is active. Use the same login on every device.':'Data is stored only on this device.'}
 function renderAll(){renderToday();renderAppointments();renderInsights();renderSettings()}
 
-async function startCloud(user){unsubDays?.();unsubProfile?.();unsubLeaderboard?.();currentUser=user;uid=user.uid;cloud=true;loadLocal(uid);await finaliseExpiredTimers();setSync('','Connecting');clearTimeout(syncTimer);syncTimer=setTimeout(()=>{if($('#syncBadge').textContent==='Connecting')setSync(navigator.onLine?'':'offline',navigator.onLine?'Connected':'Offline')},3500);unsubDays=onSnapshot(collection(db,'users',uid,'days'),{includeMetadataChanges:true},snap=>{snap.docChanges().forEach(ch=>{if(ch.type==='removed')delete days[ch.doc.id];else{const incoming=ch.doc.data();days[ch.doc.id]={...blankDay(),...incoming,appointments:incoming.appointments||[],events:incoming.events||[]}}});saveLocal();renderAll();ensureTick();clearTimeout(syncTimer);setSync(snap.metadata.fromCache&&!navigator.onLine?'offline':'live',snap.metadata.hasPendingWrites?'Saving':'Live')},err=>{console.error(err);setSync('error','Sync error');toast('Firestore access failed. Check rules and login.');showAuthMessage(err.message)});unsubProfile=onSnapshot(doc(db,'users',uid),snap=>{if(snap.exists()){const profile=snap.data();if(profile.targets)targets={...DEFAULTS,...profile.targets};if(profile.name)agentName=profile.name;saveLocal();renderAll();scheduleLeaderboardPublish()}},err=>console.error(err));unsubLeaderboard=onSnapshot(collection(db,'leaderboard'),{includeMetadataChanges:true},snap=>{leaderboardEntries=snap.docs.map(d=>({uid:d.id,...d.data()}));renderLeaderboard()},err=>{console.error('Leaderboard read failed',err);$('#leaderboardStatus').textContent='SYNC ERROR'});setSync(navigator.onLine?'live':'offline',navigator.onLine?'Live':'Offline');showApp();scheduleLeaderboardPublish()}
+async function startCloud(user){
+  // Tear down every listener and timer from the previous identity before touching UI state.
+  unsubDays?.();unsubProfile?.();unsubLeaderboard?.();
+  unsubDays=unsubProfile=unsubLeaderboard=null;
+  clearInterval(timerTick);clearTimeout(syncTimer);clearTimeout(leaderboardPublishTimer);
+
+  currentUser=user;uid=user.uid;cloud=true;
+  resetVisibleWorkspace();
+  showApp();
+  showWorkspaceLoader(user);
+  setSync('','Connecting');
+
+  let daysReady=false, profileReady=false, firstLoadFinished=false;
+  const finishWorkspaceLoad=()=>{
+    if(firstLoadFinished||!daysReady||!profileReady)return;
+    firstLoadFinished=true;
+    saveLocal();
+    renderAll();ensureTick();
+    hideWorkspaceLoader();
+    setSync(navigator.onLine?'live':'offline',navigator.onLine?'Live':'Offline');
+    scheduleLeaderboardPublish();
+  };
+
+  clearTimeout(syncTimer);
+  syncTimer=setTimeout(()=>{
+    if(!firstLoadFinished){
+      $('#workspaceLoaderDetail').textContent=navigator.onLine?'Still connecting to your private workspace…':'Offline — loading saved data when available';
+      setSync(navigator.onLine?'':'offline',navigator.onLine?'Connecting':'Offline');
+    }
+  },4000);
+
+  unsubDays=onSnapshot(collection(db,'users',uid,'days'),{includeMetadataChanges:true},snap=>{
+    // Replace the entire active dataset. Never merge with the previous signed-in user's memory.
+    const nextDays={};
+    snap.docs.forEach(d=>{
+      const incoming=d.data();
+      nextDays[d.id]={...blankDay(),...incoming,appointments:incoming.appointments||[],events:incoming.events||[]};
+    });
+    days=nextDays;
+    daysReady=true;
+    saveLocal();renderAll();ensureTick();
+    clearTimeout(syncTimer);
+    if(firstLoadFinished)setSync(snap.metadata.fromCache&&!navigator.onLine?'offline':'live',snap.metadata.hasPendingWrites?'Saving':'Live');
+    finishWorkspaceLoad();
+  },err=>{
+    console.error(err);days={};daysReady=true;renderAll();
+    setSync('error','Sync error');
+    $('#workspaceLoaderDetail').textContent='Could not load stats. Check Firestore rules and connection.';
+    toast('Firestore access failed. Check rules and login.');
+    finishWorkspaceLoad();
+  });
+
+  unsubProfile=onSnapshot(doc(db,'users',uid),snap=>{
+    targets={...DEFAULTS};
+    agentName='';
+    if(snap.exists()){
+      const profile=snap.data();
+      if(profile.targets)targets={...DEFAULTS,...profile.targets};
+      if(profile.name)agentName=profile.name;
+    }
+    profileReady=true;
+    saveLocal();renderAll();
+    finishWorkspaceLoad();
+  },err=>{
+    console.error(err);targets={...DEFAULTS};agentName='';profileReady=true;renderAll();finishWorkspaceLoad();
+  });
+
+  unsubLeaderboard=onSnapshot(collection(db,'leaderboard'),{includeMetadataChanges:true},snap=>{
+    leaderboardEntries=snap.docs.map(d=>({uid:d.id,...d.data()}));
+    renderLeaderboard();
+    renderLeaderboardPosition();
+  },err=>{
+    console.error('Leaderboard read failed',err);
+    $('#leaderboardStatus').textContent='SYNC ERROR';
+  });
+}
 function showApp(){$('#authGate').classList.add('hidden');$('#app').classList.remove('hidden');$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()}
 let viewportFrame=0;
 function updateAppViewport(){
@@ -178,7 +287,7 @@ $('#appointmentDatePicker').onchange=e=>{appointmentDate=e.target.value;renderAp
 $('#appointmentForm').onsubmit=async e=>{e.preventDefault();const address=$('#appointmentAddress').value.trim(),types=$$('.appointment-types input:checked').map(x=>x.value);if(!address)return toast('Add a property address');if(!types.length)return toast('Choose an appointment type');await addAppointment(address,types);e.target.reset()};
 $('#appointmentsList').onclick=e=>{const b=e.target.closest('[data-delete-appointment]');if(b&&confirm('Delete this appointment?'))deleteAppointment(b.dataset.deleteAppointment)};
 $('#saveSettings').onclick=async()=>{agentName=$('#agentName').value.trim()||displayAgentName();targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};saveLocal();await saveTargets();renderAll();toast('Settings saved')};
-$('#signOut').onclick=async()=>{clearActiveSession();if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
+$('#signOut').onclick=async()=>{showWorkspaceLoader({email:'Signing out'});clearActiveSession();if(auth?.currentUser)await firebaseSignOut(auth);$('#app').classList.add('hidden');$('#authGate').classList.remove('hidden')};
 $('#exportData').onclick=()=>{const blob=new Blob([JSON.stringify({targets,days},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`daily-accountability-${todayKey()}.json`;a.click();URL.revokeObjectURL(a.href)};
 $('#importData').onchange=async e=>{try{const raw=JSON.parse(await e.target.files[0].text());targets={...DEFAULTS,...raw.targets};days={...days,...raw.days};saveLocal();if(cloud){await saveTargets();for(const k of Object.keys(raw.days||{}))await saveDay(k,{quiet:true})}renderAll();toast('Backup imported')}catch{toast('Backup could not be read')}};
 $('#openCalendarFromInsights').onclick=openCalendar;$('#closeCalendar').onclick=()=>$('#calendarModal').classList.remove('open');$('#calendarPrev').onclick=$('#prevYear').onclick=()=>{year--;renderCalendar();renderInsights()};$('#calendarNext').onclick=$('#nextYear').onclick=()=>{year++;renderCalendar();renderInsights()};
