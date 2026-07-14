@@ -305,7 +305,7 @@ button:disabled,input:disabled{cursor:not-allowed}
 @keyframes workspace-spin{to{transform:rotate(360deg)}}
 
 
-/* v2.1 — simplified header and live leaderboard position on Today. */
+/* v2.2 — UI-only update applied to stable v2.0 authentication build. */
 .date-row{display:flex;align-items:center;gap:8px;margin-top:3px}
 .date-row .sync-badge{margin-left:0}
 .leaderboard-position{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08)}

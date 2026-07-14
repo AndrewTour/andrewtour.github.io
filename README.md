@@ -1,11 +1,3 @@
-Daily Accountability v2.1
-
-Changes:
-- Removed the blue all-caps Daily Accountability eyebrow from Today.
-- Moved live sync status beside the date.
-- Replaced This Week day buttons with current live leaderboard position.
-- Preserved Firebase sync, private user data, leaderboard, calendar, appointments, insights, locking and offline support.
-
 # Daily Accountability v2.0
 
 This release fixes user switching and keeps each Firebase login fully isolated.
@@ -24,3 +16,7 @@ No Firebase rule changes are required if the leaderboard rules are already publi
 - A new user with no records starts at zero.
 - Agent name, targets, appointments and daily stats remain private to that Firebase UID.
 - The shared leaderboard remains visible to signed-in users.
+
+
+## Version 2.2
+Built from the stable v2.0 authentication and sync foundation. Only the requested header and leaderboard-position UI changes were applied.

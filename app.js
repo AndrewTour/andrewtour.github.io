@@ -138,7 +138,6 @@ function escapeHtml(s){return s.replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','
 async function addAppointment(address,types){if(!canEditDate(appointmentDate))return lockedToast();const d=dayData(appointmentDate);d.appointments.push({id:uuid(),address,types,at:Date.now()});addEvent(d,'appointment',`${types.join(', ')} · ${address}`);days[appointmentDate]=d;await saveDay(appointmentDate);renderAppointments();toast('Appointment added')}
 async function deleteAppointment(id){if(!canEditDate(appointmentDate))return lockedToast();const d=dayData(appointmentDate);d.appointments=d.appointments.filter(a=>a.id!==id);days[appointmentDate]=d;await saveDay(appointmentDate);renderAppointments()}
 
-
 function renderLeaderboardPosition(){
   const date=todayKey();
   const rows=leaderboardEntries.filter(x=>x.date===date).sort((a,b)=>(b.score||0)-(a.score||0)||(b.calls||0)-(a.calls||0)||(b.connects||0)-(a.connects||0)||(b.data||0)-(a.data||0));
