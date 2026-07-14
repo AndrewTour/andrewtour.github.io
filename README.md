@@ -1,7 +1,10 @@
-# Daily Accountability v2.6
+# Daily Accountability v1.15 Stable
 
-This release replaces Firebase modular CDN imports with the stable browser compat SDK to fix the Safari/iOS `t.app` authentication error.
+This build uses the exact v1.14 authentication, Firebase initialisation, sync and UID-separated storage logic.
+
+Only visual changes were applied:
+- Removed the blue all-caps header label
+- Moved the live sync status beside the date
+- Replaced the weekly day buttons in the completion card with live leaderboard position
 
 No Firebase Console or Firestore rule changes are required.
-
-Upload all files in this folder to the root of the GitHub Pages repository. After deployment, remove the existing Home Screen app, clear website data for the domain, open the site in Safari, and add it to the Home Screen again.

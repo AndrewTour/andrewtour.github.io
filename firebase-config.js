@@ -1,4 +1,4 @@
-window.firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyDwa_eMrRRLgQhJwGx3qrRpS-hI3CbctxQ",
   authDomain: "daily-accountability-be0ac.firebaseapp.com",
   projectId: "daily-accountability-be0ac",

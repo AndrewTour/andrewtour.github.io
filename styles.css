@@ -295,17 +295,7 @@ button:disabled,input:disabled{cursor:not-allowed}
 }
 
 
-/* v2.0 — strict authenticated workspace isolation */
-.workspace-loader{position:absolute;inset:0;z-index:80;display:grid;place-items:center;padding:24px;background:linear-gradient(180deg,rgba(3,5,10,.92),rgba(3,5,10,.98));backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
-.workspace-loader-card{width:min(86vw,340px);border-radius:26px;padding:24px;text-align:center}
-.workspace-loader-card strong,.workspace-loader-card small{display:block}
-.workspace-loader-card strong{font-size:1rem;margin-top:15px}
-.workspace-loader-card small{font-size:.7rem;color:var(--muted);margin-top:7px}
-.workspace-spinner{width:34px;height:34px;margin:auto;border-radius:50%;border:3px solid rgba(255,255,255,.12);border-top-color:var(--cyan);animation:workspace-spin .8s linear infinite}
-@keyframes workspace-spin{to{transform:rotate(360deg)}}
-
-
-/* v2.2 — UI-only update applied to stable v2.0 authentication build. */
+/* v1.15-stable — visual-only changes on the proven v1.14 auth/sync base. */
 .date-row{display:flex;align-items:center;gap:8px;margin-top:3px}
 .date-row .sync-badge{margin-left:0}
 .leaderboard-position{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08)}
