@@ -13,3 +13,7 @@ Before using the leaderboard, replace your Firestore Rules with the contents of 
 
 ## GitHub update
 Upload every file and the `icons` folder to the root of the existing GitHub repository, replacing the current files, then commit.
+
+
+## v1.14 user isolation fix
+Local cache keys are now namespaced by Firebase UID. Signing out clears the active in-memory session, and signing into another account loads only that user's cached and cloud data.
