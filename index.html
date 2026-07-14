@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Daily Accountability">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=2.4.0">
 <title>Daily Accountability</title>
 </head>
 <body>
@@ -28,11 +28,17 @@
 </div>
 
 <div id="app" class="app hidden">
+  <div id="workspaceLoader" class="workspace-loader hidden" aria-live="polite">
+    <div class="workspace-loader-card glass">
+      <div class="workspace-spinner"></div>
+      <strong id="workspaceLoaderTitle">Loading your workspace…</strong>
+      <small id="workspaceLoaderDetail">Preparing your private data</small>
+    </div>
+  </div>
   <header class="topbar">
     <div>
-      <div class="eyebrow">DAILY ACCOUNTABILITY <span id="syncBadge" class="sync-badge">Connecting</span></div>
       <h1 id="viewTitle">Daily Accountability</h1>
-      <div id="dateLabel" class="date"></div>
+      <div class="date-row"><div id="dateLabel" class="date"></div><span id="syncBadge" class="sync-badge">Connecting</span></div>
     </div>
     <div class="top-actions">
       <span id="lockBadge" class="lock-badge hidden">LOCKED</span><button id="backToday" class="back-today hidden" type="button">Today</button>
@@ -54,8 +60,10 @@
           </div>
         </div>
         <div class="bar"><i id="scoreBar"></i></div>
-        <div class="week-head"><span>THIS WEEK</span><small id="weekSummary">0/4 complete · 0% avg · 0/240 knock min</small></div>
-        <div id="weekDays" class="week-days"></div>
+        <div class="leaderboard-position">
+          <div><span>LEADERBOARD POSITION</span><small id="leaderboardPositionSummary">Waiting for live team data</small></div>
+          <strong id="leaderboardPosition">—</strong>
+        </div>
       </section>
 
       <section class="metrics">
@@ -160,6 +168,6 @@
   </div>
 </div>
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js"></script>
+<script type="module" src="app.js?v=2.4.0"></script>
 </body>
 </html>
