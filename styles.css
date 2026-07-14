@@ -637,3 +637,23 @@ main,
     grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr);
   }
 }
+
+
+/* v1.21 — homepage micro-coaching only; no layout or data-layer changes. */
+.momentum-whisper{
+  display:block;
+  color:rgba(225,232,247,.68);
+  font-weight:760;
+  letter-spacing:.01em;
+  text-shadow:0 1px 12px rgba(123,168,255,.12);
+  transition:color .2s ease,opacity .2s ease;
+}
+.metric-copy>em{
+  color:rgba(213,223,242,.78);
+  text-shadow:0 1px 10px rgba(78,149,255,.08);
+  transition:color .2s ease,text-shadow .2s ease;
+}
+.metric.complete .metric-copy>em{
+  color:var(--green);
+  text-shadow:0 0 14px rgba(80,225,164,.16);
+}

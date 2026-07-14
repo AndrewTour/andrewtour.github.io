@@ -68,19 +68,69 @@ function previousScheduledKey(k,daysList=workDays){
   }
   return null;
 }
-function metricPaceText(value,target,metric){
-  if(selectedDate!==todayKey())return `${Math.max(0,target-value)} remaining`;
-  const now=new Date(),hour=now.getHours()+now.getMinutes()/60;
-  if(hour<9)return `${Math.max(0,target-value)} remaining`;
-  if(hour>=17)return value>=target?'Target complete':`${target-value} short today`;
+function nextPaceCheckpoint(now=new Date()){
+  const mins=now.getMinutes(),checkpoint=new Date(now);
+  if(mins<30)checkpoint.setMinutes(30,0,0);else{checkpoint.setHours(now.getHours()+1,0,0,0)}
+  const closing=new Date(now);closing.setHours(17,0,0,0);
+  if(checkpoint>closing)checkpoint.setTime(closing.getTime());
+  return checkpoint;
+}
+function shortTime(d){return d.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true}).replace(' ','').toLowerCase()}
+function expectedAt(metric,target,hour){
   const elapsed=Math.max(0,Math.min(8,hour-9));
-  let expected;
-  if(metric==='calls')expected=Math.min(target,Math.round(elapsed*10));
-  else expected=Math.min(target,Math.round(target*Math.min(1,elapsed/5)));
-  const diff=value-expected;
+  if(metric==='calls')return Math.min(target,Math.round(elapsed*10));
+  return Math.min(target,Math.round(target*Math.min(1,elapsed/5)));
+}
+function metricRemainingText(value,target){
+  const remaining=Math.max(0,target-value);
+  return remaining===0?'Target complete':`${remaining} remaining`;
+}
+function metricPaceText(value,target,metric){
+  if(selectedDate!==todayKey())return value>=target?'Target met':'Final result';
+  const now=new Date(),hour=now.getHours()+now.getMinutes()/60;
   if(value>=target)return 'Target complete';
-  if(diff===0)return 'On pace';
-  return diff>0?`${diff} ahead of pace`:`${Math.abs(diff)} behind pace`;
+  if(hour<9)return 'Ready for 9:00am';
+  if(hour>=17)return `${Math.max(0,target-value)} short today`;
+  const expected=expectedAt(metric,target,hour),diff=value-expected,checkpoint=nextPaceCheckpoint(now);
+  const checkpointHour=checkpoint.getHours()+checkpoint.getMinutes()/60;
+  const checkpointExpected=expectedAt(metric,target,checkpointHour);
+  const action=Math.max(0,Math.min(target-value,checkpointExpected-value));
+  const pace=diff===0?'On pace':diff>0?`${diff} ahead`:`${Math.abs(diff)} behind`;
+  if(action>0)return `${pace} · ${action} by ${shortTime(checkpoint)}`;
+  return pace;
+}
+function knockRemainingText(minutes,target){
+  const remaining=Math.max(0,target-minutes);
+  return remaining===0?'Target complete':`${remaining} min remaining today`;
+}
+function knockPaceText(minutes,target){
+  if(selectedDate!==todayKey())return minutes>=target?'Target met':'Final result';
+  const now=new Date(),hour=now.getHours()+now.getMinutes()/60;
+  if(minutes>=target)return 'Target complete';
+  if(hour<9)return 'Ready for 9:00am';
+  if(hour>=17)return `${Math.max(0,target-minutes)} min short today`;
+  const elapsed=Math.max(0,Math.min(8,hour-9));
+  const expected=Math.min(target,Math.round(target*(elapsed/8))),diff=minutes-expected,checkpoint=nextPaceCheckpoint(now);
+  const checkpointHour=checkpoint.getHours()+checkpoint.getMinutes()/60;
+  const checkpointExpected=Math.min(target,Math.round(target*(Math.max(0,Math.min(8,checkpointHour-9))/8)));
+  const action=Math.max(0,Math.min(target-minutes,checkpointExpected-minutes));
+  const pace=diff===0?'On pace':diff>0?`${diff} min ahead`:`${Math.abs(diff)} min behind`;
+  if(action>0)return `${pace} · ${action} min by ${shortTime(checkpoint)}`;
+  return pace;
+}
+function momentumWhisper(){
+  if(selectedDate!==todayKey()){
+    const previous=previousScheduledKey(selectedDate),change=previous?completion(selectedDate)-completion(previous):0;
+    if(!previous)return `${completion(selectedDate)}% recorded`;
+    if(change===0)return 'Level with the previous workday';
+    return `${change>0?'▲':'▼'} ${Math.abs(change)}% vs previous workday`;
+  }
+  if(!isWorkDayKey(selectedDate))return 'Recovery day · next scheduled day is ready';
+  const run=streak(),previous=previousScheduledKey(todayKey()),change=previous?completion(todayKey())-completion(previous):0;
+  if(run>=2)return `${run}-day run · protect the momentum`;
+  if(change>0)return `▲ ${change}% ahead of your last workday`;
+  if(change<0)return `▼ ${Math.abs(change)}% below your last workday · time to respond`;
+  return completion(todayKey())>0?'Momentum building today':'First action starts the momentum';
 }
 function todayGuidance(){
   if(selectedDate!==todayKey())return `${fmtDate(selectedDate)} · ${completion(selectedDate)}% complete`;
@@ -144,20 +194,21 @@ function renderToday(){
     const val=d[m],target=targets[m],p=pct(val,target),rem=Math.max(0,target-val);
     $(`#${m}Value`).textContent=val;
     $(`#${m}TargetLabel`).textContent=`/${target}`;
-    $(`#${m}TargetText`).textContent=`Daily target ${target}`;
+    $(`#${m}TargetText`).textContent=past?'Final result':(!scheduled?'No target today':metricRemainingText(val,target));
     $(`#${m}Percent`).textContent=`${p}%`;
     $(`#${m}Pace`).textContent=past?'Day locked':(!scheduled?'Not scheduled':metricPaceText(val,target,m));
     document.querySelector(`[data-metric="${m}"]`).classList.toggle('complete',rem===0);
   }
   $('#knockValue').textContent=fmtTimer(secs);
-  $('#knockTargetText').textContent=`Rolling target ${kt} min · Weekly minimum ${targets.weeklyKnock} min`;
-  $('#knockRemaining').textContent=past?'Day locked':(!scheduled?'Not scheduled':(Math.max(0,kt-Math.floor(secs/60))?`${Math.max(0,kt-Math.floor(secs/60))} minutes remaining`:'Target complete'));
+  $('#knockTargetText').textContent=past?'Final result':(!scheduled?'No target today':knockRemainingText(Math.floor(secs/60),kt));
+  $('#knockRemaining').textContent=past?'Day locked':(!scheduled?'Not scheduled':knockPaceText(Math.floor(secs/60),kt));
   $('#timerButton').textContent=past?'Locked':(!scheduled?'Off day':(d.timerStartedAt?'Pause':'Start'));
   $('#timerButton').classList.toggle('running',!!d.timerStartedAt&&!locked);
   $$('[data-action], #timerButton, #resetKnock').forEach(el=>{el.disabled=locked;el.setAttribute('aria-disabled',String(locked))});
   renderDayTrend();
   renderLeaderboardPosition();
   if($('#todayAtGlance'))$('#todayAtGlance').textContent=todayGuidance();
+  if($('#momentumWhisper'))$('#momentumWhisper').textContent=momentumWhisper();
 }
 function recentWorkKeys(endKey=selectedDate,count=8){
   const out=[],d=parseKey(endKey);

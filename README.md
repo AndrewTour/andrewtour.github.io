@@ -37,3 +37,17 @@ No Firebase rule changes are required. Upload all files in this folder to the ro
 - Added personal best cards inside Insights.
 - Added an automatic previous-week Monday Review summary.
 - No Firebase rules or login changes are required.
+
+
+## v1.21 — Micro coaching
+
+- Added compact, time-based pacing prompts inside the existing Calls, Connects and Data cards.
+- Added a subtle momentum line inside the existing Daily Completion area.
+- No Firebase, authentication, storage, logging, leaderboard or Firestore changes.
+
+
+## v1.21.1 metric copy refinement
+- Removed redundant “Daily target” labels from the Today KPI cards.
+- The first supporting line now shows the remaining amount.
+- The highlighted supporting line now shows live pace and the next checkpoint action.
+- Firebase, authentication, storage, sync and logging behaviour are unchanged.
