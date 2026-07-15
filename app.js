@@ -272,7 +272,7 @@ function callsPaceText(value){if(selectedDate!==todayKey())return `${Math.max(0,
 function activeViewId(){return document.querySelector('.view.active')?.id||'todayView'}
 function updateTopbar(id=activeViewId()){
   const isToday=id==='todayView';
-  const label=document.querySelector(`.tabbar button[data-view="${id}"] span`)?.textContent||'Daily Accountability';
+  const label=document.querySelector(`.tabbar button[data-view="${id}"] span`)?.textContent||'AGNT';
   const dateLine=document.querySelector('.date-line');
   const todaySlot=$('#todaySyncSlot');
   const syncBadge=$('#syncBadge');

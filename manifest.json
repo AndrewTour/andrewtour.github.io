@@ -1,11 +1,11 @@
 {
-  "name": "Daily Accountability",
-  "short_name": "Accountability",
-  "description": "Private daily sales accountability tracker with live sync.",
+  "name": "AGNT",
+  "short_name": "AGNT",
+  "description": "Private daily accountability tracker for real estate agents with live sync.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f5f6f8",
+  "background_color": "#ffffff",
   "theme_color": "#ffffff",
   "orientation": "portrait",
   "icons": [

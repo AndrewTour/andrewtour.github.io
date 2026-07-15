@@ -1,3 +1,14 @@
+# AGNT v1.24.3
+
+## Safe-area and branding update
+
+- Renamed the application to **AGNT** across the PWA title and manifest metadata.
+- Matched the iPhone status-bar and Dynamic Island surround to the app's white background.
+- Kept existing header spacing and all application functionality unchanged.
+- No Firebase Console changes are required.
+
+---
+
 # Daily Accountability v1.23.7
 
 Incremental update from v1.23.6.

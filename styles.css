@@ -1342,3 +1342,44 @@ html,body,button,input,select,textarea{
 .timer .timer-icon{width:21px;height:21px;display:block;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .timer .timer-icon path{fill:currentColor;stroke:none}
 .timer .timer-icon rect{fill:currentColor;stroke:none}
+
+
+/* v1.24.3 — AGNT branding and seamless iPhone status-bar safe area. */
+:root{
+  --agnt-page-top:#ffffff;
+}
+html{
+  background:var(--agnt-page-top) !important;
+}
+body{
+  background-color:var(--agnt-page-top) !important;
+}
+/* A fixed top layer guarantees that the region surrounding the Dynamic Island
+   uses the exact same top-page colour instead of iOS exposing a grey strip. */
+body::after{
+  content:"";
+  position:fixed;
+  z-index:-1;
+  top:0;
+  left:0;
+  right:0;
+  height:max(env(safe-area-inset-top),56px);
+  background:var(--agnt-page-top);
+  pointer-events:none;
+}
+@media (display-mode:standalone){
+  html,body{
+    background-color:var(--agnt-page-top) !important;
+  }
+  body{
+    inset:0;
+  }
+  .app{
+    top:0;
+    background:transparent;
+  }
+}
+.brand-mark{
+  font-size:.76rem;
+  letter-spacing:-.04em;
+}
