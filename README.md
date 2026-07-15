@@ -102,3 +102,10 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - Future scheduled appointments also appear as linked reminder cards on their scheduled date without duplicating the stored record or leaderboard count.
 - Reminder cards show the appointment time, booking date, one-tap call action and “Call 2 hours prior to confirm”.
 - Existing appointment records remain compatible.
+
+
+## v1.25.3 — Appointment card refinement
+- Booking an appointment now keeps the Appointments view on the date already being viewed.
+- Removed duplicate floating timestamps from original and reminder cards.
+- Future reminder cards now repeat the blue booked-for date/time beneath the booked-on date.
+- Positioned the confirmation reminder to the right of the booked-for detail with responsive spacing.

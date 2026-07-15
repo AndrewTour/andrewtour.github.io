@@ -1730,3 +1730,25 @@ button:not(:disabled):active,a.appointment-call:active{transform:scale(.965)}
 .appointment-booked-on{color:#667084!important}
 .appointment-confirm-note{color:#0ca66c!important}
 @media(max-width:380px){.appointment-reminder-badge{font-size:.47rem;padding:0 7px}.appointment-card-premium .appointment-card-top time{font-size:.62rem}}
+
+/* v1.25.3 — appointment log view and reminder card refinement */
+.appointment-reminder-footer{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:12px;
+  margin-top:7px;
+}
+.appointment-reminder-footer .appointment-booked-for,
+.appointment-reminder-footer .appointment-confirm-note{
+  margin-top:0;
+}
+.appointment-reminder-footer .appointment-confirm-note{
+  text-align:right;
+  white-space:nowrap;
+}
+@media(max-width:380px){
+  .appointment-reminder-footer{gap:8px}
+  .appointment-reminder-footer .appointment-booked-for,
+  .appointment-reminder-footer .appointment-confirm-note{font-size:.6rem}
+}
