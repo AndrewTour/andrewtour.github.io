@@ -1116,3 +1116,29 @@ body.sync-popover-open::after{
 @media(prefers-reduced-motion:reduce){
   body.sync-popover-open::after,#syncPopover.sync-popover{animation:none}
 }
+
+/* v1.23.3 — visible top-layer sync guide and unclipped track status */
+#todayView #welcomeMessage{
+  display:block;
+  white-space:nowrap;
+  overflow:visible;
+  text-overflow:clip;
+  max-width:none;
+  text-transform:uppercase;
+  letter-spacing:.18em;
+}
+#todayView #welcomeMessage.track-on{color:#079a67}
+#todayView #welcomeMessage.track-off{color:#d83c54}
+#syncPopover.sync-popover{
+  isolation:isolate;
+  color:#17191e;
+  background:rgba(255,255,255,.99);
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+}
+#syncPopover.sync-popover.hidden{
+  display:none!important;
+  visibility:hidden;
+  pointer-events:none;
+}

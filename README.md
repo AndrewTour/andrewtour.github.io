@@ -36,3 +36,9 @@ Today header refinement: personalised welcome title, restored date subtitle, and
 ## v1.23.2
 - Sync status guide now renders above the entire app with a dimmed, blurred backdrop.
 - Door-knocking coaching begins at 2:00pm and paces completion toward 5:00pm. Early knocking is recognised as ahead of target.
+
+
+## v1.23.3
+- Fixed the sync status guide so its content renders above the blur overlay.
+- Replaced the top-card label with ON TRACK / OFF TRACK using live pacing across calls, connects, data and knocking.
+- Prevented the track-status heading from truncating with an ellipsis.

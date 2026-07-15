@@ -159,6 +159,25 @@ function knockPaceText(minutes,target){
   if(action>0)return `${action} min needed by ${shortTime(checkpoint)}`;
   return 'On track';
 }
+
+function expectedKnockAt(target,when=new Date()){
+  const start=new Date(when),end=new Date(when);
+  start.setHours(14,0,0,0);
+  end.setHours(17,0,0,0);
+  if(when<start)return 0;
+  if(when>=end)return target;
+  return Math.min(target,Math.round(target*((when-start)/(end-start))));
+}
+function isDayOnTrack(k=selectedDate){
+  if(!isWorkDayKey(k))return true;
+  const d=dayData(k),knockTarget=rollingKnockTarget(k),knockMinutes=Math.floor(liveKnockSeconds(d)/60);
+  if(k!==todayKey())return d.calls>=targets.calls&&d.connects>=targets.connects&&d.data>=targets.data&&knockMinutes>=knockTarget;
+  const now=new Date();
+  return d.calls>=expectedAt('calls',targets.calls,now)
+    && d.connects>=expectedAt('connects',targets.connects,now)
+    && d.data>=expectedAt('data',targets.data,now)
+    && knockMinutes>=expectedKnockAt(knockTarget,now);
+}
 function momentumWhisper(){
   if(selectedDate!==todayKey()){
     const previous=previousScheduledKey(selectedDate),change=previous?completion(selectedDate)-completion(previous):0;
@@ -235,10 +254,11 @@ function updateTopbar(id=activeViewId()){
   $('#dateLabel').classList.remove('hidden');
   dateLine?.classList.remove('today-sync-only');
   if(isToday&&todaySlot){
-    if(syncBadge&&syncBadge.parentElement!==todaySlot)todaySlot.append(syncBadge,syncPopover);
+    if(syncBadge&&syncBadge.parentElement!==todaySlot)todaySlot.append(syncBadge);
   }else if(dateLine){
-    if(syncBadge&&syncBadge.parentElement!==dateLine)dateLine.append(syncBadge,syncPopover);
+    if(syncBadge&&syncBadge.parentElement!==dateLine)dateLine.append(syncBadge);
   }
+  if(syncPopover&&syncPopover.parentElement!==document.body)document.body.append(syncPopover);
 }
 function renderToday(){
   const d=dayData(selectedDate),score=completion(selectedDate),kt=rollingKnockTarget(selectedDate),secs=liveKnockSeconds(d),wk=weekSummary();
@@ -247,7 +267,12 @@ function renderToday(){
   $('#backToday').classList.toggle('hidden',selectedDate===todayKey());
   $('#lockBadge').classList.toggle('hidden',!locked);$('#lockBadge').textContent=past?'LOCKED':'NOT SCHEDULED';
   $('#todayView').classList.toggle('date-locked',locked);
-  if($('#welcomeMessage'))$('#welcomeMessage').textContent='DAILY COMPLETION';
+  if($('#welcomeMessage')){
+    const onTrack=isDayOnTrack(selectedDate);
+    $('#welcomeMessage').textContent=onTrack?'ON TRACK':'OFF TRACK';
+    $('#welcomeMessage').classList.toggle('track-on',onTrack);
+    $('#welcomeMessage').classList.toggle('track-off',!onTrack);
+  }
   $('#dailyScore').textContent=`${score}%`;
   $('#scoreBar').style.width=`${score}%`;
   for(const m of ['calls','connects','data']){
@@ -437,7 +462,7 @@ $('#calendarGrid').onclick=e=>{const b=e.target.closest('[data-date]');if(!b)ret
 $('#yearHeatmap').onclick=e=>{const b=e.target.closest('[data-date]');if(!b)return;selectedDate=b.dataset.date;appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;switchView('todayView');renderAll();ensureTick()};
 $('#prevMonth').onclick=()=>{monthCursor.setMonth(monthCursor.getMonth()-1);renderMonth()};$('#nextMonth').onclick=()=>{monthCursor.setMonth(monthCursor.getMonth()+1);renderMonth()};
 function closeSyncPopover(){const p=$('#syncPopover'),b=$('#syncBadge');p?.classList.add('hidden');b?.setAttribute('aria-expanded','false');document.body.classList.remove('sync-popover-open')}
-$('#syncBadge').onclick=e=>{e.stopPropagation();const p=$('#syncPopover'),opening=p.classList.contains('hidden');p.classList.toggle('hidden',!opening);$('#syncBadge').setAttribute('aria-expanded',String(opening));document.body.classList.toggle('sync-popover-open',opening)};
+$('#syncBadge').onclick=e=>{e.stopPropagation();const p=$('#syncPopover'),opening=p.classList.contains('hidden');if(p&&p.parentElement!==document.body)document.body.append(p);p.classList.toggle('hidden',!opening);$('#syncBadge').setAttribute('aria-expanded',String(opening));document.body.classList.toggle('sync-popover-open',opening)};
 $('#syncPopover').onclick=e=>e.stopPropagation();
 document.addEventListener('click',closeSyncPopover);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSyncPopover()});
