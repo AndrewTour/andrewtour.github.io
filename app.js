@@ -144,7 +144,7 @@ function knockPaceText(minutes,target){
   start.setHours(14,0,0,0);
   end.setHours(17,0,0,0);
   if(minutes>=target)return 'Daily goal achieved';
-  if(now<start)return minutes>0?`${minutes} min ahead of target`:'Door knocking starts after 2:00pm';
+  if(now<start)return minutes>0?`${minutes} min ahead of target`:'Start at 2:00pm';
   if(now>=end)return `${Math.max(0,target-minutes)} min remaining today`;
   const progress=Math.max(0,Math.min(1,(now-start)/(end-start)));
   const expected=Math.min(target,Math.round(target*progress));
@@ -172,11 +172,13 @@ function isDayOnTrack(k=selectedDate){
   if(!isWorkDayKey(k))return true;
   const d=dayData(k),knockTarget=rollingKnockTarget(k),knockMinutes=Math.floor(liveKnockSeconds(d)/60);
   if(k!==todayKey())return d.calls>=targets.calls&&d.connects>=targets.connects&&d.data>=targets.data&&knockMinutes>=knockTarget;
-  const now=new Date();
-  return d.calls>=expectedAt('calls',targets.calls,now)
+  const now=new Date(),knockStart=new Date(now);
+  knockStart.setHours(14,0,0,0);
+  const coreOnTrack=d.calls>=expectedAt('calls',targets.calls,now)
     && d.connects>=expectedAt('connects',targets.connects,now)
-    && d.data>=expectedAt('data',targets.data,now)
-    && knockMinutes>=expectedKnockAt(knockTarget,now);
+    && d.data>=expectedAt('data',targets.data,now);
+  if(now<knockStart)return coreOnTrack;
+  return coreOnTrack&&knockMinutes>=expectedKnockAt(knockTarget,now);
 }
 function momentumWhisper(){
   if(selectedDate!==todayKey()){
