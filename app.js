@@ -33,7 +33,22 @@ function isPastDate(k){return k<todayKey()}
 function canEditDate(k){return !isPastDate(k)&&isWorkDayKey(k)}
 function lockedToast(){haptic(20);toast(isPastDate(selectedDate)?'This day is complete and locked':'This day is not in your accountability schedule')}
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove('show'),1800)}
-function setSync(state,label){const b=$('#syncBadge');b.className=`sync-badge ${state}`;b.textContent=label}
+function syncVisualState(state,label){
+  if(state)return state;
+  if(label==='Saving')return 'saving';
+  if(label==='Connecting'||label==='Connected')return 'connecting';
+  if(label==='Offline'||label==='This device')return 'offline';
+  if(label==='Sync error')return 'error';
+  return 'connecting';
+}
+function setSync(state,label){
+  const b=$('#syncBadge'),visual=syncVisualState(state,label);
+  b.className=`sync-badge ${visual}`;
+  b.dataset.label=label;
+  b.setAttribute('aria-label',`Sync status: ${label}`);
+  b.title=`Sync status: ${label}`;
+  const current=$('#syncCurrentText');if(current)current.textContent=label;
+}
 
 function storagePrefix(userId=uid){return `da:${userId||'local'}:`}
 function resetState(){days={};targets={...DEFAULTS};workDays=[...DEFAULT_WORK_DAYS];agentName='';leaderboardEntries=[];selectedDate=todayKey();appointmentDate=selectedDate}
@@ -93,8 +108,9 @@ function expectedAt(metric,target,when=new Date()){
   return Math.min(target,Math.round(target*accountabilityDayProgress(when)));
 }
 function welcomeMessage(){
-  const hour=new Date().getHours(),name=(displayAgentName().split(/\s+/)[0]||'AGENT').toUpperCase();
-  const greeting=hour<12?'GOOD MORNING':hour<17?'GOOD AFTERNOON':'GOOD EVENING';
+  const hour=new Date().getHours(),raw=(displayAgentName().split(/\s+/)[0]||'Agent');
+  const name=raw.charAt(0).toUpperCase()+raw.slice(1).toLowerCase();
+  const greeting=hour<12?'Good morning':hour<17?'Good afternoon':'Good evening';
   return `${greeting}, ${name}`;
 }
 function metricRemainingText(value,target){
@@ -198,10 +214,19 @@ function alarm(){haptic([180,100,180]);toast('Today’s knocking target reached'
 function formatHour(h){return `${h%12||12}:00 ${h>=12?'PM':'AM'}`}
 function renderCallPlan(){const now=new Date(),h=now.getHours();let current=CALL_PLAN.find(x=>x[0]===h);if(h<9)current=[8,'Prepare your priority list','Before 9:00 AM'];if(h>=17)current=[17,'Review follow-up and plan tomorrow','9:00 AM–5:00 PM call day complete'];$('#currentCall').textContent=current[1];$('#currentSlot').textContent=h>=9&&h<17?`${formatHour(h)}–${formatHour(h+1)} · 10 call target`:current[2];$('#callPlan').innerHTML=CALL_PLAN.map(([hour,title,note])=>`<div class="call-row ${hour===h?'active':''}"><b>${formatHour(hour)}</b><span><strong>${title}</strong><small>${note}</small></span><em>10</em></div>`).join('')}
 function callsPaceText(value){if(selectedDate!==todayKey())return `${Math.max(0,targets.calls-value)} remaining`;const expected=expectedAt('calls',targets.calls,new Date()),diff=value-expected;return value>=targets.calls?'Target complete':diff===0?'On track':diff>0?`${diff} ahead of target`:`${Math.abs(diff)} behind target`}
+function activeViewId(){return document.querySelector('.view.active')?.id||'todayView'}
+function updateTopbar(id=activeViewId()){
+  const isToday=id==='todayView';
+  const label=document.querySelector(`.tabbar button[data-view="${id}"] span`)?.textContent||'Daily Accountability';
+  $('#viewTitle').textContent=isToday?fmtDate(selectedDate):label;
+  $('#dateLabel').textContent=isToday?'':fmtDate(selectedDate);
+  $('#dateLabel').classList.toggle('hidden',isToday);
+  document.querySelector('.date-line')?.classList.toggle('today-sync-only',isToday);
+}
 function renderToday(){
   const d=dayData(selectedDate),score=completion(selectedDate),kt=rollingKnockTarget(selectedDate),secs=liveKnockSeconds(d),wk=weekSummary();
   const past=isPastDate(selectedDate),scheduled=isWorkDayKey(selectedDate),locked=past||!scheduled;
-  $('#dateLabel').textContent=fmtDate(selectedDate);
+  updateTopbar();
   $('#backToday').classList.toggle('hidden',selectedDate===todayKey());
   $('#lockBadge').classList.toggle('hidden',!locked);$('#lockBadge').textContent=past?'LOCKED':'NOT SCHEDULED';
   $('#todayView').classList.toggle('date-locked',locked);
@@ -344,7 +369,7 @@ function renderCalendar(){const labels=['M','T','W','T','F','S','S'];$('#calenda
 function renderSettings(){$('#agentName').value=displayAgentName();$('#callsTarget').value=targets.calls;$('#connectsTarget').value=targets.connects;$('#dataTarget').value=targets.data;$('#weeklyKnockTarget').value=targets.weeklyKnock;$$('[name=workDay]').forEach(el=>el.checked=workDays.includes(Number(el.value)));$('#accountEmail').textContent=currentUser?.email||'Device-only mode';$('#modeNote').textContent=cloud?'Live sync is active. Use the same login on every device.':'Data is stored only on this device.'}
 function renderAll(){renderToday();renderAppointments();renderInsights();renderSettings()}
 
-async function startCloud(user){unsubDays?.();unsubProfile?.();unsubLeaderboard?.();currentUser=user;uid=user.uid;cloud=true;loadLocal(uid);await finaliseExpiredTimers();setSync('','Connecting');clearTimeout(syncTimer);syncTimer=setTimeout(()=>{if($('#syncBadge').textContent==='Connecting')setSync(navigator.onLine?'':'offline',navigator.onLine?'Connected':'Offline')},3500);unsubDays=onSnapshot(collection(db,'users',uid,'days'),{includeMetadataChanges:true},snap=>{snap.docChanges().forEach(ch=>{if(ch.type==='removed')delete days[ch.doc.id];else{const incoming=ch.doc.data();days[ch.doc.id]={...blankDay(),...incoming,appointments:incoming.appointments||[],events:incoming.events||[]}}});saveLocal();renderAll();ensureTick();clearTimeout(syncTimer);setSync(snap.metadata.fromCache&&!navigator.onLine?'offline':'live',snap.metadata.hasPendingWrites?'Saving':'Live')},err=>{console.error(err);setSync('error','Sync error');toast('Firestore access failed. Check rules and login.');showAuthMessage(err.message)});unsubProfile=onSnapshot(doc(db,'users',uid),snap=>{if(snap.exists()){const profile=snap.data();if(profile.targets)targets={...DEFAULTS,...profile.targets};if(Array.isArray(profile.workDays)&&profile.workDays.length)workDays=normaliseWorkDays(profile.workDays);if(profile.name)agentName=profile.name;saveLocal();renderAll();scheduleLeaderboardPublish()}},err=>console.error(err));unsubLeaderboard=onSnapshot(collection(db,'leaderboard'),{includeMetadataChanges:true},snap=>{leaderboardEntries=snap.docs.map(d=>({uid:d.id,...d.data()}));renderLeaderboard()},err=>{console.error('Leaderboard read failed',err);$('#leaderboardStatus').textContent='SYNC ERROR'});setSync(navigator.onLine?'live':'offline',navigator.onLine?'Live':'Offline');showApp();scheduleLeaderboardPublish()}
+async function startCloud(user){unsubDays?.();unsubProfile?.();unsubLeaderboard?.();currentUser=user;uid=user.uid;cloud=true;loadLocal(uid);await finaliseExpiredTimers();setSync('','Connecting');clearTimeout(syncTimer);syncTimer=setTimeout(()=>{if($('#syncBadge').dataset.label==='Connecting')setSync(navigator.onLine?'':'offline',navigator.onLine?'Connected':'Offline')},3500);unsubDays=onSnapshot(collection(db,'users',uid,'days'),{includeMetadataChanges:true},snap=>{snap.docChanges().forEach(ch=>{if(ch.type==='removed')delete days[ch.doc.id];else{const incoming=ch.doc.data();days[ch.doc.id]={...blankDay(),...incoming,appointments:incoming.appointments||[],events:incoming.events||[]}}});saveLocal();renderAll();ensureTick();clearTimeout(syncTimer);setSync(snap.metadata.fromCache&&!navigator.onLine?'offline':'live',snap.metadata.hasPendingWrites?'Saving':'Live')},err=>{console.error(err);setSync('error','Sync error');toast('Firestore access failed. Check rules and login.');showAuthMessage(err.message)});unsubProfile=onSnapshot(doc(db,'users',uid),snap=>{if(snap.exists()){const profile=snap.data();if(profile.targets)targets={...DEFAULTS,...profile.targets};if(Array.isArray(profile.workDays)&&profile.workDays.length)workDays=normaliseWorkDays(profile.workDays);if(profile.name)agentName=profile.name;saveLocal();renderAll();scheduleLeaderboardPublish()}},err=>console.error(err));unsubLeaderboard=onSnapshot(collection(db,'leaderboard'),{includeMetadataChanges:true},snap=>{leaderboardEntries=snap.docs.map(d=>({uid:d.id,...d.data()}));renderLeaderboard()},err=>{console.error('Leaderboard read failed',err);$('#leaderboardStatus').textContent='SYNC ERROR'});setSync(navigator.onLine?'live':'offline',navigator.onLine?'Live':'Offline');showApp();scheduleLeaderboardPublish()}
 function showApp(){$('#authGate').classList.add('hidden');$('#app').classList.remove('hidden');$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()}
 let viewportFrame=0;
 function updateAppViewport(){
@@ -370,7 +395,7 @@ function bindViewport(){
 }
 async function init(){bindViewport();loadLocal('local');await finaliseExpiredTimers();if(!configured()){showAuthMessage('Firebase is not configured. You can still use device-only mode.');return}try{const fb=initializeApp(firebaseConfig);auth=getAuth(fb);await setPersistence(auth,browserLocalPersistence);db=initializeFirestore(fb,{experimentalAutoDetectLongPolling:true,localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});onAuthStateChanged(auth,u=>{if(u){startCloud(u)}else{clearActiveSession();$('#app').classList.add('hidden');$('#authGate').classList.remove('hidden')}})}catch(err){console.error(err);showAuthMessage(err.message)}}
 function showAuthMessage(msg){$('#authMessage').textContent=msg}
-function switchView(id){$$('.tabbar button').forEach(b=>b.classList.toggle('active',b.dataset.view===id));$$('.view').forEach(v=>v.classList.toggle('active',v.id===id));const label=document.querySelector(`.tabbar button[data-view="${id}"] span`)?.textContent||'Daily Accountability';$('#viewTitle').textContent=id==='todayView'?'Daily Accountability':label;if(id==='appointmentsView')renderAppointments();if(id==='insightsView')renderInsights()}
+function switchView(id){$$('.tabbar button').forEach(b=>b.classList.toggle('active',b.dataset.view===id));$$('.view').forEach(v=>v.classList.toggle('active',v.id===id));updateTopbar(id);if(id==='appointmentsView')renderAppointments();if(id==='insightsView')renderInsights()}
 function openCalendar(){$('#calendarModal').classList.add('open');renderCalendar()}
 
 $('#authForm').addEventListener('submit',async e=>{e.preventDefault();showAuthMessage('');try{await signInWithEmailAndPassword(auth,$('#email').value,$('#password').value)}catch(err){showAuthMessage(err.message)}});
@@ -394,6 +419,11 @@ $('#openCalendarFromInsights').onclick=openCalendar;$('#closeCalendar').onclick=
 $('#calendarGrid').onclick=e=>{const b=e.target.closest('[data-date]');if(!b)return;selectedDate=b.dataset.date;appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;$('#calendarModal').classList.remove('open');switchView('todayView');renderAll();ensureTick()};
 $('#yearHeatmap').onclick=e=>{const b=e.target.closest('[data-date]');if(!b)return;selectedDate=b.dataset.date;appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;switchView('todayView');renderAll();ensureTick()};
 $('#prevMonth').onclick=()=>{monthCursor.setMonth(monthCursor.getMonth()-1);renderMonth()};$('#nextMonth').onclick=()=>{monthCursor.setMonth(monthCursor.getMonth()+1);renderMonth()};
+function closeSyncPopover(){const p=$('#syncPopover'),b=$('#syncBadge');p?.classList.add('hidden');b?.setAttribute('aria-expanded','false')}
+$('#syncBadge').onclick=e=>{e.stopPropagation();const p=$('#syncPopover'),opening=p.classList.contains('hidden');p.classList.toggle('hidden',!opening);$('#syncBadge').setAttribute('aria-expanded',String(opening))};
+$('#syncPopover').onclick=e=>e.stopPropagation();
+document.addEventListener('click',closeSyncPopover);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSyncPopover()});
 window.addEventListener('online',()=>{if(cloud){setSync('live','Live');scheduleLeaderboardPublish()}});window.addEventListener('offline',()=>setSync('offline','Offline'));
 if('serviceWorker'in navigator)window.addEventListener('load',async()=>{const reg=await navigator.serviceWorker.register('./service-worker.js');reg.update()});
 setInterval(()=>{finaliseExpiredTimers().then(()=>{if(selectedDate<todayKey())renderAll()});updateAppViewport();if(cloud)scheduleLeaderboardPublish()},30000);

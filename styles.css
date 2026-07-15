@@ -1005,3 +1005,66 @@ button:not(:disabled):active,.file-btn:active{
 @media(prefers-color-scheme:dark){
   html,body{color-scheme:light}
 }
+
+
+/* v1.23 — Today date title, compact sync dot/key and single-line welcome */
+.date-line{position:relative}
+.sync-badge{
+  appearance:none;
+  -webkit-appearance:none;
+  display:inline-block;
+  width:11px;
+  height:11px;
+  min-width:11px;
+  padding:0;
+  margin:0;
+  border:0;
+  border-radius:50%;
+  background:#d79a20;
+  box-shadow:0 0 0 3px rgba(215,154,32,.12);
+  cursor:pointer;
+  vertical-align:middle;
+  transition:background-color .18s ease,box-shadow .18s ease,transform .18s ease;
+}
+.sync-badge.live{background:#18aa75;box-shadow:0 0 0 3px rgba(24,170,117,.13)}
+.sync-badge.saving{background:#0b63f3;box-shadow:0 0 0 3px rgba(11,99,243,.13)}
+.sync-badge.connecting{background:#d79a20;box-shadow:0 0 0 3px rgba(215,154,32,.13)}
+.sync-badge.offline{background:#9aa1ad;box-shadow:0 0 0 3px rgba(154,161,173,.14)}
+.sync-badge.error{background:#d83c54;box-shadow:0 0 0 3px rgba(216,60,84,.13)}
+.sync-badge:not(:disabled):active{transform:scale(.88);filter:none}
+.today-sync-only{min-height:.78rem}
+.sync-popover{
+  position:absolute;
+  z-index:80;
+  top:calc(100% + 10px);
+  left:0;
+  width:min(286px,calc(100vw - 54px));
+  color:#17191e;
+  background:rgba(255,255,255,.98);
+  border:1px solid #e1e4e9;
+  border-radius:16px;
+  box-shadow:0 16px 38px rgba(25,31,46,.16);
+  backdrop-filter:blur(20px) saturate(120%);
+  -webkit-backdrop-filter:blur(20px) saturate(120%);
+  padding:12px;
+}
+.sync-popover-head{display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;margin-bottom:6px;border-bottom:1px solid #eceef1}
+.sync-popover-head strong{font-size:.76rem;color:#111318}
+.sync-popover-head span{font-size:.64rem;font-weight:800;color:#6e7683}
+.sync-key{display:grid;grid-template-columns:10px 1fr;gap:9px;align-items:center;padding:5px 1px;color:#6f7784;font-size:.64rem;line-height:1.25}
+.sync-key b{color:#22252b}
+.sync-key i{width:9px;height:9px;border-radius:50%;background:#9aa1ad}
+.sync-key i.live{background:#18aa75}
+.sync-key i.saving{background:#0b63f3}
+.sync-key i.connecting{background:#d79a20}
+.sync-key i.offline{background:#9aa1ad}
+.sync-key i.error{background:#d83c54}
+#welcomeMessage{
+  display:block;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  text-transform:none;
+  letter-spacing:0;
+}
+@media(prefers-reduced-motion:reduce){.sync-badge{transition:none}}

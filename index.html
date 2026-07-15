@@ -31,7 +31,18 @@
   <header class="topbar">
     <div>
       <h1 id="viewTitle">Daily Accountability</h1>
-      <div class="date-line"><div id="dateLabel" class="date"></div><span id="syncBadge" class="sync-badge">Connecting</span></div>
+      <div class="date-line">
+        <div id="dateLabel" class="date"></div>
+        <button id="syncBadge" class="sync-badge connecting" type="button" aria-label="Sync status: Connecting" aria-expanded="false"></button>
+        <div id="syncPopover" class="sync-popover hidden" role="dialog" aria-label="Sync status guide">
+          <div class="sync-popover-head"><strong>Sync status</strong><span id="syncCurrentText">Connecting</span></div>
+          <div class="sync-key"><i class="live"></i><span><b>Green</b> — Live and synced</span></div>
+          <div class="sync-key"><i class="saving"></i><span><b>Blue</b> — Saving changes</span></div>
+          <div class="sync-key"><i class="connecting"></i><span><b>Amber</b> — Connecting</span></div>
+          <div class="sync-key"><i class="offline"></i><span><b>Grey</b> — Offline or device-only</span></div>
+          <div class="sync-key"><i class="error"></i><span><b>Red</b> — Sync needs attention</span></div>
+        </div>
+      </div>
     </div>
     <div class="top-actions">
       <span id="lockBadge" class="lock-badge hidden">LOCKED</span><button id="backToday" class="back-today hidden" type="button">Today</button>

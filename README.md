@@ -21,3 +21,10 @@ This release is a visual-only redesign built from the working v1.21.5 release.
 - Leaderboards, appointments, settings and calendar behaviour
 
 Upload every file in this folder to the root of the existing GitHub repository.
+
+
+## v1.23 visual header update
+- Today page uses the selected date as the main title.
+- Sync state is a tappable colour dot with a compact status guide.
+- Other page titles remain unchanged.
+- Welcome message is forced to one sentence-case line.
