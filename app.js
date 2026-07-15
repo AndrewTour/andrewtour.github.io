@@ -110,7 +110,7 @@ function expectedAt(metric,target,when=new Date()){
 function welcomeMessage(){
   const hour=new Date().getHours(),raw=(displayAgentName().split(/\s+/)[0]||'Agent');
   const name=raw.charAt(0).toUpperCase()+raw.slice(1).toLowerCase();
-  const greeting=hour<12?'Good morning':hour<17?'Good afternoon':'Good evening';
+  const greeting=hour<12?'Good Morning':hour<17?'Good Afternoon':'Good Evening';
   return `${greeting}, ${name}`;
 }
 function metricRemainingText(value,target){
@@ -368,7 +368,7 @@ function renderAppointments(){
     const time=Number.isFinite(start.getTime())?start.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'}):'';
     const contact=[name,a.phone].filter(Boolean).join(' · ');
     const meta=[...(a.types||[]),time,contact].filter(Boolean).join(' · ');
-    return `<article class="appointment-card"><div><strong>${escapeHtml(a.address||'Appointment')}</strong><small>${escapeHtml(meta)}</small></div><div class="appointment-card-actions"><button data-calendar-appointment="${a.id}" aria-label="Add to calendar" title="Add to calendar">⌁</button><button data-delete-appointment="${a.id}" aria-label="Delete" ${locked?'disabled':''}>×</button></div></article>`
+    return `<article class="appointment-card"><div><strong>${escapeHtml(a.address||'Appointment')}</strong><small>${escapeHtml(meta)}</small></div><div class="appointment-card-actions"><button class="calendar-action" data-calendar-appointment="${a.id}" aria-label="Add to calendar">Add to calendar</button><button data-delete-appointment="${a.id}" aria-label="Delete" ${locked?'disabled':''}>×</button></div></article>`
   }).join(''):`<div class="empty">No appointments logged for this date.</div>`
 }
 function escapeHtml(s){return String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
@@ -536,10 +536,13 @@ if(appointmentForm)appointmentForm.onsubmit=async e=>{
   const appointment=await addAppointment({firstName,lastName,phone,address,bookingDate,startTime,durationMinutes,types});
   if(!appointment)return;
   e.target.reset();syncAppointmentBookingDate();if($('#appointmentDuration'))$('#appointmentDuration').value='60';
-  if(confirm('Appointment booked. Add it to your calendar?'))await exportAppointment(appointment)
+  const prompt=$('#calendarPrompt');
+  if(prompt){prompt.dataset.appointmentId=appointment.id;prompt.classList.remove('hidden');prompt.scrollIntoView({behavior:'smooth',block:'nearest'})}
 };
 const appointmentsList=$('#appointmentsList');
 if(appointmentsList)appointmentsList.onclick=e=>{const calendar=e.target.closest('[data-calendar-appointment]'),remove=e.target.closest('[data-delete-appointment]');if(calendar){const appointment=dayData(appointmentDate).appointments.find(a=>a.id===calendar.dataset.calendarAppointment);exportAppointment(appointment);return}if(remove&&confirm('Delete this appointment?'))deleteAppointment(remove.dataset.deleteAppointment)};
+const calendarPrompt=$('#calendarPrompt');
+if(calendarPrompt)calendarPrompt.onclick=e=>{if(e.target.closest('#dismissCalendarPrompt')){calendarPrompt.classList.add('hidden');return}if(e.target.closest('#confirmCalendarPrompt')){const id=calendarPrompt.dataset.appointmentId,appointment=dayData(appointmentDate).appointments.find(a=>a.id===id);if(appointment)exportAppointment(appointment);calendarPrompt.classList.add('hidden')}};
 $('#saveSettings').onclick=async()=>{const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;saveLocal();await saveTargets();renderAll();toast('Settings saved')};
 $('#signOut').onclick=async()=>{clearActiveSession();if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
 $('#exportData').onclick=()=>{const blob=new Blob([JSON.stringify({targets,workDays,days},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`daily-accountability-${todayKey()}.json`;a.click();URL.revokeObjectURL(a.href)};
@@ -554,6 +557,6 @@ $('#syncPopover').onclick=e=>e.stopPropagation();
 document.addEventListener('click',closeSyncPopover);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSyncPopover()});
 window.addEventListener('online',()=>{if(cloud){setSync('live','Live');scheduleLeaderboardPublish()}});window.addEventListener('offline',()=>setSync('offline','Offline'));
-if('serviceWorker'in navigator)window.addEventListener('load',async()=>{const reg=await navigator.serviceWorker.register('./service-worker.js');reg.update()});
+if('serviceWorker'in navigator)window.addEventListener('load',async()=>{try{let refreshing=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(refreshing)return;refreshing=true;location.reload()});const reg=await navigator.serviceWorker.register('./service-worker.js?v=1.23.10');await reg.update();if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'})}catch(err){console.warn('Service worker update failed',err)}});
 setInterval(()=>{finaliseExpiredTimers().then(()=>{if(selectedDate<todayKey())renderAll()});updateAppViewport();if(cloud)scheduleLeaderboardPublish()},30000);
 init();

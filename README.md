@@ -29,3 +29,10 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - Kept all new DOM bindings null-safe so appointment UI code cannot block Firebase initialisation or login during an app update.
 - Versioned CSS and JavaScript asset URLs to prevent old HTML and new JavaScript being mixed by the installed PWA cache.
 - No Firebase Console changes required.
+
+
+## v1.23.10
+- Restored visible appointment contact and schedule fields.
+- Added an inline Add to calendar prompt and clear calendar actions on saved appointments.
+- Capitalised each word in the welcome greeting.
+- Strengthened service-worker activation to prevent stale appointment UI.

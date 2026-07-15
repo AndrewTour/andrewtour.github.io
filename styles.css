@@ -1266,3 +1266,14 @@ body.sync-popover-open::after{
 .appointment-card-actions{display:flex;align-items:center;gap:4px}
 .appointment-card-actions button[data-calendar-appointment]{color:var(--blue);font-size:1.2rem;transform:rotate(-35deg)}
 @media(max-width:420px){.appointment-schedule-grid{grid-template-columns:1fr 1fr}.appointment-schedule-grid label:last-child{grid-column:1/-1}.appointment-contact-grid{grid-template-columns:1fr 1fr}}
+
+/* v1.23.10 appointment booking visibility and calendar actions */
+.calendar-prompt{margin:14px 0;padding:16px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.calendar-prompt.hidden{display:none}
+.calendar-prompt>div:first-child{display:flex;flex-direction:column;gap:4px}
+.calendar-prompt strong{font-size:1rem}
+.calendar-prompt small{color:var(--muted)}
+.calendar-prompt-actions{display:flex;gap:8px;flex-shrink:0}
+.calendar-prompt-actions button{min-height:42px;padding:0 14px;border-radius:14px}
+.appointment-card-actions .calendar-action{width:auto;min-width:116px;padding:0 12px;font-size:.78rem;font-weight:800;transform:none;color:var(--blue);border:1px solid rgba(20,104,255,.18);background:rgba(20,104,255,.06)}
+@media(max-width:520px){.calendar-prompt{align-items:stretch;flex-direction:column}.calendar-prompt-actions{width:100%}.calendar-prompt-actions button{flex:1}}
