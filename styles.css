@@ -1383,3 +1383,110 @@ body::after{
   font-size:.76rem;
   letter-spacing:-.04em;
 }
+
+/* v1.24.4 — AGNT appointments workflow upgrade */
+.appointment-form{
+  display:grid;
+  gap:10px;
+}
+.appointment-form>label,
+.appointment-schedule label{
+  display:grid;
+  gap:6px;
+}
+.appointment-form input[type="text"],
+.appointment-form input[type="tel"],
+.appointment-form input[type="date"],
+.appointment-form input[type="time"]{
+  width:100%;
+  min-width:0;
+  height:44px;
+  box-sizing:border-box;
+  background:#fff;
+  color:#17191f;
+  border:1px solid var(--phase1-border);
+  border-radius:14px;
+  padding:0 13px;
+  font:inherit;
+  box-shadow:none;
+}
+.appointment-form input:focus{
+  outline:none;
+  border-color:rgba(66,108,224,.48);
+  box-shadow:0 0 0 3px rgba(66,108,224,.10);
+}
+.appointment-schedule{
+  display:grid;
+  grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);
+  gap:8px;
+}
+.appointment-types{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:6px;
+  margin:0;
+  padding:0;
+  border:0;
+  min-width:0;
+}
+.appointment-types label{
+  min-width:0;
+  padding:0;
+  border:0;
+  background:transparent;
+}
+.appointment-types input{
+  position:absolute;
+  opacity:0;
+  pointer-events:none;
+}
+.appointment-types span{
+  display:grid;
+  place-items:center;
+  min-width:0;
+  height:40px;
+  border:1px solid var(--phase1-border);
+  border-radius:13px;
+  background:#fff;
+  color:#717886;
+  font-size:.72rem;
+  font-weight:800;
+  letter-spacing:.06em;
+  transition:border-color .16s ease,background .16s ease,color .16s ease,transform .16s ease;
+}
+.appointment-types input:checked+span{
+  border-color:#111318;
+  background:#111318;
+  color:#fff;
+}
+.appointment-types input:focus-visible+span{
+  box-shadow:0 0 0 3px rgba(66,108,224,.12);
+}
+.form-error{
+  color:#c9364d;
+  font-size:.68rem;
+  font-weight:700;
+  line-height:1.35;
+}
+.appointment-card-copy{min-width:0}
+.appointment-card-top{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.appointment-card-top time{color:var(--muted);font-size:.64rem;font-weight:700}
+.appointment-type-badge{
+  display:inline-grid;
+  place-items:center;
+  min-width:38px;
+  height:24px;
+  padding:0 8px;
+  border-radius:999px;
+  background:#eef4ff;
+  color:#0b63f3;
+  font-size:.61rem;
+  font-weight:850;
+  letter-spacing:.05em;
+}
+.appointment-card strong{overflow-wrap:anywhere}
+@media (max-width:390px){
+  .appointment-types{gap:5px}
+  .appointment-types span{height:38px;font-size:.68rem;border-radius:12px}
+  .appointment-schedule{grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr)}
+}

@@ -55,3 +55,13 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - Replaced the knocking Start/Pause text with matching flat SVG play and pause icons.
 - Preserved the existing knocking button dimensions and timer/reset behaviour.
 - No Firebase Console changes required.
+
+
+## v1.24.4 — Appointments workflow upgrade
+- Added required contact name and contact number fields.
+- Added booking date and booking time fields; removed duration.
+- Replaced appointment types with BAP, MAP, LAP and PU in a single row.
+- Added safe fallback labels for legacy appointment records.
+- Sorted saved appointments chronologically by booking time.
+- Preserved Firebase, Firestore paths, authentication, sync and all unrelated functionality.
+- No Firebase Console changes required.

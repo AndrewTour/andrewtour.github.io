@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.24.3">
+<link rel="stylesheet" href="styles.css?v=1.24.4">
 <title>AGNT</title>
 </head>
 <body>
@@ -102,16 +102,23 @@
     <section id="appointmentsView" class="view">
       <div class="view-head">
         <div><span>APPOINTMENTS</span><h2 id="appointmentDateLabel"></h2></div>
-        <input id="appointmentDatePicker" type="date">
       </div>
-      <div id="appointmentLock" class="appointment-lock hidden">Past dates are locked and read-only.</div><form id="appointmentForm" class="appointment-form glass">
-        <label>Property address<input id="appointmentAddress" type="text" placeholder="14 Calla Grove, Pendle Hill" required></label>
-        <div class="appointment-types">
-          <label><input type="checkbox" value="Appraisal"><span>Appraisal</span></label>
-          <label><input type="checkbox" value="Listing appointment"><span>Listing appointment</span></label>
-          <label><input type="checkbox" value="Price update"><span>Price update</span></label>
+      <div id="appointmentLock" class="appointment-lock hidden">Past dates are locked and read-only.</div><form id="appointmentForm" class="appointment-form glass" novalidate>
+        <label>Contact name<input id="appointmentContactName" type="text" placeholder="Contact name" autocomplete="name" autocapitalize="words" required></label>
+        <label>Contact number<input id="appointmentContactNumber" type="tel" placeholder="04xx xxx xxx" autocomplete="tel" inputmode="tel" required></label>
+        <label>Property address<input id="appointmentAddress" type="text" placeholder="14 Calla Grove, Pendle Hill" autocomplete="street-address" required></label>
+        <div class="appointment-schedule">
+          <label>Booking date<input id="appointmentDatePicker" type="date" required></label>
+          <label>Booking time<input id="appointmentTime" type="time" required></label>
         </div>
-        <button class="primary" type="submit">Add appointment</button>
+        <fieldset class="appointment-types" aria-label="Appointment type">
+          <label><input type="radio" name="appointmentType" value="BAP"><span>BAP</span></label>
+          <label><input type="radio" name="appointmentType" value="MAP"><span>MAP</span></label>
+          <label><input type="radio" name="appointmentType" value="LAP"><span>LAP</span></label>
+          <label><input type="radio" name="appointmentType" value="PU"><span>PU</span></label>
+        </fieldset>
+        <div id="appointmentFormError" class="form-error hidden" role="alert"></div>
+        <button class="primary" type="submit">Book appointment</button>
       </form>
       <div id="appointmentsList" class="appointments-list"></div>
     </section>
@@ -231,6 +238,6 @@
   </div>
 </div>
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=1.24.3"></script>
+<script type="module" src="app.js?v=1.24.4"></script>
 </body>
 </html>
