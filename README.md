@@ -43,3 +43,10 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - Removed the diagonal calendar action and replaced it with a compact, horizontal Calendar button.
 - Removed the iOS share-sheet calendar workflow and now opens the generated iCalendar event directly for Apple Calendar import.
 - No Firebase Console changes required.
+
+
+## v1.23.12
+- Returned appointment date, start time and duration to one compact row.
+- Reduced control widths, padding and gaps to prevent overlap on iPhone.
+- Removed appointment calendar prompts, buttons and iCalendar export code.
+- No Firebase Console changes required.

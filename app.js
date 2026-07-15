@@ -368,27 +368,10 @@ function renderAppointments(){
     const time=Number.isFinite(start.getTime())?start.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'}):'';
     const contact=[name,a.phone].filter(Boolean).join(' · ');
     const meta=[...(a.types||[]),time,contact].filter(Boolean).join(' · ');
-    return `<article class="appointment-card"><div><strong>${escapeHtml(a.address||'Appointment')}</strong><small>${escapeHtml(meta)}</small></div><div class="appointment-card-actions"><button class="calendar-action" data-calendar-appointment="${a.id}" aria-label="Open in Apple Calendar">Calendar</button><button data-delete-appointment="${a.id}" aria-label="Delete" ${locked?'disabled':''}>×</button></div></article>`
+    return `<article class="appointment-card"><div><strong>${escapeHtml(a.address||'Appointment')}</strong><small>${escapeHtml(meta)}</small></div><div class="appointment-card-actions"><button data-delete-appointment="${a.id}" aria-label="Delete" ${locked?'disabled':''}>×</button></div></article>`
   }).join(''):`<div class="empty">No appointments logged for this date.</div>`
 }
 function escapeHtml(s){return String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
-function icsEscape(value){return String(value??'').replace(/\\/g,'\\\\').replace(/\r?\n/g,'\\n').replace(/,/g,'\\,').replace(/;/g,'\\;')}
-function icsDate(ms){return new Date(ms).toISOString().replace(/[-:]/g,'').replace(/\.\d{3}Z$/,'Z')}
-function calendarEvent(a){
-  const start=appointmentStartMs(a),end=start+(Number(a.durationMinutes)||60)*60000;
-  const name=appointmentName(a),title=[...(a.types||[]),name].filter(Boolean).join(' · ')||'Appointment';
-  const description=[name,a.phone,a.address,(a.types||[]).join(', ')].filter(Boolean).join('\n');
-  const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Daily Accountability//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH','BEGIN:VEVENT',`UID:${icsEscape(a.id)}@daily-accountability`,`DTSTAMP:${icsDate(Date.now())}`,`DTSTART:${icsDate(start)}`,`DTEND:${icsDate(end)}`,`SUMMARY:${icsEscape(title)}`,`DESCRIPTION:${icsEscape(description)}`,`LOCATION:${icsEscape(a.address||'')}`,'END:VEVENT','END:VCALENDAR'];
-  return lines.join('\r\n');
-}
-function exportAppointment(a){
-  if(!a||!appointmentStartMs(a))return toast('Appointment time is unavailable');
-  const blob=new Blob([calendarEvent(a)],{type:'text/calendar;charset=utf-8'}),url=URL.createObjectURL(blob);
-  const opened=window.open(url,'_blank','noopener,noreferrer');
-  if(!opened){const link=document.createElement('a');link.href=url;link.target='_blank';link.rel='noopener noreferrer';document.body.append(link);link.click();link.remove()}
-  toast('Opening Apple Calendar import');
-  setTimeout(()=>URL.revokeObjectURL(url),60000)
-}
 async function addAppointment(details){
   const bookingDate=details.bookingDate||appointmentDate;
   if(!canEditDate(bookingDate))return lockedToast();
@@ -537,13 +520,9 @@ if(appointmentForm)appointmentForm.onsubmit=async e=>{
   const appointment=await addAppointment({firstName,lastName,phone,address,bookingDate,startTime,durationMinutes,types});
   if(!appointment)return;
   e.target.reset();syncAppointmentBookingDate();if($('#appointmentDuration'))$('#appointmentDuration').value='60';
-  const prompt=$('#calendarPrompt');
-  if(prompt){prompt.dataset.appointmentId=appointment.id;prompt.classList.remove('hidden');prompt.scrollIntoView({behavior:'smooth',block:'nearest'})}
 };
 const appointmentsList=$('#appointmentsList');
-if(appointmentsList)appointmentsList.onclick=e=>{const calendar=e.target.closest('[data-calendar-appointment]'),remove=e.target.closest('[data-delete-appointment]');if(calendar){const appointment=dayData(appointmentDate).appointments.find(a=>a.id===calendar.dataset.calendarAppointment);exportAppointment(appointment);return}if(remove&&confirm('Delete this appointment?'))deleteAppointment(remove.dataset.deleteAppointment)};
-const calendarPrompt=$('#calendarPrompt');
-if(calendarPrompt)calendarPrompt.onclick=e=>{if(e.target.closest('#dismissCalendarPrompt')){calendarPrompt.classList.add('hidden');return}if(e.target.closest('#confirmCalendarPrompt')){const id=calendarPrompt.dataset.appointmentId,appointment=dayData(appointmentDate).appointments.find(a=>a.id===id);if(appointment)exportAppointment(appointment);calendarPrompt.classList.add('hidden')}};
+if(appointmentsList)appointmentsList.onclick=e=>{const remove=e.target.closest('[data-delete-appointment]');if(remove&&confirm('Delete this appointment?'))deleteAppointment(remove.dataset.deleteAppointment)};
 $('#saveSettings').onclick=async()=>{const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;saveLocal();await saveTargets();renderAll();toast('Settings saved')};
 $('#signOut').onclick=async()=>{clearActiveSession();if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
 $('#exportData').onclick=()=>{const blob=new Blob([JSON.stringify({targets,workDays,days},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`daily-accountability-${todayKey()}.json`;a.click();URL.revokeObjectURL(a.href)};
