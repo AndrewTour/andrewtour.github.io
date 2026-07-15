@@ -98,3 +98,18 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - Matched “Daily goal achieved” to the same green used by the completion strip.
 - Reduced the Start label slightly to keep it proportional.
 - No Firebase Console changes required.
+
+
+## v2.1.8 — Today geometry and timer icons
+- Restored the Today page geometry from DA v16 while retaining the v2 visual design.
+- The metric capsule now ends above the fixed navigation with a deliberate visible gap.
+- Replaced Start/Pause text with accessible play/pause SVG icons.
+- Matched completed status text to the metric completion green.
+- No Firebase Console changes required.
+
+
+## v2.1.9 — Today navigation boundary fit
+- Removed the artificial white gap between the Today metric capsule and bottom navigation.
+- Maximised the available vertical space without allowing the capsule to overlap the fixed navigation.
+- Preserved the v2.1.8 play/pause icons, sizing reference, Firebase behaviour and all app functionality.
+- No Firebase Console changes required.

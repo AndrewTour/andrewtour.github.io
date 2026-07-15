@@ -318,8 +318,20 @@ function renderToday(){
   $('#knockValue').textContent=fmtTimer(secs);
   $('#knockTargetText').textContent=past?'Final result':(!scheduled?'No target today':knockRemainingText(Math.floor(secs/60),kt));
   $('#knockRemaining').textContent=past?'Day locked':(!scheduled?'Not scheduled':knockPaceText(Math.floor(secs/60),kt));
-  $('#timerButton').textContent=past?'Locked':(!scheduled?'Off day':(d.timerStartedAt?'Pause':'Start'));
-  $('#timerButton').classList.toggle('running',!!d.timerStartedAt&&!locked);
+  const timerButton=$('#timerButton');
+  const timerRunning=!!d.timerStartedAt&&!locked;
+  if(past||!scheduled){
+    timerButton.textContent=past?'Locked':'Off day';
+    timerButton.setAttribute('aria-label',past?'Knocking timer locked':'Knocking unavailable on off day');
+    timerButton.title=past?'Knocking timer locked':'Knocking unavailable on off day';
+  }else{
+    timerButton.innerHTML=timerRunning
+      ? '<svg class="timer-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>'
+      : '<svg class="timer-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10-6.5z"/></svg>';
+    timerButton.setAttribute('aria-label',timerRunning?'Pause knocking timer':'Start knocking timer');
+    timerButton.title=timerRunning?'Pause knocking timer':'Start knocking timer';
+  }
+  timerButton.classList.toggle('running',timerRunning);
   $$('[data-action], #timerButton, #resetKnock').forEach(el=>{el.disabled=locked;el.setAttribute('aria-disabled',String(locked))});
   renderDayTrend();
   renderLeaderboardPosition();
