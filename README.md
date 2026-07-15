@@ -61,3 +61,10 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - Restored the Today page to the exact pre-redesign sizing and spacing.
 - Retained the v2 typography, colours, icons and component design language.
 - Left Appointments, Leaderboard and Settings unchanged.
+
+
+## v2.1.3
+- Reduced the Today metric stack so it clears the bottom navigation.
+- Reduced metric control sizes slightly for better visual balance.
+- Reduced the Knocking Start label to match the surrounding UI.
+- No Firebase Console changes required.
