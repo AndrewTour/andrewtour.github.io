@@ -1,6 +1,6 @@
-# Daily Accountability v1.23.6
+# Daily Accountability v1.23.7
 
-Incremental update from v1.23.4.
+Incremental update from v1.23.6.
 
 ## Headline status
 - ON TRACK: remaining work is comfortably achievable before the relevant close time.
@@ -12,3 +12,5 @@ Calls, connects and data use the remaining 9am–5pm workday. Knocking joins the
 Firebase, authentication, Firestore rules, storage, leaderboard and logging actions are unchanged.
 
 - v1.23.6: Updated bottom navigation to a unified flat 2D SVG icon family.
+
+- v1.23.7: Combined the four Today metric cards into one rounded capsule with faint internal dividers while preserving the completion side indicators.

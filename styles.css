@@ -1172,3 +1172,43 @@ body.sync-popover-open::after{
   .tabbar .tab-icon,.tabbar .tab-icon svg{width:20px;height:20px}
   .tabbar .tab-icon-today svg{width:18px;height:18px}
 }
+
+/* v1.23.7 — Unified Today metric capsule.
+   Visual-only: combines the four metric rows into one shared surface with subtle separators. */
+.metrics{
+  gap:0;
+  overflow:hidden;
+  border:1px solid #e1e4e9;
+  border-radius:24px;
+  background:#fff;
+  box-shadow:0 12px 30px rgba(25,31,46,.075),0 2px 6px rgba(25,31,46,.045);
+}
+.metric,
+.score-week .metric{
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+.metric:not(:last-child){
+  border-bottom:1px solid rgba(17,19,24,.075);
+}
+.metric.complete:before{
+  top:0;
+  bottom:0;
+  width:5px;
+  border-radius:0;
+}
+.metric:first-child.complete:before{
+  border-top-left-radius:23px;
+}
+.metric:last-child.complete:before{
+  border-bottom-left-radius:23px;
+}
+@media(max-height:760px){
+  .metrics{border-radius:20px}
+  .metric:first-child.complete:before{border-top-left-radius:19px}
+  .metric:last-child.complete:before{border-bottom-left-radius:19px}
+}
