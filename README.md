@@ -36,3 +36,10 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - Added an inline Add to calendar prompt and clear calendar actions on saved appointments.
 - Capitalised each word in the welcome greeting.
 - Strengthened service-worker activation to prevent stale appointment UI.
+
+
+## v1.23.11
+- Condensed the appointment date, start-time and duration controls and prevented native iPhone inputs from overlapping.
+- Removed the diagonal calendar action and replaced it with a compact, horizontal Calendar button.
+- Removed the iOS share-sheet calendar workflow and now opens the generated iCalendar event directly for Apple Calendar import.
+- No Firebase Console changes required.

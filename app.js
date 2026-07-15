@@ -368,25 +368,26 @@ function renderAppointments(){
     const time=Number.isFinite(start.getTime())?start.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'}):'';
     const contact=[name,a.phone].filter(Boolean).join(' · ');
     const meta=[...(a.types||[]),time,contact].filter(Boolean).join(' · ');
-    return `<article class="appointment-card"><div><strong>${escapeHtml(a.address||'Appointment')}</strong><small>${escapeHtml(meta)}</small></div><div class="appointment-card-actions"><button class="calendar-action" data-calendar-appointment="${a.id}" aria-label="Add to calendar">Add to calendar</button><button data-delete-appointment="${a.id}" aria-label="Delete" ${locked?'disabled':''}>×</button></div></article>`
+    return `<article class="appointment-card"><div><strong>${escapeHtml(a.address||'Appointment')}</strong><small>${escapeHtml(meta)}</small></div><div class="appointment-card-actions"><button class="calendar-action" data-calendar-appointment="${a.id}" aria-label="Open in Apple Calendar">Calendar</button><button data-delete-appointment="${a.id}" aria-label="Delete" ${locked?'disabled':''}>×</button></div></article>`
   }).join(''):`<div class="empty">No appointments logged for this date.</div>`
 }
 function escapeHtml(s){return String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
 function icsEscape(value){return String(value??'').replace(/\\/g,'\\\\').replace(/\r?\n/g,'\\n').replace(/,/g,'\\,').replace(/;/g,'\\;')}
 function icsDate(ms){return new Date(ms).toISOString().replace(/[-:]/g,'').replace(/\.\d{3}Z$/,'Z')}
-function calendarFile(a){
+function calendarEvent(a){
   const start=appointmentStartMs(a),end=start+(Number(a.durationMinutes)||60)*60000;
   const name=appointmentName(a),title=[...(a.types||[]),name].filter(Boolean).join(' · ')||'Appointment';
   const description=[name,a.phone,a.address,(a.types||[]).join(', ')].filter(Boolean).join('\n');
   const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Daily Accountability//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH','BEGIN:VEVENT',`UID:${icsEscape(a.id)}@daily-accountability`,`DTSTAMP:${icsDate(Date.now())}`,`DTSTART:${icsDate(start)}`,`DTEND:${icsDate(end)}`,`SUMMARY:${icsEscape(title)}`,`DESCRIPTION:${icsEscape(description)}`,`LOCATION:${icsEscape(a.address||'')}`,'END:VEVENT','END:VCALENDAR'];
-  return new File([lines.join('\r\n')],`appointment-${new Date(start).toISOString().slice(0,10)}.ics`,{type:'text/calendar'});
+  return lines.join('\r\n');
 }
-async function exportAppointment(a){
+function exportAppointment(a){
   if(!a||!appointmentStartMs(a))return toast('Appointment time is unavailable');
-  const file=calendarFile(a);
-  try{if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:'Add appointment to calendar'});return}}
-  catch(err){if(err?.name==='AbortError')return;console.warn('Calendar share failed',err)}
-  const url=URL.createObjectURL(file),link=document.createElement('a');link.href=url;link.download=file.name;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)
+  const blob=new Blob([calendarEvent(a)],{type:'text/calendar;charset=utf-8'}),url=URL.createObjectURL(blob);
+  const opened=window.open(url,'_blank','noopener,noreferrer');
+  if(!opened){const link=document.createElement('a');link.href=url;link.target='_blank';link.rel='noopener noreferrer';document.body.append(link);link.click();link.remove()}
+  toast('Opening Apple Calendar import');
+  setTimeout(()=>URL.revokeObjectURL(url),60000)
 }
 async function addAppointment(details){
   const bookingDate=details.bookingDate||appointmentDate;
@@ -557,6 +558,6 @@ $('#syncPopover').onclick=e=>e.stopPropagation();
 document.addEventListener('click',closeSyncPopover);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSyncPopover()});
 window.addEventListener('online',()=>{if(cloud){setSync('live','Live');scheduleLeaderboardPublish()}});window.addEventListener('offline',()=>setSync('offline','Offline'));
-if('serviceWorker'in navigator)window.addEventListener('load',async()=>{try{let refreshing=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(refreshing)return;refreshing=true;location.reload()});const reg=await navigator.serviceWorker.register('./service-worker.js?v=1.23.10');await reg.update();if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'})}catch(err){console.warn('Service worker update failed',err)}});
+if('serviceWorker'in navigator)window.addEventListener('load',async()=>{try{let refreshing=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(refreshing)return;refreshing=true;location.reload()});const reg=await navigator.serviceWorker.register('./service-worker.js?v=1.23.11');await reg.update();if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'})}catch(err){console.warn('Service worker update failed',err)}});
 setInterval(()=>{finaliseExpiredTimers().then(()=>{if(selectedDate<todayKey())renderAll()});updateAppViewport();if(cloud)scheduleLeaderboardPublish()},30000);
 init();

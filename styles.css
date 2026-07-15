@@ -1277,3 +1277,44 @@ body.sync-popover-open::after{
 .calendar-prompt-actions button{min-height:42px;padding:0 14px;border-radius:14px}
 .appointment-card-actions .calendar-action{width:auto;min-width:116px;padding:0 12px;font-size:.78rem;font-weight:800;transform:none;color:var(--blue);border:1px solid rgba(20,104,255,.18);background:rgba(20,104,255,.06)}
 @media(max-width:520px){.calendar-prompt{align-items:stretch;flex-direction:column}.calendar-prompt-actions{width:100%}.calendar-prompt-actions button{flex:1}}
+\n\n/* v1.23.11 compact appointment schedule and Apple Calendar cleanup */
+.appointment-schedule-grid{
+  grid-template-columns:minmax(0,1.18fr) minmax(0,.92fr) minmax(0,.9fr);
+  gap:8px;
+  align-items:end;
+}
+.appointment-schedule-grid label{min-width:0}
+.appointment-schedule-grid input,.appointment-schedule-grid select{
+  min-width:0;
+  width:100%;
+  box-sizing:border-box;
+  padding:11px 9px;
+  font-size:16px;
+}
+.appointment-schedule-grid select{padding-right:28px}
+.appointment-card-actions .calendar-action,
+.appointment-card-actions button[data-calendar-appointment]{
+  transform:none !important;
+  rotate:none !important;
+  width:auto;
+  min-width:0;
+  height:36px;
+  padding:0 10px;
+  border-radius:11px;
+  border:1px solid rgba(20,104,255,.18);
+  background:rgba(20,104,255,.06);
+  color:var(--blue);
+  font-size:.67rem;
+  line-height:1;
+  font-weight:800;
+  white-space:nowrap;
+}
+.calendar-prompt{border-radius:22px}
+@media(max-width:520px){
+  .appointment-schedule-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .appointment-schedule-grid label:last-child{grid-column:1/-1}
+}
+@media(max-width:360px){
+  .appointment-schedule-grid{grid-template-columns:1fr}
+  .appointment-schedule-grid label:last-child{grid-column:auto}
+}
