@@ -65,3 +65,10 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - Sorted saved appointments chronologically by booking time.
 - Preserved Firebase, Firestore paths, authentication, sync and all unrelated functionality.
 - No Firebase Console changes required.
+
+
+## v1.24.5 — Appointments UI refinement
+- Increased BAP, MAP, LAP and PU tap targets while keeping all four on one row.
+- Restyled booking date and time as equal rounded pills with consistent spacing.
+- Standardised form margins, gaps and the Book Appointment pill treatment.
+- No Firebase, Firestore, validation, data-model or appointment-functionality changes.

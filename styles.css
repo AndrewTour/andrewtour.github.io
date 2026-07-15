@@ -1490,3 +1490,49 @@ body::after{
   .appointment-types span{height:38px;font-size:.68rem;border-radius:12px}
   .appointment-schedule{grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr)}
 }
+
+/* v1.24.5 — Appointments UI refinement */
+.appointment-form{
+  gap:12px;
+  padding-left:16px;
+  padding-right:16px;
+}
+.appointment-schedule{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+  align-items:end;
+}
+.appointment-form input[type="date"],
+.appointment-form input[type="time"]{
+  height:40px;
+  border-radius:999px;
+  padding:0 11px;
+  font-size:.72rem;
+  text-align:center;
+  background:#fff;
+  overflow:hidden;
+}
+.appointment-types{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:8px;
+  width:100%;
+}
+.appointment-types span{
+  height:46px;
+  border-radius:999px;
+  font-size:.75rem;
+  letter-spacing:.055em;
+}
+.appointment-form>.primary{
+  border-radius:999px;
+  min-height:44px;
+  margin-top:2px;
+}
+@media (max-width:390px){
+  .appointment-form{padding-left:14px;padding-right:14px}
+  .appointment-schedule{gap:9px;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .appointment-form input[type="date"],
+  .appointment-form input[type="time"]{height:38px;padding:0 8px;font-size:.68rem}
+  .appointment-types{gap:6px}
+  .appointment-types span{height:44px;border-radius:999px;font-size:.72rem}
+}
