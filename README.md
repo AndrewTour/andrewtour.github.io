@@ -1,19 +1,23 @@
-# Daily Accountability v1.21.4
+# Daily Accountability v1.22 — VNDR Light Visual Refresh
 
-Incremental pacing refinement built from v1.21.3.
+This release is a visual-only redesign built from the working v1.21.5 release.
 
-## Changes
-- Logging remains available for the full calendar day.
-- Live pacing is calculated against a 9:00am–5:00pm workday.
-- Updated terminology to **On track**.
-- Ahead messaging now uses **ahead of target**.
-- Behind pacing provides a direct next action and checkpoint.
-- After 5:00pm, incomplete metrics show the remaining amount for today.
+## Changed visually
+- White/light-grey interface
+- Black primary typography and actions
+- Soft grey borders and shadows
+- Blue coaching and live-status accents
+- Green completion states
+- Clean white tab bar
+- Updated DA app icons and PWA theme colours
 
-Firebase configuration, Firestore rules, authentication, storage paths, sync and layout remain unchanged.
+## Unchanged
+- Firebase configuration and rules
+- Authentication
+- Firestore paths and sync
+- User-specific storage
+- Logging logic
+- Targets, pacing and calculations
+- Leaderboards, appointments, settings and calendar behaviour
 
-
-## v1.21.5
-- Activity logged before 9:00am now shows as ahead of target rather than Ready to start.
-- Early activity automatically carries into the 9:00am-5:00pm pacing calculation.
-- No Firebase, storage, sync, layout or logging changes.
+Upload every file in this folder to the root of the existing GitHub repository.
