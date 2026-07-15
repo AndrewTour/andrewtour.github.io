@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.24.6">
+<link rel="stylesheet" href="styles.css?v=1.25.0">
 <title>AGNT</title>
 </head>
 <body>
@@ -154,6 +154,17 @@
       <button id="openCalendarFromInsights" class="secondary full">Open full calendar</button>
       </div>
       <div id="leaderboardInsights" class="insights-page active">
+        <section class="leaderboard-dashboard glass" aria-label="Leaderboard overview">
+          <div class="leaderboard-dashboard-main">
+            <div class="leaderboard-ring" id="leaderboardRing" style="--score:0"><strong id="leaderboardHeroScore">0%</strong><span>Today</span></div>
+            <div class="leaderboard-hero-copy"><span>TEAM POSITION</span><strong id="leaderboardHeroRank">—</strong><small id="leaderboardHeroMessage">Waiting for today’s rankings</small></div>
+          </div>
+          <div class="leaderboard-kpis">
+            <article><span>Agents</span><strong id="leaderboardAgentCount">0</strong></article>
+            <article><span>Leader</span><strong id="leaderboardTopScore">0%</strong></article>
+            <article><span>Gap</span><strong id="leaderboardGap">—</strong></article>
+          </div>
+        </section>
         <section class="leaderboard-card glass">
           <div class="leaderboard-head">
             <div><span>DAILY LEADERBOARD</span><h2 id="leaderboardDate"></h2></div>
@@ -181,8 +192,15 @@
 
     <section id="settingsView" class="view">
       <div class="settings glass">
-        <h2>Your Profile</h2>
-        <div id="accountEmail" class="account-email"></div>
+        <div class="profile-hero">
+          <div id="profileAvatar" class="profile-avatar" aria-hidden="true">A</div>
+          <div class="profile-hero-copy"><h2>Your Profile</h2><div id="accountEmail" class="account-email"></div><span id="profileSyncState">Live accountability profile</span></div>
+        </div>
+        <div class="profile-kpis" aria-label="Profile performance summary">
+          <article><span>Today</span><strong id="profileTodayScore">0%</strong></article>
+          <article><span>This week</span><strong id="profileWeekScore">0%</strong></article>
+          <article><span>Work days</span><strong id="profileWorkDays">4</strong></article>
+        </div>
         <label>Agent name<input id="agentName" type="text" maxlength="40" placeholder="Your name"></label>
         <label>Calls target<input id="callsTarget" type="number" min="1"></label>
         <label>Connects target<input id="connectsTarget" type="number" min="1"></label>
@@ -238,6 +256,6 @@
   </div>
 </div>
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=1.24.6"></script>
+<script type="module" src="app.js?v=1.25.0"></script>
 </body>
 </html>

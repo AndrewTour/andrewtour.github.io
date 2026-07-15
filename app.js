@@ -362,8 +362,38 @@ function normaliseAppointmentType(value){const raw=String(value||'').trim().toLo
 function appointmentType(a){return normaliseAppointmentType(a.type||(Array.isArray(a.types)?a.types[0]:''))||'—'}
 function appointmentTimestamp(a){if(Number.isFinite(Number(a.scheduledAt)))return Number(a.scheduledAt);if(a.date&&a.time){const t=new Date(`${a.date}T${a.time}`);if(!Number.isNaN(t.getTime()))return t.getTime()}return Number(a.at)||0}
 function appointmentTimeLabel(a){const ts=appointmentTimestamp(a);return ts?new Date(ts).toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'}):(a.time||'Time not set')}
-function renderAppointments(){const picker=$('#appointmentDatePicker');appointmentDate=picker?.value||appointmentDate;const locked=isPastDate(appointmentDate);$('#appointmentForm').classList.toggle('date-locked',locked);$$('#appointmentForm input, #appointmentForm button').forEach(el=>el.disabled=locked);$('#appointmentLock').classList.toggle('hidden',!locked);$('#appointmentDateLabel').textContent=fmtDate(appointmentDate);if(picker&&!picker.value)picker.value=appointmentDate;const list=dayData(appointmentDate).appointments;$('#appointmentsList').innerHTML=list.length?list.slice().sort((a,b)=>appointmentTimestamp(a)-appointmentTimestamp(b)).map(a=>{const contact=escapeHtml(a.contactName||a.name||'Contact not recorded'),phone=escapeHtml(a.contactNumber||a.phone||''),address=escapeHtml(a.address||'Address not recorded'),type=escapeHtml(appointmentType(a)),time=escapeHtml(appointmentTimeLabel(a));return `<article class="appointment-card"><div class="appointment-card-copy"><div class="appointment-card-top"><span class="appointment-type-badge">${type}</span><time>${time}</time></div><strong>${address}</strong><small>${contact}${phone?` · ${phone}`:''}</small></div><button data-delete-appointment="${a.id}" aria-label="Delete" ${locked?'disabled':''}>×</button></article>`}).join(''):`<div class="empty">No appointments logged for this date.</div>`}
-function escapeHtml(s){return String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function renderAppointments(){
+  const picker=$('#appointmentDatePicker');
+  appointmentDate=picker?.value||appointmentDate;
+  const locked=isPastDate(appointmentDate);
+  $('#appointmentForm').classList.toggle('date-locked',locked);
+  $$('#appointmentForm input, #appointmentForm button').forEach(el=>el.disabled=locked);
+  $('#appointmentLock').classList.toggle('hidden',!locked);
+  $('#appointmentDateLabel').textContent=fmtDate(appointmentDate);
+  if(picker&&!picker.value)picker.value=appointmentDate;
+  const list=dayData(appointmentDate).appointments;
+  $('#appointmentsList').innerHTML=list.length?list.slice().sort((a,b)=>appointmentTimestamp(a)-appointmentTimestamp(b)).map(a=>{
+    const contact=escapeHtml(a.contactName||a.name||'Contact not recorded');
+    const rawPhone=String(a.contactNumber||a.phone||'').trim();
+    const phone=escapeHtml(rawPhone);
+    const dial=rawPhone.replace(/[^+\d]/g,'');
+    const address=escapeHtml(a.address||'Address not recorded');
+    const type=escapeHtml(appointmentType(a));
+    const time=escapeHtml(appointmentTimeLabel(a));
+    return `<article class="appointment-card appointment-card-premium">
+      <div class="appointment-card-copy">
+        <div class="appointment-card-top"><span class="appointment-type-badge">${type}</span><time>${time}</time></div>
+        <strong>${address}</strong>
+        <small>${contact}${phone?` · ${phone}`:''}</small>
+      </div>
+      <div class="appointment-card-actions">
+        ${dial?`<a class="appointment-call" href="tel:${dial}" aria-label="Call ${contact}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.2 3.5 4.8 5.9c-.7.7-.8 1.8-.3 2.7 2.5 4.7 6.3 8.5 11 11 .9.5 2 .4 2.7-.3l2.3-2.3-4.1-3-2.1 2.1c-2.6-1.4-4.7-3.5-6.1-6.1l2.1-2.1-3.1-4.4Z"/></svg></a>`:''}
+        <button class="appointment-delete" data-delete-appointment="${a.id}" aria-label="Delete appointment" ${locked?'disabled':''}>×</button>
+      </div>
+    </article>`
+  }).join(''):`<div class="empty">No appointments logged for this date.</div>`
+}
+
 async function addAppointment({contactName,contactNumber,address,date,time,type}){if(!canEditDate(date))return lockedToast();const scheduledAt=new Date(`${date}T${time}`).getTime();const d=dayData(date);d.appointments.push({id:uuid(),contactName,contactNumber,address,date,time,type,types:[type],scheduledAt,at:scheduledAt});addEvent(d,'appointment',`${type} · ${contactName} · ${address}`);days[date]=d;appointmentDate=date;await saveDay(date);renderAppointments();toast('Appointment booked')}
 async function deleteAppointment(id){if(!canEditDate(appointmentDate))return lockedToast();const d=dayData(appointmentDate);d.appointments=d.appointments.filter(a=>a.id!==id);days[appointmentDate]=d;await saveDay(appointmentDate);renderAppointments()}
 
@@ -439,20 +469,39 @@ function renderLeaderboard(){
   $('#leaderboardDate').textContent=fmtDate(date);
   const rows=sortedTodayLeaderboard();
   $('#leaderboardStatus').textContent=cloud?'LIVE':'DEVICE ONLY';
+  const meIndex=rows.findIndex(r=>r.uid===uid);
+  const me=meIndex>=0?rows[meIndex]:null;
+  const myScore=me?.score??completion(date);
+  const leaderScore=rows[0]?.score||0;
+  const gap=rows.length?Math.max(0,leaderScore-myScore):0;
+  if($('#leaderboardRing'))$('#leaderboardRing').style.setProperty('--score',Math.max(0,Math.min(100,myScore)));
+  if($('#leaderboardHeroScore'))$('#leaderboardHeroScore').textContent=`${myScore}%`;
+  if($('#leaderboardHeroRank'))$('#leaderboardHeroRank').textContent=meIndex>=0?`#${meIndex+1}`:'—';
+  if($('#leaderboardHeroMessage'))$('#leaderboardHeroMessage').textContent=meIndex===0?'You are leading today':meIndex>0?`${gap}% to the lead`:'Waiting for your first update';
+  if($('#leaderboardAgentCount'))$('#leaderboardAgentCount').textContent=rows.length;
+  if($('#leaderboardTopScore'))$('#leaderboardTopScore').textContent=`${leaderScore}%`;
+  if($('#leaderboardGap'))$('#leaderboardGap').textContent=rows.length?(gap?`${gap}%`:'Leading'):'—';
   $('#leaderboardList').innerHTML=rows.length?rows.map((r,i)=>{
     const t=r.targets||{};
-    const momentum=leaderboardMomentum(r); return `<article class="leaderboard-row ${r.uid===uid?'me':''}"><b class="rank">${i+1}</b><div class="agent"><strong>${escapeHtml(r.name||r.email?.split('@')[0]||'Agent')}</strong>${r.uid===uid?'<small>You</small>':''}</div><span>${r.calls||0}<small>/${t.calls||50}</small></span><span>${r.connects||0}<small>/${t.connects||25}</small></span><span>${r.data||0}<small>/${t.data||10}</small></span><span>${r.knockMinutes||0}<small>m</small></span><em>${r.score||0}%<small class="momentum ${momentum.className}">${momentum.label}</small></em></article>`
+    const momentum=leaderboardMomentum(r);
+    const score=Math.max(0,Math.min(100,r.score||0));
+    return `<article class="leaderboard-row leaderboard-row-dashboard ${r.uid===uid?'me':''}">
+      <b class="rank">${i+1}</b>
+      <div class="agent"><strong>${escapeHtml(r.name||r.email?.split('@')[0]||'Agent')}</strong>${r.uid===uid?'<small>You</small>':''}<i class="leaderboard-mini-progress"><span style="width:${score}%"></span></i></div>
+      <span>${r.calls||0}<small>/${t.calls||50}</small></span><span>${r.connects||0}<small>/${t.connects||25}</small></span><span>${r.data||0}<small>/${t.data||10}</small></span><span>${r.knockMinutes||0}<small>m</small></span><em>${r.score||0}%<small class="momentum ${momentum.className}">${momentum.label}</small></em>
+    </article>`
   }).join(''):`<div class="empty">No agents have logged activity today.</div>`;
   renderLeaderboardPosition();
   renderWeeklyLeaderboard();
 }
+
 function switchInsightsPage(id){$$('.insights-switch button').forEach(b=>b.classList.toggle('active',b.dataset.insightsPage===id));$$('.insights-page').forEach(p=>p.classList.toggle('active',p.id===id));if(id==='leaderboardInsights')renderLeaderboard()}
 function renderInsights(){const w=weekSummary(),m=mondayOf(parseKey(selectedDate));$('#insightWeekScore').textContent=`${w.score}%`;$('#insightWeekLabel').textContent=`Week of ${m.toLocaleDateString('en-AU',{day:'numeric',month:'short'})}`;$('#insightCalls').textContent=w.calls;$('#insightCallsAvg').textContent=`${Math.round(w.calls/Math.max(1,w.count))}/day`;$('#insightConnects').textContent=w.connects;$('#insightConnectRate').textContent=`${w.calls?Math.round(w.connects/w.calls*100):0}% connect rate`;$('#insightData').textContent=w.data;$('#insightDataAvg').textContent=`${Math.round(w.data/Math.max(1,w.count))}/day`;$('#insightKnock').textContent=`${Math.floor(w.knock/60)} min`;$('#knockBar').style.width=`${pct(w.knock/60,targets.weeklyKnock)}%`;renderPersonalBests();renderMondayReview();renderMonth();$('#yearLabel').textContent=year;renderYearOverview();renderLeaderboard()}
 function renderYearOverview(){const labels=['M','T','W','T','F','S','S'];const months=[];for(let m=0;m<12;m++){const first=new Date(year,m,1),pad=(first.getDay()+6)%7;let cells=`<div class="mini-weekdays">${labels.map(x=>`<b>${x}</b>`).join('')}</div><div class="mini-days">${'<i></i>'.repeat(pad)}`;for(let d=1;d<=new Date(year,m+1,0).getDate();d++){const dt=new Date(year,m,d),k=dateKey(dt),p=completion(k),off=!workDays.includes(dt.getDay());cells+=`<button class="mini-day ${levelClass(p)} ${off?'off':''} ${k===todayKey()?'today':''} ${k===selectedDate?'selected':''}" data-date="${k}" aria-label="${fmtDate(k)}, ${p}% complete">${d}</button>`}cells+='</div>';months.push(`<section class="mini-month"><h3>${new Date(year,m,1).toLocaleDateString('en-AU',{month:'short'})}</h3>${cells}</section>`)}$('#yearHeatmap').innerHTML=months.join('')}
 function levelClass(p){return p>=100?'l4':p>=67?'l3':p>=34?'l2':p>0?'l1':''}
 function renderMonth(){const y=monthCursor.getFullYear(),m=monthCursor.getMonth();$('#monthLabel').textContent=monthCursor.toLocaleDateString('en-AU',{month:'long',year:'numeric'});const vals=[];for(let d=1;d<=new Date(y,m+1,0).getDate();d++){const dt=new Date(y,m,d);if(workDays.includes(dt.getDay()))vals.push(completion(dateKey(dt)))}const groups=[];for(let i=0;i<vals.length;i+=4){const g=vals.slice(i,i+4);groups.push(Math.round(g.reduce((a,b)=>a+b,0)/Math.max(1,g.length)))}$('#monthBars').innerHTML=groups.map((p,i)=>`<div title="${p}%"><i style="height:${Math.max(3,p)}%"></i><small>W${i+1}</small></div>`).join('')}
 function renderCalendar(){const labels=['M','T','W','T','F','S','S'];$('#calendarYear').textContent=year;const months=[];for(let m=0;m<12;m++){const first=new Date(year,m,1),pad=(first.getDay()+6)%7;let cells=`<div class="weekday-row">${labels.map(x=>`<b>${x}</b>`).join('')}</div><div class="days">${'<i></i>'.repeat(pad)}`;for(let d=1;d<=new Date(year,m+1,0).getDate();d++){const dt=new Date(year,m,d),k=dateKey(dt),p=completion(k),off=!workDays.includes(dt.getDay());cells+=`<button class="day-cell ${levelClass(p)} ${off?'off':''} ${k===todayKey()?'today':''} ${k===selectedDate?'selected':''}" data-date="${k}" title="${fmtDate(k)} · ${p}%">${d}</button>`}cells+='</div>';months.push(`<section class="month"><h3>${new Date(year,m,1).toLocaleDateString('en-AU',{month:'long'})}</h3>${cells}</section>`)}$('#calendarGrid').innerHTML=months.join('')}
-function renderSettings(){$('#agentName').value=displayAgentName();$('#callsTarget').value=targets.calls;$('#connectsTarget').value=targets.connects;$('#dataTarget').value=targets.data;$('#weeklyKnockTarget').value=targets.weeklyKnock;$$('[name=workDay]').forEach(el=>el.checked=workDays.includes(Number(el.value)));$('#accountEmail').textContent=currentUser?.email||'Device-only mode';$('#modeNote').textContent=cloud?'Live sync is active. Use the same login on every device.':'Data is stored only on this device.'}
+function renderSettings(){const name=displayAgentName();$('#agentName').value=name;$('#callsTarget').value=targets.calls;$('#connectsTarget').value=targets.connects;$('#dataTarget').value=targets.data;$('#weeklyKnockTarget').value=targets.weeklyKnock;$$('[name=workDay]').forEach(el=>el.checked=workDays.includes(Number(el.value)));$('#accountEmail').textContent=currentUser?.email||'Device-only mode';$('#modeNote').textContent=cloud?'Live sync is active. Use the same login on every device.':'Data is stored only on this device.';const initials=name.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]?.toUpperCase()||'').join('')||'A';if($('#profileAvatar'))$('#profileAvatar').textContent=initials;if($('#profileSyncState'))$('#profileSyncState').textContent=cloud?'Live sync active':'Device-only profile';if($('#profileTodayScore'))$('#profileTodayScore').textContent=`${completion(todayKey())}%`;if($('#profileWeekScore'))$('#profileWeekScore').textContent=`${weekSummary().score}%`;if($('#profileWorkDays'))$('#profileWorkDays').textContent=workDays.length}
 function renderAll(){renderToday();renderAppointments();renderInsights();renderSettings()}
 
 async function startCloud(user){unsubDays?.();unsubProfile?.();unsubLeaderboard?.();currentUser=user;uid=user.uid;cloud=true;loadLocal(uid);await finaliseExpiredTimers();setSync('','Connecting');clearTimeout(syncTimer);syncTimer=setTimeout(()=>{if($('#syncBadge').dataset.label==='Connecting')setSync(navigator.onLine?'':'offline',navigator.onLine?'Connected':'Offline')},3500);unsubDays=onSnapshot(collection(db,'users',uid,'days'),{includeMetadataChanges:true},snap=>{snap.docChanges().forEach(ch=>{if(ch.type==='removed')delete days[ch.doc.id];else{const incoming=ch.doc.data();days[ch.doc.id]={...blankDay(),...incoming,appointments:incoming.appointments||[],events:incoming.events||[]}}});saveLocal();renderAll();ensureTick();clearTimeout(syncTimer);setSync(snap.metadata.fromCache&&!navigator.onLine?'offline':'live',snap.metadata.hasPendingWrites?'Saving':'Live')},err=>{console.error(err);setSync('error','Sync error');toast('Firestore access failed. Check rules and login.');showAuthMessage(err.message)});unsubProfile=onSnapshot(doc(db,'users',uid),snap=>{if(snap.exists()){const profile=snap.data();if(profile.targets)targets={...DEFAULTS,...profile.targets};if(Array.isArray(profile.workDays)&&profile.workDays.length)workDays=normaliseWorkDays(profile.workDays);if(profile.name)agentName=profile.name;saveLocal();renderAll();scheduleLeaderboardPublish()}},err=>console.error(err));unsubLeaderboard=onSnapshot(collection(db,'leaderboard'),{includeMetadataChanges:true},snap=>{leaderboardEntries=snap.docs.map(d=>({uid:d.id,...d.data()}));renderLeaderboard()},err=>{console.error('Leaderboard read failed',err);$('#leaderboardStatus').textContent='SYNC ERROR'});setSync(navigator.onLine?'live':'offline',navigator.onLine?'Live':'Offline');showApp();scheduleLeaderboardPublish()}

@@ -78,3 +78,11 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - Corrected native iPhone date/time controls to remain inside two equal grid columns.
 - Rebuilt BAP, MAP, LAP and PU as four equal horizontal pills.
 - Added fixed gaps and consistent form alignment without changing appointment logic.
+
+
+## v1.25.0 — Experience polish
+- Premium appointment cards with type badge, clearer hierarchy and one-tap call action.
+- Leaderboard overview dashboard with progress ring, rank, team KPIs and row progress.
+- Polished Your Profile screen with avatar initials and live performance KPIs.
+- Subtle native-feeling transitions with reduced-motion support.
+- No Firebase Console changes required.
