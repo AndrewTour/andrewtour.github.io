@@ -72,3 +72,9 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - Restyled booking date and time as equal rounded pills with consistent spacing.
 - Standardised form margins, gaps and the Book Appointment pill treatment.
 - No Firebase, Firestore, validation, data-model or appointment-functionality changes.
+
+
+## v1.24.6 — Appointments layout fix
+- Corrected native iPhone date/time controls to remain inside two equal grid columns.
+- Rebuilt BAP, MAP, LAP and PU as four equal horizontal pills.
+- Added fixed gaps and consistent form alignment without changing appointment logic.

@@ -1536,3 +1536,101 @@ body::after{
   .appointment-types{gap:6px}
   .appointment-types span{height:44px;border-radius:999px;font-size:.72rem}
 }
+
+/* v1.24.6 — definitive Appointments form grid correction */
+#appointmentForm.appointment-form{
+  padding-inline:16px;
+}
+#appointmentForm .appointment-schedule{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  column-gap:12px;
+  width:100%;
+  min-width:0;
+  align-items:end;
+}
+#appointmentForm .appointment-schedule > label{
+  display:grid;
+  grid-template-rows:auto 50px;
+  gap:6px;
+  width:100%;
+  min-width:0;
+  overflow:hidden;
+}
+#appointmentForm input[type="date"],
+#appointmentForm input[type="time"]{
+  display:block;
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  height:50px;
+  margin:0;
+  padding:0 12px;
+  border:1px solid var(--phase1-border);
+  border-radius:20px;
+  box-sizing:border-box;
+  background:#fff;
+  color:#17191f;
+  font-size:.76rem;
+  line-height:50px;
+  text-align:center;
+  overflow:hidden;
+  -webkit-appearance:none;
+  appearance:none;
+}
+#appointmentForm .appointment-types{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+  width:100%;
+  min-width:0;
+  margin:0;
+  padding:0;
+  border:0;
+}
+#appointmentForm .appointment-types > label{
+  display:block !important;
+  width:100% !important;
+  min-width:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+}
+#appointmentForm .appointment-types span{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100% !important;
+  min-width:0 !important;
+  height:50px;
+  padding:0 4px;
+  border:1px solid var(--phase1-border);
+  border-radius:20px;
+  box-sizing:border-box;
+  background:#fff;
+  color:#717886;
+  font-size:.75rem;
+  font-weight:850;
+  letter-spacing:.055em;
+  white-space:nowrap;
+}
+#appointmentForm .appointment-types input:checked + span{
+  border-color:#111318;
+  background:#111318;
+  color:#fff;
+}
+#appointmentForm > .primary{
+  min-height:50px;
+  border-radius:20px;
+}
+@media(max-width:390px){
+  #appointmentForm.appointment-form{padding-inline:14px}
+  #appointmentForm .appointment-schedule{column-gap:10px}
+  #appointmentForm .appointment-schedule > label{grid-template-rows:auto 48px}
+  #appointmentForm input[type="date"],
+  #appointmentForm input[type="time"]{height:48px;line-height:48px;font-size:.7rem;padding-inline:8px;border-radius:19px}
+  #appointmentForm .appointment-types{gap:8px}
+  #appointmentForm .appointment-types span{height:48px;border-radius:19px;font-size:.7rem}
+}
