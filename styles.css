@@ -1327,3 +1327,11 @@ html,body,button,input,select,textarea{
   font-weight:720;
   letter-spacing:-.01em;
 }
+
+
+/* v1.24.1 contextual topbar actions */
+.date-nav-actions{display:flex;align-items:center;gap:7px}
+.date-nav-actions.hidden{display:none}
+.topbar-nav-icon,.home-shortcut-icon{display:grid;place-items:center;line-height:0}
+.topbar-nav-icon svg,.home-shortcut-icon svg{width:22px;height:22px;display:block;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.topbar-nav-icon svg{width:21px;height:21px}

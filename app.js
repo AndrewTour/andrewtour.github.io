@@ -287,6 +287,10 @@ function updateTopbar(id=activeViewId()){
     if(syncBadge&&syncBadge.parentElement!==dateLine)dateLine.append(syncBadge);
   }
   if(syncPopover&&syncPopover.parentElement!==document.body)document.body.append(syncPopover);
+  const showDateNav=id==='todayView'||id==='appointmentsView';
+  $('#dateNavActions')?.classList.toggle('hidden',!showDateNav);
+  $('#settingsShortcut')?.classList.toggle('hidden',id!=='insightsView');
+  $('#homeShortcut')?.classList.toggle('hidden',id!=='settingsView');
 }
 function renderToday(){
   const d=dayData(selectedDate),score=completion(selectedDate),kt=rollingKnockTarget(selectedDate),secs=liveKnockSeconds(d),wk=weekSummary();
@@ -468,13 +472,26 @@ function bindViewport(){
 async function init(){bindViewport();loadLocal('local');await finaliseExpiredTimers();if(!configured()){showAuthMessage('Firebase is not configured. You can still use device-only mode.');return}try{const fb=initializeApp(firebaseConfig);auth=getAuth(fb);await setPersistence(auth,browserLocalPersistence);db=initializeFirestore(fb,{experimentalAutoDetectLongPolling:true,localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});onAuthStateChanged(auth,u=>{if(u){startCloud(u)}else{clearActiveSession();$('#app').classList.add('hidden');$('#authGate').classList.remove('hidden')}})}catch(err){console.error(err);showAuthMessage(err.message)}}
 function showAuthMessage(msg){$('#authMessage').textContent=msg}
 function switchView(id){$$('.tabbar button').forEach(b=>b.classList.toggle('active',b.dataset.view===id));$$('.view').forEach(v=>v.classList.toggle('active',v.id===id));updateTopbar(id);if(id==='appointmentsView')renderAppointments();if(id==='insightsView')renderInsights()}
+
+function shiftHeaderDate(delta){
+  const id=activeViewId();
+  if(id==='appointmentsView'){
+    const d=parseKey(appointmentDate);d.setDate(d.getDate()+delta);appointmentDate=dateKey(d);
+    $('#appointmentDatePicker').value=appointmentDate;renderAppointments();updateTopbar(id);return;
+  }
+  if(id==='todayView'){
+    const d=parseKey(selectedDate);d.setDate(d.getDate()+delta);selectedDate=dateKey(d);appointmentDate=selectedDate;
+    $('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick();
+  }
+}
+
 function openCalendar(){$('#calendarModal').classList.add('open');renderCalendar()}
 
 $('#authForm').addEventListener('submit',async e=>{e.preventDefault();showAuthMessage('');try{await signInWithEmailAndPassword(auth,$('#email').value,$('#password').value)}catch(err){showAuthMessage(err.message)}});
 $('#createAccount').onclick=async()=>{try{await createUserWithEmailAndPassword(auth,$('#email').value,$('#password').value)}catch(err){showAuthMessage(err.message)}};
 $('#localMode').onclick=()=>{clearActiveSession();uid='local';loadLocal('local');setSync('offline','This device');showApp()};
 $$('[data-action]').forEach(b=>b.onclick=()=>changeMetric(b.dataset.metric,b.dataset.action==='plus'?1:-1));
-$('#timerButton').onclick=toggleTimer;$('#resetKnock').onclick=resetKnock;$('#settingsShortcut').onclick=()=>switchView('settingsView');$('#backToday').onclick=()=>{selectedDate=todayKey();appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()};
+$('#timerButton').onclick=toggleTimer;$('#resetKnock').onclick=resetKnock;$('#previousDay').onclick=()=>shiftHeaderDate(-1);$('#nextDay').onclick=()=>shiftHeaderDate(1);$('#settingsShortcut').onclick=()=>switchView('settingsView');$('#homeShortcut').onclick=()=>switchView('todayView');$('#backToday').onclick=()=>{selectedDate=todayKey();appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()};
 $('.tabbar').onclick=e=>{const b=e.target.closest('button[data-view]');if(b)switchView(b.dataset.view)};
 $('.insights-switch').onclick=e=>{const b=e.target.closest('button[data-insights-page]');if(b)switchInsightsPage(b.dataset.insightsPage)};
 $('#weekPrev').onclick=()=>{leaderboardWeekOffset--;renderWeeklyLeaderboard()};

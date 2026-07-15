@@ -30,3 +30,10 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - Replaced the top-right emoji settings control with the matching SVG cog.
 - Capitalised each word in the personalised welcome greeting.
 - No Firebase Console changes required.
+
+
+## v1.24.1 — Contextual header actions
+- Today and Appointments use compact previous/next day chevrons in the top-right header.
+- Leaderboard retains the settings cog.
+- Settings uses a matching home icon that returns to Today.
+- Firebase, data paths, sync, logging and all existing business logic remain unchanged.
