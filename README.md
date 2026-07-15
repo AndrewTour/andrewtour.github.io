@@ -20,3 +20,12 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - Corrected the Today metrics layout so Calls, Connects, Data and Knocking render inside one shared capsule.
 - Added faint internal dividers while preserving each completed row’s green side indicator.
 - No Firebase changes required.
+
+
+## v1.23.9-safe
+- Rebuilt appointment booking from the confirmed working v1.23.8 baseline.
+- Added first name, last name, contact number, appointment date, start time and duration.
+- Added optional calendar export after booking and from each saved appointment.
+- Kept all new DOM bindings null-safe so appointment UI code cannot block Firebase initialisation or login during an app update.
+- Versioned CSS and JavaScript asset URLs to prevent old HTML and new JavaScript being mixed by the installed PWA cache.
+- No Firebase Console changes required.

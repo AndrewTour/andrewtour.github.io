@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Daily Accountability">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=1.23.9-safe">
 <title>Daily Accountability</title>
 </head>
 <body>
@@ -100,13 +100,31 @@
         <input id="appointmentDatePicker" type="date">
       </div>
       <div id="appointmentLock" class="appointment-lock hidden">Past dates are locked and read-only.</div><form id="appointmentForm" class="appointment-form glass">
-        <label>Property address<input id="appointmentAddress" type="text" placeholder="14 Calla Grove, Pendle Hill" required></label>
+        <div class="appointment-contact-grid">
+          <label>First name<input id="appointmentFirstName" type="text" autocomplete="given-name" placeholder="First name" required></label>
+          <label>Last name<input id="appointmentLastName" type="text" autocomplete="family-name" placeholder="Last name" required></label>
+        </div>
+        <label>Contact number<input id="appointmentPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="04xx xxx xxx" required></label>
+        <label>Property address<input id="appointmentAddress" type="text" autocomplete="street-address" placeholder="14 Calla Grove, Pendle Hill" required></label>
+        <div class="appointment-schedule-grid">
+          <label>Date<input id="appointmentBookingDate" type="date" required></label>
+          <label>Start time<input id="appointmentStartTime" type="time" required></label>
+          <label>Duration
+            <select id="appointmentDuration" required>
+              <option value="30">30 min</option>
+              <option value="45">45 min</option>
+              <option value="60" selected>1 hour</option>
+              <option value="90">1.5 hours</option>
+              <option value="120">2 hours</option>
+            </select>
+          </label>
+        </div>
         <div class="appointment-types">
           <label><input type="checkbox" value="Appraisal"><span>Appraisal</span></label>
           <label><input type="checkbox" value="Listing appointment"><span>Listing appointment</span></label>
           <label><input type="checkbox" value="Price update"><span>Price update</span></label>
         </div>
-        <button class="primary" type="submit">Add appointment</button>
+        <button class="primary" type="submit">Book appointment</button>
       </form>
       <div id="appointmentsList" class="appointments-list"></div>
     </section>
@@ -226,6 +244,6 @@
   </div>
 </div>
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js"></script>
+<script type="module" src="app.js?v=1.23.9-safe"></script>
 </body>
 </html>

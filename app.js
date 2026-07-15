@@ -348,9 +348,55 @@ function renderDayTrend(){
 }
 function renderWeekDays(){if(!$('#weekDays'))return;$('#weekDays').innerHTML=weekKeys().map(k=>{const p=completion(k),d=parseKey(k);return `<button class="week-day ${k===selectedDate?'selected':''} ${p>=100?'complete':''}" data-date="${k}"><b>${workDayName(d.getDay()).slice(0,3).toUpperCase()}</b><small>${d.getDate()} · ${p}%</small></button>`}).join('')}
 
-function renderAppointments(){appointmentDate=$('#appointmentDatePicker').value||appointmentDate;const locked=isPastDate(appointmentDate);$('#appointmentForm').classList.toggle('date-locked',locked);$$('#appointmentForm input, #appointmentForm button').forEach(el=>el.disabled=locked);$('#appointmentLock').classList.toggle('hidden',!locked);$('#appointmentDateLabel').textContent=fmtDate(appointmentDate);const list=dayData(appointmentDate).appointments;$('#appointmentsList').innerHTML=list.length?list.slice().sort((a,b)=>b.at-a.at).map(a=>`<article class="appointment-card"><div><strong>${escapeHtml(a.address)}</strong><small>${a.types.join(' · ')} · ${new Date(a.at).toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'})}</small></div><button data-delete-appointment="${a.id}" aria-label="Delete" ${locked?'disabled':''}>×</button></article>`).join(''):`<div class="empty">No appointments logged for this date.</div>`}
-function escapeHtml(s){return s.replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
-async function addAppointment(address,types){if(!canEditDate(appointmentDate))return lockedToast();const d=dayData(appointmentDate);d.appointments.push({id:uuid(),address,types,at:Date.now()});addEvent(d,'appointment',`${types.join(', ')} · ${address}`);days[appointmentDate]=d;await saveDay(appointmentDate);renderAppointments();toast('Appointment added')}
+function appointmentStartMs(a){return Number(a.startAt||a.at||0)}
+function appointmentName(a){return [a.firstName,a.lastName].filter(Boolean).join(' ').trim()}
+function syncAppointmentBookingDate(){const booking=$('#appointmentBookingDate');if(booking&&!booking.value)booking.value=appointmentDate}
+function renderAppointments(){
+  const picker=$('#appointmentDatePicker');
+  appointmentDate=picker?.value||appointmentDate;
+  const form=$('#appointmentForm'),lock=$('#appointmentLock'),label=$('#appointmentDateLabel'),listEl=$('#appointmentsList');
+  if(!form||!lock||!label||!listEl)return;
+  const locked=isPastDate(appointmentDate);
+  form.classList.toggle('date-locked',locked);
+  $$('#appointmentForm input, #appointmentForm select, #appointmentForm button').forEach(el=>el.disabled=locked);
+  lock.classList.toggle('hidden',!locked);
+  label.textContent=fmtDate(appointmentDate);
+  syncAppointmentBookingDate();
+  const list=dayData(appointmentDate).appointments;
+  listEl.innerHTML=list.length?list.slice().sort((a,b)=>appointmentStartMs(a)-appointmentStartMs(b)).map(a=>{
+    const name=appointmentName(a),start=new Date(appointmentStartMs(a));
+    const time=Number.isFinite(start.getTime())?start.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'}):'';
+    const contact=[name,a.phone].filter(Boolean).join(' · ');
+    const meta=[...(a.types||[]),time,contact].filter(Boolean).join(' · ');
+    return `<article class="appointment-card"><div><strong>${escapeHtml(a.address||'Appointment')}</strong><small>${escapeHtml(meta)}</small></div><div class="appointment-card-actions"><button data-calendar-appointment="${a.id}" aria-label="Add to calendar" title="Add to calendar">⌁</button><button data-delete-appointment="${a.id}" aria-label="Delete" ${locked?'disabled':''}>×</button></div></article>`
+  }).join(''):`<div class="empty">No appointments logged for this date.</div>`
+}
+function escapeHtml(s){return String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function icsEscape(value){return String(value??'').replace(/\\/g,'\\\\').replace(/\r?\n/g,'\\n').replace(/,/g,'\\,').replace(/;/g,'\\;')}
+function icsDate(ms){return new Date(ms).toISOString().replace(/[-:]/g,'').replace(/\.\d{3}Z$/,'Z')}
+function calendarFile(a){
+  const start=appointmentStartMs(a),end=start+(Number(a.durationMinutes)||60)*60000;
+  const name=appointmentName(a),title=[...(a.types||[]),name].filter(Boolean).join(' · ')||'Appointment';
+  const description=[name,a.phone,a.address,(a.types||[]).join(', ')].filter(Boolean).join('\n');
+  const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Daily Accountability//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH','BEGIN:VEVENT',`UID:${icsEscape(a.id)}@daily-accountability`,`DTSTAMP:${icsDate(Date.now())}`,`DTSTART:${icsDate(start)}`,`DTEND:${icsDate(end)}`,`SUMMARY:${icsEscape(title)}`,`DESCRIPTION:${icsEscape(description)}`,`LOCATION:${icsEscape(a.address||'')}`,'END:VEVENT','END:VCALENDAR'];
+  return new File([lines.join('\r\n')],`appointment-${new Date(start).toISOString().slice(0,10)}.ics`,{type:'text/calendar'});
+}
+async function exportAppointment(a){
+  if(!a||!appointmentStartMs(a))return toast('Appointment time is unavailable');
+  const file=calendarFile(a);
+  try{if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:'Add appointment to calendar'});return}}
+  catch(err){if(err?.name==='AbortError')return;console.warn('Calendar share failed',err)}
+  const url=URL.createObjectURL(file),link=document.createElement('a');link.href=url;link.download=file.name;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)
+}
+async function addAppointment(details){
+  const bookingDate=details.bookingDate||appointmentDate;
+  if(!canEditDate(bookingDate))return lockedToast();
+  const startAt=new Date(`${bookingDate}T${details.startTime}:00`).getTime();
+  if(!Number.isFinite(startAt))return toast('Choose a valid appointment date and time');
+  const d=dayData(bookingDate),appointment={id:uuid(),firstName:details.firstName,lastName:details.lastName,phone:details.phone,address:details.address,types:details.types,startAt,durationMinutes:details.durationMinutes,at:startAt,createdAt:Date.now()};
+  d.appointments.push(appointment);addEvent(d,'appointment',`${details.types.join(', ')} · ${details.address}`);days[bookingDate]=d;await saveDay(bookingDate);
+  appointmentDate=bookingDate;if($('#appointmentDatePicker'))$('#appointmentDatePicker').value=bookingDate;renderAppointments();toast('Appointment booked');return appointment
+}
 async function deleteAppointment(id){if(!canEditDate(appointmentDate))return lockedToast();const d=dayData(appointmentDate);d.appointments=d.appointments.filter(a=>a.id!==id);days[appointmentDate]=d;await saveDay(appointmentDate);renderAppointments()}
 
 
@@ -442,7 +488,7 @@ function renderSettings(){$('#agentName').value=displayAgentName();$('#callsTarg
 function renderAll(){renderToday();renderAppointments();renderInsights();renderSettings()}
 
 async function startCloud(user){unsubDays?.();unsubProfile?.();unsubLeaderboard?.();currentUser=user;uid=user.uid;cloud=true;loadLocal(uid);await finaliseExpiredTimers();setSync('','Connecting');clearTimeout(syncTimer);syncTimer=setTimeout(()=>{if($('#syncBadge').dataset.label==='Connecting')setSync(navigator.onLine?'':'offline',navigator.onLine?'Connected':'Offline')},3500);unsubDays=onSnapshot(collection(db,'users',uid,'days'),{includeMetadataChanges:true},snap=>{snap.docChanges().forEach(ch=>{if(ch.type==='removed')delete days[ch.doc.id];else{const incoming=ch.doc.data();days[ch.doc.id]={...blankDay(),...incoming,appointments:incoming.appointments||[],events:incoming.events||[]}}});saveLocal();renderAll();ensureTick();clearTimeout(syncTimer);setSync(snap.metadata.fromCache&&!navigator.onLine?'offline':'live',snap.metadata.hasPendingWrites?'Saving':'Live')},err=>{console.error(err);setSync('error','Sync error');toast('Firestore access failed. Check rules and login.');showAuthMessage(err.message)});unsubProfile=onSnapshot(doc(db,'users',uid),snap=>{if(snap.exists()){const profile=snap.data();if(profile.targets)targets={...DEFAULTS,...profile.targets};if(Array.isArray(profile.workDays)&&profile.workDays.length)workDays=normaliseWorkDays(profile.workDays);if(profile.name)agentName=profile.name;saveLocal();renderAll();scheduleLeaderboardPublish()}},err=>console.error(err));unsubLeaderboard=onSnapshot(collection(db,'leaderboard'),{includeMetadataChanges:true},snap=>{leaderboardEntries=snap.docs.map(d=>({uid:d.id,...d.data()}));renderLeaderboard()},err=>{console.error('Leaderboard read failed',err);$('#leaderboardStatus').textContent='SYNC ERROR'});setSync(navigator.onLine?'live':'offline',navigator.onLine?'Live':'Offline');showApp();scheduleLeaderboardPublish()}
-function showApp(){$('#authGate').classList.add('hidden');$('#app').classList.remove('hidden');$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()}
+function showApp(){$('#authGate').classList.add('hidden');$('#app').classList.remove('hidden');if($('#appointmentDatePicker'))$('#appointmentDatePicker').value=appointmentDate;syncAppointmentBookingDate();renderAll();ensureTick()}
 let viewportFrame=0;
 function updateAppViewport(){
   cancelAnimationFrame(viewportFrame);
@@ -480,9 +526,20 @@ $('.insights-switch').onclick=e=>{const b=e.target.closest('button[data-insights
 $('#weekPrev').onclick=()=>{leaderboardWeekOffset--;renderWeeklyLeaderboard()};
 $('#weekNext').onclick=()=>{if(leaderboardWeekOffset<0)leaderboardWeekOffset++;renderWeeklyLeaderboard()};
 $('#weekLast').onclick=()=>{leaderboardWeekOffset=-1;renderWeeklyLeaderboard()};
-$('#appointmentDatePicker').onchange=e=>{appointmentDate=e.target.value;renderAppointments()};
-$('#appointmentForm').onsubmit=async e=>{e.preventDefault();const address=$('#appointmentAddress').value.trim(),types=$$('.appointment-types input:checked').map(x=>x.value);if(!address)return toast('Add a property address');if(!types.length)return toast('Choose an appointment type');await addAppointment(address,types);e.target.reset()};
-$('#appointmentsList').onclick=e=>{const b=e.target.closest('[data-delete-appointment]');if(b&&confirm('Delete this appointment?'))deleteAppointment(b.dataset.deleteAppointment)};
+const appointmentDatePicker=$('#appointmentDatePicker');
+if(appointmentDatePicker)appointmentDatePicker.onchange=e=>{appointmentDate=e.target.value;const booking=$('#appointmentBookingDate');if(booking)booking.value=appointmentDate;renderAppointments()};
+const appointmentForm=$('#appointmentForm');
+if(appointmentForm)appointmentForm.onsubmit=async e=>{
+  e.preventDefault();
+  const firstName=$('#appointmentFirstName')?.value.trim()||'',lastName=$('#appointmentLastName')?.value.trim()||'',phone=$('#appointmentPhone')?.value.trim()||'',address=$('#appointmentAddress')?.value.trim()||'',bookingDate=$('#appointmentBookingDate')?.value||appointmentDate,startTime=$('#appointmentStartTime')?.value||'',durationMinutes=Number($('#appointmentDuration')?.value||60),types=$$('.appointment-types input:checked').map(x=>x.value);
+  if(!firstName)return toast('Add a first name');if(!lastName)return toast('Add a last name');if(!phone)return toast('Add a contact number');if(!address)return toast('Add a property address');if(!bookingDate||!startTime)return toast('Choose an appointment date and time');if(!types.length)return toast('Choose an appointment type');
+  const appointment=await addAppointment({firstName,lastName,phone,address,bookingDate,startTime,durationMinutes,types});
+  if(!appointment)return;
+  e.target.reset();syncAppointmentBookingDate();if($('#appointmentDuration'))$('#appointmentDuration').value='60';
+  if(confirm('Appointment booked. Add it to your calendar?'))await exportAppointment(appointment)
+};
+const appointmentsList=$('#appointmentsList');
+if(appointmentsList)appointmentsList.onclick=e=>{const calendar=e.target.closest('[data-calendar-appointment]'),remove=e.target.closest('[data-delete-appointment]');if(calendar){const appointment=dayData(appointmentDate).appointments.find(a=>a.id===calendar.dataset.calendarAppointment);exportAppointment(appointment);return}if(remove&&confirm('Delete this appointment?'))deleteAppointment(remove.dataset.deleteAppointment)};
 $('#saveSettings').onclick=async()=>{const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;saveLocal();await saveTargets();renderAll();toast('Settings saved')};
 $('#signOut').onclick=async()=>{clearActiveSession();if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
 $('#exportData').onclick=()=>{const blob=new Blob([JSON.stringify({targets,workDays,days},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`daily-accountability-${todayKey()}.json`;a.click();URL.revokeObjectURL(a.href)};
