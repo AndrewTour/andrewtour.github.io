@@ -1,4 +1,4 @@
-const CACHE='daily-accountability-v1.23.12-single-line-schedule';
+const CACHE='daily-accountability-v2.1.0-single-line-schedule';
 const VERSION='1.23.12';
 const ASSETS=['./','./index.html',`./styles.css?v=${VERSION}`,`./app.js?v=${VERSION}`,'./firebase-config.js','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));

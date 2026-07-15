@@ -50,3 +50,8 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - Reduced control widths, padding and gaps to prevent overlap on iPhone.
 - Removed appointment calendar prompts, buttons and iCalendar export code.
 - No Firebase Console changes required.
+
+## v2.1.0 — Premium light UI rebuild
+- Rebuilt the visible interface hierarchy rather than applying token-only changes.
+- Introduced a premium light design system with stronger typography, flatter surfaces, deliberate spacing, capsule controls and a dark active navigation state.
+- Redesigned Today, Appointments, Leaderboard, Settings and login presentation without changing app logic or Firebase behaviour.
