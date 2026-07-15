@@ -95,3 +95,10 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - Restored snapshot-driven UI refreshes so cloud and local changes appear without reopening the PWA.
 - Bumped the service-worker cache and versioned assets to prevent mixed old/new files.
 - No Firebase Console changes required.
+
+
+## v1.25.2 — Appointment Logs and Scheduled Reminders
+- Appointments are now stored against the date they were created for accurate daily activity tracking.
+- Future scheduled appointments also appear as linked reminder cards on their scheduled date without duplicating the stored record or leaderboard count.
+- Reminder cards show the appointment time, booking date, one-tap call action and “Call 2 hours prior to confirm”.
+- Existing appointment records remain compatible.

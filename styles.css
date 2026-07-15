@@ -1721,3 +1721,12 @@ button:not(:disabled):active,a.appointment-call:active{transform:scale(.965)}
   .view.active{animation:none}
   button:not(:disabled),a.appointment-call,.appointment-card,.leaderboard-row,.profile-kpis article{transition:none}
 }
+
+/* v1.25.2 appointment booking log + scheduled reminder states */
+.appointment-reminder{border-color:rgba(11,99,243,.16);background:linear-gradient(180deg,#fff,#f8fbff)}
+.appointment-reminder-badge{display:inline-flex;align-items:center;min-height:24px;padding:0 9px;border-radius:999px;background:#eaf2ff;color:#0b63f3;font-size:.52rem;font-weight:900;letter-spacing:.08em;white-space:nowrap}
+.appointment-booked-for,.appointment-booked-on,.appointment-confirm-note{font-weight:750}
+.appointment-booked-for{color:#0b63f3!important}
+.appointment-booked-on{color:#667084!important}
+.appointment-confirm-note{color:#0ca66c!important}
+@media(max-width:380px){.appointment-reminder-badge{font-size:.47rem;padding:0 7px}.appointment-card-premium .appointment-card-top time{font-size:.62rem}}
