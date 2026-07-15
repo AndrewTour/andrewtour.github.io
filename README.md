@@ -86,3 +86,12 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - Polished Your Profile screen with avatar initials and live performance KPIs.
 - Subtle native-feeling transitions with reduced-motion support.
 - No Firebase Console changes required.
+
+
+## v1.25.1 — Functionality patch
+- Restored the shared HTML escaping helper removed during the v1.25.0 visual upgrade.
+- Fixed immediate appointment-card rendering after booking.
+- Restored live leaderboard rows and individual agent metric visibility.
+- Restored snapshot-driven UI refreshes so cloud and local changes appear without reopening the PWA.
+- Bumped the service-worker cache and versioned assets to prevent mixed old/new files.
+- No Firebase Console changes required.

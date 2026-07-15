@@ -362,6 +362,7 @@ function normaliseAppointmentType(value){const raw=String(value||'').trim().toLo
 function appointmentType(a){return normaliseAppointmentType(a.type||(Array.isArray(a.types)?a.types[0]:''))||'—'}
 function appointmentTimestamp(a){if(Number.isFinite(Number(a.scheduledAt)))return Number(a.scheduledAt);if(a.date&&a.time){const t=new Date(`${a.date}T${a.time}`);if(!Number.isNaN(t.getTime()))return t.getTime()}return Number(a.at)||0}
 function appointmentTimeLabel(a){const ts=appointmentTimestamp(a);return ts?new Date(ts).toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'}):(a.time||'Time not set')}
+function escapeHtml(value){return String(value??'').replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]))}
 function renderAppointments(){
   const picker=$('#appointmentDatePicker');
   appointmentDate=picker?.value||appointmentDate;
