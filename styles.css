@@ -1616,3 +1616,64 @@ body.today-active main{padding-bottom:2px!important}
   #todayView .timer{font-size:.7rem!important}
   #todayView .metric strong{font-size:1.62rem!important}
 }
+
+
+/* v2.1.4 — definitive Today geometry reset.
+   Restores the proven pre-redesign Today sizing while retaining v2 typography and surfaces. */
+#settingsShortcut{display:grid!important;place-items:center!important;padding:0!important}
+#settingsShortcut .header-settings-icon{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+
+#todayView.dashboard.active{
+  grid-template-rows:auto minmax(0,1fr)!important;
+  gap:9px!important;
+  min-height:0!important;
+  overflow:hidden!important;
+  padding-bottom:0!important;
+}
+#todayView .metrics{
+  display:grid!important;
+  grid-template-rows:repeat(4,minmax(0,1fr))!important;
+  gap:0!important;
+  height:100%!important;
+  min-height:0!important;
+  max-height:100%!important;
+  overflow:hidden!important;
+  border-radius:24px!important;
+}
+#todayView .metric{
+  min-height:0!important;
+  height:auto!important;
+  padding:6px 10px!important;
+  border-radius:0!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  align-items:center!important;
+  overflow:hidden!important;
+}
+#todayView .metric-copy{min-width:0!important;align-self:center!important}
+#todayView .metric-copy>span{font-size:.64rem!important;line-height:1!important;letter-spacing:.18em!important}
+#todayView .metric-copy>small{font-size:.58rem!important;line-height:1.08!important;margin-top:2px!important}
+#todayView .metric em{font-size:.59rem!important;line-height:1.08!important;margin-top:2px!important}
+#todayView .metric strong{font-size:1.42rem!important;line-height:.92!important;margin-top:3px!important;letter-spacing:-.04em!important}
+#todayView .metric strong small{font-size:.72rem!important}
+#todayView .actions{grid-template-columns:42px 48px 42px!important;gap:5px!important}
+#todayView .actions button,#todayView .metric-percent{height:42px!important;border-radius:14px!important}
+#todayView .actions button{font-size:1.34rem!important}
+#todayView .metric-percent{font-size:.66rem!important}
+#todayView .knock-actions{grid-template-columns:80px 42px!important}
+#todayView .timer{font-size:.72rem!important;letter-spacing:0!important}
+#todayView .reset{font-size:.94rem!important}
+#todayView .knock #knockValue{font-size:1.42rem!important;line-height:.92!important}
+#todayView .knock #knockTargetText{font-size:.58rem!important;line-height:1.08!important}
+#todayView .knock #knockRemaining{font-size:.59rem!important}
+
+@media (max-height:760px){
+  #todayView.dashboard.active{gap:6px!important}
+  #todayView .metric{padding:4px 8px!important}
+  #todayView .metric-copy>span{font-size:.58rem!important}
+  #todayView .metric-copy>small,#todayView .metric em{font-size:.52rem!important}
+  #todayView .metric strong,#todayView .knock #knockValue{font-size:1.24rem!important}
+  #todayView .actions{grid-template-columns:38px 44px 38px!important;gap:4px!important}
+  #todayView .actions button,#todayView .metric-percent{height:38px!important;border-radius:13px!important}
+  #todayView .knock-actions{grid-template-columns:74px 38px!important}
+  #todayView .timer{font-size:.66rem!important}
+}

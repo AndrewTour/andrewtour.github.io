@@ -68,3 +68,10 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - Reduced metric control sizes slightly for better visual balance.
 - Reduced the Knocking Start label to match the surrounding UI.
 - No Firebase Console changes required.
+
+
+## v2.1.4
+- Definitively restored the Today metric stack to the proven compact pre-redesign geometry.
+- Reduced metric controls and Start typography.
+- Replaced the top-right emoji gear with the same outline SVG cog used in bottom navigation.
+- No Firebase Console changes required.
