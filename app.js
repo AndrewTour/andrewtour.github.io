@@ -168,18 +168,44 @@ function expectedKnockAt(target,when=new Date()){
   if(when>=end)return target;
   return Math.min(target,Math.round(target*((when-start)/(end-start))));
 }
-function isDayOnTrack(k=selectedDate){
-  if(!isWorkDayKey(k))return true;
-  const d=dayData(k),knockTarget=rollingKnockTarget(k),knockMinutes=Math.floor(liveKnockSeconds(d)/60);
-  if(k!==todayKey())return d.calls>=targets.calls&&d.connects>=targets.connects&&d.data>=targets.data&&knockMinutes>=knockTarget;
-  const now=new Date(),knockStart=new Date(now);
-  knockStart.setHours(14,0,0,0);
-  const coreOnTrack=d.calls>=expectedAt('calls',targets.calls,now)
-    && d.connects>=expectedAt('connects',targets.connects,now)
-    && d.data>=expectedAt('data',targets.data,now);
-  if(now<knockStart)return coreOnTrack;
-  return coreOnTrack&&knockMinutes>=expectedKnockAt(knockTarget,now);
+function minutesUntil(hour,minute=0,now=new Date()){
+  const end=new Date(now);end.setHours(hour,minute,0,0);
+  return Math.max(0,(end-now)/60000);
 }
+function feasibilityState(requiredMinutes,availableMinutes){
+  if(requiredMinutes<=0)return 'on';
+  if(availableMinutes<=0)return 'off';
+  const load=requiredMinutes/availableMinutes;
+  if(load<=0.75)return 'on';
+  if(load<=1)return 'risk';
+  return 'off';
+}
+function dayTrackState(k=selectedDate){
+  if(!isWorkDayKey(k))return 'on';
+  const d=dayData(k),knockTarget=rollingKnockTarget(k),knockMinutes=Math.floor(liveKnockSeconds(d)/60);
+  if(k!==todayKey())return d.calls>=targets.calls&&d.connects>=targets.connects&&d.data>=targets.data&&knockMinutes>=knockTarget?'on':'off';
+
+  const now=new Date(),coreAvailable=minutesUntil(17,0,now);
+  const states=[];
+  const capacityPerHour={calls:10,connects:5,data:2};
+  for(const metric of ['calls','connects','data']){
+    const remaining=Math.max(0,targets[metric]-d[metric]);
+    const requiredMinutes=(remaining/capacityPerHour[metric])*60;
+    states.push(feasibilityState(requiredMinutes,coreAvailable));
+  }
+
+  const knockStart=new Date(now);knockStart.setHours(14,0,0,0);
+  if(now>=knockStart){
+    const knockAvailable=minutesUntil(17,0,now);
+    const knockRemaining=Math.max(0,knockTarget-knockMinutes);
+    states.push(feasibilityState(knockRemaining,knockAvailable));
+  }
+
+  if(states.includes('off'))return 'off';
+  if(states.includes('risk'))return 'risk';
+  return 'on';
+}
+function isDayOnTrack(k=selectedDate){return dayTrackState(k)==='on'}
 function momentumWhisper(){
   if(selectedDate!==todayKey()){
     const previous=previousScheduledKey(selectedDate),change=previous?completion(selectedDate)-completion(previous):0;
@@ -270,10 +296,12 @@ function renderToday(){
   $('#lockBadge').classList.toggle('hidden',!locked);$('#lockBadge').textContent=past?'LOCKED':'NOT SCHEDULED';
   $('#todayView').classList.toggle('date-locked',locked);
   if($('#welcomeMessage')){
-    const onTrack=isDayOnTrack(selectedDate);
-    $('#welcomeMessage').textContent=onTrack?'ON TRACK':'OFF TRACK';
-    $('#welcomeMessage').classList.toggle('track-on',onTrack);
-    $('#welcomeMessage').classList.toggle('track-off',!onTrack);
+    const trackState=dayTrackState(selectedDate);
+    const labels={on:'ON TRACK',risk:'AT RISK',off:'OFF TRACK'};
+    $('#welcomeMessage').textContent=labels[trackState];
+    $('#welcomeMessage').classList.toggle('track-on',trackState==='on');
+    $('#welcomeMessage').classList.toggle('track-risk',trackState==='risk');
+    $('#welcomeMessage').classList.toggle('track-off',trackState==='off');
   }
   $('#dailyScore').textContent=`${score}%`;
   $('#scoreBar').style.width=`${score}%`;

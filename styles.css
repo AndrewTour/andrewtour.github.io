@@ -1142,3 +1142,7 @@ body.sync-popover-open::after{
   visibility:hidden;
   pointer-events:none;
 }
+
+
+/* v1.23.5 — achievable-time headline status */
+#todayView #welcomeMessage.track-risk{color:#c68416}
