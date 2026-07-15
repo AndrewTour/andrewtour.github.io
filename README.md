@@ -20,3 +20,13 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - Corrected the Today metrics layout so Calls, Connects, Data and Knocking render inside one shared capsule.
 - Added faint internal dividers while preserving each completed row’s green side indicator.
 - No Firebase changes required.
+
+
+## v1.24.0 — Phase 1 visual refresh
+- Preserved the complete DA v16 Today-page sizing and spacing.
+- Applied the refined system typography and cleaner visual hierarchy.
+- Refreshed buttons and inputs without changing their established geometry.
+- Kept the unified flat bottom navigation icon family.
+- Replaced the top-right emoji settings control with the matching SVG cog.
+- Capitalised each word in the personalised welcome greeting.
+- No Firebase Console changes required.

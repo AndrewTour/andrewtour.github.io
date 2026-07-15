@@ -110,7 +110,7 @@ function expectedAt(metric,target,when=new Date()){
 function welcomeMessage(){
   const hour=new Date().getHours(),raw=(displayAgentName().split(/\s+/)[0]||'Agent');
   const name=raw.charAt(0).toUpperCase()+raw.slice(1).toLowerCase();
-  const greeting=hour<12?'Good morning':hour<17?'Good afternoon':'Good evening';
+  const greeting=hour<12?'Good Morning':hour<17?'Good Afternoon':'Good Evening';
   return `${greeting}, ${name}`;
 }
 function metricRemainingText(value,target){
