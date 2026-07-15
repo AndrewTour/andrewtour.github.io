@@ -1257,746 +1257,81 @@ body.sync-popover-open::after{
   }
 }
 
-/* v1.23.9 safe appointment booking */
-.appointment-contact-grid,.appointment-schedule-grid{display:grid;gap:9px;margin-bottom:9px}
-.appointment-contact-grid{grid-template-columns:1fr 1fr}
-.appointment-schedule-grid{grid-template-columns:1.25fr 1fr 1fr;margin-top:9px}
-.appointment-form input[type=tel],.appointment-form input[type=date],.appointment-form input[type=time],.appointment-form select{width:100%;background:rgba(255,255,255,.07);border:1px solid var(--line);color:var(--ink);border-radius:14px;padding:13px;font:inherit;min-height:46px}
-.appointment-form select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 17px) 20px,calc(100% - 12px) 20px;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:30px}
-.appointment-card-actions{display:flex;align-items:center;gap:4px}
-.appointment-card-actions button[data-calendar-appointment]{color:var(--blue);font-size:1.2rem;transform:rotate(-35deg)}
-@media(max-width:420px){.appointment-schedule-grid{grid-template-columns:1fr 1fr}.appointment-schedule-grid label:last-child{grid-column:1/-1}.appointment-contact-grid{grid-template-columns:1fr 1fr}}
-
-/* v1.23.10 appointment booking visibility and calendar actions */
-.calendar-prompt{margin:14px 0;padding:16px;display:flex;align-items:center;justify-content:space-between;gap:14px}
-.calendar-prompt.hidden{display:none}
-.calendar-prompt>div:first-child{display:flex;flex-direction:column;gap:4px}
-.calendar-prompt strong{font-size:1rem}
-.calendar-prompt small{color:var(--muted)}
-.calendar-prompt-actions{display:flex;gap:8px;flex-shrink:0}
-.calendar-prompt-actions button{min-height:42px;padding:0 14px;border-radius:14px}
-.appointment-card-actions .calendar-action{width:auto;min-width:116px;padding:0 12px;font-size:.78rem;font-weight:800;transform:none;color:var(--blue);border:1px solid rgba(20,104,255,.18);background:rgba(20,104,255,.06)}
-@media(max-width:520px){.calendar-prompt{align-items:stretch;flex-direction:column}.calendar-prompt-actions{width:100%}.calendar-prompt-actions button{flex:1}}
-
-
-/* v1.23.11 compact appointment schedule and Apple Calendar cleanup */
-.appointment-schedule-grid{
-  grid-template-columns:minmax(0,1.18fr) minmax(0,.92fr) minmax(0,.9fr);
-  gap:8px;
-  align-items:end;
-}
-.appointment-schedule-grid label{min-width:0}
-.appointment-schedule-grid input,.appointment-schedule-grid select{
-  min-width:0;
-  width:100%;
-  box-sizing:border-box;
-  padding:11px 9px;
-  font-size:16px;
-}
-.appointment-schedule-grid select{padding-right:28px}
-.appointment-card-actions .calendar-action,
-.appointment-card-actions button[data-calendar-appointment]{
-  transform:none !important;
-  rotate:none !important;
-  width:auto;
-  min-width:0;
-  height:36px;
-  padding:0 10px;
-  border-radius:11px;
-  border:1px solid rgba(20,104,255,.18);
-  background:rgba(20,104,255,.06);
-  color:var(--blue);
-  font-size:.67rem;
-  line-height:1;
-  font-weight:800;
-  white-space:nowrap;
-}
-.calendar-prompt{border-radius:22px}
-@media(max-width:520px){
-  .appointment-schedule-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
-  .appointment-schedule-grid label:last-child{grid-column:1/-1}
-}
-@media(max-width:360px){
-  .appointment-schedule-grid{grid-template-columns:1fr}
-  .appointment-schedule-grid label:last-child{grid-column:auto}
-}
-
-
-/* v1.23.12 single-line appointment schedule; calendar export removed */
-.appointment-schedule-grid{
-  display:grid;
-  grid-template-columns:minmax(0,1.18fr) minmax(0,.82fr) minmax(0,.9fr) !important;
-  gap:6px !important;
-  align-items:end;
-}
-.appointment-schedule-grid label{min-width:0;font-size:.72rem}
-.appointment-schedule-grid input,
-.appointment-schedule-grid select{
-  width:100%;
-  min-width:0;
-  min-height:44px;
-  box-sizing:border-box;
-  padding:8px 6px !important;
-  font-size:14px !important;
-  border-radius:13px;
-}
-.appointment-schedule-grid select{padding-right:24px !important;background-position:calc(100% - 14px) 18px,calc(100% - 9px) 18px}
-@media(max-width:420px){
-  .appointment-schedule-grid{grid-template-columns:minmax(0,1.2fr) minmax(0,.78fr) minmax(0,.88fr) !important;gap:5px !important}
-  .appointment-schedule-grid input,.appointment-schedule-grid select{font-size:13px !important;padding-left:5px !important;padding-right:5px !important}
-  .appointment-schedule-grid select{padding-right:22px !important}
-}
-.calendar-prompt,.calendar-action,[data-calendar-appointment]{display:none !important}
-
-/* v2.1.0 — structural premium light UI rebuild */
+/* v1.24.0 — Phase 1 visual system refresh.
+   Intentionally preserves the approved v16 layout geometry and Today sizing. */
 :root{
-  --bg:#f5f6f8;
-  --card:#ffffff;
-  --line:#e5e8ed;
-  --ink:#0b0d12;
-  --muted:#8c94a3;
-  --blue:#1468ff;
-  --green:#17b67a;
-  --amber:#f0aa2b;
-  --red:#df3e55;
-  --shadow:0 12px 34px rgba(22,29,42,.08);
-  --radius-xl:30px;
-  --radius-lg:24px;
-  --radius-md:18px;
+  --phase1-surface:#ffffff;
+  --phase1-border:rgba(17,24,39,.10);
+  --phase1-shadow:0 10px 28px rgba(15,23,42,.07),0 2px 6px rgba(15,23,42,.035);
 }
-html,body{
-  background:var(--bg)!important;
-  color:var(--ink)!important;
-  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Arial,sans-serif!important;
+html,body,button,input,select,textarea{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue",Arial,sans-serif;
 }
-body{background:linear-gradient(180deg,#fafbfc 0%,#f4f5f7 100%)!important}
-.glass{
-  background:var(--card)!important;
-  border:1px solid var(--line)!important;
-  box-shadow:var(--shadow)!important;
-  backdrop-filter:none!important;
-  -webkit-backdrop-filter:none!important;
+.topbar h1,.view-head h2,.settings h2,.auth-card h1{
+  letter-spacing:-.025em;
+  font-weight:760;
 }
-.app{max-width:620px;padding-left:24px;padding-right:24px;gap:14px}
-.topbar{min-height:106px;padding:18px 4px 14px;border-bottom:1px solid var(--line);transform:none!important}
-.topbar h1{font-size:2rem!important;line-height:.98!important;letter-spacing:-.045em;font-weight:850;margin:0 0 8px}
-.date{font-size:1rem!important;line-height:1.1;color:var(--muted)!important;letter-spacing:-.01em}
-.sync-badge{width:14px;height:14px;min-width:14px;padding:0;border-radius:50%;border:0;background:var(--amber);font-size:0;box-shadow:0 0 0 5px rgba(240,170,43,.14)}
-.sync-badge.live{background:var(--green);box-shadow:0 0 0 5px rgba(23,182,122,.14)}
-.sync-badge.saving{background:var(--blue);box-shadow:0 0 0 5px rgba(20,104,255,.14)}
-.sync-badge.offline{background:#aeb4be;box-shadow:0 0 0 5px rgba(174,180,190,.14)}
-.sync-badge.error{background:var(--red);box-shadow:0 0 0 5px rgba(223,62,85,.14)}
-.icon-btn,.back-today{height:54px;min-width:54px;border-radius:50%;background:#fff!important;border:1px solid var(--line)!important;color:var(--ink)!important;box-shadow:none!important;font-size:1.35rem}
-main{overflow:hidden}.view{padding:8px 4px 18px}
-.dashboard.active{gap:16px!important}
-.score-week{border-radius:var(--radius-xl)!important;padding:26px 28px 22px!important;box-shadow:none!important;border:1px solid var(--line)!important}
-.score-overview{grid-template-columns:minmax(0,.9fr) minmax(180px,1.1fr);gap:24px;align-items:center}
-.score-copy>span,.trend-wrap>span,.metric-copy>span,.leaderboard-position span,.view-head span,.insight span,.section-label span,.leaderboard-head span{
-  color:#7e8796!important;font-size:.78rem!important;letter-spacing:.22em!important;font-weight:850!important
+.metric span,.score span,.week-head span,.view-head span,.insight span,.section-label>span{
+  letter-spacing:.14em;
+  font-weight:780;
 }
-.score-copy strong{font-size:5.25rem!important;line-height:.84!important;letter-spacing:-.07em;margin-top:20px!important}
-.momentum-whisper{display:block;margin-top:12px;color:#7f8898!important;font-size:1rem!important;line-height:1.12;font-weight:700;max-width:220px}
-.trend-wrap>span{text-align:left!important;margin-bottom:12px!important}
-.day-trend{height:86px!important}
-.trend-grid{stroke:#e8ebef!important}.trend-line{stroke:var(--blue)!important;stroke-width:3.5!important;filter:none!important}.trend-point{fill:var(--blue)!important;stroke:#fff!important;stroke-width:2!important}.trend-point.selected{fill:#0b0d12!important}
-.score-week>.bar{height:7px!important;margin-top:22px!important;background:#edf0f4!important;border:0!important}.score-week>.bar i{background:var(--green)!important}
-.leaderboard-position{margin-top:20px!important;padding-top:20px!important;border-top:1px solid var(--line)!important}.leaderboard-position strong{font-size:3.2rem!important;letter-spacing:-.06em}.leaderboard-position small{font-size:.83rem!important;color:var(--muted)!important;margin-top:7px!important}
-.today-at-glance{margin-top:14px!important;font-size:.9rem!important;font-weight:750!important;color:var(--blue)!important}
-.metrics{border-radius:var(--radius-xl)!important;overflow:hidden;background:#fff!important;border:1px solid var(--line)!important;box-shadow:none!important}
-.metric{min-height:156px!important;border-radius:0!important;padding:24px 18px 24px 22px!important;background:transparent!important;box-shadow:none!important;border:0!important}
-.dashboard .metrics>.metric+.metric::after{left:22px!important;right:22px!important;background:var(--line)!important;opacity:1!important}
-.metric.complete:before{width:6px!important;background:var(--green)!important}
-.metric-copy>small{font-size:.9rem!important;margin-top:8px!important;color:var(--muted)!important}
-.metric em{font-size:.9rem!important;margin-top:5px!important;color:var(--blue)!important;font-weight:750}
-.metric strong{font-size:3.25rem!important;letter-spacing:-.055em;margin-top:10px!important}.metric strong small{font-size:1.3rem!important}
-.actions{grid-template-columns:54px 68px 54px!important;gap:9px!important}.actions button,.metric-percent{height:54px!important;border-radius:17px!important;border:1px solid var(--line)!important;box-shadow:none!important}
-.actions button{background:#f3f5f7!important;color:var(--ink)!important}.actions button:last-child{background:#0b0d12!important;color:#fff!important}.metric-percent{background:#f2f6ff!important;color:var(--blue)!important;font-size:1rem!important}
-.knock-actions{grid-template-columns:112px 54px!important}.timer{background:#0b0d12!important;color:#fff!important;border:0!important;font-size:.96rem!important}.timer.running{background:var(--red)!important}.reset{background:#f3f5f7!important}
-.tabbar{min-height:78px!important;border-radius:28px!important;padding:7px!important;background:rgba(255,255,255,.96)!important;border:1px solid var(--line)!important;box-shadow:0 16px 35px rgba(25,32,44,.12)!important}
-.tabbar button{border-radius:22px!important;color:#7e8795!important;padding:7px 2px!important}.tabbar button.active{background:#101217!important;color:#fff!important}.tabbar button.active .tab-icon{color:#fff!important}.tabbar span{font-size:.72rem!important;font-weight:700;margin-top:4px!important}.tab-icon{width:25px!important;height:25px!important}
-.view-head{margin:4px 4px 18px!important;align-items:end}.view-head h2{font-size:2rem!important;letter-spacing:-.045em;margin-top:10px!important}.view-head input{min-height:54px;border-radius:18px!important;background:#fff!important;color:var(--ink)!important;border:1px solid var(--line)!important;padding:0 16px!important;font-size:.9rem!important}
-.appointment-form{border-radius:var(--radius-xl)!important;padding:24px!important;box-shadow:none!important}.appointment-form label{font-size:.84rem!important;color:#747d8c!important;gap:8px!important}.appointment-form input[type=text],.appointment-form input[type=tel],.appointment-form input[type=date],.appointment-form input[type=time],.appointment-form select,.settings input{
-  min-height:58px!important;background:#f6f7f9!important;border:1px solid #e2e5ea!important;color:var(--ink)!important;border-radius:18px!important;padding:0 16px!important;font-size:1rem!important;box-shadow:none!important
+.primary,.secondary,.danger,.file-btn,.icon-btn,.back-today,
+.actions button,.metric-percent,.appointment-types label,.view-head input,
+.settings input,.appointment-form input[type=text],.auth-card input{
+  box-shadow:none;
 }
-.appointment-contact-grid,.appointment-schedule-grid{gap:10px!important}.appointment-schedule-grid{grid-template-columns:minmax(0,1.2fr) minmax(0,.85fr) minmax(0,.9fr)!important}.appointment-schedule-grid input,.appointment-schedule-grid select{font-size:.88rem!important;padding:0 10px!important}
-.appointment-types{gap:10px!important;margin-top:16px!important}.appointment-types label{min-height:64px;border-radius:18px!important;background:#f7f8fa!important;border:1px solid var(--line)!important;font-size:.78rem!important;color:#6e7683!important}
-.primary,.secondary,.danger,.file-btn{min-height:58px!important;border-radius:18px!important;padding:0 18px!important;font-size:.95rem!important;letter-spacing:-.01em;box-shadow:none!important}.primary{background:#0b0d12!important;color:#fff!important}.secondary,.file-btn{background:#f3f5f7!important;color:var(--ink)!important;border:1px solid var(--line)!important}.danger{background:#fff1f3!important;color:var(--red)!important;border:1px solid #ffd7dd!important}
-.appointments-list{gap:12px!important}.appointment-card{border-radius:22px!important;background:#fff!important;border:1px solid var(--line)!important;padding:18px 20px!important;box-shadow:none!important}.appointment-card strong{font-size:1.05rem!important;letter-spacing:-.02em}.appointment-card small{font-size:.78rem!important;line-height:1.35!important}
-.insights-switch{border-radius:20px!important;padding:5px!important;box-shadow:none!important}.insights-switch button{min-height:48px!important;border-radius:16px!important}.insights-switch button.active{background:#0b0d12!important;color:#fff!important}
-.insight-grid{gap:12px!important}.insight,.personal-bests,.month-card,.year-card,.leaderboard-card,.improvement-card{border-radius:24px!important;box-shadow:none!important;padding:20px!important}.insight strong{font-size:2.15rem!important;letter-spacing:-.04em}.insight small{font-size:.78rem!important}
-.settings{border-radius:var(--radius-xl)!important;padding:24px!important;box-shadow:none!important}.settings h2{font-size:2rem!important;letter-spacing:-.045em;margin-bottom:12px!important}.settings label{font-size:.82rem!important;color:#747d8c!important;margin:13px 0!important}.account-email{font-size:.82rem!important;color:var(--blue)!important}
-.auth-gate{background:linear-gradient(180deg,#fbfcfd,#f3f5f7)!important}.auth-card{border-radius:32px!important;background:#fff!important;color:var(--ink)!important;box-shadow:0 24px 70px rgba(25,32,44,.12)!important;padding:34px!important}.auth-card h1{font-size:2.3rem!important;letter-spacing:-.05em}.auth-card p{color:var(--muted)!important}.auth-card input{min-height:58px!important;border-radius:18px!important;background:#f4f6f8!important;border:1px solid var(--line)!important;color:var(--ink)!important;padding:0 16px!important}
-@media(max-width:520px){
-  .app{padding-left:18px;padding-right:18px}
-  .topbar{min-height:92px;padding-top:14px}.topbar h1{font-size:1.75rem!important}
-  .score-week{padding:22px 20px 19px!important}.score-overview{grid-template-columns:minmax(0,.88fr) minmax(145px,1.12fr);gap:12px}.score-copy strong{font-size:4.35rem!important}.momentum-whisper{font-size:.88rem!important}.day-trend{height:72px!important}
-  .metric{min-height:140px!important;padding:20px 14px 20px 18px!important}.metric strong{font-size:2.8rem!important}.actions{grid-template-columns:48px 60px 48px!important}.actions button,.metric-percent{height:50px!important}.knock-actions{grid-template-columns:96px 48px!important}
-  .appointment-form{padding:20px!important}.appointment-form input[type=text],.appointment-form input[type=tel],.appointment-form input[type=date],.appointment-form input[type=time],.appointment-form select{min-height:54px!important}
+.primary{
+  background:#111318;
+  color:#fff;
+  border:1px solid #111318;
 }
-@media(max-width:390px){
-  .score-copy strong{font-size:3.9rem!important}.score-overview{grid-template-columns:minmax(0,.8fr) minmax(132px,1.2fr)}
-  .metric{min-height:132px!important}.metric strong{font-size:2.55rem!important}.actions{grid-template-columns:44px 54px 44px!important;gap:6px!important}.actions button,.metric-percent{height:46px!important;border-radius:15px!important}.knock-actions{grid-template-columns:86px 44px!important}
-  .appointment-schedule-grid{grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr) minmax(0,.88fr)!important;gap:5px!important}.appointment-schedule-grid input,.appointment-schedule-grid select{font-size:.78rem!important;padding:0 6px!important}
+.secondary,.file-btn{
+  background:#fff;
+  color:#17191f;
+  border:1px solid var(--phase1-border);
+}
+.danger{
+  background:#fff4f5;
+  color:#c9364d;
+  border:1px solid rgba(201,54,77,.13);
+}
+.settings input,.appointment-form input[type=text],.auth-card input,.view-head input{
+  background:#fff;
+  color:#17191f;
+  border-color:var(--phase1-border);
+}
+.settings input:focus,.appointment-form input[type=text]:focus,.auth-card input:focus,.view-head input:focus{
+  outline:none;
+  border-color:rgba(66,108,224,.48);
+  box-shadow:0 0 0 3px rgba(66,108,224,.10);
+}
+.appointment-form,.settings,.auth-card,.score-week,.metrics{
+  box-shadow:var(--phase1-shadow);
+}
+.settings-shortcut-icon{
+  display:grid;
+  place-items:center;
+  line-height:0;
+}
+.settings-shortcut-icon svg{
+  width:22px;
+  height:22px;
+  display:block;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.9;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.tabbar button span{
+  font-weight:720;
+  letter-spacing:-.01em;
 }
 
 
-/* v2.1.2 — exact pre-redesign Today geometry.
-   Visual language remains v2; all Today dimensions return to the proven v1.23.12 sizing. */
-body.today-active .app{
-  max-width:560px!important;
-  padding:max(12px,env(safe-area-inset-top)) 18px max(10px,env(safe-area-inset-bottom))!important;
-  grid-template-rows:auto minmax(0,1fr) auto!important;
-  gap:9px!important;
-}
-body.today-active .topbar{
-  min-height:76px!important;
-  padding:0 5px!important;
-  transform:translateY(7px)!important;
-}
-body.today-active .topbar h1{
-  margin:0 0 5px!important;
-  font-size:1.52rem!important;
-  line-height:1.03!important;
-  letter-spacing:-.035em!important;
-}
-body.today-active .date{font-size:.86rem!important;line-height:1.15!important}
-body.today-active .icon-btn,
-body.today-active .back-today{
-  height:48px!important;
-  min-width:48px!important;
-  padding:0 13px!important;
-  font-size:1.22rem!important;
-}
-#todayView.dashboard.active{
-  display:grid!important;
-  grid-template-rows:auto minmax(0,1fr)!important;
-  gap:9px!important;
-  overflow:hidden!important;
-}
-#todayView .score-week{
-  border-radius:28px!important;
-  padding:14px 18px 12px!important;
-  min-height:0!important;
-}
-#todayView .score-overview{
-  grid-template-columns:minmax(0,.78fr) minmax(145px,1.22fr)!important;
-  gap:14px!important;
-  align-items:end!important;
-}
-#todayView .score-copy>span{font-size:.76rem!important;line-height:1!important;letter-spacing:.18em!important}
-#todayView .trend-wrap>span{font-size:.62rem!important;line-height:1!important;letter-spacing:.14em!important;margin-bottom:2px!important;text-align:right!important}
-#todayView .score-copy strong{
-  font-size:3rem!important;
-  line-height:.9!important;
-  margin-top:9px!important;
-  letter-spacing:-.06em!important;
-}
-#todayView .momentum-whisper{
-  display:block!important;
-  margin-top:7px!important;
-  max-width:220px!important;
-  font-size:.84rem!important;
-  line-height:1.12!important;
-}
-#todayView .day-trend{height:62px!important}
-#todayView .score-week>.bar{height:8px!important;margin-top:8px!important}
-#todayView .leaderboard-position{margin-top:10px!important;padding-top:9px!important}
-#todayView .leaderboard-position span{font-size:.67rem!important;letter-spacing:.17em!important}
-#todayView .leaderboard-position small{margin-top:4px!important;font-size:.58rem!important}
-#todayView .leaderboard-position>strong{font-size:1.9rem!important}
-#todayView .today-at-glance{
-  margin-top:8px!important;
-  font-size:.72rem!important;
-  line-height:1.2!important;
-  white-space:nowrap!important;
-  overflow:hidden!important;
-  text-overflow:ellipsis!important;
-}
-#todayView .metrics{
-  display:grid!important;
-  grid-template-rows:repeat(4,minmax(0,1fr))!important;
-  gap:0!important;
-  min-height:0!important;
-  border-radius:24px!important;
-  overflow:hidden!important;
-}
-#todayView .metric{
-  min-height:0!important;
-  border-radius:0!important;
-  padding:10px 13px!important;
-  grid-template-columns:minmax(0,1fr) auto!important;
-  align-items:center!important;
-  overflow:hidden!important;
-}
-#todayView .metrics>.metric+.metric::after{left:16px!important;right:16px!important}
-#todayView .metric-copy>span{font-size:.76rem!important;line-height:1!important;letter-spacing:.18em!important}
-#todayView .metric-copy>small{font-size:.71rem!important;line-height:1.12!important;margin-top:4px!important}
-#todayView .metric em{font-size:.72rem!important;line-height:1.1!important;margin-top:4px!important}
-#todayView .metric strong{font-size:1.94rem!important;line-height:.95!important;margin-top:6px!important;letter-spacing:-.045em!important}
-#todayView .metric strong small{font-size:.94rem!important}
-#todayView .actions{grid-template-columns:54px 58px 54px!important;gap:7px!important}
-#todayView .actions button,
-#todayView .metric-percent{height:54px!important;border-radius:18px!important}
-#todayView .actions button{font-size:1.84rem!important;line-height:1!important}
-#todayView .metric-percent{font-size:.75rem!important;line-height:1!important}
-#todayView .knock-actions{grid-template-columns:100px 54px!important}
-#todayView .timer{font-size:.92rem!important}
-#todayView .reset{font-size:1.22rem!important}
-#todayView .knock #knockValue{font-size:1.95rem!important;line-height:.95!important}
-#todayView .knock #knockTargetText{font-size:.7rem!important;line-height:1.15!important}
-#todayView .knock #knockRemaining{font-size:.73rem!important}
-body.today-active .tabbar{
-  min-height:67px!important;
-  border-radius:26px!important;
-  padding:5px!important;
-}
-body.today-active .tabbar button{border-radius:20px!important;padding:7px 3px!important}
-body.today-active .tabbar button.active{background:rgba(16,18,23,.07)!important;color:var(--ink)!important}
-body.today-active .tabbar b{font-size:1.14rem!important;line-height:1!important}
-body.today-active .tabbar span{font-size:.69rem!important;line-height:1!important;margin-top:2px!important}
-body.today-active .tab-icon{width:25px!important;height:25px!important}
-
-@media(max-height:760px){
-  #todayView .score-week{padding:10px 14px 9px!important;border-radius:22px!important}
-  #todayView .score-copy strong{font-size:2.35rem!important;margin-top:5px!important}
-  #todayView .day-trend{height:48px!important}
-  #todayView .score-overview{grid-template-columns:minmax(0,.72fr) minmax(130px,1.28fr)!important;gap:9px!important}
-  #todayView .score-week>.bar{height:6px!important;margin-top:5px!important}
-  #todayView .leaderboard-position{margin-top:7px!important;padding-top:6px!important}
-  #todayView .leaderboard-position>strong{font-size:1.55rem!important}
-  #todayView .leaderboard-position small{font-size:.52rem!important}
-}
-@media(max-width:390px){
-  #todayView .score-week{padding-left:14px!important;padding-right:14px!important}
-  #todayView .score-overview{grid-template-columns:minmax(0,.7fr) minmax(126px,1.3fr)!important;gap:8px!important}
-  #todayView .score-copy>span{font-size:.68rem!important}
-  #todayView .trend-wrap>span{font-size:.55rem!important}
-}
-
-/* v2.1.3 — Today page final fit and control sizing */
-body.today-active main{padding-bottom:2px!important}
-#todayView.dashboard.active{gap:7px!important}
-#todayView .metrics{
-  margin-bottom:2px!important;
-  border-radius:22px!important;
-}
-#todayView .metric{
-  padding:8px 12px!important;
-}
-#todayView .metric-copy>span{font-size:.72rem!important}
-#todayView .metric-copy>small{font-size:.67rem!important;margin-top:3px!important}
-#todayView .metric em{font-size:.68rem!important;margin-top:3px!important}
-#todayView .metric strong{font-size:1.78rem!important;margin-top:4px!important}
-#todayView .metric strong small{font-size:.88rem!important}
-#todayView .actions{
-  grid-template-columns:48px 54px 48px!important;
-  gap:6px!important;
-}
-#todayView .actions button,
-#todayView .metric-percent{
-  height:48px!important;
-  border-radius:16px!important;
-}
-#todayView .actions button{font-size:1.55rem!important}
-#todayView .metric-percent{font-size:.72rem!important}
-#todayView .knock-actions{grid-template-columns:92px 48px!important}
-#todayView .timer{
-  font-size:.76rem!important;
-  letter-spacing:-.01em!important;
-}
-#todayView .reset{font-size:1.08rem!important}
-#todayView .knock #knockValue{font-size:1.78rem!important}
-#todayView .knock #knockTargetText{font-size:.66rem!important}
-#todayView .knock #knockRemaining{font-size:.68rem!important}
-@media(max-height:760px){
-  #todayView .metric{padding:7px 11px!important}
-  #todayView .actions{grid-template-columns:44px 50px 44px!important;gap:5px!important}
-  #todayView .actions button,#todayView .metric-percent{height:44px!important;border-radius:15px!important}
-  #todayView .knock-actions{grid-template-columns:84px 44px!important}
-  #todayView .timer{font-size:.7rem!important}
-  #todayView .metric strong{font-size:1.62rem!important}
-}
-
-
-/* v2.1.4 — definitive Today geometry reset.
-   Restores the proven pre-redesign Today sizing while retaining v2 typography and surfaces. */
-#settingsShortcut{display:grid!important;place-items:center!important;padding:0!important}
-#settingsShortcut .header-settings-icon{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
-
-#todayView.dashboard.active{
-  grid-template-rows:auto minmax(0,1fr)!important;
-  gap:9px!important;
-  min-height:0!important;
-  overflow:hidden!important;
-  padding-bottom:0!important;
-}
-#todayView .metrics{
-  display:grid!important;
-  grid-template-rows:repeat(4,minmax(0,1fr))!important;
-  gap:0!important;
-  height:100%!important;
-  min-height:0!important;
-  max-height:100%!important;
-  overflow:hidden!important;
-  border-radius:24px!important;
-}
-#todayView .metric{
-  min-height:0!important;
-  height:auto!important;
-  padding:6px 10px!important;
-  border-radius:0!important;
-  grid-template-columns:minmax(0,1fr) auto!important;
-  align-items:center!important;
-  overflow:hidden!important;
-}
-#todayView .metric-copy{min-width:0!important;align-self:center!important}
-#todayView .metric-copy>span{font-size:.64rem!important;line-height:1!important;letter-spacing:.18em!important}
-#todayView .metric-copy>small{font-size:.58rem!important;line-height:1.08!important;margin-top:2px!important}
-#todayView .metric em{font-size:.59rem!important;line-height:1.08!important;margin-top:2px!important}
-#todayView .metric strong{font-size:1.42rem!important;line-height:.92!important;margin-top:3px!important;letter-spacing:-.04em!important}
-#todayView .metric strong small{font-size:.72rem!important}
-#todayView .actions{grid-template-columns:42px 48px 42px!important;gap:5px!important}
-#todayView .actions button,#todayView .metric-percent{height:42px!important;border-radius:14px!important}
-#todayView .actions button{font-size:1.34rem!important}
-#todayView .metric-percent{font-size:.66rem!important}
-#todayView .knock-actions{grid-template-columns:80px 42px!important}
-#todayView .timer{font-size:.72rem!important;letter-spacing:0!important}
-#todayView .reset{font-size:.94rem!important}
-#todayView .knock #knockValue{font-size:1.42rem!important;line-height:.92!important}
-#todayView .knock #knockTargetText{font-size:.58rem!important;line-height:1.08!important}
-#todayView .knock #knockRemaining{font-size:.59rem!important}
-
-@media (max-height:760px){
-  #todayView.dashboard.active{gap:6px!important}
-  #todayView .metric{padding:4px 8px!important}
-  #todayView .metric-copy>span{font-size:.58rem!important}
-  #todayView .metric-copy>small,#todayView .metric em{font-size:.52rem!important}
-  #todayView .metric strong,#todayView .knock #knockValue{font-size:1.24rem!important}
-  #todayView .actions{grid-template-columns:38px 44px 38px!important;gap:4px!important}
-  #todayView .actions button,#todayView .metric-percent{height:38px!important;border-radius:13px!important}
-  #todayView .knock-actions{grid-template-columns:74px 38px!important}
-  #todayView .timer{font-size:.66rem!important}
-}
-
-/* v2.1.5 — Today viewport reservation fix.
-   Reserve the fixed bottom navigation's full footprint so the metric capsule
-   ends above it, then distribute the four rows inside the available height. */
-body.today-active .app{
-  grid-template-rows:auto minmax(0,1fr)!important;
-  padding-bottom:calc(var(--nav-space) + max(8px,env(safe-area-inset-bottom)))!important;
-}
-body.today-active main,
-#todayView.dashboard.active{
-  min-height:0!important;
-  height:100%!important;
-  overflow:hidden!important;
-}
-#todayView.dashboard.active{
-  grid-template-rows:auto minmax(0,1fr)!important;
-  gap:9px!important;
-}
-#todayView .metrics{
-  height:auto!important;
-  min-height:0!important;
-  max-height:none!important;
-  align-self:stretch!important;
-  overflow:hidden!important;
-}
-#todayView .metric{
-  min-height:0!important;
-  height:100%!important;
-  padding:7px 11px!important;
-}
-#todayView .metric-copy>span{font-size:.69rem!important}
-#todayView .metric-copy>small{font-size:.63rem!important}
-#todayView .metric em{font-size:.64rem!important}
-#todayView .metric strong,
-#todayView .knock #knockValue{font-size:1.58rem!important}
-#todayView .metric strong small{font-size:.8rem!important}
-#todayView .actions{grid-template-columns:40px 46px 40px!important;gap:5px!important}
-#todayView .actions button,
-#todayView .metric-percent{height:40px!important;border-radius:13px!important}
-#todayView .actions button{font-size:1.25rem!important}
-#todayView .metric-percent{font-size:.68rem!important}
-#todayView .knock-actions{grid-template-columns:76px 40px!important}
-#todayView .timer{font-size:.68rem!important}
-#todayView .reset{font-size:.9rem!important}
-
-@media (display-mode:standalone) and (max-height:760px){
-  body.today-active .app{
-    padding-bottom:calc(74px + max(7px,env(safe-area-inset-bottom)))!important;
-  }
-  #todayView.dashboard.active{gap:6px!important}
-  #todayView .metric{padding:5px 9px!important}
-  #todayView .metric strong,
-  #todayView .knock #knockValue{font-size:1.42rem!important}
-  #todayView .actions{grid-template-columns:37px 43px 37px!important;gap:4px!important}
-  #todayView .actions button,
-  #todayView .metric-percent{height:37px!important;border-radius:12px!important}
-  #todayView .knock-actions{grid-template-columns:70px 37px!important}
-}
-
-/* v2.1.6 — Today sizing matched to DA v16 reference.
-   Visual language remains v2; geometry and viewport fit follow the approved pre-redesign Today screen. */
-body.today-active{
-  --nav-space:122px;
-}
-body.today-active .app{
-  height:100dvh!important;
-  min-height:100dvh!important;
-  max-height:100dvh!important;
-  padding-top:max(7px,env(safe-area-inset-top))!important;
-  padding-right:11px!important;
-  padding-bottom:calc(var(--nav-space) + max(7px,env(safe-area-inset-bottom)))!important;
-  padding-left:11px!important;
-  grid-template-rows:auto minmax(0,1fr)!important;
-  gap:6px!important;
-  overflow:hidden!important;
-}
-body.today-active .topbar{
-  min-height:58px!important;
-  padding:0 3px!important;
-}
-body.today-active main{
-  height:100%!important;
-  min-height:0!important;
-  overflow:hidden!important;
-  padding-bottom:0!important;
-}
-#todayView.dashboard.active{
-  display:grid!important;
-  height:100%!important;
-  min-height:0!important;
-  overflow:hidden!important;
-  grid-template-rows:auto minmax(0,1fr)!important;
-  gap:6px!important;
-  padding:1px 2px 0!important;
-}
-#todayView .score-week{
-  padding:10px 14px 9px!important;
-  border-radius:22px!important;
-  min-height:0!important;
-}
-#todayView .score-overview{
-  grid-template-columns:minmax(0,.72fr) minmax(130px,1.28fr)!important;
-  gap:9px!important;
-}
-#todayView .score-copy strong{font-size:3rem!important;line-height:.9!important;margin-top:4px!important}
-#todayView .day-trend{height:48px!important}
-#todayView .score-week>.bar{height:6px!important;margin-top:5px!important}
-#todayView .leaderboard-position{margin-top:7px!important;padding-top:6px!important}
-#todayView .leaderboard-position>strong{font-size:1.55rem!important}
-#todayView .leaderboard-position small{font-size:.58rem!important}
-#todayView .metrics{
-  display:grid!important;
-  grid-template-rows:repeat(4,minmax(0,1fr))!important;
-  gap:0!important;
-  height:100%!important;
-  min-height:0!important;
-  max-height:100%!important;
-  margin:0!important;
-  overflow:hidden!important;
-  border-radius:22px!important;
-  align-self:stretch!important;
-}
-#todayView .metric{
-  height:auto!important;
-  min-height:0!important;
-  padding:6px 10px!important;
-  border-radius:0!important;
-  grid-template-columns:minmax(0,1fr) auto!important;
-  align-items:center!important;
-  overflow:hidden!important;
-}
-#todayView .metric-copy>span{font-size:.69rem!important;line-height:1!important;letter-spacing:.17em!important}
-#todayView .metric-copy>small{font-size:.64rem!important;line-height:1.1!important;margin-top:2px!important}
-#todayView .metric em{font-size:.66rem!important;line-height:1.1!important;margin-top:2px!important}
-#todayView .metric strong{font-size:1.72rem!important;line-height:.95!important;margin-top:3px!important}
-#todayView .metric strong small{font-size:.84rem!important}
-#todayView .actions{grid-template-columns:42px 47px 42px!important;gap:5px!important}
-#todayView .actions button,#todayView .metric-percent{height:42px!important;border-radius:14px!important}
-#todayView .actions button{font-size:1.25rem!important}
-#todayView .metric-percent{font-size:.74rem!important}
-#todayView .knock-actions{grid-template-columns:78px 42px!important}
-#todayView .timer{font-size:.7rem!important;line-height:1!important}
-#todayView .reset{font-size:1rem!important}
-#todayView .knock #knockValue{font-size:1.72rem!important;line-height:.95!important}
-#todayView .knock #knockTargetText{font-size:.64rem!important;line-height:1.1!important}
-#todayView .knock #knockRemaining{font-size:.66rem!important}
-body.today-active .tabbar{
-  bottom:max(7px,env(safe-area-inset-bottom))!important;
-  min-height:67px!important;
-}
-@media (max-width:390px), (max-height:760px){
-  body.today-active{--nav-space:108px}
-  #todayView .score-copy strong{font-size:2.55rem!important}
-  #todayView .metric{padding:5px 8px!important}
-  #todayView .actions{grid-template-columns:38px 43px 38px!important;gap:4px!important}
-  #todayView .actions button,#todayView .metric-percent{height:38px!important;border-radius:13px!important}
-  #todayView .knock-actions{grid-template-columns:70px 38px!important}
-  #todayView .metric strong,#todayView .knock #knockValue{font-size:1.5rem!important}
-}
-
-/* v2.1.7 — Today final spacing refinement.
-   Slightly enlarges both Today stacks within the proven v16 geometry and
-   aligns completed-status text with the completion indicator green. */
-#todayView.dashboard.active{
-  gap:8px!important;
-}
-#todayView .score-week{
-  padding:12px 15px 11px!important;
-}
-#todayView .score-copy strong{
-  font-size:3.08rem!important;
-}
-#todayView .leaderboard-position{
-  margin-top:8px!important;
-  padding-top:7px!important;
-}
-#todayView .metric{
-  padding:7px 11px!important;
-}
-#todayView .metric-copy>span{
-  font-size:.71rem!important;
-}
-#todayView .metric-copy>small{
-  font-size:.66rem!important;
-}
-#todayView .metric em{
-  font-size:.68rem!important;
-}
-#todayView .metric strong,
-#todayView .knock #knockValue{
-  font-size:1.78rem!important;
-}
-#todayView .metric.complete .metric-copy>em,
-#todayView .metric.complete em{
-  color:var(--green)!important;
-}
-#todayView .timer{
-  font-size:.66rem!important;
-}
-
-@media (max-width:390px), (max-height:760px){
-  #todayView.dashboard.active{gap:7px!important}
-  #todayView .score-week{padding:11px 14px 10px!important}
-  #todayView .score-copy strong{font-size:2.65rem!important}
-  #todayView .metric{padding:6px 9px!important}
-  #todayView .metric-copy>span{font-size:.68rem!important}
-  #todayView .metric-copy>small{font-size:.63rem!important}
-  #todayView .metric em{font-size:.65rem!important}
-  #todayView .metric strong,
-  #todayView .knock #knockValue{font-size:1.58rem!important}
-}
-
-
-/* v2.1.8 — authoritative Today geometry from DA v16 reference.
-   This block intentionally overrides all earlier Today sizing experiments. */
-body.today-active{--today-nav-height:78px;--today-nav-gap:0px;--today-nav-bottom:max(8px,env(safe-area-inset-bottom));}
-body.today-active .app{
-  height:100dvh!important;
-  min-height:100dvh!important;
-  max-height:100dvh!important;
-  box-sizing:border-box!important;
-  padding:max(7px,env(safe-area-inset-top)) 11px calc(var(--today-nav-height) + var(--today-nav-gap) + var(--today-nav-bottom))!important;
-  grid-template-rows:58px minmax(0,1fr)!important;
-  gap:6px!important;
-  overflow:hidden!important;
-}
-body.today-active .topbar{height:58px!important;min-height:58px!important;max-height:58px!important;padding:0 3px!important;transform:none!important;}
-body.today-active main{height:100%!important;min-height:0!important;max-height:100%!important;overflow:hidden!important;}
-#todayView.dashboard.active{
-  display:grid!important;
-  box-sizing:border-box!important;
-  width:100%!important;
-  height:100%!important;
-  min-height:0!important;
-  max-height:100%!important;
-  grid-template-rows:154px minmax(0,1fr)!important;
-  gap:8px!important;
-  padding:1px 2px 0!important;
-  overflow:hidden!important;
-}
-#todayView .score-week{
-  height:154px!important;
-  min-height:154px!important;
-  max-height:154px!important;
-  box-sizing:border-box!important;
-  padding:11px 15px 10px!important;
-  border-radius:22px!important;
-  overflow:hidden!important;
-}
-#todayView .score-overview{grid-template-columns:minmax(0,.72fr) minmax(130px,1.28fr)!important;gap:9px!important;align-items:end!important;}
-#todayView .score-copy strong{font-size:3rem!important;line-height:.9!important;margin-top:4px!important;}
-#todayView .day-trend{height:48px!important;}
-#todayView .score-week>.bar{height:6px!important;margin-top:5px!important;}
-#todayView .leaderboard-position{margin-top:7px!important;padding-top:6px!important;}
-#todayView .leaderboard-position>strong{font-size:1.55rem!important;}
-#todayView .leaderboard-position small{font-size:.58rem!important;}
-#todayView .metrics{
-  display:grid!important;
-  box-sizing:border-box!important;
-  grid-template-rows:repeat(4,minmax(0,1fr))!important;
-  width:100%!important;
-  height:100%!important;
-  min-height:0!important;
-  max-height:100%!important;
-  gap:0!important;
-  margin:0!important;
-  align-self:stretch!important;
-  overflow:hidden!important;
-  border-radius:22px!important;
-}
-#todayView .metric{
-  box-sizing:border-box!important;
-  min-height:0!important;
-  height:auto!important;
-  max-height:none!important;
-  padding:6px 10px!important;
-  border-radius:0!important;
-  grid-template-columns:minmax(0,1fr) auto!important;
-  align-items:center!important;
-  overflow:hidden!important;
-}
-#todayView .metric-copy{min-width:0!important;align-self:center!important;}
-#todayView .metric-copy>span{font-size:.69rem!important;line-height:1!important;letter-spacing:.17em!important;}
-#todayView .metric-copy>small{font-size:.64rem!important;line-height:1.1!important;margin-top:2px!important;}
-#todayView .metric em{font-size:.66rem!important;line-height:1.1!important;margin-top:2px!important;}
-#todayView .metric strong,#todayView .knock #knockValue{font-size:1.72rem!important;line-height:.95!important;margin-top:3px!important;}
-#todayView .metric strong small{font-size:.84rem!important;}
-#todayView .metric.complete .metric-copy>em,#todayView .metric.complete em{color:var(--green)!important;}
-#todayView .actions{grid-template-columns:42px 47px 42px!important;gap:5px!important;align-items:center!important;}
-#todayView .actions button,#todayView .metric-percent{width:auto!important;height:42px!important;min-height:42px!important;max-height:42px!important;border-radius:14px!important;}
-#todayView .actions button{font-size:1.25rem!important;}
-#todayView .metric-percent{font-size:.74rem!important;}
-#todayView .knock-actions{grid-template-columns:50px 42px!important;gap:6px!important;}
-#todayView .timer{display:grid!important;place-items:center!important;padding:0!important;font-size:0!important;line-height:0!important;}
-#todayView .timer-icon{width:20px!important;height:20px!important;display:block!important;fill:currentColor!important;stroke:none!important;}
-#todayView .reset{font-size:1rem!important;}
-body.today-active .tabbar{
-  min-height:var(--today-nav-height)!important;
-  height:var(--today-nav-height)!important;
-  bottom:var(--today-nav-bottom)!important;
-}
-@media (max-height:760px){
-  body.today-active{--today-nav-height:70px;--today-nav-gap:0px;}
-  body.today-active .app{grid-template-rows:54px minmax(0,1fr)!important;padding-left:10px!important;padding-right:10px!important;}
-  body.today-active .topbar{height:54px!important;min-height:54px!important;max-height:54px!important;}
-  #todayView.dashboard.active{grid-template-rows:142px minmax(0,1fr)!important;gap:6px!important;}
-  #todayView .score-week{height:142px!important;min-height:142px!important;max-height:142px!important;padding:9px 13px 8px!important;}
-  #todayView .score-copy strong{font-size:2.65rem!important;}
-  #todayView .metric{padding:5px 8px!important;}
-  #todayView .metric strong,#todayView .knock #knockValue{font-size:1.52rem!important;}
-  #todayView .actions{grid-template-columns:38px 43px 38px!important;gap:4px!important;}
-  #todayView .actions button,#todayView .metric-percent{height:38px!important;min-height:38px!important;max-height:38px!important;border-radius:13px!important;}
-  #todayView .knock-actions{grid-template-columns:46px 38px!important;}
-  #todayView .timer-icon{width:18px!important;height:18px!important;}
-}
-
-
-/* v2.1.9 — maximise Today viewport usage.
-   The metric capsule now uses the full available height and meets the
-   navigation boundary without an artificial white gap or overlap. */
-body.today-active{--today-nav-gap:0px!important;}
-#todayView.dashboard.active{padding-bottom:0!important;}
-#todayView .metrics{margin-bottom:0!important;}
+/* v1.24.1 contextual topbar actions */
+.date-nav-actions{display:flex;align-items:center;gap:7px}
+.date-nav-actions.hidden{display:none}
+.topbar-nav-icon,.home-shortcut-icon{display:grid;place-items:center;line-height:0}
+.topbar-nav-icon svg,.home-shortcut-icon svg{width:22px;height:22px;display:block;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.topbar-nav-icon svg{width:21px;height:21px}
