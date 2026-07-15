@@ -37,3 +37,10 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - Leaderboard retains the settings cog.
 - Settings uses a matching home icon that returns to Today.
 - Firebase, data paths, sync, logging and all existing business logic remain unchanged.
+
+
+## v1.24.2 — Profile title and knocking controls
+- Renamed the Settings page content heading to **Your Profile**.
+- Replaced the knocking Start/Pause text with matching flat SVG play and pause icons.
+- Preserved the existing knocking button dimensions and timer/reset behaviour.
+- No Firebase Console changes required.

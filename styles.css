@@ -1335,3 +1335,10 @@ html,body,button,input,select,textarea{
 .topbar-nav-icon,.home-shortcut-icon{display:grid;place-items:center;line-height:0}
 .topbar-nav-icon svg,.home-shortcut-icon svg{width:22px;height:22px;display:block;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .topbar-nav-icon svg{width:21px;height:21px}
+
+
+/* v1.24.2 profile title + icon-only knocking timer */
+.timer{display:grid!important;place-items:center!important;line-height:0!important}
+.timer .timer-icon{width:21px;height:21px;display:block;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.timer .timer-icon path{fill:currentColor;stroke:none}
+.timer .timer-icon rect{fill:currentColor;stroke:none}
