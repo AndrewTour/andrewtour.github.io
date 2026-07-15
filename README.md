@@ -83,3 +83,10 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - Redistributed all four metric rows within the available viewport.
 - Restored readable metric typography while keeping controls compact.
 - No Firebase Console changes required.
+
+
+## v2.1.6 — Today sizing matched to DA v16 reference
+- Kept the v2 visual language and typography.
+- Restored the approved pre-redesign Today viewport proportions and metric-stack spacing.
+- Reserved the full bottom-navigation footprint so the metric capsule finishes above it.
+- No Firebase Console changes required.

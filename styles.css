@@ -1735,3 +1735,104 @@ body.today-active main,
   #todayView .metric-percent{height:37px!important;border-radius:12px!important}
   #todayView .knock-actions{grid-template-columns:70px 37px!important}
 }
+
+/* v2.1.6 — Today sizing matched to DA v16 reference.
+   Visual language remains v2; geometry and viewport fit follow the approved pre-redesign Today screen. */
+body.today-active{
+  --nav-space:122px;
+}
+body.today-active .app{
+  height:100dvh!important;
+  min-height:100dvh!important;
+  max-height:100dvh!important;
+  padding-top:max(7px,env(safe-area-inset-top))!important;
+  padding-right:11px!important;
+  padding-bottom:calc(var(--nav-space) + max(7px,env(safe-area-inset-bottom)))!important;
+  padding-left:11px!important;
+  grid-template-rows:auto minmax(0,1fr)!important;
+  gap:6px!important;
+  overflow:hidden!important;
+}
+body.today-active .topbar{
+  min-height:58px!important;
+  padding:0 3px!important;
+}
+body.today-active main{
+  height:100%!important;
+  min-height:0!important;
+  overflow:hidden!important;
+  padding-bottom:0!important;
+}
+#todayView.dashboard.active{
+  display:grid!important;
+  height:100%!important;
+  min-height:0!important;
+  overflow:hidden!important;
+  grid-template-rows:auto minmax(0,1fr)!important;
+  gap:6px!important;
+  padding:1px 2px 0!important;
+}
+#todayView .score-week{
+  padding:10px 14px 9px!important;
+  border-radius:22px!important;
+  min-height:0!important;
+}
+#todayView .score-overview{
+  grid-template-columns:minmax(0,.72fr) minmax(130px,1.28fr)!important;
+  gap:9px!important;
+}
+#todayView .score-copy strong{font-size:3rem!important;line-height:.9!important;margin-top:4px!important}
+#todayView .day-trend{height:48px!important}
+#todayView .score-week>.bar{height:6px!important;margin-top:5px!important}
+#todayView .leaderboard-position{margin-top:7px!important;padding-top:6px!important}
+#todayView .leaderboard-position>strong{font-size:1.55rem!important}
+#todayView .leaderboard-position small{font-size:.58rem!important}
+#todayView .metrics{
+  display:grid!important;
+  grid-template-rows:repeat(4,minmax(0,1fr))!important;
+  gap:0!important;
+  height:100%!important;
+  min-height:0!important;
+  max-height:100%!important;
+  margin:0!important;
+  overflow:hidden!important;
+  border-radius:22px!important;
+  align-self:stretch!important;
+}
+#todayView .metric{
+  height:auto!important;
+  min-height:0!important;
+  padding:6px 10px!important;
+  border-radius:0!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  align-items:center!important;
+  overflow:hidden!important;
+}
+#todayView .metric-copy>span{font-size:.69rem!important;line-height:1!important;letter-spacing:.17em!important}
+#todayView .metric-copy>small{font-size:.64rem!important;line-height:1.1!important;margin-top:2px!important}
+#todayView .metric em{font-size:.66rem!important;line-height:1.1!important;margin-top:2px!important}
+#todayView .metric strong{font-size:1.72rem!important;line-height:.95!important;margin-top:3px!important}
+#todayView .metric strong small{font-size:.84rem!important}
+#todayView .actions{grid-template-columns:42px 47px 42px!important;gap:5px!important}
+#todayView .actions button,#todayView .metric-percent{height:42px!important;border-radius:14px!important}
+#todayView .actions button{font-size:1.25rem!important}
+#todayView .metric-percent{font-size:.74rem!important}
+#todayView .knock-actions{grid-template-columns:78px 42px!important}
+#todayView .timer{font-size:.7rem!important;line-height:1!important}
+#todayView .reset{font-size:1rem!important}
+#todayView .knock #knockValue{font-size:1.72rem!important;line-height:.95!important}
+#todayView .knock #knockTargetText{font-size:.64rem!important;line-height:1.1!important}
+#todayView .knock #knockRemaining{font-size:.66rem!important}
+body.today-active .tabbar{
+  bottom:max(7px,env(safe-area-inset-bottom))!important;
+  min-height:67px!important;
+}
+@media (max-width:390px), (max-height:760px){
+  body.today-active{--nav-space:108px}
+  #todayView .score-copy strong{font-size:2.55rem!important}
+  #todayView .metric{padding:5px 8px!important}
+  #todayView .actions{grid-template-columns:38px 43px 38px!important;gap:4px!important}
+  #todayView .actions button,#todayView .metric-percent{height:38px!important;border-radius:13px!important}
+  #todayView .knock-actions{grid-template-columns:70px 38px!important}
+  #todayView .metric strong,#todayView .knock #knockValue{font-size:1.5rem!important}
+}
