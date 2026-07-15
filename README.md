@@ -23,8 +23,16 @@ This release is a visual-only redesign built from the working v1.21.5 release.
 Upload every file in this folder to the root of the existing GitHub repository.
 
 
-## v1.23 visual header update
+## v1.23.1 visual header update
 - Today page uses the selected date as the main title.
 - Sync state is a tappable colour dot with a compact status guide.
 - Other page titles remain unchanged.
 - Welcome message is forced to one sentence-case line.
+
+
+Today header refinement: personalised welcome title, restored date subtitle, and sync dot moved beside Settings on Today only.
+
+
+## v1.23.2
+- Sync status guide now renders above the entire app with a dimmed, blurred backdrop.
+- Door-knocking coaching begins at 2:00pm and paces completion toward 5:00pm. Early knocking is recognised as ahead of target.

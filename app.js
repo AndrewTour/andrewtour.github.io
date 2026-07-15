@@ -140,12 +140,20 @@ function knockRemainingText(minutes,target){
 }
 function knockPaceText(minutes,target){
   if(selectedDate!==todayKey())return minutes>=target?'Daily goal achieved':'Final result';
-  const now=new Date(),start=workdayStart(now),end=workdayEnd(now);
+  const now=new Date(),start=new Date(now),end=new Date(now);
+  start.setHours(14,0,0,0);
+  end.setHours(17,0,0,0);
   if(minutes>=target)return 'Daily goal achieved';
-  if(now<start)return minutes>0?`${minutes} min ahead of target`:'Ready to start';
+  if(now<start)return minutes>0?`${minutes} min ahead of target`:'Door knocking starts after 2:00pm';
   if(now>=end)return `${Math.max(0,target-minutes)} min remaining today`;
-  const expected=Math.min(target,Math.round(target*accountabilityDayProgress(now))),diff=minutes-expected,checkpoint=nextPaceCheckpoint(now);
-  const checkpointExpected=Math.min(target,Math.round(target*accountabilityDayProgress(checkpoint)));
+  const progress=Math.max(0,Math.min(1,(now-start)/(end-start)));
+  const expected=Math.min(target,Math.round(target*progress));
+  const diff=minutes-expected;
+  const checkpoint=new Date(now);
+  if(now.getMinutes()<30)checkpoint.setMinutes(30,0,0);else checkpoint.setHours(now.getHours()+1,0,0,0);
+  if(checkpoint>end)checkpoint.setTime(end.getTime());
+  const checkpointProgress=Math.max(0,Math.min(1,(checkpoint-start)/(end-start)));
+  const checkpointExpected=Math.min(target,Math.round(target*checkpointProgress));
   const action=Math.max(0,Math.min(target-minutes,checkpointExpected-minutes));
   if(diff>0)return `${diff} min ahead of target`;
   if(action>0)return `${action} min needed by ${shortTime(checkpoint)}`;
@@ -218,10 +226,19 @@ function activeViewId(){return document.querySelector('.view.active')?.id||'toda
 function updateTopbar(id=activeViewId()){
   const isToday=id==='todayView';
   const label=document.querySelector(`.tabbar button[data-view="${id}"] span`)?.textContent||'Daily Accountability';
-  $('#viewTitle').textContent=isToday?fmtDate(selectedDate):label;
-  $('#dateLabel').textContent=isToday?'':fmtDate(selectedDate);
-  $('#dateLabel').classList.toggle('hidden',isToday);
-  document.querySelector('.date-line')?.classList.toggle('today-sync-only',isToday);
+  const dateLine=document.querySelector('.date-line');
+  const todaySlot=$('#todaySyncSlot');
+  const syncBadge=$('#syncBadge');
+  const syncPopover=$('#syncPopover');
+  $('#viewTitle').textContent=isToday?welcomeMessage():label;
+  $('#dateLabel').textContent=fmtDate(selectedDate);
+  $('#dateLabel').classList.remove('hidden');
+  dateLine?.classList.remove('today-sync-only');
+  if(isToday&&todaySlot){
+    if(syncBadge&&syncBadge.parentElement!==todaySlot)todaySlot.append(syncBadge,syncPopover);
+  }else if(dateLine){
+    if(syncBadge&&syncBadge.parentElement!==dateLine)dateLine.append(syncBadge,syncPopover);
+  }
 }
 function renderToday(){
   const d=dayData(selectedDate),score=completion(selectedDate),kt=rollingKnockTarget(selectedDate),secs=liveKnockSeconds(d),wk=weekSummary();
@@ -230,7 +247,7 @@ function renderToday(){
   $('#backToday').classList.toggle('hidden',selectedDate===todayKey());
   $('#lockBadge').classList.toggle('hidden',!locked);$('#lockBadge').textContent=past?'LOCKED':'NOT SCHEDULED';
   $('#todayView').classList.toggle('date-locked',locked);
-  if($('#welcomeMessage'))$('#welcomeMessage').textContent=welcomeMessage();
+  if($('#welcomeMessage'))$('#welcomeMessage').textContent='DAILY COMPLETION';
   $('#dailyScore').textContent=`${score}%`;
   $('#scoreBar').style.width=`${score}%`;
   for(const m of ['calls','connects','data']){
@@ -419,8 +436,8 @@ $('#openCalendarFromInsights').onclick=openCalendar;$('#closeCalendar').onclick=
 $('#calendarGrid').onclick=e=>{const b=e.target.closest('[data-date]');if(!b)return;selectedDate=b.dataset.date;appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;$('#calendarModal').classList.remove('open');switchView('todayView');renderAll();ensureTick()};
 $('#yearHeatmap').onclick=e=>{const b=e.target.closest('[data-date]');if(!b)return;selectedDate=b.dataset.date;appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;switchView('todayView');renderAll();ensureTick()};
 $('#prevMonth').onclick=()=>{monthCursor.setMonth(monthCursor.getMonth()-1);renderMonth()};$('#nextMonth').onclick=()=>{monthCursor.setMonth(monthCursor.getMonth()+1);renderMonth()};
-function closeSyncPopover(){const p=$('#syncPopover'),b=$('#syncBadge');p?.classList.add('hidden');b?.setAttribute('aria-expanded','false')}
-$('#syncBadge').onclick=e=>{e.stopPropagation();const p=$('#syncPopover'),opening=p.classList.contains('hidden');p.classList.toggle('hidden',!opening);$('#syncBadge').setAttribute('aria-expanded',String(opening))};
+function closeSyncPopover(){const p=$('#syncPopover'),b=$('#syncBadge');p?.classList.add('hidden');b?.setAttribute('aria-expanded','false');document.body.classList.remove('sync-popover-open')}
+$('#syncBadge').onclick=e=>{e.stopPropagation();const p=$('#syncPopover'),opening=p.classList.contains('hidden');p.classList.toggle('hidden',!opening);$('#syncBadge').setAttribute('aria-expanded',String(opening));document.body.classList.toggle('sync-popover-open',opening)};
 $('#syncPopover').onclick=e=>e.stopPropagation();
 document.addEventListener('click',closeSyncPopover);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSyncPopover()});

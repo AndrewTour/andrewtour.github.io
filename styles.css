@@ -1068,3 +1068,51 @@ button:not(:disabled):active,.file-btn:active{
   letter-spacing:0;
 }
 @media(prefers-reduced-motion:reduce){.sync-badge{transition:none}}
+
+
+/* v1.23.1 — Today welcome heading, restored date line and top-right sync dot */
+.today-sync-slot{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-width:24px;
+}
+.today-sync-slot .sync-popover{
+  left:auto;
+  right:0;
+  top:calc(100% + 12px);
+}
+#todayView #welcomeMessage{
+  text-transform:uppercase;
+  letter-spacing:.18em;
+}
+
+/* v1.23.2 — top-layer sync guide and 2pm–5pm knocking coaching */
+body.sync-popover-open::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:2147483645;
+  background:rgba(15,17,21,.16);
+  backdrop-filter:blur(5px);
+  -webkit-backdrop-filter:blur(5px);
+  pointer-events:none;
+  animation:syncOverlayIn .16s ease-out both;
+}
+#syncPopover.sync-popover{
+  position:fixed;
+  z-index:2147483647;
+  top:max(calc(env(safe-area-inset-top) + 70px),84px);
+  right:18px;
+  left:auto;
+  width:min(286px,calc(100vw - 36px));
+  transform-origin:top right;
+  animation:syncGuideIn .18s cubic-bezier(.2,.8,.2,1) both;
+}
+#syncPopover.sync-popover.hidden{display:none!important}
+@keyframes syncOverlayIn{from{opacity:0}to{opacity:1}}
+@keyframes syncGuideIn{from{opacity:0;transform:translateY(-5px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(prefers-reduced-motion:reduce){
+  body.sync-popover-open::after,#syncPopover.sync-popover{animation:none}
+}
