@@ -1,4 +1,4 @@
-# Daily Accountability v1.23.9
+# Daily Accountability v1.23.7
 
 Incremental update from v1.23.6.
 
@@ -20,11 +20,3 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - Corrected the Today metrics layout so Calls, Connects, Data and Knocking render inside one shared capsule.
 - Added faint internal dividers while preserving each completed row’s green side indicator.
 - No Firebase changes required.
-
-
-## v1.23.9
-- Added first name, last name and contact number fields to appointment booking.
-- Added appointment date, start time and duration fields.
-- Added an optional Add to calendar prompt using an ICS calendar event.
-- Existing appointment records remain compatible.
-- No Firebase Console changes required.
