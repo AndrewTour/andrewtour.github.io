@@ -1212,3 +1212,47 @@ body.sync-popover-open::after{
   .metric:first-child.complete:before{border-top-left-radius:19px}
   .metric:last-child.complete:before{border-bottom-left-radius:19px}
 }
+
+
+/* v1.23.8 — unified Today metric capsule */
+.dashboard .metrics{
+  display:grid;
+  grid-template-rows:repeat(4,minmax(0,1fr));
+  gap:0 !important;
+  min-height:0;
+  border-radius:28px;
+  overflow:hidden;
+}
+.dashboard .metrics > .metric{
+  position:relative;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+.dashboard .metrics > .metric + .metric::after{
+  content:"";
+  position:absolute;
+  top:0;
+  left:20px;
+  right:20px;
+  height:1px;
+  background:var(--line);
+  opacity:.55;
+  pointer-events:none;
+}
+.dashboard .metrics > .metric.complete::before{
+  z-index:1;
+}
+@media (max-width:600px){
+  .dashboard .metrics{border-radius:24px}
+  .dashboard .metrics > .metric + .metric::after{left:16px;right:16px}
+}
+@media (min-width:700px){
+  .dashboard .metrics{
+    grid-template-columns:1fr !important;
+    grid-template-rows:repeat(4,minmax(0,1fr)) !important;
+  }
+}

@@ -14,3 +14,9 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - v1.23.6: Updated bottom navigation to a unified flat 2D SVG icon family.
 
 - v1.23.7: Combined the four Today metric cards into one rounded capsule with faint internal dividers while preserving the completion side indicators.
+
+
+## v1.23.8
+- Corrected the Today metrics layout so Calls, Connects, Data and Knocking render inside one shared capsule.
+- Added faint internal dividers while preserving each completed row’s green side indicator.
+- No Firebase changes required.
