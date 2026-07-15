@@ -1,4 +1,4 @@
-# Daily Accountability v1.23.5
+# Daily Accountability v1.23.6
 
 Incremental update from v1.23.4.
 
@@ -10,3 +10,5 @@ Incremental update from v1.23.4.
 Calls, connects and data use the remaining 9am–5pm workday. Knocking joins the status calculation from 2pm and uses the 2pm–5pm window. Logging remains available until the calendar day closes.
 
 Firebase, authentication, Firestore rules, storage, leaderboard and logging actions are unchanged.
+
+- v1.23.6: Updated bottom navigation to a unified flat 2D SVG icon family.

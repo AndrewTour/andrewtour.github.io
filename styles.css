@@ -1146,3 +1146,29 @@ body.sync-popover-open::after{
 
 /* v1.23.5 — achievable-time headline status */
 #todayView #welcomeMessage.track-risk{color:#c68416}
+
+/* v1.23.6 — unified flat bottom-tab icon family. */
+.tabbar .tab-icon{
+  width:22px;
+  height:22px;
+  display:grid;
+  place-items:center;
+  line-height:0;
+  color:inherit;
+}
+.tabbar .tab-icon svg{
+  width:22px;
+  height:22px;
+  display:block;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.9;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  vector-effect:non-scaling-stroke;
+}
+.tabbar .tab-icon-today svg{width:20px;height:20px}
+@media(max-height:760px){
+  .tabbar .tab-icon,.tabbar .tab-icon svg{width:20px;height:20px}
+  .tabbar .tab-icon-today svg{width:18px;height:18px}
+}
