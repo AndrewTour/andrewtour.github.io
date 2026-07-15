@@ -55,3 +55,10 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - Rebuilt the visible interface hierarchy rather than applying token-only changes.
 - Introduced a premium light design system with stronger typography, flatter surfaces, deliberate spacing, capsule controls and a dark active navigation state.
 - Redesigned Today, Appointments, Leaderboard, Settings and login presentation without changing app logic or Firebase behaviour.
+
+
+## v2.1.1 — Today sizing correction
+- Restored the compact, proven Today page dimensions and spacing.
+- Retained the v2 premium typography, flat surfaces, icon system and visual language.
+- Scoped the correction to Today so Appointments, Leaderboard and Settings remain unchanged.
+- No Firebase Console changes required.

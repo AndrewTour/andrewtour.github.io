@@ -272,6 +272,7 @@ function callsPaceText(value){if(selectedDate!==todayKey())return `${Math.max(0,
 function activeViewId(){return document.querySelector('.view.active')?.id||'todayView'}
 function updateTopbar(id=activeViewId()){
   const isToday=id==='todayView';
+  document.body.classList.toggle('today-active',isToday);
   const label=document.querySelector(`.tabbar button[data-view="${id}"] span`)?.textContent||'Daily Accountability';
   const dateLine=document.querySelector('.date-line');
   const todaySlot=$('#todaySyncSlot');
