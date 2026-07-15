@@ -1677,3 +1677,61 @@ body.today-active main{padding-bottom:2px!important}
   #todayView .knock-actions{grid-template-columns:74px 38px!important}
   #todayView .timer{font-size:.66rem!important}
 }
+
+/* v2.1.5 — Today viewport reservation fix.
+   Reserve the fixed bottom navigation's full footprint so the metric capsule
+   ends above it, then distribute the four rows inside the available height. */
+body.today-active .app{
+  grid-template-rows:auto minmax(0,1fr)!important;
+  padding-bottom:calc(var(--nav-space) + max(8px,env(safe-area-inset-bottom)))!important;
+}
+body.today-active main,
+#todayView.dashboard.active{
+  min-height:0!important;
+  height:100%!important;
+  overflow:hidden!important;
+}
+#todayView.dashboard.active{
+  grid-template-rows:auto minmax(0,1fr)!important;
+  gap:9px!important;
+}
+#todayView .metrics{
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  align-self:stretch!important;
+  overflow:hidden!important;
+}
+#todayView .metric{
+  min-height:0!important;
+  height:100%!important;
+  padding:7px 11px!important;
+}
+#todayView .metric-copy>span{font-size:.69rem!important}
+#todayView .metric-copy>small{font-size:.63rem!important}
+#todayView .metric em{font-size:.64rem!important}
+#todayView .metric strong,
+#todayView .knock #knockValue{font-size:1.58rem!important}
+#todayView .metric strong small{font-size:.8rem!important}
+#todayView .actions{grid-template-columns:40px 46px 40px!important;gap:5px!important}
+#todayView .actions button,
+#todayView .metric-percent{height:40px!important;border-radius:13px!important}
+#todayView .actions button{font-size:1.25rem!important}
+#todayView .metric-percent{font-size:.68rem!important}
+#todayView .knock-actions{grid-template-columns:76px 40px!important}
+#todayView .timer{font-size:.68rem!important}
+#todayView .reset{font-size:.9rem!important}
+
+@media (display-mode:standalone) and (max-height:760px){
+  body.today-active .app{
+    padding-bottom:calc(74px + max(7px,env(safe-area-inset-bottom)))!important;
+  }
+  #todayView.dashboard.active{gap:6px!important}
+  #todayView .metric{padding:5px 9px!important}
+  #todayView .metric strong,
+  #todayView .knock #knockValue{font-size:1.42rem!important}
+  #todayView .actions{grid-template-columns:37px 43px 37px!important;gap:4px!important}
+  #todayView .actions button,
+  #todayView .metric-percent{height:37px!important;border-radius:12px!important}
+  #todayView .knock-actions{grid-template-columns:70px 37px!important}
+}

@@ -75,3 +75,11 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - Reduced metric controls and Start typography.
 - Replaced the top-right emoji gear with the same outline SVG cog used in bottom navigation.
 - No Firebase Console changes required.
+
+
+## v2.1.5 — Today viewport reservation fix
+- Restored the fixed bottom navigation reservation on the Today page.
+- Metric capsule now finishes above the navigation bar.
+- Redistributed all four metric rows within the available viewport.
+- Restored readable metric typography while keeping controls compact.
+- No Firebase Console changes required.
