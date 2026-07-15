@@ -1836,3 +1836,55 @@ body.today-active .tabbar{
   #todayView .knock-actions{grid-template-columns:70px 38px!important}
   #todayView .metric strong,#todayView .knock #knockValue{font-size:1.5rem!important}
 }
+
+/* v2.1.7 — Today final spacing refinement.
+   Slightly enlarges both Today stacks within the proven v16 geometry and
+   aligns completed-status text with the completion indicator green. */
+#todayView.dashboard.active{
+  gap:8px!important;
+}
+#todayView .score-week{
+  padding:12px 15px 11px!important;
+}
+#todayView .score-copy strong{
+  font-size:3.08rem!important;
+}
+#todayView .leaderboard-position{
+  margin-top:8px!important;
+  padding-top:7px!important;
+}
+#todayView .metric{
+  padding:7px 11px!important;
+}
+#todayView .metric-copy>span{
+  font-size:.71rem!important;
+}
+#todayView .metric-copy>small{
+  font-size:.66rem!important;
+}
+#todayView .metric em{
+  font-size:.68rem!important;
+}
+#todayView .metric strong,
+#todayView .knock #knockValue{
+  font-size:1.78rem!important;
+}
+#todayView .metric.complete .metric-copy>em,
+#todayView .metric.complete em{
+  color:var(--green)!important;
+}
+#todayView .timer{
+  font-size:.66rem!important;
+}
+
+@media (max-width:390px), (max-height:760px){
+  #todayView.dashboard.active{gap:7px!important}
+  #todayView .score-week{padding:11px 14px 10px!important}
+  #todayView .score-copy strong{font-size:2.65rem!important}
+  #todayView .metric{padding:6px 9px!important}
+  #todayView .metric-copy>span{font-size:.68rem!important}
+  #todayView .metric-copy>small{font-size:.63rem!important}
+  #todayView .metric em{font-size:.65rem!important}
+  #todayView .metric strong,
+  #todayView .knock #knockValue{font-size:1.58rem!important}
+}

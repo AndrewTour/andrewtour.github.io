@@ -90,3 +90,11 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - Restored the approved pre-redesign Today viewport proportions and metric-stack spacing.
 - Reserved the full bottom-navigation footprint so the metric capsule finishes above it.
 - No Firebase Console changes required.
+
+
+## v2.1.7 — Today spacing and completion colour
+- Slightly increased the Today performance and metric stack visual scale within the approved v16 geometry.
+- Preserved the navigation clearance and existing Today layout.
+- Matched “Daily goal achieved” to the same green used by the completion strip.
+- Reduced the Start label slightly to keep it proportional.
+- No Firebase Console changes required.
