@@ -272,6 +272,7 @@ function callsPaceText(value){if(selectedDate!==todayKey())return `${Math.max(0,
 function activeViewId(){return document.querySelector('.view.active')?.id||'todayView'}
 function updateTopbar(id=activeViewId()){
   const isToday=id==='todayView';
+  document.body.classList.toggle('today-active',isToday);
   const label=document.querySelector(`.tabbar button[data-view="${id}"] span`)?.textContent||'Daily Accountability';
   const dateLine=document.querySelector('.date-line');
   const todaySlot=$('#todaySyncSlot');
@@ -287,10 +288,6 @@ function updateTopbar(id=activeViewId()){
     if(syncBadge&&syncBadge.parentElement!==dateLine)dateLine.append(syncBadge);
   }
   if(syncPopover&&syncPopover.parentElement!==document.body)document.body.append(syncPopover);
-  const showDateNav=id==='todayView'||id==='appointmentsView';
-  $('#dateNavActions')?.classList.toggle('hidden',!showDateNav);
-  $('#settingsShortcut')?.classList.toggle('hidden',id!=='insightsView');
-  $('#homeShortcut')?.classList.toggle('hidden',id!=='settingsView');
 }
 function renderToday(){
   const d=dayData(selectedDate),score=completion(selectedDate),kt=rollingKnockTarget(selectedDate),secs=liveKnockSeconds(d),wk=weekSummary();
@@ -321,8 +318,20 @@ function renderToday(){
   $('#knockValue').textContent=fmtTimer(secs);
   $('#knockTargetText').textContent=past?'Final result':(!scheduled?'No target today':knockRemainingText(Math.floor(secs/60),kt));
   $('#knockRemaining').textContent=past?'Day locked':(!scheduled?'Not scheduled':knockPaceText(Math.floor(secs/60),kt));
-  $('#timerButton').textContent=past?'Locked':(!scheduled?'Off day':(d.timerStartedAt?'Pause':'Start'));
-  $('#timerButton').classList.toggle('running',!!d.timerStartedAt&&!locked);
+  const timerButton=$('#timerButton');
+  const timerRunning=!!d.timerStartedAt&&!locked;
+  if(past||!scheduled){
+    timerButton.textContent=past?'Locked':'Off day';
+    timerButton.setAttribute('aria-label',past?'Knocking timer locked':'Knocking unavailable on off day');
+    timerButton.title=past?'Knocking timer locked':'Knocking unavailable on off day';
+  }else{
+    timerButton.innerHTML=timerRunning
+      ? '<svg class="timer-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>'
+      : '<svg class="timer-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10-6.5z"/></svg>';
+    timerButton.setAttribute('aria-label',timerRunning?'Pause knocking timer':'Start knocking timer');
+    timerButton.title=timerRunning?'Pause knocking timer':'Start knocking timer';
+  }
+  timerButton.classList.toggle('running',timerRunning);
   $$('[data-action], #timerButton, #resetKnock').forEach(el=>{el.disabled=locked;el.setAttribute('aria-disabled',String(locked))});
   renderDayTrend();
   renderLeaderboardPosition();
@@ -352,9 +361,39 @@ function renderDayTrend(){
 }
 function renderWeekDays(){if(!$('#weekDays'))return;$('#weekDays').innerHTML=weekKeys().map(k=>{const p=completion(k),d=parseKey(k);return `<button class="week-day ${k===selectedDate?'selected':''} ${p>=100?'complete':''}" data-date="${k}"><b>${workDayName(d.getDay()).slice(0,3).toUpperCase()}</b><small>${d.getDate()} · ${p}%</small></button>`}).join('')}
 
-function renderAppointments(){appointmentDate=$('#appointmentDatePicker').value||appointmentDate;const locked=isPastDate(appointmentDate);$('#appointmentForm').classList.toggle('date-locked',locked);$$('#appointmentForm input, #appointmentForm button').forEach(el=>el.disabled=locked);$('#appointmentLock').classList.toggle('hidden',!locked);$('#appointmentDateLabel').textContent=fmtDate(appointmentDate);const list=dayData(appointmentDate).appointments;$('#appointmentsList').innerHTML=list.length?list.slice().sort((a,b)=>b.at-a.at).map(a=>`<article class="appointment-card"><div><strong>${escapeHtml(a.address)}</strong><small>${a.types.join(' · ')} · ${new Date(a.at).toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'})}</small></div><button data-delete-appointment="${a.id}" aria-label="Delete" ${locked?'disabled':''}>×</button></article>`).join(''):`<div class="empty">No appointments logged for this date.</div>`}
-function escapeHtml(s){return s.replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
-async function addAppointment(address,types){if(!canEditDate(appointmentDate))return lockedToast();const d=dayData(appointmentDate);d.appointments.push({id:uuid(),address,types,at:Date.now()});addEvent(d,'appointment',`${types.join(', ')} · ${address}`);days[appointmentDate]=d;await saveDay(appointmentDate);renderAppointments();toast('Appointment added')}
+function appointmentStartMs(a){return Number(a.startAt||a.at||0)}
+function appointmentName(a){return [a.firstName,a.lastName].filter(Boolean).join(' ').trim()}
+function syncAppointmentBookingDate(){const booking=$('#appointmentBookingDate');if(booking&&!booking.value)booking.value=appointmentDate}
+function renderAppointments(){
+  const picker=$('#appointmentDatePicker');
+  appointmentDate=picker?.value||appointmentDate;
+  const form=$('#appointmentForm'),lock=$('#appointmentLock'),label=$('#appointmentDateLabel'),listEl=$('#appointmentsList');
+  if(!form||!lock||!label||!listEl)return;
+  const locked=isPastDate(appointmentDate);
+  form.classList.toggle('date-locked',locked);
+  $$('#appointmentForm input, #appointmentForm select, #appointmentForm button').forEach(el=>el.disabled=locked);
+  lock.classList.toggle('hidden',!locked);
+  label.textContent=fmtDate(appointmentDate);
+  syncAppointmentBookingDate();
+  const list=dayData(appointmentDate).appointments;
+  listEl.innerHTML=list.length?list.slice().sort((a,b)=>appointmentStartMs(a)-appointmentStartMs(b)).map(a=>{
+    const name=appointmentName(a),start=new Date(appointmentStartMs(a));
+    const time=Number.isFinite(start.getTime())?start.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'}):'';
+    const contact=[name,a.phone].filter(Boolean).join(' · ');
+    const meta=[...(a.types||[]),time,contact].filter(Boolean).join(' · ');
+    return `<article class="appointment-card"><div><strong>${escapeHtml(a.address||'Appointment')}</strong><small>${escapeHtml(meta)}</small></div><div class="appointment-card-actions"><button data-delete-appointment="${a.id}" aria-label="Delete" ${locked?'disabled':''}>×</button></div></article>`
+  }).join(''):`<div class="empty">No appointments logged for this date.</div>`
+}
+function escapeHtml(s){return String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+async function addAppointment(details){
+  const bookingDate=details.bookingDate||appointmentDate;
+  if(!canEditDate(bookingDate))return lockedToast();
+  const startAt=new Date(`${bookingDate}T${details.startTime}:00`).getTime();
+  if(!Number.isFinite(startAt))return toast('Choose a valid appointment date and time');
+  const d=dayData(bookingDate),appointment={id:uuid(),firstName:details.firstName,lastName:details.lastName,phone:details.phone,address:details.address,types:details.types,startAt,durationMinutes:details.durationMinutes,at:startAt,createdAt:Date.now()};
+  d.appointments.push(appointment);addEvent(d,'appointment',`${details.types.join(', ')} · ${details.address}`);days[bookingDate]=d;await saveDay(bookingDate);
+  appointmentDate=bookingDate;if($('#appointmentDatePicker'))$('#appointmentDatePicker').value=bookingDate;renderAppointments();toast('Appointment booked');return appointment
+}
 async function deleteAppointment(id){if(!canEditDate(appointmentDate))return lockedToast();const d=dayData(appointmentDate);d.appointments=d.appointments.filter(a=>a.id!==id);days[appointmentDate]=d;await saveDay(appointmentDate);renderAppointments()}
 
 
@@ -446,7 +485,7 @@ function renderSettings(){$('#agentName').value=displayAgentName();$('#callsTarg
 function renderAll(){renderToday();renderAppointments();renderInsights();renderSettings()}
 
 async function startCloud(user){unsubDays?.();unsubProfile?.();unsubLeaderboard?.();currentUser=user;uid=user.uid;cloud=true;loadLocal(uid);await finaliseExpiredTimers();setSync('','Connecting');clearTimeout(syncTimer);syncTimer=setTimeout(()=>{if($('#syncBadge').dataset.label==='Connecting')setSync(navigator.onLine?'':'offline',navigator.onLine?'Connected':'Offline')},3500);unsubDays=onSnapshot(collection(db,'users',uid,'days'),{includeMetadataChanges:true},snap=>{snap.docChanges().forEach(ch=>{if(ch.type==='removed')delete days[ch.doc.id];else{const incoming=ch.doc.data();days[ch.doc.id]={...blankDay(),...incoming,appointments:incoming.appointments||[],events:incoming.events||[]}}});saveLocal();renderAll();ensureTick();clearTimeout(syncTimer);setSync(snap.metadata.fromCache&&!navigator.onLine?'offline':'live',snap.metadata.hasPendingWrites?'Saving':'Live')},err=>{console.error(err);setSync('error','Sync error');toast('Firestore access failed. Check rules and login.');showAuthMessage(err.message)});unsubProfile=onSnapshot(doc(db,'users',uid),snap=>{if(snap.exists()){const profile=snap.data();if(profile.targets)targets={...DEFAULTS,...profile.targets};if(Array.isArray(profile.workDays)&&profile.workDays.length)workDays=normaliseWorkDays(profile.workDays);if(profile.name)agentName=profile.name;saveLocal();renderAll();scheduleLeaderboardPublish()}},err=>console.error(err));unsubLeaderboard=onSnapshot(collection(db,'leaderboard'),{includeMetadataChanges:true},snap=>{leaderboardEntries=snap.docs.map(d=>({uid:d.id,...d.data()}));renderLeaderboard()},err=>{console.error('Leaderboard read failed',err);$('#leaderboardStatus').textContent='SYNC ERROR'});setSync(navigator.onLine?'live':'offline',navigator.onLine?'Live':'Offline');showApp();scheduleLeaderboardPublish()}
-function showApp(){$('#authGate').classList.add('hidden');$('#app').classList.remove('hidden');$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()}
+function showApp(){$('#authGate').classList.add('hidden');$('#app').classList.remove('hidden');if($('#appointmentDatePicker'))$('#appointmentDatePicker').value=appointmentDate;syncAppointmentBookingDate();renderAll();ensureTick()}
 let viewportFrame=0;
 function updateAppViewport(){
   cancelAnimationFrame(viewportFrame);
@@ -472,34 +511,31 @@ function bindViewport(){
 async function init(){bindViewport();loadLocal('local');await finaliseExpiredTimers();if(!configured()){showAuthMessage('Firebase is not configured. You can still use device-only mode.');return}try{const fb=initializeApp(firebaseConfig);auth=getAuth(fb);await setPersistence(auth,browserLocalPersistence);db=initializeFirestore(fb,{experimentalAutoDetectLongPolling:true,localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});onAuthStateChanged(auth,u=>{if(u){startCloud(u)}else{clearActiveSession();$('#app').classList.add('hidden');$('#authGate').classList.remove('hidden')}})}catch(err){console.error(err);showAuthMessage(err.message)}}
 function showAuthMessage(msg){$('#authMessage').textContent=msg}
 function switchView(id){$$('.tabbar button').forEach(b=>b.classList.toggle('active',b.dataset.view===id));$$('.view').forEach(v=>v.classList.toggle('active',v.id===id));updateTopbar(id);if(id==='appointmentsView')renderAppointments();if(id==='insightsView')renderInsights()}
-
-function shiftHeaderDate(delta){
-  const id=activeViewId();
-  if(id==='appointmentsView'){
-    const d=parseKey(appointmentDate);d.setDate(d.getDate()+delta);appointmentDate=dateKey(d);
-    $('#appointmentDatePicker').value=appointmentDate;renderAppointments();updateTopbar(id);return;
-  }
-  if(id==='todayView'){
-    const d=parseKey(selectedDate);d.setDate(d.getDate()+delta);selectedDate=dateKey(d);appointmentDate=selectedDate;
-    $('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick();
-  }
-}
-
 function openCalendar(){$('#calendarModal').classList.add('open');renderCalendar()}
 
 $('#authForm').addEventListener('submit',async e=>{e.preventDefault();showAuthMessage('');try{await signInWithEmailAndPassword(auth,$('#email').value,$('#password').value)}catch(err){showAuthMessage(err.message)}});
 $('#createAccount').onclick=async()=>{try{await createUserWithEmailAndPassword(auth,$('#email').value,$('#password').value)}catch(err){showAuthMessage(err.message)}};
 $('#localMode').onclick=()=>{clearActiveSession();uid='local';loadLocal('local');setSync('offline','This device');showApp()};
 $$('[data-action]').forEach(b=>b.onclick=()=>changeMetric(b.dataset.metric,b.dataset.action==='plus'?1:-1));
-$('#timerButton').onclick=toggleTimer;$('#resetKnock').onclick=resetKnock;$('#previousDay').onclick=()=>shiftHeaderDate(-1);$('#nextDay').onclick=()=>shiftHeaderDate(1);$('#settingsShortcut').onclick=()=>switchView('settingsView');$('#homeShortcut').onclick=()=>switchView('todayView');$('#backToday').onclick=()=>{selectedDate=todayKey();appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()};
+$('#timerButton').onclick=toggleTimer;$('#resetKnock').onclick=resetKnock;$('#settingsShortcut').onclick=()=>switchView('settingsView');$('#backToday').onclick=()=>{selectedDate=todayKey();appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()};
 $('.tabbar').onclick=e=>{const b=e.target.closest('button[data-view]');if(b)switchView(b.dataset.view)};
 $('.insights-switch').onclick=e=>{const b=e.target.closest('button[data-insights-page]');if(b)switchInsightsPage(b.dataset.insightsPage)};
 $('#weekPrev').onclick=()=>{leaderboardWeekOffset--;renderWeeklyLeaderboard()};
 $('#weekNext').onclick=()=>{if(leaderboardWeekOffset<0)leaderboardWeekOffset++;renderWeeklyLeaderboard()};
 $('#weekLast').onclick=()=>{leaderboardWeekOffset=-1;renderWeeklyLeaderboard()};
-$('#appointmentDatePicker').onchange=e=>{appointmentDate=e.target.value;renderAppointments()};
-$('#appointmentForm').onsubmit=async e=>{e.preventDefault();const address=$('#appointmentAddress').value.trim(),types=$$('.appointment-types input:checked').map(x=>x.value);if(!address)return toast('Add a property address');if(!types.length)return toast('Choose an appointment type');await addAppointment(address,types);e.target.reset()};
-$('#appointmentsList').onclick=e=>{const b=e.target.closest('[data-delete-appointment]');if(b&&confirm('Delete this appointment?'))deleteAppointment(b.dataset.deleteAppointment)};
+const appointmentDatePicker=$('#appointmentDatePicker');
+if(appointmentDatePicker)appointmentDatePicker.onchange=e=>{appointmentDate=e.target.value;const booking=$('#appointmentBookingDate');if(booking)booking.value=appointmentDate;renderAppointments()};
+const appointmentForm=$('#appointmentForm');
+if(appointmentForm)appointmentForm.onsubmit=async e=>{
+  e.preventDefault();
+  const firstName=$('#appointmentFirstName')?.value.trim()||'',lastName=$('#appointmentLastName')?.value.trim()||'',phone=$('#appointmentPhone')?.value.trim()||'',address=$('#appointmentAddress')?.value.trim()||'',bookingDate=$('#appointmentBookingDate')?.value||appointmentDate,startTime=$('#appointmentStartTime')?.value||'',durationMinutes=Number($('#appointmentDuration')?.value||60),types=$$('.appointment-types input:checked').map(x=>x.value);
+  if(!firstName)return toast('Add a first name');if(!lastName)return toast('Add a last name');if(!phone)return toast('Add a contact number');if(!address)return toast('Add a property address');if(!bookingDate||!startTime)return toast('Choose an appointment date and time');if(!types.length)return toast('Choose an appointment type');
+  const appointment=await addAppointment({firstName,lastName,phone,address,bookingDate,startTime,durationMinutes,types});
+  if(!appointment)return;
+  e.target.reset();syncAppointmentBookingDate();if($('#appointmentDuration'))$('#appointmentDuration').value='60';
+};
+const appointmentsList=$('#appointmentsList');
+if(appointmentsList)appointmentsList.onclick=e=>{const remove=e.target.closest('[data-delete-appointment]');if(remove&&confirm('Delete this appointment?'))deleteAppointment(remove.dataset.deleteAppointment)};
 $('#saveSettings').onclick=async()=>{const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;saveLocal();await saveTargets();renderAll();toast('Settings saved')};
 $('#signOut').onclick=async()=>{clearActiveSession();if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
 $('#exportData').onclick=()=>{const blob=new Blob([JSON.stringify({targets,workDays,days},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`daily-accountability-${todayKey()}.json`;a.click();URL.revokeObjectURL(a.href)};
@@ -514,6 +550,6 @@ $('#syncPopover').onclick=e=>e.stopPropagation();
 document.addEventListener('click',closeSyncPopover);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSyncPopover()});
 window.addEventListener('online',()=>{if(cloud){setSync('live','Live');scheduleLeaderboardPublish()}});window.addEventListener('offline',()=>setSync('offline','Offline'));
-if('serviceWorker'in navigator)window.addEventListener('load',async()=>{const reg=await navigator.serviceWorker.register('./service-worker.js');reg.update()});
+if('serviceWorker'in navigator)window.addEventListener('load',async()=>{try{let refreshing=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(refreshing)return;refreshing=true;location.reload()});const reg=await navigator.serviceWorker.register('./service-worker.js?v=1.23.11');await reg.update();if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'})}catch(err){console.warn('Service worker update failed',err)}});
 setInterval(()=>{finaliseExpiredTimers().then(()=>{if(selectedDate<todayKey())renderAll()});updateAppViewport();if(cloud)scheduleLeaderboardPublish()},30000);
 init();
