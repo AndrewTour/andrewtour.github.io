@@ -1752,3 +1752,17 @@ button:not(:disabled):active,a.appointment-call:active{transform:scale(.965)}
   .appointment-reminder-footer .appointment-booked-for,
   .appointment-reminder-footer .appointment-confirm-note{font-size:.6rem}
 }
+
+
+/* v1.26.0 — read-only admin monitoring mode */
+.admin-agent-bar{display:flex;align-items:end;justify-content:space-between;gap:14px;padding:12px 14px;margin-bottom:10px;border-radius:20px}
+.admin-agent-bar label{display:grid;gap:6px;min-width:0;flex:1}
+.admin-agent-bar label>span{font-size:.55rem;font-weight:900;letter-spacing:.16em;color:#7b8492}
+.admin-agent-bar select{width:100%;min-width:0;height:42px;padding:0 36px 0 14px;border:1px solid rgba(20,28,40,.09);border-radius:999px;background:#fff;color:#111318;font:800 .78rem/1 inherit;appearance:auto}
+.admin-agent-bar>small{flex:0 0 auto;padding-bottom:12px;color:#0b63f3;font-size:.6rem;font-weight:800;white-space:nowrap}
+.admin-appointment-notice{margin-bottom:10px;padding:11px 14px;border-radius:18px;color:#0b63f3;font-size:.68rem;font-weight:750}
+.admin-mode #todayView .actions button,.admin-mode #timerButton,.admin-mode #resetKnock{opacity:.42;pointer-events:none}
+.admin-mode #todayView .metric-percent{opacity:.9}
+.admin-mode #settingsView input,.admin-mode #settingsView .workday-options span,.admin-mode #settingsView #saveSettings,.admin-mode #settingsView #exportData,.admin-mode #settingsView .file-btn{opacity:.55}
+.admin-mode .leaderboard-row.me{border-color:rgba(11,99,243,.32);background:#f7faff}
+@media(max-width:390px){.admin-agent-bar{align-items:stretch;flex-direction:column;gap:5px}.admin-agent-bar>small{padding:0 2px}.admin-agent-bar select{height:40px}}

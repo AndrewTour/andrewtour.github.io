@@ -9,8 +9,9 @@ let workDays=[...DEFAULT_WORK_DAYS];
 const CALL_PLAN=[[9,'Active Buyer Calls','Hot buyers, offers, contracts and second inspections'],[10,'Past OFI Calls','Recent attendees, missed callbacks and buyer feedback'],[11,'Pipeline Calls','Current sellers, warm leads and next-step conversations'],[12,'Past Appraisals','Owners with a likely 3–12 month move'],[13,'Database Reconnects','Long-term owners and dormant contacts'],[14,'Just Listed & Coming Soon','Buyers, neighbours and local owner awareness'],[15,'Just Sold Calls','Result calls and nearby owner follow-up'],[16,'Priority Follow-Up','Offers, appointments and tomorrow’s pipeline']];
 const DEFAULTS={calls:50,connects:25,data:10,weeklyKnock:240};
 let targets={...DEFAULTS}, days={}, selectedDate=dateKey(new Date()), appointmentDate=selectedDate, agentName='', leaderboardEntries=[], leaderboardWeekOffset=0;
+let accountRole='agent', accountProfile={}, viewedAgentUid=null, agentProfiles=[], activeMode='', adminUsersReady=false;
 let year=new Date().getFullYear(), monthCursor=new Date(), uid='local', currentUser=null, cloud=false, db=null, auth=null;
-let unsubDays=null, unsubProfile=null, unsubLeaderboard=null, timerTick=null, syncTimer=null, leaderboardPublishTimer=null;
+let unsubDays=null, unsubProfile=null, unsubViewedProfile=null, unsubUsers=null, unsubLeaderboard=null, timerTick=null, syncTimer=null, leaderboardPublishTimer=null;
 
 function dateKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 function parseKey(k){const [y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d)}
@@ -30,8 +31,9 @@ function fmtTimer(sec){const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=
 function uuid(){return crypto.randomUUID?.()||`${Date.now()}-${Math.random()}`}
 function configured(){return firebaseConfig?.apiKey&&!firebaseConfig.apiKey.startsWith('PASTE_')}
 function isPastDate(k){return k<todayKey()}
-function canEditDate(k){return !isPastDate(k)&&isWorkDayKey(k)}
-function lockedToast(){haptic(20);toast(isPastDate(selectedDate)?'This day is complete and locked':'This day is not in your accountability schedule')}
+function isAdmin(){return accountRole==='admin'}
+function canEditDate(k){return !isAdmin()&&!isPastDate(k)&&isWorkDayKey(k)}
+function lockedToast(){haptic(20);toast(isAdmin()?'Admin mode is read-only':(isPastDate(selectedDate)?'This day is complete and locked':'This day is not in your accountability schedule'))}
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove('show'),1800)}
 function syncVisualState(state,label){
   if(state)return state;
@@ -51,19 +53,21 @@ function setSync(state,label){
 }
 
 function storagePrefix(userId=uid){return `da:${userId||'local'}:`}
-function resetState(){days={};targets={...DEFAULTS};workDays=[...DEFAULT_WORK_DAYS];agentName='';leaderboardEntries=[];selectedDate=todayKey();appointmentDate=selectedDate}
+function resetState(){days={};targets={...DEFAULTS};workDays=[...DEFAULT_WORK_DAYS];agentName='';leaderboardEntries=[];selectedDate=todayKey();appointmentDate=selectedDate;viewedAgentUid=null;agentProfiles=[];accountRole='agent';accountProfile={};activeMode='';adminUsersReady=false}
 function loadLocal(userId=uid){resetState();const prefix=storagePrefix(userId);try{days=JSON.parse(localStorage.getItem(prefix+'days')||'{}');targets={...DEFAULTS,...JSON.parse(localStorage.getItem(prefix+'targets')||'{}')};agentName=localStorage.getItem(prefix+'agent-name')||'';const savedWorkDays=JSON.parse(localStorage.getItem(prefix+'work-days')||'null');if(Array.isArray(savedWorkDays)&&savedWorkDays.length)workDays=normaliseWorkDays(savedWorkDays)}catch{resetState()}}
-function saveLocal(){const prefix=storagePrefix(uid);localStorage.setItem(prefix+'days',JSON.stringify(days));localStorage.setItem(prefix+'targets',JSON.stringify(targets));localStorage.setItem(prefix+'agent-name',agentName);localStorage.setItem(prefix+'work-days',JSON.stringify(workDays))}
-function clearActiveSession(){unsubDays?.();unsubProfile?.();unsubLeaderboard?.();unsubDays=unsubProfile=unsubLeaderboard=null;clearInterval(timerTick);clearTimeout(syncTimer);clearTimeout(leaderboardPublishTimer);currentUser=null;uid='local';cloud=false;resetState()}
+function saveLocal(){if(isAdmin())return;const prefix=storagePrefix(uid);localStorage.setItem(prefix+'days',JSON.stringify(days));localStorage.setItem(prefix+'targets',JSON.stringify(targets));localStorage.setItem(prefix+'agent-name',agentName);localStorage.setItem(prefix+'work-days',JSON.stringify(workDays))}
+function clearActiveSession(){unsubDays?.();unsubProfile?.();unsubViewedProfile?.();unsubUsers?.();unsubLeaderboard?.();unsubDays=unsubProfile=unsubViewedProfile=unsubUsers=unsubLeaderboard=null;clearInterval(timerTick);clearTimeout(syncTimer);clearTimeout(leaderboardPublishTimer);currentUser=null;uid='local';cloud=false;document.body.classList.remove('admin-mode');resetState()}
 function displayAgentName(){return (agentName||currentUser?.displayName||currentUser?.email?.split('@')[0]||'Agent').trim()}
+function accountDisplayName(){return (accountProfile?.name||currentUser?.displayName||currentUser?.email?.split('@')[0]||'Admin').trim()}
+function activeAgentUid(){return isAdmin()?viewedAgentUid:uid}
 function leaderboardPayload(){
   const k=todayKey(),d=dayData(k),knockMinutes=Math.floor(liveKnockSeconds(d)/60),knockTarget=rollingKnockTarget(k);
-  return{uid,name:displayAgentName(),email:currentUser?.email||'',date:k,activeToday:isWorkDayKey(k),workDays:[...workDays],calls:d.calls,connects:d.connects,data:d.data,knockMinutes,score:completion(k),targets:{calls:targets.calls,connects:targets.connects,data:targets.data,knock:knockTarget},dailyHistory:recentDailyHistory(),weekHistory:recentWeekHistory(),clientUpdatedAt:Date.now(),updatedAt:serverTimestamp()}
+  return{uid,name:displayAgentName(),email:currentUser?.email||'',role:'agent',date:k,activeToday:isWorkDayKey(k),workDays:[...workDays],calls:d.calls,connects:d.connects,data:d.data,knockMinutes,score:completion(k),targets:{calls:targets.calls,connects:targets.connects,data:targets.data,knock:knockTarget},dailyHistory:recentDailyHistory(),weekHistory:recentWeekHistory(),clientUpdatedAt:Date.now(),updatedAt:serverTimestamp()}
 }
-function scheduleLeaderboardPublish(){if(!cloud||!db||!uid)return;clearTimeout(leaderboardPublishTimer);leaderboardPublishTimer=setTimeout(publishLeaderboard,180)}
-async function publishLeaderboard(){if(!cloud||!db||!uid)return;try{await setDoc(doc(db,'leaderboard',uid),leaderboardPayload(),{merge:true});if($('#leaderboardStatus'))$('#leaderboardStatus').textContent='LIVE'}catch(err){console.error('Leaderboard publish failed',err);setSync('error','Sync error');if($('#leaderboardStatus'))$('#leaderboardStatus').textContent='SYNC ERROR'}}
-async function saveDay(k,{quiet=false}={}){const clean={...dayData(k),clientUpdatedAt:Date.now()};days[k]=clean;saveLocal();renderAll();if(!cloud)return;setSync('','Saving');try{await setDoc(doc(db,'users',uid,'days',k),{...clean,updatedAt:serverTimestamp()},{merge:true});if(k===todayKey())scheduleLeaderboardPublish();setSync('live','Live')}catch(err){console.error(err);setSync('error','Sync error');if(!quiet)toast('Saved on this device. Cloud sync failed.')}}
-async function saveTargets(){saveLocal();if(!cloud)return;setSync('','Saving');try{await setDoc(doc(db,'users',uid),{targets,workDays:[...workDays],name:displayAgentName(),email:currentUser?.email||'',updatedAt:serverTimestamp()},{merge:true});scheduleLeaderboardPublish();setSync('live','Live')}catch(err){console.error(err);setSync('error','Sync error');toast('Targets saved locally. Cloud sync failed.')}}
+function scheduleLeaderboardPublish(){if(isAdmin()||!cloud||!db||!uid)return;clearTimeout(leaderboardPublishTimer);leaderboardPublishTimer=setTimeout(publishLeaderboard,180)}
+async function publishLeaderboard(){if(isAdmin()||!cloud||!db||!uid)return;try{await setDoc(doc(db,'leaderboard',uid),leaderboardPayload(),{merge:true});if($('#leaderboardStatus'))$('#leaderboardStatus').textContent='LIVE'}catch(err){console.error('Leaderboard publish failed',err);setSync('error','Sync error');if($('#leaderboardStatus'))$('#leaderboardStatus').textContent='SYNC ERROR'}}
+async function saveDay(k,{quiet=false}={}){if(isAdmin())return lockedToast();const clean={...dayData(k),clientUpdatedAt:Date.now()};days[k]=clean;saveLocal();renderAll();if(!cloud)return;setSync('','Saving');try{await setDoc(doc(db,'users',uid,'days',k),{...clean,updatedAt:serverTimestamp()},{merge:true});if(k===todayKey())scheduleLeaderboardPublish();setSync('live','Live')}catch(err){console.error(err);setSync('error','Sync error');if(!quiet)toast('Saved on this device. Cloud sync failed.')}}
+async function saveTargets(){if(isAdmin())return lockedToast();saveLocal();if(!cloud)return;setSync('','Saving');try{await setDoc(doc(db,'users',uid),{targets,workDays:[...workDays],name:displayAgentName(),email:currentUser?.email||'',updatedAt:serverTimestamp()},{merge:true});scheduleLeaderboardPublish();setSync('live','Live')}catch(err){console.error(err);setSync('error','Sync error');toast('Targets saved locally. Cloud sync failed.')}}
 function addEvent(d,type,label,delta=0){d.events.push({id:uuid(),type,label,delta,at:Date.now()});d.events=d.events.slice(-500)}
 
 function recentDailyHistory(count=21){
@@ -263,7 +267,7 @@ async function changeMetric(metric,delta){if(!canEditDate(selectedDate))return l
 async function toggleTimer(){if(!canEditDate(selectedDate))return lockedToast();const d=dayData(selectedDate);if(d.timerStartedAt){d.knockSeconds=liveKnockSeconds(d);d.timerStartedAt=null;addEvent(d,'knock','Knocking paused')}else{d.timerStartedAt=Date.now();d.alarmPlayed=false;addEvent(d,'knock','Knocking started')}days[selectedDate]=d;haptic(18);await saveDay(selectedDate);ensureTick()}
 async function resetKnock(){if(!canEditDate(selectedDate))return lockedToast();if(!confirm('Reset knocking time for this date?'))return;const d=dayData(selectedDate);d.knockSeconds=0;d.timerStartedAt=null;d.alarmPlayed=false;addEvent(d,'knock','Knocking reset');days[selectedDate]=d;await saveDay(selectedDate);ensureTick()}
 async function finaliseExpiredTimers(){const today=todayKey();for(const [k,raw] of Object.entries(days)){if(k<today&&raw?.timerStartedAt){const d=dayData(k);d.knockSeconds=liveKnockSeconds(d);d.timerStartedAt=null;d.alarmPlayed=true;addEvent(d,'knock','Knocking stopped automatically at day close');days[k]=d;await saveDay(k,{quiet:true})}}}
-function ensureTick(){clearInterval(timerTick);if(dayData(selectedDate).timerStartedAt)timerTick=setInterval(()=>{renderToday();const d=dayData(selectedDate),target=rollingKnockTarget(selectedDate)*60;if(liveKnockSeconds(d)>=target&&!d.alarmPlayed){d.alarmPlayed=true;days[selectedDate]=d;saveDay(selectedDate,{quiet:true});alarm()}},1000)}
+function ensureTick(){clearInterval(timerTick);if(dayData(selectedDate).timerStartedAt)timerTick=setInterval(()=>{renderToday();if(isAdmin())return;const d=dayData(selectedDate),target=rollingKnockTarget(selectedDate)*60;if(liveKnockSeconds(d)>=target&&!d.alarmPlayed){d.alarmPlayed=true;days[selectedDate]=d;saveDay(selectedDate,{quiet:true});alarm()}},1000)}
 function alarm(){haptic([180,100,180]);toast('Today’s knocking target reached');try{const c=new AudioContext(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=880;g.gain.value=.17;o.start();o.stop(c.currentTime+.7)}catch{}}
 
 function formatHour(h){return `${h%12||12}:00 ${h>=12?'PM':'AM'}`}
@@ -277,7 +281,7 @@ function updateTopbar(id=activeViewId()){
   const todaySlot=$('#todaySyncSlot');
   const syncBadge=$('#syncBadge');
   const syncPopover=$('#syncPopover');
-  $('#viewTitle').textContent=isToday?welcomeMessage():label;
+  $('#viewTitle').textContent=isToday?(isAdmin()?`Viewing ${displayAgentName()}`:welcomeMessage()):label;
   $('#dateLabel').textContent=fmtDate(selectedDate);
   $('#dateLabel').classList.remove('hidden');
   dateLine?.classList.remove('today-sync-only');
@@ -294,10 +298,10 @@ function updateTopbar(id=activeViewId()){
 }
 function renderToday(){
   const d=dayData(selectedDate),score=completion(selectedDate),kt=rollingKnockTarget(selectedDate),secs=liveKnockSeconds(d),wk=weekSummary();
-  const past=isPastDate(selectedDate),scheduled=isWorkDayKey(selectedDate),locked=past||!scheduled;
+  const past=isPastDate(selectedDate),scheduled=isWorkDayKey(selectedDate),locked=isAdmin()||past||!scheduled;
   updateTopbar();
   $('#backToday').classList.toggle('hidden',selectedDate===todayKey());
-  $('#lockBadge').classList.toggle('hidden',!locked);$('#lockBadge').textContent=past?'LOCKED':'NOT SCHEDULED';
+  $('#lockBadge').classList.toggle('hidden',!locked);$('#lockBadge').textContent=isAdmin()?'READ ONLY':(past?'LOCKED':'NOT SCHEDULED');
   $('#todayView').classList.toggle('date-locked',locked);
   if($('#welcomeMessage')){
     const trackState=dayTrackState(selectedDate);
@@ -378,10 +382,12 @@ function appointmentEntriesForDate(viewDate){
 }
 function renderAppointments(){
   const picker=$('#appointmentDatePicker');
-  const locked=isPastDate(appointmentDate);
+  const locked=isAdmin()||isPastDate(appointmentDate);
   $('#appointmentForm').classList.toggle('date-locked',locked);
+  $('#appointmentForm').classList.toggle('hidden',isAdmin());
+  $('#adminAppointmentNotice')?.classList.toggle('hidden',!isAdmin());
   $$('#appointmentForm input, #appointmentForm button').forEach(el=>el.disabled=locked);
-  $('#appointmentLock').classList.toggle('hidden',!locked);
+  $('#appointmentLock').classList.toggle('hidden',isAdmin()||!locked);
   $('#appointmentDateLabel').textContent=fmtDate(appointmentDate);
   if(picker&&!picker.value)picker.value=appointmentDate;
   const list=appointmentEntriesForDate(appointmentDate);
@@ -395,7 +401,7 @@ function renderAppointments(){
     const time=escapeHtml(appointmentTimeLabel(a,sourceDate));
     const scheduledDate=appointmentScheduledDate(a,sourceDate);
     const createdDate=appointmentCreatedDate(a,sourceDate);
-    const canDelete=canEditDate(sourceDate);
+    const canDelete=!isAdmin()&&canEditDate(sourceDate);
     if(isReminder){
       return `<article class="appointment-card appointment-card-premium appointment-reminder">
         <div class="appointment-card-copy">
@@ -410,7 +416,7 @@ function renderAppointments(){
         </div>
         <div class="appointment-card-actions">
           ${dial?`<a class="appointment-call" href="tel:${dial}" aria-label="Call ${contact}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.2 3.5 4.8 5.9c-.7.7-.8 1.8-.3 2.7 2.5 4.7 6.3 8.5 11 11 .9.5 2 .4 2.7-.3l2.3-2.3-4.1-3-2.1 2.1c-2.6-1.4-4.7-3.5-6.1-6.1l2.1-2.1-3.1-4.4Z"/></svg></a>`:''}
-          <button class="appointment-delete" data-delete-appointment="${a.id}" data-source-date="${sourceDate}" aria-label="Delete appointment" ${canDelete?'':'disabled'}>×</button>
+          ${isAdmin()?'':`<button class="appointment-delete" data-delete-appointment="${a.id}" data-source-date="${sourceDate}" aria-label="Delete appointment" ${canDelete?'':'disabled'}>×</button>`}
         </div>
       </article>`;
     }
@@ -424,7 +430,7 @@ function renderAppointments(){
       </div>
       <div class="appointment-card-actions">
         ${dial?`<a class="appointment-call" href="tel:${dial}" aria-label="Call ${contact}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.2 3.5 4.8 5.9c-.7.7-.8 1.8-.3 2.7 2.5 4.7 6.3 8.5 11 11 .9.5 2 .4 2.7-.3l2.3-2.3-4.1-3-2.1 2.1c-2.6-1.4-4.7-3.5-6.1-6.1l2.1-2.1-3.1-4.4Z"/></svg></a>`:''}
-        <button class="appointment-delete" data-delete-appointment="${a.id}" data-source-date="${sourceDate}" aria-label="Delete appointment" ${canDelete?'':'disabled'}>×</button>
+        ${isAdmin()?'':`<button class="appointment-delete" data-delete-appointment="${a.id}" data-source-date="${sourceDate}" aria-label="Delete appointment" ${canDelete?'':'disabled'}>×</button>`}
       </div>
     </article>`
   }).join(''):`<div class="empty">No appointments logged or scheduled for this date.</div>`
@@ -445,14 +451,16 @@ async function addAppointment({contactName,contactNumber,address,date,time,type}
 async function deleteAppointment(id,sourceDate=appointmentDate){if(!canEditDate(sourceDate))return lockedToast();const d=dayData(sourceDate);d.appointments=d.appointments.filter(a=>a.id!==id);days[sourceDate]=d;await saveDay(sourceDate);renderAppointments()}
 
 
+function adminUidSet(){return new Set(agentProfiles.filter(p=>p.role==='admin').map(p=>p.uid))}
 function sortedTodayLeaderboard(){
-  return leaderboardEntries.filter(x=>x.date===todayKey()&&x.activeToday!==false).sort((a,b)=>(b.score||0)-(a.score||0)||(b.calls||0)-(a.calls||0)||(b.connects||0)-(a.connects||0)||(b.data||0)-(a.data||0));
+  const admins=adminUidSet();
+  return leaderboardEntries.filter(x=>!admins.has(x.uid)&&x.role!=='admin'&&x.date===todayKey()&&x.activeToday!==false).sort((a,b)=>(b.score||0)-(a.score||0)||(b.calls||0)-(a.calls||0)||(b.connects||0)-(a.connects||0)||(b.data||0)-(a.data||0));
 }
 function renderLeaderboardPosition(){
   const position=$('#leaderboardPosition'),meta=$('#leaderboardPositionMeta');
   if(!position||!meta)return;
   if(!cloud){position.textContent='—';meta.textContent='Sign in to view live ranking';return;}
-  const rows=sortedTodayLeaderboard(),index=rows.findIndex(r=>r.uid===uid);
+  const focusUid=activeAgentUid(),rows=sortedTodayLeaderboard(),index=rows.findIndex(r=>r.uid===focusUid);
   if(index<0){position.textContent='—';meta.textContent=rows.length?`${rows.length} agent${rows.length===1?'':'s'} ranked today`:'Waiting for today’s rankings';return;}
   const me=rows[index];
   position.textContent=`#${index+1}`;
@@ -469,8 +477,8 @@ function metricLabel(key){return({calls:'Calls',connects:'Connects',data:'Data',
 function renderWeeklyLeaderboard(){
   const rows=weeklyLeaderboardRows(),base=selectedLeaderboardWeekDate();
   $('#weeklyLeaderboardDate').textContent=`Week ${formatWeekRange(base)}`;
-  $('#weeklyLeaderboardList').innerHTML=rows.length?rows.map((r,i)=>{const t=r.targets||{};return `<article class="leaderboard-row ${r.uid===uid?'me':''}"><b class="rank">${i+1}</b><div class="agent"><strong>${escapeHtml(r.name||r.email?.split('@')[0]||'Agent')}</strong>${r.uid===uid?'<small>You</small>':''}</div><span>${r.calls||0}<small>/${t.calls||0}</small></span><span>${r.connects||0}<small>/${t.connects||0}</small></span><span>${r.data||0}<small>/${t.data||0}</small></span><span>${r.knockMinutes||0}<small>m</small></span><em>${r.score||0}%</em></article>`}).join(''):`<div class="empty">No team data is available for this week yet.</div>`;
-  $('#improvementList').innerHTML=rows.length?rows.map(r=>{const metric=metricLabel(r.weakestMetric),value=r.weakestPct||0,gap=Math.max(0,100-value);return `<article class="improvement-row ${r.uid===uid?'me':''}"><div><strong>${escapeHtml(r.name||r.email?.split('@')[0]||'Agent')}</strong><small>${metric} is the lowest-performing metric</small></div><span>${value}%</span><em>${gap?`${gap}% gap`:'On target'}</em></article>`}).join(''):`<div class="empty">Improvement areas will appear once weekly activity is logged.</div>`;
+  $('#weeklyLeaderboardList').innerHTML=rows.length?rows.map((r,i)=>{const t=r.targets||{};return `<article class="leaderboard-row ${r.uid===focusUid?'me':''}"><b class="rank">${i+1}</b><div class="agent"><strong>${escapeHtml(r.name||r.email?.split('@')[0]||'Agent')}</strong>${r.uid===focusUid?`<small>${isAdmin()?'Selected':'You'}</small>`:''}</div><span>${r.calls||0}<small>/${t.calls||0}</small></span><span>${r.connects||0}<small>/${t.connects||0}</small></span><span>${r.data||0}<small>/${t.data||0}</small></span><span>${r.knockMinutes||0}<small>m</small></span><em>${r.score||0}%</em></article>`}).join(''):`<div class="empty">No team data is available for this week yet.</div>`;
+  $('#improvementList').innerHTML=rows.length?rows.map(r=>{const metric=metricLabel(r.weakestMetric),value=r.weakestPct||0,gap=Math.max(0,100-value);return `<article class="improvement-row ${r.uid===focusUid?'me':''}"><div><strong>${escapeHtml(r.name||r.email?.split('@')[0]||'Agent')}</strong><small>${metric} is the lowest-performing metric</small></div><span>${value}%</span><em>${gap?`${gap}% gap`:'On target'}</em></article>`}).join(''):`<div class="empty">Improvement areas will appear once weekly activity is logged.</div>`;
   $('#weekNext').disabled=leaderboardWeekOffset>=0;
 }
 function leaderboardMomentum(entry){
@@ -516,7 +524,8 @@ function renderLeaderboard(){
   $('#leaderboardDate').textContent=fmtDate(date);
   const rows=sortedTodayLeaderboard();
   $('#leaderboardStatus').textContent=cloud?'LIVE':'DEVICE ONLY';
-  const meIndex=rows.findIndex(r=>r.uid===uid);
+  const focusUid=activeAgentUid();
+  const meIndex=rows.findIndex(r=>r.uid===focusUid);
   const me=meIndex>=0?rows[meIndex]:null;
   const myScore=me?.score??completion(date);
   const leaderScore=rows[0]?.score||0;
@@ -524,7 +533,7 @@ function renderLeaderboard(){
   if($('#leaderboardRing'))$('#leaderboardRing').style.setProperty('--score',Math.max(0,Math.min(100,myScore)));
   if($('#leaderboardHeroScore'))$('#leaderboardHeroScore').textContent=`${myScore}%`;
   if($('#leaderboardHeroRank'))$('#leaderboardHeroRank').textContent=meIndex>=0?`#${meIndex+1}`:'—';
-  if($('#leaderboardHeroMessage'))$('#leaderboardHeroMessage').textContent=meIndex===0?'You are leading today':meIndex>0?`${gap}% to the lead`:'Waiting for your first update';
+  if($('#leaderboardHeroMessage'))$('#leaderboardHeroMessage').textContent=meIndex===0?(isAdmin()?'Selected agent is leading':'You are leading today'):meIndex>0?`${gap}% to the lead`:(isAdmin()?'Select an agent to inspect':'Waiting for your first update');
   if($('#leaderboardAgentCount'))$('#leaderboardAgentCount').textContent=rows.length;
   if($('#leaderboardTopScore'))$('#leaderboardTopScore').textContent=`${leaderScore}%`;
   if($('#leaderboardGap'))$('#leaderboardGap').textContent=rows.length?(gap?`${gap}%`:'Leading'):'—';
@@ -532,9 +541,9 @@ function renderLeaderboard(){
     const t=r.targets||{};
     const momentum=leaderboardMomentum(r);
     const score=Math.max(0,Math.min(100,r.score||0));
-    return `<article class="leaderboard-row leaderboard-row-dashboard ${r.uid===uid?'me':''}">
+    return `<article class="leaderboard-row leaderboard-row-dashboard ${r.uid===focusUid?'me':''}">
       <b class="rank">${i+1}</b>
-      <div class="agent"><strong>${escapeHtml(r.name||r.email?.split('@')[0]||'Agent')}</strong>${r.uid===uid?'<small>You</small>':''}<i class="leaderboard-mini-progress"><span style="width:${score}%"></span></i></div>
+      <div class="agent"><strong>${escapeHtml(r.name||r.email?.split('@')[0]||'Agent')}</strong>${r.uid===focusUid?`<small>${isAdmin()?'Selected':'You'}</small>`:''}<i class="leaderboard-mini-progress"><span style="width:${score}%"></span></i></div>
       <span>${r.calls||0}<small>/${t.calls||50}</small></span><span>${r.connects||0}<small>/${t.connects||25}</small></span><span>${r.data||0}<small>/${t.data||10}</small></span><span>${r.knockMinutes||0}<small>m</small></span><em>${r.score||0}%<small class="momentum ${momentum.className}">${momentum.label}</small></em>
     </article>`
   }).join(''):`<div class="empty">No agents have logged activity today.</div>`;
@@ -548,10 +557,80 @@ function renderYearOverview(){const labels=['M','T','W','T','F','S','S'];const m
 function levelClass(p){return p>=100?'l4':p>=67?'l3':p>=34?'l2':p>0?'l1':''}
 function renderMonth(){const y=monthCursor.getFullYear(),m=monthCursor.getMonth();$('#monthLabel').textContent=monthCursor.toLocaleDateString('en-AU',{month:'long',year:'numeric'});const vals=[];for(let d=1;d<=new Date(y,m+1,0).getDate();d++){const dt=new Date(y,m,d);if(workDays.includes(dt.getDay()))vals.push(completion(dateKey(dt)))}const groups=[];for(let i=0;i<vals.length;i+=4){const g=vals.slice(i,i+4);groups.push(Math.round(g.reduce((a,b)=>a+b,0)/Math.max(1,g.length)))}$('#monthBars').innerHTML=groups.map((p,i)=>`<div title="${p}%"><i style="height:${Math.max(3,p)}%"></i><small>W${i+1}</small></div>`).join('')}
 function renderCalendar(){const labels=['M','T','W','T','F','S','S'];$('#calendarYear').textContent=year;const months=[];for(let m=0;m<12;m++){const first=new Date(year,m,1),pad=(first.getDay()+6)%7;let cells=`<div class="weekday-row">${labels.map(x=>`<b>${x}</b>`).join('')}</div><div class="days">${'<i></i>'.repeat(pad)}`;for(let d=1;d<=new Date(year,m+1,0).getDate();d++){const dt=new Date(year,m,d),k=dateKey(dt),p=completion(k),off=!workDays.includes(dt.getDay());cells+=`<button class="day-cell ${levelClass(p)} ${off?'off':''} ${k===todayKey()?'today':''} ${k===selectedDate?'selected':''}" data-date="${k}" title="${fmtDate(k)} · ${p}%">${d}</button>`}cells+='</div>';months.push(`<section class="month"><h3>${new Date(year,m,1).toLocaleDateString('en-AU',{month:'long'})}</h3>${cells}</section>`)}$('#calendarGrid').innerHTML=months.join('')}
-function renderSettings(){const name=displayAgentName();$('#agentName').value=name;$('#callsTarget').value=targets.calls;$('#connectsTarget').value=targets.connects;$('#dataTarget').value=targets.data;$('#weeklyKnockTarget').value=targets.weeklyKnock;$$('[name=workDay]').forEach(el=>el.checked=workDays.includes(Number(el.value)));$('#accountEmail').textContent=currentUser?.email||'Device-only mode';$('#modeNote').textContent=cloud?'Live sync is active. Use the same login on every device.':'Data is stored only on this device.';const initials=name.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]?.toUpperCase()||'').join('')||'A';if($('#profileAvatar'))$('#profileAvatar').textContent=initials;if($('#profileSyncState'))$('#profileSyncState').textContent=cloud?'Live sync active':'Device-only profile';if($('#profileTodayScore'))$('#profileTodayScore').textContent=`${completion(todayKey())}%`;if($('#profileWeekScore'))$('#profileWeekScore').textContent=`${weekSummary().score}%`;if($('#profileWorkDays'))$('#profileWorkDays').textContent=workDays.length}
-function renderAll(){renderToday();renderAppointments();renderInsights();renderSettings()}
+function renderSettings(){const name=isAdmin()?accountDisplayName():displayAgentName();$('#agentName').value=name;$('#callsTarget').value=targets.calls;$('#connectsTarget').value=targets.connects;$('#dataTarget').value=targets.data;$('#weeklyKnockTarget').value=targets.weeklyKnock;$$('[name=workDay]').forEach(el=>el.checked=workDays.includes(Number(el.value)));$('#accountEmail').textContent=currentUser?.email||'Device-only mode';$('#modeNote').textContent=isAdmin()?'Admin monitoring account · read-only agent access':(cloud?'Live sync is active. Use the same login on every device.':'Data is stored only on this device.');const initials=name.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]?.toUpperCase()||'').join('')||'A';if($('#profileAvatar'))$('#profileAvatar').textContent=initials;if($('#profileSyncState'))$('#profileSyncState').textContent=isAdmin()?'Admin monitoring profile':(cloud?'Live sync active':'Device-only profile');if($('#profileTodayScore'))$('#profileTodayScore').textContent=isAdmin()?'—':`${completion(todayKey())}%`;if($('#profileWeekScore'))$('#profileWeekScore').textContent=isAdmin()?'—':`${weekSummary().score}%`;if($('#profileWorkDays'))$('#profileWorkDays').textContent=isAdmin()?'—':workDays.length;$$('#settingsView input, #settingsView button:not(#signOut)').forEach(el=>el.disabled=isAdmin())}
+function renderAll(){renderAdminAgentSelector();renderToday();renderAppointments();renderInsights();renderSettings()}
 
-async function startCloud(user){unsubDays?.();unsubProfile?.();unsubLeaderboard?.();currentUser=user;uid=user.uid;cloud=true;loadLocal(uid);await finaliseExpiredTimers();setSync('','Connecting');clearTimeout(syncTimer);syncTimer=setTimeout(()=>{if($('#syncBadge').dataset.label==='Connecting')setSync(navigator.onLine?'':'offline',navigator.onLine?'Connected':'Offline')},3500);unsubDays=onSnapshot(collection(db,'users',uid,'days'),{includeMetadataChanges:true},snap=>{snap.docChanges().forEach(ch=>{if(ch.type==='removed')delete days[ch.doc.id];else{const incoming=ch.doc.data();days[ch.doc.id]={...blankDay(),...incoming,appointments:incoming.appointments||[],events:incoming.events||[]}}});saveLocal();renderAll();ensureTick();clearTimeout(syncTimer);setSync(snap.metadata.fromCache&&!navigator.onLine?'offline':'live',snap.metadata.hasPendingWrites?'Saving':'Live')},err=>{console.error(err);setSync('error','Sync error');toast('Firestore access failed. Check rules and login.');showAuthMessage(err.message)});unsubProfile=onSnapshot(doc(db,'users',uid),snap=>{if(snap.exists()){const profile=snap.data();if(profile.targets)targets={...DEFAULTS,...profile.targets};if(Array.isArray(profile.workDays)&&profile.workDays.length)workDays=normaliseWorkDays(profile.workDays);if(profile.name)agentName=profile.name;saveLocal();renderAll();scheduleLeaderboardPublish()}},err=>console.error(err));unsubLeaderboard=onSnapshot(collection(db,'leaderboard'),{includeMetadataChanges:true},snap=>{leaderboardEntries=snap.docs.map(d=>({uid:d.id,...d.data()}));renderLeaderboard()},err=>{console.error('Leaderboard read failed',err);$('#leaderboardStatus').textContent='SYNC ERROR'});setSync(navigator.onLine?'live':'offline',navigator.onLine?'Live':'Offline');showApp();scheduleLeaderboardPublish()}
+
+function applyProfile(profile={}){
+  targets={...DEFAULTS,...(profile.targets||{})};
+  workDays=Array.isArray(profile.workDays)&&profile.workDays.length?normaliseWorkDays(profile.workDays):[...DEFAULT_WORK_DAYS];
+  agentName=(profile.name||profile.email?.split('@')[0]||'Agent').trim();
+}
+function normalisedAgentProfiles(){
+  const byUid=new Map();
+  agentProfiles.forEach(p=>byUid.set(p.uid,p));
+  leaderboardEntries.forEach(entry=>{if(!byUid.has(entry.uid))byUid.set(entry.uid,{uid:entry.uid,name:entry.name,email:entry.email,role:entry.role||'agent'})});
+  return [...byUid.values()].filter(p=>p.uid&&p.role!=='admin'&&p.uid!==uid).sort((a,b)=>(a.name||a.email||'').localeCompare(b.name||b.email||''));
+}
+function renderAdminAgentSelector(){
+  const bar=$('#adminAgentBar'),select=$('#adminAgentSelect');
+  if(!bar||!select)return;
+  bar.classList.toggle('hidden',!isAdmin());
+  if(!isAdmin())return;
+  const agents=normalisedAgentProfiles();
+  select.innerHTML=agents.length?agents.map(a=>`<option value="${escapeHtml(a.uid)}" ${a.uid===viewedAgentUid?'selected':''}>${escapeHtml(a.name||a.email?.split('@')[0]||'Agent')}</option>`).join(''):'<option value="">No agents available</option>';
+  select.disabled=!agents.length;
+  if($('#adminAgentMeta'))$('#adminAgentMeta').textContent=agents.length?`${agents.length} agent${agents.length===1?'':'s'} · read-only`:'Waiting for agent profiles';
+  if(!viewedAgentUid&&agents.length)selectAdminAgent(agents[0].uid);
+}
+function subscribeViewedAgentProfile(agentUid){
+  unsubViewedProfile?.();
+  unsubViewedProfile=onSnapshot(doc(db,'users',agentUid),snap=>{
+    const profile=snap.exists()?{uid:agentUid,...snap.data()}:(normalisedAgentProfiles().find(a=>a.uid===agentUid)||{uid:agentUid});
+    applyProfile(profile);
+    renderAll();
+  },err=>{console.error('Agent profile read failed',err);setSync('error','Sync error')});
+}
+function subscribeDays(userId,{adminView=false}={}){
+  unsubDays?.();days={};
+  unsubDays=onSnapshot(collection(db,'users',userId,'days'),{includeMetadataChanges:true},snap=>{
+    snap.docChanges().forEach(ch=>{if(ch.type==='removed')delete days[ch.doc.id];else{const incoming=ch.doc.data();days[ch.doc.id]={...blankDay(),...incoming,appointments:incoming.appointments||[],events:incoming.events||[]}}});
+    if(!adminView)saveLocal();
+    renderAll();ensureTick();clearTimeout(syncTimer);
+    setSync(snap.metadata.fromCache&&!navigator.onLine?'offline':'live',snap.metadata.hasPendingWrites?'Saving':'Live');
+  },err=>{console.error(err);setSync('error','Sync error');toast('Firestore access failed. Check rules and login.');showAuthMessage(err.message)});
+}
+function selectAdminAgent(agentUid){
+  if(!isAdmin()||!agentUid||agentUid===viewedAgentUid)return;
+  viewedAgentUid=agentUid;days={};targets={...DEFAULTS};workDays=[...DEFAULT_WORK_DAYS];
+  const fallback=normalisedAgentProfiles().find(a=>a.uid===agentUid)||{};applyProfile(fallback);
+  subscribeViewedAgentProfile(agentUid);subscribeDays(agentUid,{adminView:true});
+  renderAdminAgentSelector();renderAll();ensureTick();
+}
+function activateAgentMode(profile={}){
+  if(activeMode!=='agent'){unsubUsers?.();unsubUsers=null;unsubViewedProfile?.();unsubViewedProfile=null;activeMode='agent';viewedAgentUid=uid;document.body.classList.remove('admin-mode');subscribeDays(uid)}
+  applyProfile(profile);saveLocal();finaliseExpiredTimers().then(()=>renderAll());scheduleLeaderboardPublish();
+}
+function activateAdminMode(){
+  if(activeMode==='admin')return;
+  activeMode='admin';document.body.classList.add('admin-mode');days={};targets={...DEFAULTS};workDays=[...DEFAULT_WORK_DAYS];agentName='Agent';
+  unsubDays?.();unsubDays=null;
+  unsubUsers=onSnapshot(collection(db,'users'),snap=>{agentProfiles=snap.docs.map(d=>({uid:d.id,...d.data()}));adminUsersReady=true;renderAdminAgentSelector()},err=>{console.error('Agent directory read failed',err);setSync('error','Sync error');toast('Admin access needs the updated Firestore rules.')});
+  renderAdminAgentSelector();renderAll();
+}
+async function startCloud(user){
+  unsubDays?.();unsubProfile?.();unsubViewedProfile?.();unsubUsers?.();unsubLeaderboard?.();
+  currentUser=user;uid=user.uid;cloud=true;loadLocal(uid);setSync('','Connecting');
+  clearTimeout(syncTimer);syncTimer=setTimeout(()=>{if($('#syncBadge').dataset.label==='Connecting')setSync(navigator.onLine?'':'offline',navigator.onLine?'Connected':'Offline')},3500);
+  unsubLeaderboard=onSnapshot(collection(db,'leaderboard'),{includeMetadataChanges:true},snap=>{
+    leaderboardEntries=snap.docs.map(d=>({uid:d.id,...d.data()}));renderAdminAgentSelector();renderLeaderboard();
+  },err=>{console.error('Leaderboard read failed',err);$('#leaderboardStatus').textContent='SYNC ERROR'});
+  unsubProfile=onSnapshot(doc(db,'users',uid),snap=>{
+    const profile=snap.exists()?snap.data():{};accountProfile=profile;accountRole=profile.role==='admin'?'admin':'agent';
+    if(isAdmin())activateAdminMode();else activateAgentMode(profile);
+    showApp();setSync(navigator.onLine?'live':'offline',navigator.onLine?'Live':'Offline');
+  },err=>{console.error(err);setSync('error','Sync error');showAuthMessage(err.message)});
+}
 function showApp(){$('#authGate').classList.add('hidden');$('#app').classList.remove('hidden');$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()}
 let viewportFrame=0;
 function updateAppViewport(){
@@ -604,12 +683,13 @@ $('#weekPrev').onclick=()=>{leaderboardWeekOffset--;renderWeeklyLeaderboard()};
 $('#weekNext').onclick=()=>{if(leaderboardWeekOffset<0)leaderboardWeekOffset++;renderWeeklyLeaderboard()};
 $('#weekLast').onclick=()=>{leaderboardWeekOffset=-1;renderWeeklyLeaderboard()};
 $('#appointmentDatePicker').onchange=()=>{};
-$('#appointmentForm').onsubmit=async e=>{e.preventDefault();const viewedDate=appointmentDate;const contactName=$('#appointmentContactName').value.trim(),contactNumber=$('#appointmentContactNumber').value.trim(),address=$('#appointmentAddress').value.trim(),date=$('#appointmentDatePicker').value,time=$('#appointmentTime').value,type=$('.appointment-types input:checked')?.value||'',error=$('#appointmentFormError');const missing=[];if(!contactName)missing.push('contact name');if(!contactNumber)missing.push('contact number');if(!address)missing.push('property address');if(!date)missing.push('booking date');if(!time)missing.push('booking time');if(!type)missing.push('appointment type');if(missing.length){error.textContent=`Add ${missing.join(', ')}`;error.classList.remove('hidden');return}error.textContent='';error.classList.add('hidden');await addAppointment({contactName,contactNumber,address,date,time,type});e.target.reset();appointmentDate=viewedDate;$('#appointmentDatePicker').value=viewedDate;renderAppointments();updateTopbar('appointmentsView')};
+$('#adminAgentSelect').onchange=e=>selectAdminAgent(e.target.value);
+$('#appointmentForm').onsubmit=async e=>{if(isAdmin()){e.preventDefault();return lockedToast();}e.preventDefault();const viewedDate=appointmentDate;const contactName=$('#appointmentContactName').value.trim(),contactNumber=$('#appointmentContactNumber').value.trim(),address=$('#appointmentAddress').value.trim(),date=$('#appointmentDatePicker').value,time=$('#appointmentTime').value,type=$('.appointment-types input:checked')?.value||'',error=$('#appointmentFormError');const missing=[];if(!contactName)missing.push('contact name');if(!contactNumber)missing.push('contact number');if(!address)missing.push('property address');if(!date)missing.push('booking date');if(!time)missing.push('booking time');if(!type)missing.push('appointment type');if(missing.length){error.textContent=`Add ${missing.join(', ')}`;error.classList.remove('hidden');return}error.textContent='';error.classList.add('hidden');await addAppointment({contactName,contactNumber,address,date,time,type});e.target.reset();appointmentDate=viewedDate;$('#appointmentDatePicker').value=viewedDate;renderAppointments();updateTopbar('appointmentsView')};
 $('#appointmentsList').onclick=e=>{const b=e.target.closest('[data-delete-appointment]');if(b&&confirm('Delete this appointment?'))deleteAppointment(b.dataset.deleteAppointment,b.dataset.sourceDate||appointmentDate)};
-$('#saveSettings').onclick=async()=>{const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;saveLocal();await saveTargets();renderAll();toast('Settings saved')};
+$('#saveSettings').onclick=async()=>{if(isAdmin())return lockedToast();const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;saveLocal();await saveTargets();renderAll();toast('Settings saved')};
 $('#signOut').onclick=async()=>{clearActiveSession();if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
-$('#exportData').onclick=()=>{const blob=new Blob([JSON.stringify({targets,workDays,days},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`daily-accountability-${todayKey()}.json`;a.click();URL.revokeObjectURL(a.href)};
-$('#importData').onchange=async e=>{try{const raw=JSON.parse(await e.target.files[0].text());targets={...DEFAULTS,...raw.targets};if(Array.isArray(raw.workDays)&&raw.workDays.length)workDays=normaliseWorkDays(raw.workDays);days={...days,...raw.days};saveLocal();if(cloud){await saveTargets();for(const k of Object.keys(raw.days||{}))await saveDay(k,{quiet:true})}renderAll();toast('Backup imported')}catch{toast('Backup could not be read')}};
+$('#exportData').onclick=()=>{if(isAdmin())return lockedToast();const blob=new Blob([JSON.stringify({targets,workDays,days},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`daily-accountability-${todayKey()}.json`;a.click();URL.revokeObjectURL(a.href)};
+$('#importData').onchange=async e=>{if(isAdmin())return lockedToast();try{const raw=JSON.parse(await e.target.files[0].text());targets={...DEFAULTS,...raw.targets};if(Array.isArray(raw.workDays)&&raw.workDays.length)workDays=normaliseWorkDays(raw.workDays);days={...days,...raw.days};saveLocal();if(cloud){await saveTargets();for(const k of Object.keys(raw.days||{}))await saveDay(k,{quiet:true})}renderAll();toast('Backup imported')}catch{toast('Backup could not be read')}};
 $('#openCalendarFromInsights').onclick=openCalendar;$('#closeCalendar').onclick=()=>$('#calendarModal').classList.remove('open');$('#calendarPrev').onclick=$('#prevYear').onclick=()=>{year--;renderCalendar();renderInsights()};$('#calendarNext').onclick=$('#nextYear').onclick=()=>{year++;renderCalendar();renderInsights()};
 $('#calendarGrid').onclick=e=>{const b=e.target.closest('[data-date]');if(!b)return;selectedDate=b.dataset.date;appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;$('#calendarModal').classList.remove('open');switchView('todayView');renderAll();ensureTick()};
 $('#yearHeatmap').onclick=e=>{const b=e.target.closest('[data-date]');if(!b)return;selectedDate=b.dataset.date;appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;switchView('todayView');renderAll();ensureTick()};

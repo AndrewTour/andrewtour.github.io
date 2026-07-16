@@ -109,3 +109,19 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - Removed duplicate floating timestamps from original and reminder cards.
 - Future reminder cards now repeat the blue booked-for date/time beneath the booked-on date.
 - Positioned the confirmation reminder to the right of the booked-for detail with responsive spacing.
+
+
+## v1.26.0 — Read-only Admin Mode
+- Added secure `agent` and `admin` profile roles.
+- Admin accounts do not publish leaderboard rows and are excluded from rankings.
+- Added a Today-page agent selector for read-only inspection of each agent’s full daily stack.
+- Admin selection also applies to appointment logs, insights and historical dates.
+- Preserved the existing agent experience, Firestore paths, local cache and live sync.
+- Includes updated Firestore rules; deploy them and assign the admin profile role in Firebase.
+
+## v1.26.0 — Firestore rules alignment patch
+- Replaced the packaged Firestore rules with the verified AGNT structure: `users/{uid}`, `users/{uid}/days/{date}` and `leaderboard/{uid}`.
+- Admins have read-only access to all agent profiles and UID-scoped records.
+- Agents retain owner-only read/write access to their own data.
+- Admin accounts are blocked from publishing leaderboard rows.
+- Admin roles must be assigned manually using `users/{ADMIN_UID}.role = "admin"`.
