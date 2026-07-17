@@ -135,12 +135,13 @@ function metricPaceText(value,target,metric){
   return 'On track';
 }
 function knockRemainingText(minutes,target){
-  const remaining=Math.max(0,target-minutes);
+  const difference=target-minutes;
+  if(difference<0)return `${Math.abs(difference)} Mins Subtracted From Tomorrow`;
   if(selectedDate===todayKey()){
     const end=new Date();end.setHours(17,0,0,0);
-    if(new Date()>=end&&remaining>0)return `${remaining} mins added tomorrow`;
+    if(new Date()>=end&&difference>0)return `${difference} Mins Added To Tomorrow`;
   }
-  return remaining===0?'Target complete':`${remaining} min remaining today`;
+  return difference===0?'Target complete':`${difference} min remaining today`;
 }
 function knockPaceText(minutes,target){
   if(selectedDate!==todayKey())return minutes>=target?'Daily goal achieved':'Final result';
