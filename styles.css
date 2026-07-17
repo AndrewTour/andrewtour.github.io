@@ -2256,3 +2256,16 @@ html,body,input,button,select,textarea{
     row-gap:8px;
   }
 }
+
+
+/* v1.28.1 — end-of-day coaching and supporting-text size alignment only. */
+.today-at-glance .focus-primary,
+.today-at-glance .focus-secondary{display:block}
+.today-at-glance .focus-primary{color:#0b63f3}
+.today-at-glance .focus-secondary{color:#9198a6;margin-top:4px}
+.leaderboard-position small{font-size:.73rem;line-height:1.2}
+.today-at-glance{font-size:.71rem;line-height:1.2}
+@media(max-height:760px){
+  .leaderboard-position small,
+  .today-at-glance{font-size:.55rem}
+}

@@ -136,6 +136,10 @@ function metricPaceText(value,target,metric){
 }
 function knockRemainingText(minutes,target){
   const remaining=Math.max(0,target-minutes);
+  if(selectedDate===todayKey()){
+    const end=new Date();end.setHours(17,0,0,0);
+    if(new Date()>=end&&remaining>0)return `${remaining} mins added tomorrow`;
+  }
   return remaining===0?'Target complete':`${remaining} min remaining today`;
 }
 function knockPaceText(minutes,target){
@@ -144,6 +148,7 @@ function knockPaceText(minutes,target){
   start.setHours(14,0,0,0);
   end.setHours(17,0,0,0);
   if(minutes>=target)return 'Daily goal achieved';
+  if(now>=end)return 'Fell short';
   if(now<start)return minutes>0?`${minutes} min ahead of target`:'Start at 2:00pm';
   const expected=expectedKnockAt(target,now);
   return minutes>=expected?'On track':'Off track';
@@ -222,6 +227,8 @@ function todayGuidance(){
   const pcts={calls:pct(d.calls,targets.calls),connects:pct(d.connects,targets.connects),data:pct(d.data,targets.data),knocking:pct(liveKnockSeconds(d)/60,kt)};
   const weakest=Object.entries(pcts).sort((a,b)=>a[1]-b[1])[0]?.[0]||'calls';
   const total=Object.values(remaining).reduce((a,b)=>a+b,0);
+  const now=new Date(),planningStart=new Date(now);planningStart.setHours(18,30,0,0);
+  if(now>=planningStart)return 'Calendar Management|Plan Tomorrow';
   if(total===0)return 'All daily targets complete. Keep building tomorrow’s pipeline.';
   return `Focus Now: ${metricLabel(weakest)} · ${remaining[weakest]} ${labels[weakest]} remaining`;
 }
@@ -338,7 +345,13 @@ function renderToday(){
   $$('[data-action], #timerButton, #resetKnock').forEach(el=>{el.disabled=locked;el.setAttribute('aria-disabled',String(locked))});
   renderDayTrend();
   renderLeaderboardPosition();
-  if($('#todayAtGlance'))$('#todayAtGlance').textContent=todayGuidance();
+  if($('#todayAtGlance')){
+    const guidance=todayGuidance();
+    if(guidance.includes('|')){
+      const [primary,secondary]=guidance.split('|');
+      $('#todayAtGlance').innerHTML=`<span class="focus-primary">${escapeHtml(primary)}</span><span class="focus-secondary">${escapeHtml(secondary)}</span>`;
+    }else $('#todayAtGlance').textContent=guidance;
+  }
   if($('#momentumWhisper'))$('#momentumWhisper').textContent=momentumWhisper();
 }
 function recentWorkKeys(endKey=selectedDate,count=8){
