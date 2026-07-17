@@ -3,20 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#05070d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="AGNT">
+<meta name="apple-mobile-web-app-title" content="Daily Accountability">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=15">
-<title>AGNT</title>
+<link rel="stylesheet" href="styles.css">
+<title>Daily Accountability</title>
 </head>
 <body>
 <div id="authGate" class="auth-gate">
   <form id="authForm" class="auth-card glass">
-    <div class="brand-mark">AGNT</div>
-    <h1>AGNT</h1>
+    <div class="brand-mark">DA</div>
+    <h1>Daily Accountability</h1>
     <p>Sign in once and your data stays live across your devices.</p>
     <input id="email" type="email" autocomplete="email" placeholder="Email" required>
     <input id="password" type="password" autocomplete="current-password" placeholder="Password" minlength="6" required>
@@ -30,7 +30,7 @@
 <div id="app" class="app hidden">
   <header class="topbar">
     <div>
-      <h1 id="viewTitle">AGNT</h1>
+      <h1 id="viewTitle">Daily Accountability</h1>
       <div class="date-line">
         <div id="dateLabel" class="date"></div>
         <button id="syncBadge" class="sync-badge connecting" type="button" aria-label="Sync status: Connecting" aria-expanded="false"></button>
@@ -47,12 +47,7 @@
     <div class="top-actions">
       <span id="lockBadge" class="lock-badge hidden">LOCKED</span><button id="backToday" class="back-today hidden" type="button">Today</button>
       <div id="todaySyncSlot" class="today-sync-slot" aria-label="Sync status"></div>
-      <div id="dateNavActions" class="date-nav-actions hidden" aria-label="Change day">
-        <button id="previousDay" class="icon-btn topbar-nav-icon" type="button" aria-label="Previous day"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6.5 9 12l5.5 5.5"/></svg></button>
-        <button id="nextDay" class="icon-btn topbar-nav-icon" type="button" aria-label="Next day"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 6.5 5.5 5.5-5.5 5.5"/></svg></button>
-      </div>
-      <button id="settingsShortcut" class="icon-btn settings-shortcut-icon hidden" type="button" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.6 3.4l.55-1.4h3.7l.55 1.4a2 2 0 0 0 2.55 1.15l1.38-.57 2.62 2.62-.57 1.38a2 2 0 0 0 1.15 2.55l1.4.55v3.7l-1.4.55a2 2 0 0 0-1.15 2.55l.57 1.38-2.62 2.62-1.38-.57a2 2 0 0 0-2.55 1.15l-.55 1.4h-3.7l-.55-1.4a2 2 0 0 0-2.55-1.15l-1.38.57-2.62-2.62.57-1.38a2 2 0 0 0-1.15-2.55l-1.4-.55v-3.7l1.4-.55a2 2 0 0 0 1.15-2.55L3.05 6.6l2.62-2.62 1.38.57A2 2 0 0 0 9.6 3.4Z"/><circle cx="12" cy="12.85" r="3.15"/></svg></button>
-      <button id="homeShortcut" class="icon-btn home-shortcut-icon hidden" type="button" aria-label="Return to Today"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 10 8-6 8 6"/><path d="M6.5 9.5V20h11V9.5"/><path d="M10 20v-6h4v6"/></svg></button>
+      <button id="settingsShortcut" class="icon-btn" type="button" aria-label="Settings">⚙</button>
     </div>
   </header>
 
@@ -78,22 +73,22 @@
         <div id="todayAtGlance" class="today-at-glance" aria-live="polite">Loading today’s focus…</div>
       </section>
 
-      <section class="metrics glass">
-        <article class="metric" data-metric="calls">
-          <div class="metric-copy"><span>CALLS</span><small id="callsTargetText">50 Remaining</small><em id="callsPace">Start At 9:00am</em><strong><i id="callsValue">0</i><small id="callsTargetLabel">/50</small></strong></div>
+      <section class="metrics">
+        <article class="metric glass" data-metric="calls">
+          <div class="metric-copy"><span>Calls</span><small id="callsTargetText">50 remaining</small><em id="callsPace">Start at 9:00am</em><strong><i id="callsValue">0</i><small id="callsTargetLabel">/50</small></strong></div>
           <div class="actions"><button data-action="minus" data-metric="calls">−</button><div id="callsPercent" class="metric-percent">0%</div><button data-action="plus" data-metric="calls">+</button></div>
         </article>
-        <article class="metric" data-metric="connects">
-          <div class="metric-copy"><span>CONNECTS</span><small id="connectsTargetText">25 Remaining</small><em id="connectsPace">Start At 9:00am</em><strong><i id="connectsValue">0</i><small id="connectsTargetLabel">/25</small></strong></div>
+        <article class="metric glass" data-metric="connects">
+          <div class="metric-copy"><span>Connects</span><small id="connectsTargetText">25 remaining</small><em id="connectsPace">Start at 9:00am</em><strong><i id="connectsValue">0</i><small id="connectsTargetLabel">/25</small></strong></div>
           <div class="actions"><button data-action="minus" data-metric="connects">−</button><div id="connectsPercent" class="metric-percent">0%</div><button data-action="plus" data-metric="connects">+</button></div>
         </article>
-        <article class="metric" data-metric="data">
-          <div class="metric-copy"><span>DATA</span><small id="dataTargetText">10 Remaining</small><em id="dataPace">Start At 9:00am</em><strong><i id="dataValue">0</i><small id="dataTargetLabel">/10</small></strong></div>
+        <article class="metric glass" data-metric="data">
+          <div class="metric-copy"><span>Data</span><small id="dataTargetText">10 remaining</small><em id="dataPace">Start at 9:00am</em><strong><i id="dataValue">0</i><small id="dataTargetLabel">/10</small></strong></div>
           <div class="actions"><button data-action="minus" data-metric="data">−</button><div id="dataPercent" class="metric-percent">0%</div><button data-action="plus" data-metric="data">+</button></div>
         </article>
-        <article class="metric knock">
-          <div class="metric-copy"><span>KNOCKING</span><small id="knockTargetText">60 Min Remaining Today</small><em id="knockRemaining">Start At 9:00am</em><strong id="knockValue">00:00</strong></div>
-          <div class="actions knock-actions"><div id="knockPercent" class="metric-percent metric-ring" role="img" aria-label="Knocking: 0% complete, expected pace 0%, target 60 minutes"><span>0%</span></div><button id="timerButton" class="timer" type="button" aria-label="Start knocking timer"><svg class="timer-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 6.5 17 12l-8.5 5.5Z"/></svg></button><button id="resetKnock" class="reset" aria-label="Reset today’s knocking">↶</button></div>
+        <article class="metric knock glass">
+          <div class="metric-copy"><span>Knocking</span><small id="knockTargetText">60 min remaining today</small><em id="knockRemaining">Start at 9:00am</em><strong id="knockValue">00:00</strong></div>
+          <div class="actions knock-actions"><button id="timerButton" class="timer">Start</button><button id="resetKnock" class="reset" aria-label="Reset today’s knocking">↶</button></div>
         </article>
       </section>
 
@@ -102,23 +97,16 @@
     <section id="appointmentsView" class="view">
       <div class="view-head">
         <div><span>APPOINTMENTS</span><h2 id="appointmentDateLabel"></h2></div>
+        <input id="appointmentDatePicker" type="date">
       </div>
-      <div id="appointmentLock" class="appointment-lock hidden">Past dates are locked and read-only.</div><form id="appointmentForm" class="appointment-form glass" novalidate>
-        <label>Contact name<input id="appointmentContactName" type="text" placeholder="Contact name" autocomplete="name" autocapitalize="words" required></label>
-        <label>Contact number<input id="appointmentContactNumber" type="tel" placeholder="04xx xxx xxx" autocomplete="tel" inputmode="tel" required></label>
-        <label>Property address<input id="appointmentAddress" type="text" placeholder="14 Calla Grove, Pendle Hill" autocomplete="street-address" required></label>
-        <div class="appointment-schedule">
-          <label>Booking date<input id="appointmentDatePicker" type="date" required></label>
-          <label>Booking time<input id="appointmentTime" type="time" required></label>
+      <div id="appointmentLock" class="appointment-lock hidden">Past dates are locked and read-only.</div><form id="appointmentForm" class="appointment-form glass">
+        <label>Property address<input id="appointmentAddress" type="text" placeholder="14 Calla Grove, Pendle Hill" required></label>
+        <div class="appointment-types">
+          <label><input type="checkbox" value="Appraisal"><span>Appraisal</span></label>
+          <label><input type="checkbox" value="Listing appointment"><span>Listing appointment</span></label>
+          <label><input type="checkbox" value="Price update"><span>Price update</span></label>
         </div>
-        <fieldset class="appointment-types" aria-label="Appointment type">
-          <label><input type="radio" name="appointmentType" value="BAP"><span>BAP</span></label>
-          <label><input type="radio" name="appointmentType" value="MAP"><span>MAP</span></label>
-          <label><input type="radio" name="appointmentType" value="LAP"><span>LAP</span></label>
-          <label><input type="radio" name="appointmentType" value="PU"><span>PU</span></label>
-        </fieldset>
-        <div id="appointmentFormError" class="form-error hidden" role="alert"></div>
-        <button class="primary" type="submit">Book appointment</button>
+        <button class="primary" type="submit">Add appointment</button>
       </form>
       <div id="appointmentsList" class="appointments-list"></div>
     </section>
@@ -154,17 +142,6 @@
       <button id="openCalendarFromInsights" class="secondary full">Open full calendar</button>
       </div>
       <div id="leaderboardInsights" class="insights-page active">
-        <section class="leaderboard-dashboard glass" aria-label="Leaderboard overview">
-          <div class="leaderboard-dashboard-main">
-            <div class="leaderboard-ring" id="leaderboardRing" style="--score:0"><strong id="leaderboardHeroScore">0%</strong><span>Today</span></div>
-            <div class="leaderboard-hero-copy"><span>TEAM POSITION</span><strong id="leaderboardHeroRank">—</strong><small id="leaderboardHeroMessage">Waiting for today’s rankings</small></div>
-          </div>
-          <div class="leaderboard-kpis">
-            <article><span>Agents</span><strong id="leaderboardAgentCount">0</strong></article>
-            <article><span>Leader</span><strong id="leaderboardTopScore">0%</strong></article>
-            <article><span>Gap</span><strong id="leaderboardGap">—</strong></article>
-          </div>
-        </section>
         <section class="leaderboard-card glass">
           <div class="leaderboard-head">
             <div><span>DAILY LEADERBOARD</span><h2 id="leaderboardDate"></h2></div>
@@ -192,15 +169,8 @@
 
     <section id="settingsView" class="view">
       <div class="settings glass">
-        <div class="profile-hero">
-          <div id="profileAvatar" class="profile-avatar" aria-hidden="true">A</div>
-          <div class="profile-hero-copy"><h2>Your Profile</h2><div id="accountEmail" class="account-email"></div><span id="profileSyncState">Live accountability profile</span></div>
-        </div>
-        <div class="profile-kpis" aria-label="Profile performance summary">
-          <article><span>Today</span><strong id="profileTodayScore">0%</strong></article>
-          <article><span>This week</span><strong id="profileWeekScore">0%</strong></article>
-          <article><span>Work days</span><strong id="profileWorkDays">4</strong></article>
-        </div>
+        <h2>Settings</h2>
+        <div id="accountEmail" class="account-email"></div>
         <label>Agent name<input id="agentName" type="text" maxlength="40" placeholder="Your name"></label>
         <label>Calls target<input id="callsTarget" type="number" min="1"></label>
         <label>Connects target<input id="connectsTarget" type="number" min="1"></label>
@@ -229,22 +199,10 @@
   </main>
 
   <nav class="tabbar glass">
-    <button class="active" data-view="todayView">
-      <b class="tab-icon tab-icon-today" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.25" fill="currentColor" stroke="none"/></svg></b>
-      <span>Today</span>
-    </button>
-    <button data-view="appointmentsView">
-      <b class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="15" rx="3"/><path d="M7.5 3.5v4M16.5 3.5v4M3.5 9.5h17"/><path d="M8 13h3M13 13h3M8 17h3"/></svg></b>
-      <span>Appointments</span>
-    </button>
-    <button data-view="insightsView">
-      <b class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 18.5h16"/><path d="M5.5 16l4.25-4.25 3.1 2.8L18.5 8.5"/><path d="M14.5 8.5h4v4"/></svg></b>
-      <span>Leaderboard</span>
-    </button>
-    <button data-view="settingsView">
-      <b class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9.6 3.4l.55-1.4h3.7l.55 1.4a2 2 0 0 0 2.55 1.15l1.38-.57 2.62 2.62-.57 1.38a2 2 0 0 0 1.15 2.55l1.4.55v3.7l-1.4.55a2 2 0 0 0-1.15 2.55l.57 1.38-2.62 2.62-1.38-.57a2 2 0 0 0-2.55 1.15l-.55 1.4h-3.7l-.55-1.4a2 2 0 0 0-2.55-1.15l-1.38.57-2.62-2.62.57-1.38a2 2 0 0 0-1.15-2.55l-1.4-.55v-3.7l1.4-.55a2 2 0 0 0 1.15-2.55L3.05 6.6l2.62-2.62 1.38.57A2 2 0 0 0 9.6 3.4Z"/><circle cx="12" cy="12.85" r="3.15"/></svg></b>
-      <span>Settings</span>
-    </button>
+    <button class="active" data-view="todayView"><b>●</b><span>Today</span></button>
+    <button data-view="appointmentsView"><b>▣</b><span>Appointments</span></button>
+    <button data-view="insightsView"><b>▦</b><span>Leaderboard</span></button>
+    <button data-view="settingsView"><b>⚙</b><span>Settings</span></button>
   </nav>
 </div>
 
@@ -256,6 +214,6 @@
   </div>
 </div>
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=15"></script>
+<script type="module" src="app.js"></script>
 </body>
 </html>
