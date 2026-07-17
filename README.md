@@ -128,3 +128,13 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - Restored relaxed spacing between the current metric value, slash and target.
 - Preserved all dual-layer ring rendering, pacing calculations, completion states and application functionality.
 - No Firebase or Firestore changes required.
+
+
+## v1.27.2 — Layout Stability + Portrait Request
+
+- Locked metric recommendation areas to a stable two-line height so row and navigation positions do not shift.
+- Rebuilt metric counters as controlled value, slash and target elements for consistent `x / x` spacing.
+- Preserved the current dual-layer ring dimensions, pacing logic and completion states.
+- Updated the manifest orientation request to `portrait-primary`.
+- Added a safe centred landscape browser fallback without forcing device rotation.
+- No Firebase, Firestore, authentication, data model or business-logic changes.

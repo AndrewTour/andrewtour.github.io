@@ -1922,3 +1922,78 @@ html,body,input,button,select,textarea{
     font-size:.53rem;
   }
 }
+
+
+/* v1.27.2 — layout stability, counter spacing and portrait request.
+   Layout-only refinement. Metric logic, pacing calculations and controls are unchanged. */
+.metric{
+  /* Keep each row structurally identical while the recommendation copy changes. */
+  grid-template-columns:minmax(0,1fr) auto;
+}
+.metric-copy{
+  display:grid;
+  grid-template-rows:auto auto minmax(2.4em,auto) auto;
+  align-content:center;
+}
+.metric-copy>em{
+  min-height:2.4em;
+  max-height:2.4em;
+  line-height:1.2;
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  overflow:hidden;
+}
+.metric-counter{
+  display:inline-flex!important;
+  align-items:baseline!important;
+  gap:0!important;
+  width:max-content;
+  white-space:nowrap;
+}
+.metric-counter>i{
+  margin:0;
+}
+.metric-counter-slash{
+  display:inline-block;
+  margin:0 .28em;
+  color:var(--muted);
+  font-size:.49em;
+  font-weight:500;
+  line-height:1;
+  letter-spacing:0;
+}
+.metric-counter>small{
+  margin:0!important;
+  font-size:.49em!important;
+  font-weight:500;
+  line-height:1;
+  letter-spacing:0!important;
+}
+.actions,
+.knock-actions{
+  align-items:center;
+}
+.metric-percent.metric-ring,
+.actions>button,
+.knock-actions>button{
+  align-self:center;
+}
+
+/* Browser fallback only. Installed PWAs request portrait-primary in manifest.json. */
+@media (orientation:landscape) and (max-height:560px){
+  html,body{min-height:100%;overflow:auto}
+  body{display:flex;justify-content:center;background:var(--bg)}
+  .app{
+    width:min(560px,100%);
+    min-height:100dvh;
+    height:auto;
+    margin-inline:auto;
+  }
+  main{min-height:520px}
+}
+
+@media(max-height:760px){
+  .metric-copy{grid-template-rows:auto auto minmax(2.2em,auto) auto}
+  .metric-copy>em{min-height:2.2em;max-height:2.2em}
+}
