@@ -2267,28 +2267,155 @@ html,body,input,button,select,textarea{
   .today-at-glance{font-size:.55rem}
 }
 
+/* v1.29.0 — UI consistency and interaction polish.
+   Visual-only overrides: layout geometry, content, controls, data logic and navigation remain unchanged. */
+:root{
+  --surface-border:#dfe3e8;
+  --surface-shadow:0 6px 18px rgba(25,31,46,.05),0 1px 3px rgba(25,31,46,.025);
+  --control-border:#dde1e6;
+  --control-bg:#f4f5f7;
+  --control-pressed:#e9ecf0;
+  --radius-card:28px;
+  --radius-panel:18px;
+  --motion-fast:120ms;
+}
 
-/* v1.28.4 — knocking ring now uses the identical shared ring styling as Calls, Connects and Data. */
-.dashboard .knock-actions{
-  grid-template-columns:47px 54px 54px;
+/* One surface language across the app without changing component dimensions. */
+.score-week,.score,.metric,.week-card,.leaderboard-card,.weekly-leaderboard-card,
+.improvement-card,.appointment-form,.settings,.month-card,.year-card,.insight,
+.calendar-shell,.personal-bests,.monday-review,.auth-card{
+  border-color:var(--surface-border);
+  box-shadow:var(--surface-shadow);
 }
-.dashboard .knock-actions .timer,
-.dashboard .knock-actions .reset{
-  width:54px;
-  height:54px;
-  min-width:54px;
-  border-radius:18px;
-  padding:0;
+.score-week,.score,.leaderboard-card,.weekly-leaderboard-card,.improvement-card,
+.appointment-form,.settings,.calendar-shell,.personal-bests,.monday-review,.auth-card{
+  border-radius:var(--radius-card);
 }
-@media(max-height:760px){
-  .dashboard .knock-actions{
-    grid-template-columns:38px 46px 46px;
-  }
-  .dashboard .knock-actions .timer,
-  .dashboard .knock-actions .reset{
-    width:46px;
-    height:45px;
-    min-width:46px;
-    border-radius:15px;
+.metric,.week-card,.month-card,.year-card,.insight{
+  border-radius:24px;
+}
+.appointment-card,.improvement-row,.personal-best-grid article,.month,.mini-month,
+.leaderboard-row{
+  border-color:#e5e8ec;
+  box-shadow:0 3px 10px rgba(25,31,46,.04);
+}
+
+/* Clear, consistent supporting-text hierarchy while retaining compact Today geometry. */
+.view:not(.dashboard) .view-head span,
+.view:not(.dashboard) .section-label>span,
+.view:not(.dashboard) .insight>span,
+.settings label,.appointment-form label,.account-email,
+.appointment-card small,.insight small,.week-head small,
+.leaderboard-note,.personal-best-grid small,.monday-review>p{
+  line-height:1.35;
+}
+.view:not(.dashboard) .view-head span,
+.view:not(.dashboard) .section-label>span,
+.view:not(.dashboard) .insight>span{
+  font-size:.69rem;
+}
+.settings label,.appointment-form label,.account-email,
+.appointment-card small,.insight small,.leaderboard-note,
+.personal-best-grid small,.monday-review>p{
+  font-size:.68rem;
+}
+
+/* Unified control borders, fills and stable interaction feedback. */
+.icon-btn,.back-today,.actions button,.week-history-controls button,
+.modal-head button,.year-head button,.primary,.secondary,.danger,.file-btn,
+.text-btn,.view-head input,.settings input,.appointment-form input[type=text],
+.auth-card input,.appointment-types label,.workday-options span{
+  transition:background-color var(--motion-fast) ease,border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease,opacity var(--motion-fast) ease,filter var(--motion-fast) ease;
+}
+.icon-btn,.back-today,.actions button:first-child,.secondary,.file-btn,
+.week-history-controls button,.modal-head button,.year-head button{
+  background:var(--control-bg);
+  border-color:var(--control-border);
+}
+button:focus-visible,.file-btn:focus-visible,input:focus-visible{
+  outline:3px solid rgba(11,99,243,.22);
+  outline-offset:2px;
+}
+button:disabled,.file-btn[aria-disabled="true"]{
+  opacity:.42;
+  cursor:default;
+  filter:none;
+}
+button:not(:disabled):active,.file-btn:active{
+  transform:none;
+  filter:brightness(.97);
+}
+.icon-btn:not(:disabled):active,.back-today:not(:disabled):active,
+.actions button:first-child:not(:disabled):active,.secondary:not(:disabled):active,
+.file-btn:active,.week-history-controls button:not(:disabled):active,
+.modal-head button:not(:disabled):active,.year-head button:not(:disabled):active{
+  background:var(--control-pressed);
+}
+.primary:not(:disabled):active,.actions button:last-child:not(:disabled):active,
+.timer:not(:disabled):active{
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.18);
+}
+
+/* Completion is clear but quieter: marker + tint + positive coaching colour. */
+.metric.complete{
+  background:#fbfefc;
+}
+.metric.complete:before{
+  width:4px;
+}
+.metric.complete .metric-copy>em{
+  color:#078d61;
+}
+
+/* Keep all percentage indicators visually aligned as one component family. */
+.metric-percent.metric-ring{
+  border-color:#d8e3f7;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.8);
+  font-variant-numeric:tabular-nums;
+}
+.metric-percent.metric-ring span{
+  font-weight:850;
+  letter-spacing:-.02em;
+}
+
+/* Stronger active navigation identity without movement or resized elements. */
+.tabbar button{
+  position:relative;
+  transition:background-color var(--motion-fast) ease,color var(--motion-fast) ease,
+    opacity var(--motion-fast) ease;
+}
+.tabbar button.active{
+  background:#f1f3f6;
+  color:#111318;
+  box-shadow:inset 0 0 0 1px rgba(17,19,24,.035);
+}
+.tabbar button.active b,.tabbar button.active svg{
+  opacity:1;
+}
+.tabbar button:not(.active) b,.tabbar button:not(.active) svg{
+  opacity:.72;
+}
+.tabbar button span{
+  font-size:.62rem;
+  font-weight:600;
+}
+
+/* More restrained elevation on the fixed navigation and integrated Today stack. */
+.tabbar{
+  border-color:var(--surface-border);
+  box-shadow:0 10px 24px rgba(25,31,46,.07),0 1px 3px rgba(25,31,46,.035);
+}
+.dashboard .score-week,.dashboard .metrics{
+  border-color:var(--surface-border);
+  box-shadow:var(--surface-shadow);
+}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    scroll-behavior:auto!important;
+    transition-duration:.01ms!important;
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
   }
 }
