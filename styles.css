@@ -2211,3 +2211,21 @@ html,body,input,button,select,textarea{
   font-size:.65rem;
   line-height:normal;
 }
+
+/* v1.27.8 — metric supporting-text title case and matched line sizing only. */
+.dashboard .metric-copy>small,
+.dashboard .metric-copy>em{
+  text-transform:capitalize;
+}
+.dashboard .metric:not(.knock) .metric-copy>small{
+  font-size:.73rem;
+}
+.dashboard .metric.knock .metric-copy>small{
+  font-size:.65rem;
+}
+@media(max-height:760px){
+  .dashboard .metric-copy>small,
+  .dashboard .metric-copy>em{
+    font-size:.55rem;
+  }
+}
