@@ -113,6 +113,9 @@ function welcomeMessage(){
   const greeting=hour<12?'Good Morning':hour<17?'Good Afternoon':'Good Evening';
   return `${greeting}, ${name}`;
 }
+function titleCaseDisplay(text){
+  return String(text).replace(/\b([a-z])/g,letter=>letter.toUpperCase());
+}
 function metricRemainingText(value,target){
   const remaining=Math.max(0,target-value);
   return remaining===0?'Target complete':`${remaining} remaining`;
@@ -223,7 +226,7 @@ function todayGuidance(){
   const weakest=Object.entries(pcts).sort((a,b)=>a[1]-b[1])[0]?.[0]||'calls';
   const total=Object.values(remaining).reduce((a,b)=>a+b,0);
   if(total===0)return 'All daily targets complete. Keep building tomorrow’s pipeline.';
-  return `Focus now: ${metricLabel(weakest)} · ${remaining[weakest]} ${labels[weakest]} remaining`;
+  return titleCaseDisplay(`Focus now: ${metricLabel(weakest)} · ${remaining[weakest]} ${labels[weakest]} remaining`);
 }
 function rollingKnockTarget(k){const date=parseKey(k),m=mondayOf(date);let prior=0,seen=0;for(const n of workDays){const x=new Date(m);x.setDate(m.getDate()+n-1);const key=dateKey(x);if(key===k)break;prior+=Math.floor(liveKnockSeconds(dayData(key))/60);seen++}return Math.ceil(Math.max(0,targets.weeklyKnock-prior)/Math.max(1,workDays.length-seen))}
 function completion(k){if(!isWorkDayKey(k))return 0;const d=dayData(k),kt=rollingKnockTarget(k);return Math.round((pct(d.calls,targets.calls)+pct(d.connects,targets.connects)+pct(d.data,targets.data)+pct(liveKnockSeconds(d)/60,kt))/4)}
@@ -302,7 +305,7 @@ function renderToday(){
     const val=d[m],target=targets[m],p=pct(val,target),rem=Math.max(0,target-val);
     $(`#${m}Value`).textContent=val;
     $(`#${m}TargetLabel`).textContent=`/${target}`;
-    $(`#${m}TargetText`).textContent=past?'Final result':(!scheduled?'No target today':metricRemainingText(val,target));
+    $(`#${m}TargetText`).textContent=titleCaseDisplay(past?'Final result':(!scheduled?'No target today':metricRemainingText(val,target)));
     const ring=$(`#${m}Percent`);
     const pacePct=(selectedDate===todayKey()&&scheduled)?Math.min(100,Math.round(expectedAt(m,target,new Date())/Math.max(1,target)*100)):0;
     ring.textContent=`${p}%`;
@@ -311,12 +314,12 @@ function renderToday(){
     ring.style.setProperty('--pace',pacePct);
     ring.setAttribute('role','img');
     ring.setAttribute('aria-label',`${m.charAt(0).toUpperCase()+m.slice(1)}: ${p}% complete, expected pace ${pacePct}%, target ${target}`);
-    $(`#${m}Pace`).textContent=past?'Day locked':(!scheduled?'Not scheduled':metricPaceText(val,target,m));
+    $(`#${m}Pace`).textContent=titleCaseDisplay(past?'Day locked':(!scheduled?'Not scheduled':metricPaceText(val,target,m)));
     document.querySelector(`[data-metric="${m}"]`).classList.toggle('complete',rem===0);
   }
   $('#knockValue').textContent=fmtTimer(secs);
-  $('#knockTargetText').textContent=past?'Final result':(!scheduled?'No target today':knockRemainingText(Math.floor(secs/60),kt));
-  $('#knockRemaining').textContent=past?'Day locked':(!scheduled?'Not scheduled':knockPaceText(Math.floor(secs/60),kt));
+  $('#knockTargetText').textContent=titleCaseDisplay(past?'Final result':(!scheduled?'No target today':knockRemainingText(Math.floor(secs/60),kt)));
+  $('#knockRemaining').textContent=titleCaseDisplay(past?'Day locked':(!scheduled?'Not scheduled':knockPaceText(Math.floor(secs/60),kt)));
   const knockMinutes=Math.floor(secs/60),knockActual=pct(knockMinutes,kt);
   const knockExpected=(selectedDate===todayKey()&&scheduled)?Math.min(100,Math.round(expectedKnockAt(kt,new Date())/Math.max(1,kt)*100)):0;
   const knockRing=$('#knockPercent');

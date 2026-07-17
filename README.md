@@ -1,3 +1,19 @@
+# AGNT V15
+
+Incremental visual text-formatting update from the confirmed working AGNT V14 build.
+
+## Changes
+- Preserved the all-caps dashboard metric titles.
+- Converted the grey metric supporting lines to Title Case.
+- Converted the blue metric coaching lines to Title Case.
+- Updated the blue `Focus Now:` guidance line to Title Case.
+- Left the grey leaderboard `% complete · agents ranked` line unchanged in lowercase.
+
+## Unchanged
+Firebase, authentication, Firestore paths and rules, UID separation, local cache, sync, storage keys, knowledge base, metric logic, timers, knocking logic, pacing, rings, leaderboard calculations, appointments, history, navigation, saved data and deployment workflow.
+
+---
+
 # AGNT v1.27.5
 
 Incremental update from the confirmed working v1.27.4 release.
