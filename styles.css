@@ -2119,3 +2119,62 @@ html,body,input,button,select,textarea{
   .knock-actions{grid-template-columns:38px 62px 46px;gap:6px}
   .knock-actions .timer{width:62px}
 }
+
+/* v1.27.4 — targeted Today-screen proportional polish only.
+   Ring rendering, pacing, metric actions and all data behaviour are unchanged. */
+
+/* Slightly quieter metric labels so the values remain the primary focus. */
+.dashboard .metric-copy>span{
+  font-size:.61rem;
+}
+
+/* Increase the displayed metric values and keep Knocking on the same visual scale. */
+.dashboard .metric-copy>strong,
+.dashboard .knock #knockValue{
+  font-size:1.68rem;
+  line-height:1;
+}
+
+/* Reserve three lines for the day-on-day momentum message at all times. */
+.score-copy .momentum-whisper{
+  min-height:3.6em;
+  height:3.6em;
+  max-height:3.6em;
+  line-height:1.2;
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:3;
+  overflow:hidden;
+}
+
+/* Reduce only the Calls, Connects and Data +/- controls by approximately 20%.
+   The dual-layer ring keeps its existing dimensions. */
+.dashboard .actions:not(.knock-actions){
+  grid-template-columns:43px 47px 43px;
+  gap:7px;
+}
+.dashboard .actions:not(.knock-actions)>button{
+  width:43px;
+  height:43px;
+  min-width:43px;
+  border-radius:15px;
+  font-size:1.28rem;
+  justify-self:center;
+}
+
+@media(max-height:760px){
+  .dashboard .metric-copy>span{font-size:.52rem}
+  .dashboard .metric-copy>strong,
+  .dashboard .knock #knockValue{font-size:1.43rem}
+  .dashboard .actions:not(.knock-actions){
+    grid-template-columns:37px 38px 37px;
+    gap:6px;
+  }
+  .dashboard .actions:not(.knock-actions)>button{
+    width:37px;
+    height:37px;
+    min-width:37px;
+    border-radius:13px;
+    font-size:1.12rem;
+  }
+}

@@ -1,3 +1,16 @@
+# AGNT v1.27.4
+
+## Today-screen proportional polish
+
+- Slightly reduced Calls, Connects, Data and Knocking title sizing.
+- Slightly increased the primary metric values and matched the Knocking value scale.
+- Reserved a stable three-line area for the day-on-day momentum message.
+- Reduced the visible Calls, Connects and Data plus/minus controls by approximately 20% while retaining the existing progress-ring size.
+- Preserved all ring rendering, pacing, Firebase, Firestore, timer, navigation and data behaviour.
+- No Firebase Console or Firestore rule changes are required.
+
+---
+
 # AGNT v1.24.3
 
 ## Safe-area and branding update
