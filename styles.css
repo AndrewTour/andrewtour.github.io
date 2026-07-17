@@ -2229,3 +2229,13 @@ html,body,input,button,select,textarea{
     font-size:.55rem;
   }
 }
+
+/* v1.27.9 — metric title size matched to Leaderboard Position only. */
+.dashboard .metric-copy>span{
+  font-size:.67rem;
+}
+@media(max-height:760px){
+  .dashboard .metric-copy>span{
+    font-size:.67rem;
+  }
+}
