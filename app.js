@@ -228,7 +228,7 @@ function todayGuidance(){
   const weakest=Object.entries(pcts).sort((a,b)=>a[1]-b[1])[0]?.[0]||'calls';
   const total=Object.values(remaining).reduce((a,b)=>a+b,0);
   const now=new Date(),planningStart=new Date(now);planningStart.setHours(18,30,0,0);
-  if(now>=planningStart)return 'Calendar Management|Plan Tomorrow';
+  if(now>=planningStart)return 'Calendar Management / Plan Tomorrow';
   if(total===0)return 'All daily targets complete. Keep building tomorrow’s pipeline.';
   return `Focus Now: ${metricLabel(weakest)} · ${remaining[weakest]} ${labels[weakest]} remaining`;
 }
@@ -346,11 +346,8 @@ function renderToday(){
   renderDayTrend();
   renderLeaderboardPosition();
   if($('#todayAtGlance')){
-    const guidance=todayGuidance();
-    if(guidance.includes('|')){
-      const [primary,secondary]=guidance.split('|');
-      $('#todayAtGlance').innerHTML=`<span class="focus-primary">${escapeHtml(primary)}</span><span class="focus-secondary">${escapeHtml(secondary)}</span>`;
-    }else $('#todayAtGlance').textContent=guidance;
+    const guidance=todayGuidance().replace(/^Focus Now:\s*/i,'');
+    $('#todayAtGlance').innerHTML=`<span class="focus-primary">Focus Now: ${escapeHtml(guidance)}</span>`;
   }
   if($('#momentumWhisper'))$('#momentumWhisper').textContent=momentumWhisper();
 }
