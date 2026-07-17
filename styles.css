@@ -2239,3 +2239,20 @@ html,body,input,button,select,textarea{
     font-size:.67rem;
   }
 }
+
+/* v1.28.0 — Today-screen vertical balance and integrated stack treatment only.
+   Text, metrics, controls, dimensions, data behaviour and navigation remain unchanged. */
+.app{
+  row-gap:12px;
+}
+.dashboard .score-week,
+.dashboard .metrics{
+  background:rgba(255,255,255,.94);
+  border-color:rgba(225,228,233,.72);
+  box-shadow:0 6px 18px rgba(25,31,46,.045),0 1px 3px rgba(25,31,46,.025);
+}
+@media(max-height:760px){
+  .app{
+    row-gap:8px;
+  }
+}
