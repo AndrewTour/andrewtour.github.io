@@ -2268,13 +2268,7 @@ html,body,input,button,select,textarea{
 }
 
 
-/* v1.28.3 — rollover wording and knocking control alignment only. */
-.dashboard #knockPercent.metric-percent.metric-ring{
-  width:47px;
-  height:47px;
-  min-width:47px;
-  font-size:.61rem;
-}
+/* v1.28.4 — knocking ring now uses the identical shared ring styling as Calls, Connects and Data. */
 .dashboard .knock-actions{
   grid-template-columns:47px 54px 54px;
 }
@@ -2287,12 +2281,6 @@ html,body,input,button,select,textarea{
   padding:0;
 }
 @media(max-height:760px){
-  .dashboard #knockPercent.metric-percent.metric-ring{
-    width:38px;
-    height:38px;
-    min-width:38px;
-    font-size:.53rem;
-  }
   .dashboard .knock-actions{
     grid-template-columns:38px 46px 46px;
   }
