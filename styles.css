@@ -1874,3 +1874,51 @@ html,body,input,button,select,textarea{
 @media(prefers-reduced-motion:reduce){
   .metric-percent.metric-ring{transition:none}
 }
+
+/* v1.27.1 — targeted post-refresh alignment refinements only. */
+.metric-copy > strong{
+  display:flex;
+  align-items:baseline;
+  gap:6px;
+  width:max-content;
+  letter-spacing:-.045em;
+}
+.metric-copy > strong > small{
+  margin-left:0;
+  letter-spacing:-.015em;
+  line-height:1;
+}
+.actions{
+  align-items:center;
+}
+.metric-percent.metric-ring{
+  width:47px;
+  height:47px;
+  min-width:47px;
+  --agnt-ring-thickness:6px;
+  align-self:center;
+  justify-self:center;
+  transform:translateY(1px);
+  font-size:.61rem;
+}
+.metric-percent.metric-ring::after{
+  height:7px;
+}
+@media(max-width:390px){
+  .metric-percent.metric-ring{
+    width:43px;
+    height:43px;
+    min-width:43px;
+    --agnt-ring-thickness:5px;
+    font-size:.58rem;
+  }
+}
+@media(max-height:760px){
+  .metric-percent.metric-ring{
+    width:38px;
+    height:38px;
+    min-width:38px;
+    --agnt-ring-thickness:4.5px;
+    font-size:.53rem;
+  }
+}

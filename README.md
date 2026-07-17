@@ -120,3 +120,11 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - Ring visuals cap at 100% while stored over-target values remain unchanged.
 - Added accessible ring labels for actual progress, expected pace and target.
 - No Firebase, Firestore rules, authentication, data model or sync changes required.
+
+
+## v1.27.1 — Post-refresh ring and counter refinement
+- Reduced dual-layer metric ring diameter and stroke by approximately 10–15%.
+- Vertically centred each ring with its neighbouring minus and plus controls.
+- Restored relaxed spacing between the current metric value, slash and target.
+- Preserved all dual-layer ring rendering, pacing calculations, completion states and application functionality.
+- No Firebase or Firestore changes required.
