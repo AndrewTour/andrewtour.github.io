@@ -175,3 +175,9 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - Restored the V8 actual/target counter structure and proportions.
 - Retained the v1.27 dual-layer actual/expected pace rings and all pacing logic.
 - No Firebase, Firestore, authentication, storage, sync or workflow changes.
+
+## v1.29.1
+- Matched the Knocking progress ring percentage typography and colour behaviour exactly to Calls, Connects and Data.
+- Equalised the three Knocking data-line margins and line heights with the other metric cards.
+- No Firebase, Firestore, authentication, sync, storage, timer or metric-logic changes.
+

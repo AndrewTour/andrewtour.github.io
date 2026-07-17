@@ -328,7 +328,7 @@ function renderToday(){
   const knockExpected=(selectedDate===todayKey()&&scheduled)?Math.min(100,Math.round(expectedKnockAt(kt,new Date())/Math.max(1,kt)*100)):0;
   const knockRing=$('#knockPercent');
   if(knockRing){
-    knockRing.innerHTML=`<span>${knockActual}%</span>`;
+    knockRing.textContent=`${knockActual}%`;
     knockRing.style.setProperty('--actual',knockActual);
     knockRing.style.setProperty('--pace',knockExpected);
     knockRing.classList.toggle('complete',knockActual>=100);

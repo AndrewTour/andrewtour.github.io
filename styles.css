@@ -2419,3 +2419,42 @@ button:not(:disabled):active,.file-btn:active{
     animation-iteration-count:1!important;
   }
 }
+
+/* v1.29.1 — exact knocking ring and metric-copy rhythm match.
+   Visual-only: no timer, target, pacing or data behaviour changes. */
+.dashboard .knock .metric-percent.metric-ring{
+  color:var(--blue);
+  font-size:.66rem;
+  font-weight:700;
+  letter-spacing:-.02em;
+}
+.dashboard .knock.complete .metric-percent.metric-ring,
+.dashboard .knock .metric-percent.metric-ring.complete{
+  color:var(--green);
+}
+.dashboard .metric.knock .metric-copy>small{
+  font-size:.73rem;
+  line-height:normal;
+  margin-top:4px;
+}
+.dashboard .metric.knock .metric-copy>em{
+  font-size:.73rem;
+  line-height:normal;
+  margin-top:4px;
+}
+.dashboard .metric.knock .metric-copy>strong{
+  line-height:1;
+  margin-top:6px;
+}
+@media(max-height:760px){
+  .dashboard .knock .metric-percent.metric-ring{font-size:.61rem}
+  .dashboard .metric.knock .metric-copy>small,
+  .dashboard .metric.knock .metric-copy>em{
+    font-size:.55rem;
+    line-height:normal;
+    margin-top:2px;
+  }
+  .dashboard .metric.knock .metric-copy>strong{
+    margin-top:4px;
+  }
+}
