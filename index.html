@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.27.2">
+<link rel="stylesheet" href="styles.css?v=1.27.3">
 <title>AGNT</title>
 </head>
 <body>
@@ -80,15 +80,15 @@
 
       <section class="metrics glass">
         <article class="metric" data-metric="calls">
-          <div class="metric-copy"><span>CALLS</span><small id="callsTargetText">50 remaining</small><em id="callsPace">Start at 9:00am</em><strong class="metric-counter"><i id="callsValue">0</i><span class="metric-counter-slash" aria-hidden="true">/</span><small id="callsTargetLabel">50</small></strong></div>
+          <div class="metric-copy"><span>CALLS</span><small id="callsTargetText">50 remaining</small><em id="callsPace">Start at 9:00am</em><strong><i id="callsValue">0</i><small id="callsTargetLabel">/50</small></strong></div>
           <div class="actions"><button data-action="minus" data-metric="calls">−</button><div id="callsPercent" class="metric-percent">0%</div><button data-action="plus" data-metric="calls">+</button></div>
         </article>
         <article class="metric" data-metric="connects">
-          <div class="metric-copy"><span>CONNECTS</span><small id="connectsTargetText">25 remaining</small><em id="connectsPace">Start at 9:00am</em><strong class="metric-counter"><i id="connectsValue">0</i><span class="metric-counter-slash" aria-hidden="true">/</span><small id="connectsTargetLabel">25</small></strong></div>
+          <div class="metric-copy"><span>CONNECTS</span><small id="connectsTargetText">25 remaining</small><em id="connectsPace">Start at 9:00am</em><strong><i id="connectsValue">0</i><small id="connectsTargetLabel">/25</small></strong></div>
           <div class="actions"><button data-action="minus" data-metric="connects">−</button><div id="connectsPercent" class="metric-percent">0%</div><button data-action="plus" data-metric="connects">+</button></div>
         </article>
         <article class="metric" data-metric="data">
-          <div class="metric-copy"><span>DATA</span><small id="dataTargetText">10 remaining</small><em id="dataPace">Start at 9:00am</em><strong class="metric-counter"><i id="dataValue">0</i><span class="metric-counter-slash" aria-hidden="true">/</span><small id="dataTargetLabel">10</small></strong></div>
+          <div class="metric-copy"><span>DATA</span><small id="dataTargetText">10 remaining</small><em id="dataPace">Start at 9:00am</em><strong><i id="dataValue">0</i><small id="dataTargetLabel">/10</small></strong></div>
           <div class="actions"><button data-action="minus" data-metric="data">−</button><div id="dataPercent" class="metric-percent">0%</div><button data-action="plus" data-metric="data">+</button></div>
         </article>
         <article class="metric knock">
@@ -256,6 +256,6 @@
   </div>
 </div>
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=1.27.2"></script>
+<script type="module" src="app.js?v=1.27.3"></script>
 </body>
 </html>

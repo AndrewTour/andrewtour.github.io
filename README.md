@@ -138,3 +138,11 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - Updated the manifest orientation request to `portrait-primary`.
 - Added a safe centred landscape browser fallback without forcing device rotation.
 - No Firebase, Firestore, authentication, data model or business-logic changes.
+
+
+## v1.27.3 — V8 Today Sizing + Dual Rings
+- Restored the AGNT V8 Today-page title, momentum stack and metric-row geometry.
+- Removed the artificial recommendation-height gap introduced in v1.27.2.
+- Restored the V8 actual/target counter structure and proportions.
+- Retained the v1.27 dual-layer actual/expected pace rings and all pacing logic.
+- No Firebase, Firestore, authentication, storage, sync or workflow changes.

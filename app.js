@@ -312,7 +312,7 @@ function renderToday(){
   for(const m of ['calls','connects','data']){
     const val=d[m],target=targets[m],p=pct(val,target),rem=Math.max(0,target-val);
     $(`#${m}Value`).textContent=val;
-    $(`#${m}TargetLabel`).textContent=target;
+    $(`#${m}TargetLabel`).textContent=`/${target}`;
     $(`#${m}TargetText`).textContent=past?'Final result':(!scheduled?'No target today':metricRemainingText(val,target));
     const ring=$(`#${m}Percent`);
     const pacePct=(selectedDate===todayKey()&&scheduled)?Math.min(100,Math.round(expectedAt(m,target,new Date())/Math.max(1,target)*100)):0;
