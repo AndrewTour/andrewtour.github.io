@@ -1,3 +1,19 @@
+# AGNT v1.27.5
+
+Incremental update from the confirmed working v1.27.4 release.
+
+## Changes
+- Calls, Connects and Data grey supporting text now matches the existing Knocking grey text size.
+- Calls, Connects and Data blue coaching text now matches the existing Knocking blue text size.
+- Before 2:00pm, Knocking retains its existing wording, including `Start at 2:00pm` when no early time is logged.
+- After 2:00pm, incomplete Knocking shows only `On track` or `Off track`, using the existing rollover-adjusted target and 2:00pm–5:00pm expected-pace calculation.
+- Completed Knocking retains the existing completed wording and state.
+
+## Unchanged
+Firebase, authentication, Firestore paths and rules, UID separation, local cache, sync, Calls/Connects/Data wording and logic, timer, rollover, alarm, rings, pace arcs, controls, layout, navigation, leaderboards, calendar, history, appointments, orientation, saved data and deployment workflow.
+
+---
+
 # AGNT v1.27.4
 
 ## Today-screen proportional polish

@@ -2178,3 +2178,20 @@ html,body,input,button,select,textarea{
     font-size:1.12rem;
   }
 }
+
+
+/* v1.27.5 — supporting-text size match only.
+   Calls, Connects and Data now use the existing Knocking supporting-text sizes.
+   No line-height, spacing, weight, colour, dimensions or alignment changes. */
+.dashboard .metric:not(.knock) .metric-copy>small{
+  font-size:.7rem;
+}
+.dashboard .metric:not(.knock) .metric-copy>em{
+  font-size:.73rem;
+}
+@media(max-height:760px){
+  .dashboard .metric:not(.knock) .metric-copy>small,
+  .dashboard .metric:not(.knock) .metric-copy>em{
+    font-size:.55rem;
+  }
+}

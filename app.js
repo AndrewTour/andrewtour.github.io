@@ -145,19 +145,8 @@ function knockPaceText(minutes,target){
   end.setHours(17,0,0,0);
   if(minutes>=target)return 'Daily goal achieved';
   if(now<start)return minutes>0?`${minutes} min ahead of target`:'Start at 2:00pm';
-  if(now>=end)return `${Math.max(0,target-minutes)} min remaining today`;
-  const progress=Math.max(0,Math.min(1,(now-start)/(end-start)));
-  const expected=Math.min(target,Math.round(target*progress));
-  const diff=minutes-expected;
-  const checkpoint=new Date(now);
-  if(now.getMinutes()<30)checkpoint.setMinutes(30,0,0);else checkpoint.setHours(now.getHours()+1,0,0,0);
-  if(checkpoint>end)checkpoint.setTime(end.getTime());
-  const checkpointProgress=Math.max(0,Math.min(1,(checkpoint-start)/(end-start)));
-  const checkpointExpected=Math.min(target,Math.round(target*checkpointProgress));
-  const action=Math.max(0,Math.min(target-minutes,checkpointExpected-minutes));
-  if(diff>0)return `${diff} min ahead of target`;
-  if(action>0)return `${action} min needed by ${shortTime(checkpoint)}`;
-  return 'On track';
+  const expected=expectedKnockAt(target,now);
+  return minutes>=expected?'On track':'Off track';
 }
 
 function expectedKnockAt(target,when=new Date()){
