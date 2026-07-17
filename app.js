@@ -114,15 +114,15 @@ function welcomeMessage(){
   return `${greeting}, ${name}`;
 }
 function metricRemainingText(value,target){
-  const Remaining=Math.max(0,target-value);
-  return Remaining===0?'Target complete':`${remaining} Remaining`;
+  const remaining=Math.max(0,target-value);
+  return remaining===0?'Target complete':`${remaining} remaining`;
 }
 function metricPaceText(value,target,metric){
   if(selectedDate!==todayKey())return value>=target?'Daily goal achieved':'Final result';
   const now=new Date(),start=workdayStart(now),end=workdayEnd(now);
   if(value>=target)return 'Daily goal achieved';
   if(now<start)return value>0?`${value} ahead of target`:'Ready to start';
-  if(now>=end)return `${Math.max(0,target-value)} Remaining today`;
+  if(now>=end)return `${Math.max(0,target-value)} remaining today`;
   const expected=expectedAt(metric,target,now),diff=value-expected,checkpoint=nextPaceCheckpoint(now);
   const checkpointExpected=expectedAt(metric,target,checkpoint);
   const action=Math.max(0,Math.min(target-value,checkpointExpected-value));
@@ -132,11 +132,11 @@ function metricPaceText(value,target,metric){
     const unit=action===1?{calls:'call',connects:'connect',data:'data record'}[metric]:labels[metric];
     return `${action} ${unit} needed by ${shortTime(checkpoint)}`;
   }
-  return 'On Track';
+  return 'On track';
 }
 function knockRemainingText(minutes,target){
-  const Remaining=Math.max(0,target-minutes);
-  return Remaining===0?'Target complete':`${remaining} min Remaining today`;
+  const remaining=Math.max(0,target-minutes);
+  return remaining===0?'Target complete':`${remaining} min remaining today`;
 }
 function knockPaceText(minutes,target){
   if(selectedDate!==todayKey())return minutes>=target?'Daily goal achieved':'Final result';
@@ -144,9 +144,9 @@ function knockPaceText(minutes,target){
   start.setHours(14,0,0,0);
   end.setHours(17,0,0,0);
   if(minutes>=target)return 'Daily goal achieved';
-  if(now<start)return minutes>0?`${minutes} min ahead of target`:'Start At 2:00pm';
+  if(now<start)return minutes>0?`${minutes} min ahead of target`:'Start at 2:00pm';
   const expected=expectedKnockAt(target,now);
-  return minutes>=expected?'On Track':'Off Track';
+  return minutes>=expected?'On track':'Off track';
 }
 
 function expectedKnockAt(target,when=new Date()){
@@ -178,7 +178,7 @@ function dayTrackState(k=selectedDate){
   const states=[];
   const capacityPerHour={calls:10,connects:5,data:2};
   for(const metric of ['calls','connects','data']){
-    const Remaining=Math.max(0,targets[metric]-d[metric]);
+    const remaining=Math.max(0,targets[metric]-d[metric]);
     const requiredMinutes=(remaining/capacityPerHour[metric])*60;
     states.push(feasibilityState(requiredMinutes,coreAvailable));
   }
@@ -223,7 +223,7 @@ function todayGuidance(){
   const weakest=Object.entries(pcts).sort((a,b)=>a[1]-b[1])[0]?.[0]||'calls';
   const total=Object.values(remaining).reduce((a,b)=>a+b,0);
   if(total===0)return 'All daily targets complete. Keep building tomorrow’s pipeline.';
-  return `Focus Now: ${metricLabel(weakest)} · ${remaining[weakest]} ${labels[weakest]} Remaining`;
+  return `Focus now: ${metricLabel(weakest)} · ${remaining[weakest]} ${labels[weakest]} remaining`;
 }
 function rollingKnockTarget(k){const date=parseKey(k),m=mondayOf(date);let prior=0,seen=0;for(const n of workDays){const x=new Date(m);x.setDate(m.getDate()+n-1);const key=dateKey(x);if(key===k)break;prior+=Math.floor(liveKnockSeconds(dayData(key))/60);seen++}return Math.ceil(Math.max(0,targets.weeklyKnock-prior)/Math.max(1,workDays.length-seen))}
 function completion(k){if(!isWorkDayKey(k))return 0;const d=dayData(k),kt=rollingKnockTarget(k);return Math.round((pct(d.calls,targets.calls)+pct(d.connects,targets.connects)+pct(d.data,targets.data)+pct(liveKnockSeconds(d)/60,kt))/4)}
@@ -257,7 +257,7 @@ function alarm(){haptic([180,100,180]);toast('Today’s knocking target reached'
 
 function formatHour(h){return `${h%12||12}:00 ${h>=12?'PM':'AM'}`}
 function renderCallPlan(){const now=new Date(),h=now.getHours();let current=CALL_PLAN.find(x=>x[0]===h);if(h<9)current=[8,'Prepare your priority list','Before 9:00 AM'];if(h>=17)current=[17,'Review follow-up and plan tomorrow','9:00 AM–5:00 PM call day complete'];$('#currentCall').textContent=current[1];$('#currentSlot').textContent=h>=9&&h<17?`${formatHour(h)}–${formatHour(h+1)} · 10 call target`:current[2];$('#callPlan').innerHTML=CALL_PLAN.map(([hour,title,note])=>`<div class="call-row ${hour===h?'active':''}"><b>${formatHour(hour)}</b><span><strong>${title}</strong><small>${note}</small></span><em>10</em></div>`).join('')}
-function callsPaceText(value){if(selectedDate!==todayKey())return `${Math.max(0,targets.calls-value)} Remaining`;const expected=expectedAt('calls',targets.calls,new Date()),diff=value-expected;return value>=targets.calls?'Target complete':diff===0?'On Track':diff>0?`${diff} ahead of target`:`${Math.abs(diff)} behind target`}
+function callsPaceText(value){if(selectedDate!==todayKey())return `${Math.max(0,targets.calls-value)} remaining`;const expected=expectedAt('calls',targets.calls,new Date()),diff=value-expected;return value>=targets.calls?'Target complete':diff===0?'On track':diff>0?`${diff} ahead of target`:`${Math.abs(diff)} behind target`}
 function activeViewId(){return document.querySelector('.view.active')?.id||'todayView'}
 function updateTopbar(id=activeViewId()){
   const isToday=id==='todayView';
