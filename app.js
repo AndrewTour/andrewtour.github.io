@@ -314,13 +314,30 @@ function renderToday(){
     $(`#${m}Value`).textContent=val;
     $(`#${m}TargetLabel`).textContent=`/${target}`;
     $(`#${m}TargetText`).textContent=past?'Final result':(!scheduled?'No target today':metricRemainingText(val,target));
-    $(`#${m}Percent`).textContent=`${p}%`;
+    const ring=$(`#${m}Percent`);
+    const pacePct=(selectedDate===todayKey()&&scheduled)?Math.min(100,Math.round(expectedAt(m,target,new Date())/Math.max(1,target)*100)):0;
+    ring.textContent=`${p}%`;
+    ring.classList.add('metric-ring');
+    ring.style.setProperty('--actual',p);
+    ring.style.setProperty('--pace',pacePct);
+    ring.setAttribute('role','img');
+    ring.setAttribute('aria-label',`${m.charAt(0).toUpperCase()+m.slice(1)}: ${p}% complete, expected pace ${pacePct}%, target ${target}`);
     $(`#${m}Pace`).textContent=past?'Day locked':(!scheduled?'Not scheduled':metricPaceText(val,target,m));
     document.querySelector(`[data-metric="${m}"]`).classList.toggle('complete',rem===0);
   }
   $('#knockValue').textContent=fmtTimer(secs);
   $('#knockTargetText').textContent=past?'Final result':(!scheduled?'No target today':knockRemainingText(Math.floor(secs/60),kt));
   $('#knockRemaining').textContent=past?'Day locked':(!scheduled?'Not scheduled':knockPaceText(Math.floor(secs/60),kt));
+  const knockMinutes=Math.floor(secs/60),knockActual=pct(knockMinutes,kt);
+  const knockExpected=(selectedDate===todayKey()&&scheduled)?Math.min(100,Math.round(expectedKnockAt(kt,new Date())/Math.max(1,kt)*100)):0;
+  const knockRing=$('#knockPercent');
+  if(knockRing){
+    knockRing.innerHTML=`<span>${knockActual}%</span>`;
+    knockRing.style.setProperty('--actual',knockActual);
+    knockRing.style.setProperty('--pace',knockExpected);
+    knockRing.classList.toggle('complete',knockActual>=100);
+    knockRing.setAttribute('aria-label',`Knocking: ${knockActual}% complete, expected pace ${knockExpected}%, target ${kt} minutes`);
+  }
   const timerButton=$('#timerButton');
   const timerRunning=!!d.timerStartedAt&&!locked;
   timerButton.innerHTML=timerRunning

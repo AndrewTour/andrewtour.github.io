@@ -109,3 +109,14 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - Removed duplicate floating timestamps from original and reminder cards.
 - Future reminder cards now repeat the blue booked-for date/time beneath the booked-on date.
 - Positioned the confirmation reminder to the right of the booked-for detail with responsive spacing.
+
+
+## v1.27.0 — UI refresh and dual-layer pacing rings
+- Refreshed native iPhone typography, card hierarchy, spacing and bottom navigation polish.
+- Upgraded Calls, Connects, Data and Knocking progress displays to dual-layer rings.
+- Solid arcs show actual completion; translucent arcs show expected time-based pace.
+- Reused the existing 9:00am–5:00pm pacing logic for Calls, Connects and Data.
+- Reused the existing 2:00pm–5:00pm pacing logic and rollover-adjusted target for Knocking.
+- Ring visuals cap at 100% while stored over-target values remain unchanged.
+- Added accessible ring labels for actual progress, expected pace and target.
+- No Firebase, Firestore rules, authentication, data model or sync changes required.
