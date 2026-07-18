@@ -147,3 +147,11 @@ Appointment follow-up information is stored as optional fields on existing appoi
 - Removed repeated metric labels from each agent row.
 - Improved Day and Week tab text clarity while preserving the existing UI.
 - No Firebase, Firestore, authentication, sync, scoring, appointment workflow or data-model changes.
+
+
+## v1.38.9 — Subheading Date Correction
+
+- Removed the compact grey date from Your Schedule, Appointments, Leaderboard and Settings.
+- Kept the contextual subtitle in the previous supporting-text position beneath each page title.
+- Restored the original title-to-supporting-text spacing and formatting.
+- No Firebase, authentication, Firestore, cache, sync, metric, appointment or leaderboard logic changes.

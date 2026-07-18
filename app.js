@@ -326,7 +326,7 @@ function updateTopbar(id=activeViewId()){
   const subtitleText=id==='scheduleView'?'Plan ahead. Win the day.':id==='appointmentsView'?'Stay prepared. Follow through.':id==='insightsView'?'Set the pace. Raise the standard.':id==='settingsView'?'Make AGNT work your way.':'';
   if(subtitle){subtitle.textContent=subtitleText;subtitle.classList.toggle('hidden',!subtitleText)}
   $('#dateLabel').textContent=fmtDate(selectedDate);
-  const hideCompactDate=id==='scheduleView'||id==='insightsView';
+  const hideCompactDate=id==='scheduleView'||id==='appointmentsView'||id==='insightsView'||id==='settingsView';
   $('#dateLabel').classList.toggle('hidden',hideCompactDate);
   dateLine?.classList.toggle('today-sync-only',hideCompactDate);
   const syncInTopActions=isToday||id==='scheduleView'||id==='appointmentsView'||id==='insightsView'||id==='settingsView';
