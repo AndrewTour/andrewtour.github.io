@@ -11,6 +11,8 @@ const DEFAULTS={calls:50,connects:25,data:10,weeklyKnock:240};
 let targets={...DEFAULTS}, days={}, selectedDate=dateKey(new Date()), appointmentDate=selectedDate, appointmentHistoryMode=null, agentName='', calendarPreference='outlook', leaderboardEntries=[], leaderboardWeekOffset=0, scorecardWeekOffset=0;
 let year=new Date().getFullYear(), monthCursor=new Date(), uid='local', currentUser=null, cloud=false, db=null, auth=null;
 let unsubDays=null, unsubProfile=null, unsubLeaderboard=null, timerTick=null, syncTimer=null, leaderboardPublishTimer=null;
+const daySaveChains=new Map();
+const appointmentSubmitLocks=new Set();
 
 function dateKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 function parseKey(k){const [y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d)}
@@ -21,7 +23,33 @@ function isWorkDayKey(k){return workDays.includes(parseKey(k).getDay())}
 function workDayName(n){return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][n]}
 function normaliseWorkDays(values){const order=[1,2,3,4,5,6,0],set=new Set((values||[]).map(Number).filter(n=>n>=0&&n<=6));return order.filter(n=>set.has(n))}
 function blankDay(){return{calls:0,connects:0,data:0,knockSeconds:0,timerStartedAt:null,appointments:[],events:[],review:{},clientUpdatedAt:0}}
-function dayData(k){return {...blankDay(),...(days[k]||{}),appointments:[...(days[k]?.appointments||[])],events:[...(days[k]?.events||[])]}}
+function validDateKey(value){return /^\d{4}-\d{2}-\d{2}$/.test(String(value||''))&&!Number.isNaN(parseKey(String(value)).getTime())}
+function normaliseAppointmentRecord(raw={},sourceDate=''){
+  const a=raw&&typeof raw==='object'?{...raw}:{};
+  const createdDate=validDateKey(a.createdDate)?a.createdDate:validDateKey(a.logDate)?a.logDate:sourceDate;
+  const scheduledDate=validDateKey(a.scheduledDate)?a.scheduledDate:validDateKey(a.date)?a.date:sourceDate;
+  const time=/^([01]\d|2[0-3]):[0-5]\d$/.test(String(a.time||''))?String(a.time):'12:00';
+  const scheduledAt=Number.isFinite(Number(a.scheduledAt))?Number(a.scheduledAt):new Date(`${scheduledDate}T${time}`).getTime();
+  const at=Number.isFinite(Number(a.at))?Number(a.at):Date.now();
+  const type=normaliseAppointmentType(a.type||(Array.isArray(a.types)?a.types[0]:''));
+  return{...a,id:String(a.id||uuid()),contactName:String(a.contactName||a.name||'').trim(),contactNumber:String(a.contactNumber||a.phone||'').trim(),address:String(a.address||'').trim(),date:scheduledDate,time,type,types:Array.isArray(a.types)&&a.types.length?a.types:[type],createdDate,logDate:createdDate,scheduledDate,scheduledAt:Number.isFinite(scheduledAt)?scheduledAt:0,at};
+}
+function normaliseAppointments(list,sourceDate=''){
+  const seen=new Set(),out=[];
+  for(const raw of Array.isArray(list)?list:[]){
+    const a=normaliseAppointmentRecord(raw,sourceDate);
+    const key=a.id||`${a.createdDate}|${a.scheduledDate}|${a.time}|${a.type}|${a.address}|${a.contactName}`;
+    if(seen.has(key))continue;
+    seen.add(key);out.push(a);
+  }
+  return out;
+}
+function normaliseDayRecord(raw={},sourceDate=''){
+  const value=raw&&typeof raw==='object'?raw:{};
+  return{...blankDay(),...value,calls:Math.max(0,Number(value.calls)||0),connects:Math.max(0,Number(value.connects)||0),data:Math.max(0,Number(value.data)||0),knockSeconds:Math.max(0,Number(value.knockSeconds)||0),timerStartedAt:Number.isFinite(Number(value.timerStartedAt))?Number(value.timerStartedAt):null,appointments:normaliseAppointments(value.appointments,sourceDate),events:Array.isArray(value.events)?value.events.filter(Boolean).slice(-500):[],review:value.review&&typeof value.review==='object'?value.review:{},clientUpdatedAt:Number(value.clientUpdatedAt)||0};
+}
+function normaliseDaysMap(raw){const out={};if(!raw||typeof raw!=='object')return out;for(const [k,v] of Object.entries(raw)){if(validDateKey(k))out[k]=normaliseDayRecord(v,k)}return out}
+function dayData(k){return normaliseDayRecord(days[k],k)}
 function liveKnockSeconds(d){return (d.knockSeconds||0)+(d.timerStartedAt?Math.max(0,Math.floor((Date.now()-d.timerStartedAt)/1000)):0)}
 function pct(n,t){return Math.min(100,Math.round((Number(n)||0)/Math.max(1,Number(t)||1)*100))}
 function haptic(v=10){navigator.vibrate?.(v)}
@@ -52,8 +80,9 @@ function setSync(state,label){
 
 function storagePrefix(userId=uid){return `da:${userId||'local'}:`}
 function resetState(){days={};targets={...DEFAULTS};workDays=[...DEFAULT_WORK_DAYS];agentName='';calendarPreference='outlook';leaderboardEntries=[];selectedDate=todayKey();appointmentDate=selectedDate}
-function loadLocal(userId=uid){resetState();const prefix=storagePrefix(userId);try{days=JSON.parse(localStorage.getItem(prefix+'days')||'{}');targets={...DEFAULTS,...JSON.parse(localStorage.getItem(prefix+'targets')||'{}')};agentName=localStorage.getItem(prefix+'agent-name')||'';const savedWorkDays=JSON.parse(localStorage.getItem(prefix+'work-days')||'null');if(Array.isArray(savedWorkDays)&&savedWorkDays.length)workDays=normaliseWorkDays(savedWorkDays);const savedCalendarPreference=localStorage.getItem(prefix+'calendar-preference');calendarPreference=savedCalendarPreference==='apple'?'apple':'outlook'}catch{resetState()}}
-function saveLocal(){const prefix=storagePrefix(uid);localStorage.setItem(prefix+'days',JSON.stringify(days));localStorage.setItem(prefix+'targets',JSON.stringify(targets));localStorage.setItem(prefix+'agent-name',agentName);localStorage.setItem(prefix+'work-days',JSON.stringify(workDays));localStorage.setItem(prefix+'calendar-preference',calendarPreference)}
+function safeJsonParse(value,fallback){try{return JSON.parse(value)}catch{return fallback}}
+function loadLocal(userId=uid){resetState();const prefix=storagePrefix(userId);try{days=normaliseDaysMap(safeJsonParse(localStorage.getItem(prefix+'days')||localStorage.getItem(prefix+'days-backup')||'{}',{}));targets={...DEFAULTS,...safeJsonParse(localStorage.getItem(prefix+'targets')||'{}',{})};agentName=localStorage.getItem(prefix+'agent-name')||'';const savedWorkDays=safeJsonParse(localStorage.getItem(prefix+'work-days')||'null',null);if(Array.isArray(savedWorkDays)&&savedWorkDays.length)workDays=normaliseWorkDays(savedWorkDays);const savedCalendarPreference=localStorage.getItem(prefix+'calendar-preference');calendarPreference=savedCalendarPreference==='apple'?'apple':'outlook'}catch(err){console.error('Local data recovery failed',err);resetState()}}
+function saveLocal(){const prefix=storagePrefix(uid);try{const serialised=JSON.stringify(normaliseDaysMap(days));const previous=localStorage.getItem(prefix+'days');if(previous)localStorage.setItem(prefix+'days-backup',previous);localStorage.setItem(prefix+'days',serialised);localStorage.setItem(prefix+'targets',JSON.stringify(targets));localStorage.setItem(prefix+'agent-name',agentName);localStorage.setItem(prefix+'work-days',JSON.stringify(workDays));localStorage.setItem(prefix+'calendar-preference',calendarPreference);return true}catch(err){console.error('Local save failed',err);return false}}
 function clearActiveSession(){unsubDays?.();unsubProfile?.();unsubLeaderboard?.();unsubDays=unsubProfile=unsubLeaderboard=null;clearInterval(timerTick);clearTimeout(syncTimer);clearTimeout(leaderboardPublishTimer);currentUser=null;uid='local';cloud=false;resetState()}
 function displayAgentName(){return (agentName||currentUser?.displayName||currentUser?.email?.split('@')[0]||'Agent').trim()}
 function leaderboardPayload(){
@@ -62,7 +91,22 @@ function leaderboardPayload(){
 }
 function scheduleLeaderboardPublish(){if(!cloud||!db||!uid)return;clearTimeout(leaderboardPublishTimer);leaderboardPublishTimer=setTimeout(publishLeaderboard,180)}
 async function publishLeaderboard(){if(!cloud||!db||!uid)return;try{await setDoc(doc(db,'leaderboard',uid),leaderboardPayload(),{merge:true});if($('#leaderboardStatus'))$('#leaderboardStatus').textContent='LIVE'}catch(err){console.error('Leaderboard publish failed',err);setSync('error','Sync error');if($('#leaderboardStatus'))$('#leaderboardStatus').textContent='SYNC ERROR'}}
-async function saveDay(k,{quiet=false}={}){const clean={...dayData(k),clientUpdatedAt:Date.now()};days[k]=clean;saveLocal();renderAll();if(!cloud)return;setSync('','Saving');try{await setDoc(doc(db,'users',uid,'days',k),{...clean,updatedAt:serverTimestamp()},{merge:true});if(k===todayKey())scheduleLeaderboardPublish();setSync('live','Live')}catch(err){console.error(err);setSync('error','Sync error');if(!quiet)toast('Saved on this device. Cloud sync failed.')}}
+async function persistDayToCloud(k,clean,{quiet=false}={}){
+  if(!cloud||!db||!uid)return;
+  setSync('','Saving');
+  try{await setDoc(doc(db,'users',uid,'days',k),{...clean,updatedAt:serverTimestamp()},{merge:true});if(k===todayKey())scheduleLeaderboardPublish();setSync('live','Live')}
+  catch(err){console.error('Day sync failed',err);setSync('error','Sync error');if(!quiet)toast('Saved on this device. Cloud sync failed.');throw err}
+}
+async function saveDay(k,{quiet=false}={}){
+  if(!validDateKey(k))return;
+  const clean={...dayData(k),clientUpdatedAt:Date.now()};days[k]=clean;
+  saveLocal();renderAll();
+  if(!cloud)return;
+  const previous=daySaveChains.get(k)||Promise.resolve();
+  const next=previous.catch(()=>{}).then(()=>persistDayToCloud(k,{...days[k]},{quiet}));
+  daySaveChains.set(k,next);
+  try{await next}finally{if(daySaveChains.get(k)===next)daySaveChains.delete(k)}
+}
 async function saveTargets(){saveLocal();if(!cloud)return;setSync('','Saving');try{await setDoc(doc(db,'users',uid),{targets,workDays:[...workDays],name:displayAgentName(),email:currentUser?.email||'',updatedAt:serverTimestamp()},{merge:true});scheduleLeaderboardPublish();setSync('live','Live')}catch(err){console.error(err);setSync('error','Sync error');toast('Targets saved locally. Cloud sync failed.')}}
 function addEvent(d,type,label,delta=0){d.events.push({id:uuid(),type,label,delta,at:Date.now()});d.events=d.events.slice(-500)}
 
@@ -772,16 +816,20 @@ function renderAppointments(){
 async function addAppointment({contactName,contactNumber,address,date,time,type}){
   const createdDate=todayKey();
   if(!canEditDate(createdDate))return lockedToast();
+  const signature=[createdDate,date,time,type,contactName.trim().toLowerCase(),address.trim().toLowerCase()].join('|');
+  if(appointmentSubmitLocks.has(signature))return null;
+  appointmentSubmitLocks.add(signature);
   const scheduledAt=new Date(`${date}T${time}`).getTime();
+  if(!validDateKey(date)||!Number.isFinite(scheduledAt)){appointmentSubmitLocks.delete(signature);toast('Appointment date or time is invalid');return null}
   const d=dayData(createdDate);
-  const appointment={id:uuid(),contactName,contactNumber,address,date,time,type,types:[type],createdDate,logDate:createdDate,scheduledDate:date,scheduledAt,at:Date.now()};
+  const recentDuplicate=d.appointments.find(a=>[appointmentCreatedDate(a,createdDate),appointmentScheduledDate(a,createdDate),a.time,appointmentType(a),String(a.contactName||'').trim().toLowerCase(),String(a.address||'').trim().toLowerCase()].join('|')===signature&&Date.now()-(Number(a.at)||0)<15000);
+  if(recentDuplicate){appointmentSubmitLocks.delete(signature);return recentDuplicate}
+  const appointment=normaliseAppointmentRecord({id:uuid(),contactName,contactNumber,address,date,time,type,types:[type],createdDate,logDate:createdDate,scheduledDate:date,scheduledAt,at:Date.now()},createdDate);
   d.appointments.push(appointment);
   addEvent(d,'appointment',`${type} · ${contactName} · ${address} · booked for ${date} ${time}`);
   days[createdDate]=d;
-  await saveDay(createdDate);
-  renderAppointments();
-  toast(date===createdDate?'Appointment logged':'Appointment logged and reminder created');
-  return appointment;
+  try{await saveDay(createdDate);renderAppointments();toast(date===createdDate?'Appointment logged':'Appointment logged and reminder created');return appointment}
+  finally{appointmentSubmitLocks.delete(signature)}
 }
 async function deleteAppointment(id,sourceDate=appointmentDate){
   const d=dayData(sourceDate),index=d.appointments.findIndex(a=>String(a.id)===String(id));
@@ -984,7 +1032,7 @@ function renderCalendar(){const labels=['M','T','W','T','F','S','S'];$('#calenda
 function renderSettings(){const name=displayAgentName();$('#agentName').value=name;$('#callsTarget').value=targets.calls;$('#connectsTarget').value=targets.connects;$('#dataTarget').value=targets.data;$('#weeklyKnockTarget').value=targets.weeklyKnock;$$('[name=workDay]').forEach(el=>el.checked=workDays.includes(Number(el.value)));$$('[name=calendarPreference]').forEach(el=>el.checked=el.value===calendarPreference);$('#accountEmail').textContent=currentUser?.email||'Device-only mode';$('#modeNote').textContent=cloud?'Live sync is active. Use the same login on every device.':'Data is stored only on this device.';const initials=name.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]?.toUpperCase()||'').join('')||'A';if($('#profileAvatar'))$('#profileAvatar').textContent=initials;if($('#profileSyncState'))$('#profileSyncState').textContent=cloud?'Live sync active':'Device-only profile';if($('#profileTodayScore'))$('#profileTodayScore').textContent=`${completion(todayKey())}%`;if($('#profileWeekScore'))$('#profileWeekScore').textContent=`${weekSummary().score}%`;if($('#profileWorkDays'))$('#profileWorkDays').textContent=workDays.length}
 function renderAll(){renderToday();renderTimeline();renderAppointments();renderInsights();renderSettings()}
 
-async function startCloud(user){unsubDays?.();unsubProfile?.();unsubLeaderboard?.();currentUser=user;uid=user.uid;cloud=true;loadLocal(uid);await finaliseExpiredTimers();setSync('','Connecting');clearTimeout(syncTimer);syncTimer=setTimeout(()=>{if($('#syncBadge').dataset.label==='Connecting')setSync(navigator.onLine?'':'offline',navigator.onLine?'Connected':'Offline')},3500);unsubDays=onSnapshot(collection(db,'users',uid,'days'),{includeMetadataChanges:true},snap=>{snap.docChanges().forEach(ch=>{if(ch.type==='removed')delete days[ch.doc.id];else{const incoming=ch.doc.data();days[ch.doc.id]={...blankDay(),...incoming,appointments:incoming.appointments||[],events:incoming.events||[]}}});saveLocal();renderAll();ensureTick();clearTimeout(syncTimer);setSync(snap.metadata.fromCache&&!navigator.onLine?'offline':'live',snap.metadata.hasPendingWrites?'Saving':'Live')},err=>{console.error(err);setSync('error','Sync error');toast('Firestore access failed. Check rules and login.');showAuthMessage(err.message)});unsubProfile=onSnapshot(doc(db,'users',uid),snap=>{if(snap.exists()){const profile=snap.data();if(profile.targets)targets={...DEFAULTS,...profile.targets};if(Array.isArray(profile.workDays)&&profile.workDays.length)workDays=normaliseWorkDays(profile.workDays);if(profile.name)agentName=profile.name;saveLocal();renderAll();scheduleLeaderboardPublish()}},err=>console.error(err));unsubLeaderboard=onSnapshot(collection(db,'leaderboard'),{includeMetadataChanges:true},snap=>{leaderboardEntries=snap.docs.map(d=>({uid:d.id,...d.data()}));renderLeaderboard()},err=>{console.error('Leaderboard read failed',err);$('#leaderboardStatus').textContent='SYNC ERROR'});setSync(navigator.onLine?'live':'offline',navigator.onLine?'Live':'Offline');showApp();scheduleLeaderboardPublish()}
+async function startCloud(user){unsubDays?.();unsubProfile?.();unsubLeaderboard?.();currentUser=user;uid=user.uid;cloud=true;loadLocal(uid);await finaliseExpiredTimers();setSync('','Connecting');clearTimeout(syncTimer);syncTimer=setTimeout(()=>{if($('#syncBadge').dataset.label==='Connecting')setSync(navigator.onLine?'':'offline',navigator.onLine?'Connected':'Offline')},3500);unsubDays=onSnapshot(collection(db,'users',uid,'days'),{includeMetadataChanges:true},snap=>{snap.docChanges().forEach(ch=>{if(ch.type==='removed'){delete days[ch.doc.id];return}const incoming=normaliseDayRecord(ch.doc.data(),ch.doc.id),local=dayData(ch.doc.id);days[ch.doc.id]=local.clientUpdatedAt>incoming.clientUpdatedAt&&snap.metadata.fromCache?local:incoming});saveLocal();renderAll();ensureTick();clearTimeout(syncTimer);setSync(snap.metadata.fromCache&&!navigator.onLine?'offline':'live',snap.metadata.hasPendingWrites?'Saving':'Live')},err=>{console.error(err);setSync('error','Sync error');toast('Firestore access failed. Check rules and login.');showAuthMessage(err.message)});unsubProfile=onSnapshot(doc(db,'users',uid),snap=>{if(snap.exists()){const profile=snap.data();if(profile.targets)targets={...DEFAULTS,...profile.targets};if(Array.isArray(profile.workDays)&&profile.workDays.length)workDays=normaliseWorkDays(profile.workDays);if(profile.name)agentName=profile.name;saveLocal();renderAll();scheduleLeaderboardPublish()}},err=>console.error(err));unsubLeaderboard=onSnapshot(collection(db,'leaderboard'),{includeMetadataChanges:true},snap=>{leaderboardEntries=snap.docs.map(d=>({uid:d.id,...d.data()}));renderLeaderboard()},err=>{console.error('Leaderboard read failed',err);$('#leaderboardStatus').textContent='SYNC ERROR'});setSync(navigator.onLine?'live':'offline',navigator.onLine?'Live':'Offline');showApp();scheduleLeaderboardPublish()}
 function showApp(){$('#authGate').classList.add('hidden');$('#app').classList.remove('hidden');$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()}
 let viewportFrame=0;
 function updateAppViewport(){
@@ -1077,7 +1125,9 @@ $('#syncBadge').onclick=e=>{e.stopPropagation();const p=$('#syncPopover'),openin
 $('#syncPopover').onclick=e=>e.stopPropagation();
 document.addEventListener('click',closeSyncPopover);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSyncPopover()});
-window.addEventListener('online',()=>{if(cloud){setSync('live','Live');scheduleLeaderboardPublish()}});window.addEventListener('offline',()=>setSync('offline','Offline'));
+window.addEventListener('online',()=>{if(cloud){setSync('','Connecting');scheduleLeaderboardPublish();for(const [k,day] of Object.entries(days))if(day?.clientUpdatedAt)saveDay(k,{quiet:true}).catch(()=>{})}});window.addEventListener('offline',()=>setSync('offline','Offline'));
+window.addEventListener('error',event=>console.error('Unhandled app error',event.error||event.message));
+window.addEventListener('unhandledrejection',event=>console.error('Unhandled promise rejection',event.reason));
 if('serviceWorker'in navigator)window.addEventListener('load',async()=>{const reg=await navigator.serviceWorker.register('./service-worker.js');reg.update()});
 setInterval(()=>{finaliseExpiredTimers().then(()=>{if(selectedDate<todayKey())renderAll()});updateAppViewport();if(cloud)scheduleLeaderboardPublish()},30000);
 init();

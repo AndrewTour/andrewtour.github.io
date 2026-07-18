@@ -73,3 +73,13 @@ Appointment follow-up information is stored as optional fields on existing appoi
 - Calendar state is retained when the appointment is added during submission; cancelled calendar prompts leave the card action available.
 - Same-day appointments now use the richer timeline format with contact details and a Call button while remaining positioned at their scheduled time.
 - No Firebase, Firestore, authentication, history, follow-up, outcome, deletion, metric, or sync changes are required.
+
+## v1.38.0 — Foundation Stability Update
+- Added defensive data normalisation for locally cached and Firestore day and appointment records.
+- Added appointment duplicate-submit protection without changing the booking workflow.
+- Serialised per-day cloud writes to reduce race conditions during rapid updates.
+- Added a local backup copy before replacing cached day data and safe recovery from malformed cache values.
+- Hardened Firestore snapshot handling and online reconnection writes.
+- Restricted service-worker runtime caching to same-origin app assets and improved navigation fallback behaviour.
+- Added non-visual global error diagnostics in the browser console.
+- No UI, layout, styling, labels, navigation, metric logic, appointment workflow, Firebase paths or Firestore rules changes.
