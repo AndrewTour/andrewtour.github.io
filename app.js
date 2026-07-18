@@ -545,6 +545,10 @@ function coachingEngine(viewDate=selectedDate,items=timelineItemsForDate(viewDat
 
   return{title:'You’re ahead',meta:state.knockRemaining?`Core targets complete · Door knocking begins at 2:00pm`:'All targets complete'};
 }
+function coachSentenceCase(value){
+  const text=String(value||'').trim();
+  return text?text.charAt(0).toUpperCase()+text.slice(1).toLowerCase():'';
+}
 function timelinePriority(viewDate=selectedDate){
   const items=timelineItemsForDate(viewDate),coach=coachingEngine(viewDate,items);
   return{...coach,items};
@@ -552,14 +556,14 @@ function timelinePriority(viewDate=selectedDate){
 function renderNowCard(){
   const priority=timelinePriority(selectedDate);
   if($('#nowCardTitle'))$('#nowCardTitle').textContent=priority.title;
-  if($('#nowCardMeta'))$('#nowCardMeta').textContent=priority.meta;
+  if($('#nowCardMeta'))$('#nowCardMeta').textContent=coachSentenceCase(priority.meta);
 }
 function renderTimeline(){
   if(!$('#dailyTimeline'))return;
   const priority=timelinePriority(selectedDate),items=priority.items;
   $('#timelineDateLabel').textContent=fmtDate(selectedDate);
   $('#timelineCurrentTitle').textContent=priority.title;
-  $('#timelineCurrentMeta').textContent=priority.meta;
+  $('#timelineCurrentMeta').textContent=coachSentenceCase(priority.meta);
   $('#timelineSummary').textContent=`${items.filter(i=>i.kind==='appointment').length} appointment${items.filter(i=>i.kind==='appointment').length===1?'':'s'} · ${completion(selectedDate)}% complete`;
   $('#dailyTimeline').innerHTML=items.length?items.map((item,index)=>{
     const status=timelineStatus(item,index,items,selectedDate);
@@ -775,7 +779,7 @@ function renderScorecard(){
   const base=scorecardWeekDate(),w=weekSummaryFor(base),m=w.metricPcts||{},entries=scorecardAppointments(base);
   const metrics=Object.entries(m),strongest=[...metrics].sort((a,b)=>b[1]-a[1])[0]||['calls',0],weakest=[...metrics].sort((a,b)=>a[1]-b[1])[0]||['calls',0];
   $('#scorecardWeekLabel').textContent=scorecardWeekOffset===0?`This week · ${formatWeekRange(base)}`:`Week ${formatWeekRange(base)}`;
-  $('#scorecardScore').textContent=`${w.score}%`;$('#scorecardGrade').textContent=scorecardGrade(w.score);
+  $('#scorecardScore').textContent=`${w.score}%`;$('#scorecardGrade').textContent=`Weekly Grade · ${scorecardGrade(w.score)}`;
   $('#scorecardStatus').textContent=w.score>=95?'A strong, balanced week.':w.score>=90?'On track for an A-grade week.':`${metricLabel(weakest[0])} is holding the week back.`;
   $('#scorecardCalls').textContent=`${w.calls} / ${w.targets.calls}`;$('#scorecardCallsPct').textContent=`${m.calls||0}%`;
   $('#scorecardConnects').textContent=`${w.connects} / ${w.targets.connects}`;$('#scorecardConnectsPct').textContent=`${m.connects||0}%`;

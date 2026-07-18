@@ -1,4 +1,4 @@
-# AGNT v1.34.1 — Weekly Scorecard
+# AGNT v1.34.2 — Weekly Scorecard
 
 Incremental update built from AGNT v1.33.0.
 
@@ -20,3 +20,11 @@ No Firebase or Firestore changes are required.
 - Matched Knocking supporting-text spacing to the other daily metrics.
 - Matched the Knocking progress-ring placement, dimensions, typography and styling to the other progress rings.
 - No Firebase, data, sync, appointment, calendar or metric behaviour changes.
+
+
+## v1.34.2 refinement
+- Clarified the scorecard grade label as “Weekly Grade · [grade]”.
+- Moved the Knocking progress ring to the left of the Play button.
+- Kept the Play and Restart buttons together at their existing size.
+- Changed Smart Coach supporting messaging to sentence case while preserving the Smart Coach heading.
+- No Firebase, Firestore, authentication, sync, metric, appointment, calendar or coaching logic changes.

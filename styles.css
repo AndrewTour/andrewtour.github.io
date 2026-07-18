@@ -2597,3 +2597,21 @@ button:not(:disabled):active,.file-btn:active{
     font-size:.53rem;
   }
 }
+
+
+/* v1.34.2 — requested scorecard label, coach sentence case and Knocking control order. */
+#nowCardMeta,
+#timelineCurrentMeta{
+  text-transform:none!important;
+}
+.scorecard-score #scorecardGrade{
+  font-size:1rem;
+  line-height:1.2;
+}
+.dashboard .knock-actions{
+  grid-template-columns:47px 54px 54px;
+  gap:7px;
+}
+@media(max-height:760px){
+  .dashboard .knock-actions{grid-template-columns:38px 46px 46px;gap:6px}
+}
