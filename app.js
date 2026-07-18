@@ -322,6 +322,9 @@ function updateTopbar(id=activeViewId()){
   const syncBadge=$('#syncBadge');
   const syncPopover=$('#syncPopover');
   $('#viewTitle').textContent=isToday?welcomeMessage():(id==='scheduleView'?'Your Schedule':label);
+  const subtitle=$('#viewSubtitle');
+  const subtitleText=id==='scheduleView'?'Plan ahead. Win the day.':id==='insightsView'?'Set the pace. Raise the standard.':'';
+  if(subtitle){subtitle.textContent=subtitleText;subtitle.classList.toggle('hidden',!subtitleText)}
   $('#dateLabel').textContent=fmtDate(selectedDate);
   const hideCompactDate=id==='scheduleView'||id==='insightsView';
   $('#dateLabel').classList.toggle('hidden',hideCompactDate);

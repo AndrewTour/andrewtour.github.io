@@ -133,3 +133,9 @@ Appointment follow-up information is stored as optional fields on existing appoi
 - Reduced and repositioned the universal live sync dot as requested.
 - Leaderboard metric rings now show raw metric totals while the ring conveys progress.
 - Condensed leaderboard row spacing to keep approximately four agents visible on a typical iPhone screen.
+
+
+## v1.38.7 — Contextual Compact Leaderboard
+- Added contextual grey subtitles under Your Schedule and Leaderboard.
+- Further condensed leaderboard row spacing to prioritise four complete agent data sets in the visible leaderboard window.
+- No Firebase, authentication, storage, scoring or workflow changes.

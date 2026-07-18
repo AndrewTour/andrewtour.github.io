@@ -2825,4 +2825,82 @@ button:not(:disabled):active,.file-btn:active{
   .leaderboard-metric-ring>i{width:42px;height:42px}
   .leaderboard-metric-ring small{font-size:.44rem}
 }
-\n\n/* v1.38.6 — compact live-status placement and four-agent leaderboard density. */\n.sync-badge{width:9px;height:9px;min-width:9px;box-shadow:0 0 0 2px rgba(215,154,32,.12)}\n.sync-badge.live{box-shadow:0 0 0 2px rgba(24,170,117,.13)}\n.sync-badge.saving{box-shadow:0 0 0 2px rgba(11,99,243,.13)}\n.sync-badge.connecting{box-shadow:0 0 0 2px rgba(215,154,32,.13)}\n.sync-badge.offline{box-shadow:0 0 0 2px rgba(154,161,173,.14)}\n.sync-badge.error{box-shadow:0 0 0 2px rgba(216,60,84,.13)}\n#scheduleView~*{}\n.date-line.today-sync-only{min-height:0}\n.leaderboard-unified-card{padding:13px 14px}\n.leaderboard-mode-tabs{margin-bottom:10px}\n.leaderboard-unified-head{margin-bottom:8px}\n.leaderboard-row-expanded{padding:8px 10px 9px;min-height:0}\n.leaderboard-row-summary{grid-template-columns:27px minmax(0,1fr) auto;gap:8px}\n.leaderboard-row-summary .rank{width:27px;height:27px;font-size:.62rem}\n.leaderboard-row-summary .agent strong{font-size:.76rem}\n.leaderboard-row-summary .agent small{font-size:.5rem;margin-top:1px}\n.leaderboard-row-summary>em{font-size:.88rem}\n.leaderboard-row-summary>em small{font-size:.4rem;margin-top:2px}\n.leaderboard-ring-metrics{gap:7px;margin-top:7px;padding-left:34px}\n.leaderboard-metric-ring{gap:3px}\n.leaderboard-metric-ring>i{width:38px;height:38px}\n.leaderboard-metric-ring>i::after{inset:4px}\n.leaderboard-metric-ring strong{font-size:.62rem}\n.leaderboard-metric-ring small{font-size:.43rem}\n.leaderboard-unified-card .leaderboard-note{padding-top:7px;margin-top:5px;font-size:.58rem;line-height:1.3}\n@media(max-width:390px){\n  .leaderboard-unified-card{padding:12px}\n  .leaderboard-row-expanded{padding:7px 7px 8px}\n  .leaderboard-ring-metrics{gap:4px;padding-left:31px;margin-top:6px}\n  .leaderboard-metric-ring>i{width:36px;height:36px}\n  .leaderboard-metric-ring small{font-size:.4rem}\n}\n
+
+
+/* v1.38.6 — compact live-status placement and four-agent leaderboard density. */
+.sync-badge{width:9px;height:9px;min-width:9px;box-shadow:0 0 0 2px rgba(215,154,32,.12)}
+.sync-badge.live{box-shadow:0 0 0 2px rgba(24,170,117,.13)}
+.sync-badge.saving{box-shadow:0 0 0 2px rgba(11,99,243,.13)}
+.sync-badge.connecting{box-shadow:0 0 0 2px rgba(215,154,32,.13)}
+.sync-badge.offline{box-shadow:0 0 0 2px rgba(154,161,173,.14)}
+.sync-badge.error{box-shadow:0 0 0 2px rgba(216,60,84,.13)}
+#scheduleView~*{}
+.date-line.today-sync-only{min-height:0}
+.leaderboard-unified-card{padding:13px 14px}
+.leaderboard-mode-tabs{margin-bottom:10px}
+.leaderboard-unified-head{margin-bottom:8px}
+.leaderboard-row-expanded{padding:8px 10px 9px;min-height:0}
+.leaderboard-row-summary{grid-template-columns:27px minmax(0,1fr) auto;gap:8px}
+.leaderboard-row-summary .rank{width:27px;height:27px;font-size:.62rem}
+.leaderboard-row-summary .agent strong{font-size:.76rem}
+.leaderboard-row-summary .agent small{font-size:.5rem;margin-top:1px}
+.leaderboard-row-summary>em{font-size:.88rem}
+.leaderboard-row-summary>em small{font-size:.4rem;margin-top:2px}
+.leaderboard-ring-metrics{gap:7px;margin-top:7px;padding-left:34px}
+.leaderboard-metric-ring{gap:3px}
+.leaderboard-metric-ring>i{width:38px;height:38px}
+.leaderboard-metric-ring>i::after{inset:4px}
+.leaderboard-metric-ring strong{font-size:.62rem}
+.leaderboard-metric-ring small{font-size:.43rem}
+.leaderboard-unified-card .leaderboard-note{padding-top:7px;margin-top:5px;font-size:.58rem;line-height:1.3}
+@media(max-width:390px){
+  .leaderboard-unified-card{padding:12px}
+  .leaderboard-row-expanded{padding:7px 7px 8px}
+  .leaderboard-ring-metrics{gap:4px;padding-left:31px;margin-top:6px}
+  .leaderboard-metric-ring>i{width:36px;height:36px}
+  .leaderboard-metric-ring small{font-size:.4rem}
+}
+
+
+/* v1.38.7 — contextual page subtitles and four-agent leaderboard viewport. */
+.view-subtitle{
+  margin-top:2px;
+  color:#929aa8;
+  font-size:.82rem;
+  line-height:1.15;
+  font-weight:500;
+  letter-spacing:0;
+}
+.view-subtitle.hidden{display:none!important}
+
+/* Preserve the existing visual language while prioritising four complete rows. */
+.leaderboard-unified-card{padding:10px 12px 9px}
+.leaderboard-mode-tabs{margin-bottom:7px;padding:3px}
+.leaderboard-mode-tabs button{min-height:32px}
+.leaderboard-unified-head{margin-bottom:5px}
+.leaderboard-unified-head h2{margin-top:2px}
+.leaderboard-period-controls button{height:29px;min-width:29px;padding:0 7px}
+.leaderboard-live{padding:6px 9px}
+.leaderboard-row-expanded{padding:5px 7px 6px}
+.leaderboard-row-summary{grid-template-columns:24px minmax(0,1fr) auto;gap:7px}
+.leaderboard-row-summary .rank{width:24px;height:24px;font-size:.56rem}
+.leaderboard-row-summary .agent strong{font-size:.72rem}
+.leaderboard-row-summary .agent small{font-size:.46rem;margin-top:0}
+.leaderboard-row-summary>em{font-size:.82rem}
+.leaderboard-row-summary>em small{font-size:.36rem;margin-top:1px}
+.leaderboard-ring-metrics{gap:5px;margin-top:4px;padding-left:29px}
+.leaderboard-metric-ring{gap:1px}
+.leaderboard-metric-ring>i{width:31px;height:31px}
+.leaderboard-metric-ring>i::after{inset:3px}
+.leaderboard-metric-ring strong{font-size:.55rem}
+.leaderboard-metric-ring small{font-size:.38rem;line-height:1}
+.leaderboard-unified-card .leaderboard-note{padding-top:4px;margin-top:3px;font-size:.52rem;line-height:1.2}
+
+@media(max-width:390px){
+  .leaderboard-unified-card{padding:9px 10px 8px}
+  .leaderboard-mode-tabs{margin-bottom:6px}
+  .leaderboard-row-expanded{padding:4px 5px 5px}
+  .leaderboard-ring-metrics{gap:3px;padding-left:27px;margin-top:3px}
+  .leaderboard-metric-ring>i{width:29px;height:29px}
+  .leaderboard-metric-ring small{font-size:.36rem}
+}
