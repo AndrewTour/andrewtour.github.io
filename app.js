@@ -321,7 +321,7 @@ function updateTopbar(id=activeViewId()){
   const todaySlot=$('#todaySyncSlot');
   const syncBadge=$('#syncBadge');
   const syncPopover=$('#syncPopover');
-  $('#viewTitle').textContent=isToday?welcomeMessage():label;
+  $('#viewTitle').textContent=isToday?welcomeMessage():(id==='scheduleView'?'Your Schedule':label);
   $('#dateLabel').textContent=fmtDate(selectedDate);
   $('#dateLabel').classList.remove('hidden');
   dateLine?.classList.remove('today-sync-only');
@@ -918,18 +918,22 @@ function weeklyLeaderboardRows(){
   return leaderboardEntries.map(entry=>{const w=entry.weekHistory?.[wk];return w?{uid:entry.uid,name:entry.name,email:entry.email,...w}:null}).filter(Boolean).sort(sortLeaderboardRows);
 }
 function metricLabel(key){return({calls:'Calls',connects:'Connects',data:'Data',knocking:'Knocking'})[key]||'Calls'}
-function metricCell(value,target,suffix=''){
-  if(value==null)return `<span class="leaderboard-metric-cell unavailable"><strong>—</strong><small>Not saved</small></span>`;
+function metricRing(value,target,label){
+  if(value==null)return `<span class="leaderboard-metric-ring unavailable" style="--metric-score:0"><i><strong>—</strong></i><small>${label}</small></span>`;
   const safeTarget=Number(target)||0,p=safeTarget?Math.max(0,Math.min(100,Math.round((Number(value)||0)/safeTarget*100))):0;
-  return `<span class="leaderboard-metric-cell"><strong>${value}${suffix}</strong><small>${safeTarget?`/${safeTarget}${suffix}`:''}</small><i><b style="width:${p}%"></b></i></span>`;
+  return `<span class="leaderboard-metric-ring" style="--metric-score:${p}" role="img" aria-label="${label}: ${p}% complete"><i><strong>${p}%</strong></i><small>${label}</small></span>`;
 }
 function leaderboardRowHtml(r,i,weekly=false){
   const t=r.targets||{},score=Math.max(0,Math.min(100,r.score||0));
   return `<article class="leaderboard-row leaderboard-row-expanded ${r.uid===uid?'me':''}">
-    <b class="rank">${i+1}</b>
-    <div class="agent"><strong>${escapeHtml(r.name||r.email?.split('@')[0]||'Agent')}</strong>${r.uid===uid?'<small>You</small>':''}<i class="leaderboard-mini-progress"><span style="width:${score}%"></span></i></div>
-    ${metricCell(r.calls,t.calls)}${metricCell(r.connects,t.connects)}${metricCell(r.data,t.data)}${metricCell(r.knockMinutes,t.knock,'m')}
-    <em>${r.score||0}%<small>${weekly?'Week':'Day'}</small></em>
+    <div class="leaderboard-row-summary">
+      <b class="rank">${i+1}</b>
+      <div class="agent"><strong>${escapeHtml(r.name||r.email?.split('@')[0]||'Agent')}</strong>${r.uid===uid?'<small>You</small>':''}</div>
+      <em>${score}%<small>${weekly?'Week':'Day'}</small></em>
+    </div>
+    <div class="leaderboard-ring-metrics">
+      ${metricRing(r.calls,t.calls,'Calls')}${metricRing(r.connects,t.connects,'Connects')}${metricRing(r.data,t.data,'Data')}${metricRing(r.knockMinutes,t.knock,'Knocks')}
+    </div>
   </article>`;
 }
 function renderUnifiedLeaderboard(){

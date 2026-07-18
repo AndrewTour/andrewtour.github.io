@@ -2779,3 +2779,49 @@ button:not(:disabled):active,.file-btn:active{
   .leaderboard-mode-tabs{margin-bottom:10px}.leaderboard-row-expanded{min-height:56px;padding-top:9px;padding-bottom:9px}
   .leaderboard-unified-card .leaderboard-note{font-size:.6rem}
 }
+
+/* v1.38.5 — glanceable leaderboard rings and compact page headings */
+.leaderboard-unified-card{overflow:hidden}
+.leaderboard-unified-list{overflow-x:hidden}
+.leaderboard-row-expanded{
+  display:block;
+  min-width:0;
+  padding:13px 12px 14px;
+}
+.leaderboard-row-summary{
+  display:grid;
+  grid-template-columns:30px minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+}
+.leaderboard-row-summary .rank{width:30px;height:30px}
+.leaderboard-row-summary .agent{min-width:0;display:flex;flex-direction:column;justify-content:center}
+.leaderboard-row-summary .agent strong{font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.leaderboard-row-summary .agent small{font-size:.55rem;margin-top:2px}
+.leaderboard-row-summary>em{display:flex;flex-direction:column;align-items:flex-end;color:#0b63f3;font-size:1rem;font-weight:900;font-style:normal;line-height:1}
+.leaderboard-row-summary>em small{margin-top:4px;color:#9aa1ad;font-size:.45rem;font-weight:750;text-transform:uppercase;letter-spacing:.08em}
+.leaderboard-ring-metrics{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:8px;
+  margin-top:12px;
+  padding-left:40px;
+}
+.leaderboard-metric-ring{display:flex;min-width:0;flex-direction:column;align-items:center;gap:5px}
+.leaderboard-metric-ring>i{
+  width:46px;height:46px;border-radius:50%;display:grid;place-items:center;position:relative;font-style:normal;
+  background:conic-gradient(#0b63f3 calc(var(--metric-score)*1%),#edf0f4 0);
+}
+.leaderboard-metric-ring>i::after{content:"";position:absolute;inset:5px;border-radius:50%;background:#fff}
+.leaderboard-metric-ring strong{position:relative;z-index:1;font-size:.62rem;line-height:1;color:#111318;font-weight:900}
+.leaderboard-metric-ring small{font-size:.48rem;color:#8f97a5;font-weight:800;white-space:nowrap}
+.leaderboard-metric-ring.unavailable>i{background:#edf0f4}
+.leaderboard-metric-ring.unavailable strong{color:#a0a7b2}
+#appointmentsView>.view-head{margin-bottom:8px}
+#appointmentsView>.view-head h2{margin-top:0}
+@media(max-width:390px){
+  .leaderboard-row-expanded{padding-left:9px;padding-right:9px}
+  .leaderboard-ring-metrics{gap:5px;padding-left:36px}
+  .leaderboard-metric-ring>i{width:42px;height:42px}
+  .leaderboard-metric-ring small{font-size:.44rem}
+}

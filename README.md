@@ -119,3 +119,10 @@ Appointment follow-up information is stored as optional fields on existing appoi
 - Refined leaderboard rows with clearer metric progress while retaining the existing AGNT design language.
 - Extended the leaderboard stack to use the available space above the bottom navigation.
 - No Firebase rules, authentication, UID separation or unrelated app functionality changed.
+
+## v1.38.5 — Glanceable Leaderboard
+- Replaced wide leaderboard metric columns with compact percentage progress rings.
+- Removed horizontal leaderboard scrolling; team growth remains vertically scrollable.
+- Removed the secondary Appointments content label while retaining the large selected date.
+- Renamed the Today page heading to “Your Schedule” while preserving the Today bottom navigation label.
+- No Firebase, data model, authentication, scoring or workflow changes.
