@@ -34,3 +34,12 @@ Appointment follow-up information is stored as optional fields on existing appoi
 - Added separate Past Appointments and Upcoming Appointments history tabs, with Past first.
 - Preserved the selected-day appointment log at the bottom of the Appointments page.
 - Kept appointment creation, storage, follow-up and outcome workflows unchanged.
+
+
+## v1.37.3
+
+- Appointment Log now shows only appointments booked on the selected day, using the original booking timestamp where available.
+- Past and Upcoming screens now classify every appointment from its scheduled timestamp compared with the current time.
+- Future appointments booked on earlier days are retained and displayed in Upcoming Appointments.
+- Follow-ups scheduled for the selected date appear as AM-priority items in the Today timeline with contact details and a Call button.
+- Existing appointment history, Firebase paths, follow-up UI, outcome UI and daily appointment storage remain unchanged.

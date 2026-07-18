@@ -378,7 +378,11 @@ function renderWeekDays(){if(!$('#weekDays'))return;$('#weekDays').innerHTML=wee
 function normaliseAppointmentType(value){const raw=String(value||'').trim().toLowerCase();if(raw==='bap'||raw==='buyer appointment')return'BAP';if(raw==='map'||raw==='appraisal'||raw==='market appraisal')return'MAP';if(raw==='lap'||raw==='listing appointment')return'LAP';if(raw==='pu'||raw==='price update')return'PU';return String(value||'').trim().toUpperCase()}
 function appointmentType(a){return normaliseAppointmentType(a.type||(Array.isArray(a.types)?a.types[0]:''))||'—'}
 function appointmentScheduledDate(a,sourceDate=''){return a.scheduledDate||a.date||sourceDate}
-function appointmentCreatedDate(a,sourceDate=''){return a.createdDate||a.logDate||sourceDate}
+function appointmentCreatedDate(a,sourceDate=''){
+  const raw=Number(a.at||a.createdAt||0);
+  if(raw){const d=new Date(raw);if(!Number.isNaN(d.getTime()))return dateKey(d);}
+  return a.createdDate||a.logDate||sourceDate;
+}
 function appointmentTimestamp(a,sourceDate=''){if(Number.isFinite(Number(a.scheduledAt)))return Number(a.scheduledAt);const scheduledDate=appointmentScheduledDate(a,sourceDate);if(scheduledDate&&a.time){const t=new Date(`${scheduledDate}T${a.time}`);if(!Number.isNaN(t.getTime()))return t.getTime()}return Number(a.at)||0}
 function appointmentTimeLabel(a,sourceDate=''){const ts=appointmentTimestamp(a,sourceDate);if(!ts)return a.time||'Time not set';return new Date(ts).toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true}).replace(/\s/g,'').toUpperCase()}
 function shortAppointmentDate(k){return k?parseKey(k).toLocaleDateString('en-AU',{day:'numeric',month:'long'}):'Date not set'}
@@ -457,13 +461,26 @@ function timelineTimeLabel(minutes){
   const total=((minutes%1440)+1440)%1440,h=Math.floor(total/60),m=total%60;
   return new Date(2000,0,1,h,m).toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'});
 }
+function scheduledFollowUpsForDate(viewDate){
+  return allAppointmentEntries().filter(({appointment:a,sourceDate})=>a.followUpDate===viewDate&&appointmentLifecycle(a,sourceDate)==='follow-up');
+}
 function timelineItemsForDate(viewDate){
   const items=[
-    {id:'prospecting',minutes:8*60,title:'Prospecting',meta:'Calls, connects and data',kind:'focus',duration:6*60},
+    {id:'prospecting',minutes:9*60,title:'Prospecting',meta:'Calls, connects and data',kind:'focus',duration:5*60},
     {id:'knocking',minutes:14*60,title:'Door Knock Focus',meta:`${rollingKnockTarget(viewDate)} minute target`,kind:'knock',duration:120},
     {id:'progress',minutes:16*60,title:'Daily Progress Check',meta:'Review remaining targets',kind:'check',duration:30},
     {id:'wrap',minutes:18*60,title:'Wrap Up',meta:'Review today and prepare tomorrow',kind:'wrap',duration:60}
   ];
+  scheduledFollowUpsForDate(viewDate).forEach(({appointment:a,sourceDate},index)=>{
+    const rawPhone=String(a.contactNumber||a.phone||'').trim(),dial=rawPhone.replace(/[^+\d]/g,'');
+    items.push({
+      id:`followup-${calendarExportId(a,sourceDate)}`,
+      minutes:8*60+(index*5),
+      title:`Follow-Up · ${appointmentType(a)} · ${a.address||'Address not recorded'}`,
+      meta:`${a.contactName||a.name||'Contact not recorded'}${rawPhone?` · ${rawPhone}`:''}`,
+      kind:'followup',duration:30,dial
+    });
+  });
   appointmentEntriesForDate(viewDate).forEach(({appointment:a,sourceDate})=>{
     const scheduled=appointmentScheduledDate(a,sourceDate);
     if(scheduled!==viewDate)return;
@@ -475,7 +492,8 @@ function timelineItemsForDate(viewDate){
       kind:'appointment',duration:60
     });
   });
-  return items.sort((a,b)=>a.minutes-b.minutes||a.title.localeCompare(b.title));
+  const order={followup:0,appointment:1,focus:2,knock:3,check:4,wrap:5};
+  return items.sort((a,b)=>a.minutes-b.minutes||(order[a.kind]??9)-(order[b.kind]??9)||a.title.localeCompare(b.title));
 }
 function timelineStatus(item,index,items,viewDate){
   if(viewDate<todayKey())return'complete';
@@ -504,10 +522,12 @@ function coachingEngine(viewDate=selectedDate,items=timelineItemsForDate(viewDat
   const currentAppointment=items.find((item,index)=>item.kind==='appointment'&&timelineStatus(item,index,items,viewDate)==='current');
   const nextAppointment=items.find(item=>item.kind==='appointment'&&item.minutes>nowMinutes);
   const minutesToAppointment=nextAppointment?nextAppointment.minutes-nowMinutes:Infinity;
+  const todayFollowUps=scheduledFollowUpsForDate(viewDate);
 
   if(currentAppointment)return{title:'Appointment in progress',meta:`${currentAppointment.title} · Resume prospecting afterwards`};
   if(nextAppointment&&minutesToAppointment<=10)return{title:'Prepare for your appointment',meta:`${nextAppointment.title} starts in ${minutesToAppointment} min`};
   if(nextAppointment&&minutesToAppointment<=30)return{title:'Wrap up shortly',meta:`Complete the current block, then prepare for ${timelineTimeLabel(nextAppointment.minutes)}`};
+  if(todayFollowUps.length&&nowMinutes<12*60)return{title:'Complete appointment follow-ups',meta:`${todayFollowUps.length} follow-up call${todayFollowUps.length===1?' is':'s are'} prioritised this morning`};
   const followUps=dueFollowUps();
   if(followUps.length)return{title:'Complete follow-ups',meta:`${followUps.length} past appointment${followUps.length===1?' needs':'s need'} an outcome`};
 
@@ -570,7 +590,8 @@ function renderTimeline(){
   $('#dailyTimeline').innerHTML=items.length?items.map((item,index)=>{
     const status=timelineStatus(item,index,items,selectedDate);
     const marker=status==='complete'?'✓':status==='current'?'●':'○';
-    return `<article class="timeline-item ${status} ${item.kind}"><time>${escapeHtml(timelineTimeLabel(item.minutes))}</time><span class="timeline-marker">${marker}</span><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.meta)}</small></div></article>`;
+    const call=item.kind==='followup'&&item.dial?`<a class="timeline-call" href="tel:${escapeHtml(item.dial)}">Call</a>`:'';
+    return `<article class="timeline-item ${status} ${item.kind}"><time>${escapeHtml(timelineTimeLabel(item.minutes))}</time><span class="timeline-marker">${marker}</span><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.meta)}</small>${call}</div></article>`;
   }).join(''):'<div class="empty">Nothing scheduled for this date.</div>';
 }
 
@@ -657,7 +678,11 @@ function appointmentBookedLabel(a,sourceDate=''){
 }
 function appointmentHistoryEntries(mode){
   const now=Date.now();
-  return allAppointmentEntries().filter(({appointment:a,sourceDate,scheduled})=>mode==='past'?(scheduled<now||appointmentLifecycle(a,sourceDate)!=='upcoming'):(scheduled>=now&&appointmentLifecycle(a,sourceDate)==='upcoming'));
+  return allAppointmentEntries().filter(({appointment:a,sourceDate})=>{
+    const scheduledAt=appointmentTimestamp(a,sourceDate);
+    if(!scheduledAt)return mode==='past';
+    return mode==='past'?scheduledAt<=now:scheduledAt>now;
+  });
 }
 function appointmentReminderText(){
   const due=dueFollowUps();
@@ -709,7 +734,7 @@ function renderAppointments(){
     $('#appointmentHistoryList').innerHTML=history.length?history.map(entry=>appointmentCardMarkup(entry,{history:true})).join(''):`<div class="empty">No ${appointmentHistoryMode} appointments.</div>`;
   }
 
-  const daily=all.filter(({sourceDate})=>sourceDate===appointmentDate);
+  const daily=all.filter(({appointment:a,sourceDate})=>appointmentCreatedDate(a,sourceDate)===appointmentDate);
   $('#appointmentsList').innerHTML=daily.length?daily.map(entry=>appointmentCardMarkup(entry,{dailyLog:true})).join(''):'<div class="empty">No appointments logged for this day.</div>';
 }
 

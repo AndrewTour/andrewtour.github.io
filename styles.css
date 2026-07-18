@@ -2696,3 +2696,9 @@ button:not(:disabled):active,.file-btn:active{
 .appointment-created-meta,.appointment-followup-timestamp{display:block;margin-top:4px;color:var(--muted);font-size:.7rem}
 .appointment-followup-timestamp{font-weight:750;color:#8a4f00}
 .appointment-followup-timestamp.overdue{color:var(--danger,#d93025)}
+
+/* v1.37.3 — today-only booking log, timestamp history routing and AM follow-up timeline */
+.timeline-item.followup{margin:3px -7px;padding:13px 7px;border-radius:16px;background:rgba(48,113,255,.055)}
+.timeline-item.followup strong{color:var(--blue)}
+.timeline-call{justify-self:start;margin-top:4px;min-width:74px;padding:7px 14px;border-radius:999px;background:var(--blue);color:#fff!important;text-align:center;text-decoration:none;font-size:.66rem;font-weight:800;line-height:1}
+.timeline-item.complete .timeline-call{pointer-events:none;opacity:.55}
