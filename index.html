@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.30.0">
+<link rel="stylesheet" href="styles.css?v=1.31.0">
 <title>AGNT</title>
 </head>
 <body>
@@ -219,6 +219,14 @@
             <label><input type="checkbox" name="workDay" value="0"><span>Sun</span></label>
           </div>
         </fieldset>
+        <fieldset class="calendar-preference-settings">
+          <legend>Calendar Preference</legend>
+          <p>Calendar</p>
+          <div class="calendar-preference-options">
+            <label><input type="radio" name="calendarPreference" value="apple"><span>Apple Calendar</span></label>
+            <label><input type="radio" name="calendarPreference" value="outlook"><span>Outlook Calendar</span></label>
+          </div>
+        </fieldset>
         <button id="saveSettings" class="primary">Save settings</button>
         <button id="exportData" class="secondary">Export backup</button>
         <label class="file-btn secondary">Import backup<input id="importData" type="file" accept="application/json"></label>
@@ -256,6 +264,6 @@
   </div>
 </div>
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=1.30.0"></script>
+<script type="module" src="app.js?v=1.31.0"></script>
 </body>
 </html>

@@ -1,3 +1,22 @@
+# AGNT v1.31.0 — Outlook Calendar Preference
+
+Incremental update from the uploaded v1.30.0 package.
+
+## Changes
+- Added a local, per-user/device Calendar Preference setting with Outlook Calendar selected by default.
+- Existing users without a saved preference automatically use Outlook for testing.
+- Outlook exports attempt to open Outlook's event creation flow with title, date, time, 60-minute duration, location and client details prefilled.
+- If Outlook does not open, the existing ICS export runs automatically without showing an error.
+- Apple Calendar selection preserves the existing ICS file content and export behaviour unchanged.
+- The post-booking calendar prompt now names the selected provider.
+- Existing appointment calendar buttons and exported-status indicators are unchanged.
+- Service-worker cache and asset versions updated to v1.31.0.
+
+## Unchanged
+Firebase, authentication, Firestore paths and rules, UID separation, appointment records, booking/editing/deletion/sorting, reminder logic, calendar indicators, analytics, existing ICS formatting, sync logic, local data shapes, styling outside the new Settings control, manifest and icons.
+
+---
+
 # AGNT v1.27.5
 
 Incremental update from the confirmed working v1.27.4 release.

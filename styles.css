@@ -2460,3 +2460,16 @@ button:not(:disabled):active,.file-btn:active{
     margin-top:4px;
   }
 }
+
+
+/* v1.31.0 — local calendar provider preference. */
+.calendar-preference-settings{border:0;margin:16px 0 8px;padding:0}
+.calendar-preference-settings legend{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);margin-bottom:5px}
+.calendar-preference-settings>p{margin:0 0 8px;color:var(--muted);font-size:12px;line-height:1.35}
+.calendar-preference-options{display:grid;gap:8px}
+.calendar-preference-options label{margin:0;position:relative}
+.calendar-preference-options input{position:absolute;opacity:0;pointer-events:none}
+.calendar-preference-options span{display:flex;align-items:center;min-height:42px;padding:0 13px 0 40px;border:1px solid var(--line);border-radius:14px;background:var(--surface);font-size:13px;font-weight:750;color:var(--ink);position:relative}
+.calendar-preference-options span::before{content:'';position:absolute;left:14px;width:16px;height:16px;border:1.5px solid var(--muted);border-radius:50%;background:#fff}
+.calendar-preference-options input:checked+span{border-color:rgba(48,113,255,.45);background:rgba(48,113,255,.07)}
+.calendar-preference-options input:checked+span::before{border:5px solid var(--blue);width:9px;height:9px}
