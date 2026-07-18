@@ -1665,11 +1665,13 @@ button:not(:disabled):active,a.appointment-call:active{transform:scale(.965)}
 .appointment-card-premium strong{display:block;font-size:.86rem;line-height:1.25;color:#111318}
 .appointment-card-premium small{display:block;margin-top:4px;color:#87909f;font-size:.66rem;line-height:1.3}
 .appointment-card-actions{display:flex;align-items:center;gap:8px;flex:0 0 auto}
-.appointment-call,.appointment-delete{
+.appointment-calendar,.appointment-call,.appointment-delete{
   width:40px;height:40px;border-radius:14px;display:grid;place-items:center;border:1px solid rgba(24,28,36,.09);background:#f6f7f9;color:#111318;text-decoration:none;padding:0;
 }
+.appointment-calendar{background:#eef4ff;color:#0b63f3;border-color:rgba(11,99,243,.14)}
+.appointment-calendar.is-added{background:#eef8f3;color:#0ca66c;border-color:rgba(12,166,108,.15)}
+.appointment-calendar svg,.appointment-call svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .appointment-call{background:#eef8f3;color:#0ca66c;border-color:rgba(12,166,108,.15)}
-.appointment-call svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .appointment-delete{font-size:1.1rem;color:#cf4057}
 
 .leaderboard-dashboard{padding:16px;margin-bottom:12px;border-radius:22px}
@@ -1711,7 +1713,7 @@ button:not(:disabled):active,a.appointment-call:active{transform:scale(.965)}
 
 @media(max-width:390px){
   .appointment-card-premium{padding:12px}
-  .appointment-call,.appointment-delete{width:38px;height:38px;border-radius:13px}
+  .appointment-calendar,.appointment-call,.appointment-delete{width:38px;height:38px;border-radius:13px}
   .leaderboard-dashboard{padding:14px}
   .leaderboard-ring{width:84px;height:84px}
   .leaderboard-hero-copy>strong{font-size:2rem}
