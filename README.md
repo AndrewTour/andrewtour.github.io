@@ -83,3 +83,11 @@ Appointment follow-up information is stored as optional fields on existing appoi
 - Restricted service-worker runtime caching to same-origin app assets and improved navigation fallback behaviour.
 - Added non-visual global error diagnostics in the browser console.
 - No UI, layout, styling, labels, navigation, metric logic, appointment workflow, Firebase paths or Firestore rules changes.
+
+
+## v1.38.1 — Shared Timeline Focus Logic
+- Timeline status and Focus Now now use one shared priority decision.
+- The timeline's existing current emphasis follows the same item surfaced by Focus Now.
+- Appointment preparation, scheduled follow-ups, prospecting, door knocking, progress review and wrap-up map to their existing timeline entries.
+- No timeline markup, styling, layout or visual design changes.
+- No Firebase configuration, rules, paths or migration changes.

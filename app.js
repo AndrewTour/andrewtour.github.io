@@ -540,14 +540,20 @@ function timelineItemsForDate(viewDate){
   const order={followup:0,appointment:1,focus:2,knock:3,check:4,wrap:5};
   return items.sort((a,b)=>a.minutes-b.minutes||(order[a.kind]??9)-(order[b.kind]??9)||a.title.localeCompare(b.title));
 }
-function timelineStatus(item,index,items,viewDate){
+function timelineStatus(item,index,items,viewDate,focusItemId=''){
   if(viewDate<todayKey())return'complete';
   if(viewDate>todayKey())return'upcoming';
   const now=new Date(),nowMinutes=now.getHours()*60+now.getMinutes();
+  if(focusItemId&&item.id===focusItemId)return'current';
   const next=items[index+1]?.minutes??1440;
   const end=Math.min(item.minutes+(item.duration||60),next);
-  if(nowMinutes>=item.minutes&&nowMinutes<end)return'current';
   return nowMinutes>=end?'complete':'upcoming';
+}
+function timelineFocusId(items,kind){
+  return items.find(item=>item.kind===kind)?.id||'';
+}
+function timelineFollowUpId(items,entry){
+  return entry?`followup-${calendarExportId(entry.appointment,entry.sourceDate)}`:'';
 }
 function coachingMetricState(viewDate=selectedDate){
   const d=dayData(viewDate),knockTarget=rollingKnockTarget(viewDate),knockMinutes=Math.floor(liveKnockSeconds(d)/60);
@@ -559,39 +565,40 @@ function coachingMetricState(viewDate=selectedDate){
   return{d,knockTarget,knockMinutes,knockRemaining:Math.max(0,knockTarget-knockMinutes),metrics,incomplete:metrics.filter(m=>m.remaining>0)};
 }
 function coachingEngine(viewDate=selectedDate,items=timelineItemsForDate(viewDate)){
-  if(!isWorkDayKey(viewDate))return{title:'No tracking day scheduled',meta:'Your metrics remain available for reference'};
-  if(viewDate<todayKey())return{title:'Day complete',meta:`Final score ${completion(viewDate)}%`};
-  if(viewDate>todayKey())return{title:'Plan your day',meta:items[0]?`First block starts ${timelineTimeLabel(items[0].minutes)}`:'No scheduled items'};
+  if(!isWorkDayKey(viewDate))return{title:'No tracking day scheduled',meta:'Your metrics remain available for reference',focusItemId:''};
+  if(viewDate<todayKey())return{title:'Day complete',meta:`Final score ${completion(viewDate)}%`,focusItemId:''};
+  if(viewDate>todayKey())return{title:'Plan your day',meta:items[0]?`First block starts ${timelineTimeLabel(items[0].minutes)}`:'No scheduled items',focusItemId:items[0]?.id||''};
 
   const now=new Date(),nowMinutes=now.getHours()*60+now.getMinutes(),state=coachingMetricState(viewDate);
-  const currentAppointment=items.find((item,index)=>item.kind==='appointment'&&timelineStatus(item,index,items,viewDate)==='current');
+  const currentAppointment=items.find(item=>item.kind==='appointment'&&nowMinutes>=item.minutes&&nowMinutes<item.minutes+(item.duration||60));
   const nextAppointment=items.find(item=>item.kind==='appointment'&&item.minutes>nowMinutes);
   const minutesToAppointment=nextAppointment?nextAppointment.minutes-nowMinutes:Infinity;
   const todayFollowUps=scheduledFollowUpsForDate(viewDate);
+  const prospectingId=timelineFocusId(items,'focus'),knockingId=timelineFocusId(items,'knock'),progressId=timelineFocusId(items,'check'),wrapId=timelineFocusId(items,'wrap');
 
-  if(currentAppointment)return{title:'Appointment in progress',meta:`${currentAppointment.title} · Resume prospecting afterwards`};
-  if(nextAppointment&&minutesToAppointment<=10)return{title:'Prepare for your appointment',meta:`${nextAppointment.title} starts in ${minutesToAppointment} min`};
-  if(nextAppointment&&minutesToAppointment<=30)return{title:'Wrap up shortly',meta:`Complete the current block, then prepare for ${timelineTimeLabel(nextAppointment.minutes)}`};
-  if(todayFollowUps.length&&nowMinutes<12*60)return{title:'Complete appointment follow-ups',meta:`${todayFollowUps.length} follow-up call${todayFollowUps.length===1?' is':'s are'} prioritised this morning`};
+  if(currentAppointment)return{title:'Appointment in progress',meta:`${currentAppointment.title} · Resume prospecting afterwards`,focusItemId:currentAppointment.id};
+  if(nextAppointment&&minutesToAppointment<=10)return{title:'Prepare for your appointment',meta:`${nextAppointment.title} starts in ${minutesToAppointment} min`,focusItemId:nextAppointment.id};
+  if(nextAppointment&&minutesToAppointment<=30)return{title:'Wrap up shortly',meta:`Complete the current block, then prepare for ${timelineTimeLabel(nextAppointment.minutes)}`,focusItemId:nextAppointment.id};
+  if(todayFollowUps.length&&nowMinutes<12*60)return{title:'Complete appointment follow-ups',meta:`${todayFollowUps.length} follow-up call${todayFollowUps.length===1?' is':'s are'} prioritised this morning`,focusItemId:timelineFollowUpId(items,todayFollowUps[0])};
   const followUps=dueFollowUps();
-  if(followUps.length)return{title:'Complete follow-ups',meta:`${followUps.length} past appointment${followUps.length===1?' needs':'s need'} an outcome`};
+  if(followUps.length)return{title:'Complete follow-ups',meta:`${followUps.length} past appointment${followUps.length===1?' needs':'s need'} an outcome`,focusItemId:timelineFollowUpId(items,followUps[0])||prospectingId};
 
   const allCoreComplete=state.incomplete.length===0;
-  if(allCoreComplete&&state.knockRemaining===0)return{title:'Day complete',meta:'All daily targets have been achieved'};
+  if(allCoreComplete&&state.knockRemaining===0)return{title:'Day complete',meta:'All daily targets have been achieved',focusItemId:nowMinutes>=18*60?wrapId:progressId};
 
   if(nowMinutes>=14*60&&state.knockRemaining>0){
     const available=Math.max(0,17*60-nowMinutes);
-    if(available<=0)return{title:'Finish the weakest metric',meta:`${state.knockRemaining} knocking min will roll into the next scheduled day`};
+    if(available<=0)return{title:'Finish the weakest metric',meta:`${state.knockRemaining} knocking min will roll into the next scheduled day`,focusItemId:knockingId};
     const finish=new Date(now.getTime()+state.knockRemaining*60000);
     const finishLabel=finish.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'});
-    return{title:'Continue door knocking',meta:`${state.knockRemaining} min remaining · Finish around ${finishLabel}`};
+    return{title:'Continue door knocking',meta:`${state.knockRemaining} min remaining · Finish around ${finishLabel}`,focusItemId:knockingId};
   }
 
   if(nowMinutes>=13*60+30&&nowMinutes<14*60&&state.knockRemaining>0){
-    return{title:'Prepare to door knock',meta:`Door knocking starts in ${14*60-nowMinutes} min · ${state.knockRemaining} min target`};
+    return{title:'Prepare to door knock',meta:`Door knocking starts in ${14*60-nowMinutes} min · ${state.knockRemaining} min target`,focusItemId:knockingId};
   }
 
-  if(nowMinutes>=18*60+30)return{title:'Plan tomorrow',meta:allCoreComplete?'Today’s core targets are complete':'Review unfinished activity and prepare the next workday'};
+  if(nowMinutes>=18*60+30)return{title:'Plan tomorrow',meta:allCoreComplete?'Today’s core targets are complete':'Review unfinished activity and prepare the next workday',focusItemId:wrapId};
 
   if(state.incomplete.length){
     const ranked=[...state.incomplete].sort((a,b)=>a.progress-b.progress||a.remaining-b.remaining);
@@ -605,12 +612,12 @@ function coachingEngine(viewDate=selectedDate,items=timelineItemsForDate(viewDat
     const expected=expectedAt(priority.key,priority.target,now),behind=Math.max(0,expected-priority.value);
     if(behind>0){
       const recoveryMinutes=Math.max(10,Math.ceil(behind/priority.rate*60/5)*5);
-      return{title:'Increase activity',meta:`${behind} ${priority.label} behind pace · A focused ${recoveryMinutes}-minute block will recover the gap`};
+      return{title:'Increase activity',meta:`${behind} ${priority.label} behind pace · A focused ${recoveryMinutes}-minute block will recover the gap`,focusItemId:prospectingId};
     }
-    return{title:priority.action,meta:`Target ${blockTarget} ${priority.label} before ${timelineTimeLabel(coreDeadlineMinutes)}`};
+    return{title:priority.action,meta:`Target ${blockTarget} ${priority.label} before ${timelineTimeLabel(coreDeadlineMinutes)}`,focusItemId:prospectingId};
   }
 
-  return{title:'You’re ahead',meta:state.knockRemaining?`Core targets complete · Door knocking begins at 2:00pm`:'All targets complete'};
+  return{title:'You’re ahead',meta:state.knockRemaining?`Core targets complete · Door knocking begins at 2:00pm`:'All targets complete',focusItemId:state.knockRemaining?knockingId:progressId};
 }
 function coachSentenceCase(value){
   const text=String(value||'').trim();
@@ -633,7 +640,7 @@ function renderTimeline(){
   $('#timelineCurrentMeta').textContent=coachSentenceCase(priority.meta);
   $('#timelineSummary').textContent=`${items.filter(i=>i.kind==='appointment').length} appointment${items.filter(i=>i.kind==='appointment').length===1?'':'s'} · ${completion(selectedDate)}% complete`;
   $('#dailyTimeline').innerHTML=items.length?items.map((item,index)=>{
-    const status=timelineStatus(item,index,items,selectedDate);
+    const status=timelineStatus(item,index,items,selectedDate,priority.focusItemId);
     const marker=status==='complete'?'✓':status==='current'?'●':'○';
     const call=(item.kind==='followup'||item.kind==='appointment')&&item.dial?`<a class="timeline-call" href="tel:${escapeHtml(item.dial)}">Call</a>`:'';
     return `<article class="timeline-item ${status} ${item.kind}"><time>${escapeHtml(timelineTimeLabel(item.minutes))}</time><span class="timeline-marker">${marker}</span><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.meta)}</small>${call}</div></article>`;
