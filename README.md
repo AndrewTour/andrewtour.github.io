@@ -65,3 +65,11 @@ Appointment follow-up information is stored as optional fields on existing appoi
 - Added outcome colours: blue, green, amber and red respectively.
 - Removed Price Update Booked and Listing Appointment Booked from the outcome selector without deleting historical appointment data.
 - No Firebase, appointment history, follow-up, calendar, timeline, logging or sync changes.
+
+
+## v1.37.7
+- Appointment booking time now defaults to 12:00PM instead of the current device time.
+- Today's appointment log now includes the same Add to Calendar / Added to Calendar control used by Upcoming Appointments.
+- Calendar state is retained when the appointment is added during submission; cancelled calendar prompts leave the card action available.
+- Same-day appointments now use the richer timeline format with contact details and a Call button while remaining positioned at their scheduled time.
+- No Firebase, Firestore, authentication, history, follow-up, outcome, deletion, metric, or sync changes are required.
