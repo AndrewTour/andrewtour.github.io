@@ -2702,3 +2702,7 @@ button:not(:disabled):active,.file-btn:active{
 .timeline-item.followup strong{color:var(--blue)}
 .timeline-call{justify-self:start;margin-top:4px;min-width:74px;padding:7px 14px;border-radius:999px;background:var(--blue);color:#fff!important;text-align:center;text-decoration:none;font-size:.66rem;font-weight:800;line-height:1}
 .timeline-item.complete .timeline-call{pointer-events:none;opacity:.55}
+
+/* v1.37.4 — appointment history action flow */
+.appointment-calendar-action.is-added{background:rgba(12,166,108,.14)!important;color:#0ca66c!important;border-color:rgba(12,166,108,.24)!important}
+.appointment-outcome-action.has-outcome{background:rgba(91,145,255,.16)!important}

@@ -43,3 +43,10 @@ Appointment follow-up information is stored as optional fields on existing appoi
 - Future appointments booked on earlier days are retained and displayed in Upcoming Appointments.
 - Follow-ups scheduled for the selected date appear as AM-priority items in the Today timeline with contact details and a Call button.
 - Existing appointment history, Firebase paths, follow-up UI, outcome UI and daily appointment storage remain unchanged.
+
+
+## v1.37.4
+- Past appointment follow-up flow is Set Follow-Up → Mark Followed Up → action removed when complete.
+- Selected outcomes now replace the Update Outcome button label while remaining editable.
+- Upcoming appointments restore Add to Calendar with the saved green/ticked state.
+- No Firebase, history, logging, timeline or sync changes.

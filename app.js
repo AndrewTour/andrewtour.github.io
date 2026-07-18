@@ -702,9 +702,20 @@ function setAppointmentHistoryScreen(mode){
 function appointmentCardMarkup(entry,{dailyLog=false,history=false}={}){
   const {appointment:a,sourceDate,scheduled}=entry;
   const contact=escapeHtml(a.contactName||a.name||'Contact not recorded'),rawPhone=String(a.contactNumber||a.phone||'').trim(),phone=escapeHtml(rawPhone),dial=rawPhone.replace(/[^+\d]/g,''),address=escapeHtml(a.address||'Address not recorded'),type=escapeHtml(appointmentType(a)),time=escapeHtml(appointmentTimeLabel(a,sourceDate)),lifecycle=appointmentLifecycle(a,sourceDate);
-  const statusText=lifecycle==='upcoming'?'Upcoming':lifecycle==='completed'?(a.outcome||'Completed'):followUpDueLabel(a);
+  const statusText=lifecycle==='upcoming'?'Upcoming':lifecycle==='completed'?'Completed':followUpDueLabel(a);
   const note=a.outcomeNote?`<small class="appointment-outcome-note">${escapeHtml(a.outcomeNote)}</small>`:'';
-  const actions=lifecycle==='upcoming'?`${dial?`<a class="appointment-call appointment-action-wide" href="tel:${dial}">Call</a>`:''}<button class="appointment-secondary-action" data-set-followup="${a.id}" data-source-date="${sourceDate}">Set Follow-Up</button>`:`${dial?`<a class="appointment-call appointment-action-wide" href="tel:${dial}">Call</a>`:''}${lifecycle==='follow-up'?`<button class="appointment-secondary-action" data-mark-followedup="${a.id}" data-source-date="${sourceDate}">Mark Followed Up</button>`:''}<button class="appointment-secondary-action" data-update-outcome="${a.id}" data-source-date="${sourceDate}">Update Outcome</button>`;
+  const callAction=dial?`<a class="appointment-call appointment-action-wide" href="tel:${dial}">Call</a>`:'';
+  let actions;
+  if(history&&appointmentHistoryMode==='upcoming'){
+    const added=appointmentAddedToCalendar(a,sourceDate),calendarLabel=added?'Added to Calendar':'Add to Calendar';
+    actions=`${callAction}<button class="appointment-secondary-action appointment-calendar-action ${added?'is-added':''}" data-calendar-appointment="${escapeHtml(calendarExportId(a,sourceDate))}" data-source-date="${escapeHtml(sourceDate)}">${added?'✓ ':''}${calendarLabel}</button>`;
+  }else if(history&&appointmentHistoryMode==='past'){
+    const followAction=lifecycle==='completed'?'':a.followUpDate?`<button class="appointment-secondary-action" data-mark-followedup="${a.id}" data-source-date="${sourceDate}">Mark Followed Up</button>`:`<button class="appointment-secondary-action" data-set-followup="${a.id}" data-source-date="${sourceDate}">Set Follow-Up</button>`;
+    const outcomeLabel=escapeHtml(a.outcome||'Update Outcome');
+    actions=`${callAction}${followAction}<button class="appointment-secondary-action appointment-outcome-action ${a.outcome?'has-outcome':''}" data-update-outcome="${a.id}" data-source-date="${sourceDate}">${outcomeLabel}</button>`;
+  }else{
+    actions=lifecycle==='upcoming'?`${callAction}<button class="appointment-secondary-action" data-set-followup="${a.id}" data-source-date="${sourceDate}">Set Follow-Up</button>`:`${callAction}${lifecycle==='follow-up'?`<button class="appointment-secondary-action" data-mark-followedup="${a.id}" data-source-date="${sourceDate}">Mark Followed Up</button>`:''}<button class="appointment-secondary-action" data-update-outcome="${a.id}" data-source-date="${sourceDate}">${escapeHtml(a.outcome||'Update Outcome')}</button>`;
+  }
   const booked=appointmentBookedLabel(a,sourceDate);
   const loggedMeta=dailyLog&&a.scheduledDate&&a.scheduledDate!==sourceDate?`<small class="appointment-log-scheduled">Scheduled for ${escapeHtml(shortAppointmentDate(scheduled))} at ${time}</small>`:`<small class="appointment-booked-for">${escapeHtml(shortAppointmentDate(scheduled))} at ${time}</small>`;
   const bookedMeta=history&&booked?`<small class="appointment-created-meta">Booked ${escapeHtml(booked)}</small>`:'';
@@ -1015,7 +1026,7 @@ $('#appointmentsView').onclick=e=>{
   const calendarButton=e.target.closest('[data-calendar-appointment]');
   if(calendarButton){
     const sourceDate=calendarButton.dataset.sourceDate||appointmentDate;
-    const entry=appointmentEntriesForDate(appointmentDate).find(({appointment:a,sourceDate:s})=>calendarExportId(a,s)===calendarButton.dataset.calendarAppointment&&s===sourceDate);
+    const entry=allAppointmentEntries().find(({appointment:a,sourceDate:s})=>calendarExportId(a,s)===calendarButton.dataset.calendarAppointment&&s===sourceDate);
     if(!entry)return toast('Appointment could not be found');
     if(appointmentAddedToCalendar(entry.appointment,entry.sourceDate))return toast('Already added to calendar');
     exportAppointmentToCalendar(entry.appointment,entry.sourceDate);return;
