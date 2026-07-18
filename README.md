@@ -1,4 +1,4 @@
-# AGNT v1.31.0 — Outlook Calendar Preference
+# AGNT v1.31.1 — Outlook Calendar Launch Fix
 
 Incremental update from the uploaded v1.30.0 package.
 
@@ -10,7 +10,7 @@ Incremental update from the uploaded v1.30.0 package.
 - Apple Calendar selection preserves the existing ICS file content and export behaviour unchanged.
 - The post-booking calendar prompt now names the selected provider.
 - Existing appointment calendar buttons and exported-status indicators are unchanged.
-- Service-worker cache and asset versions updated to v1.31.0.
+- Service-worker cache and asset versions updated to v1.31.1.
 
 ## Unchanged
 Firebase, authentication, Firestore paths and rules, UID separation, appointment records, booking/editing/deletion/sorting, reminder logic, calendar indicators, analytics, existing ICS formatting, sync logic, local data shapes, styling outside the new Settings control, manifest and icons.
@@ -200,3 +200,10 @@ Firebase, authentication, Firestore rules, storage, leaderboard and logging acti
 - Equalised the three Knocking data-line margins and line heights with the other metric cards.
 - No Firebase, Firestore, authentication, sync, storage, timer or metric-logic changes.
 
+
+## v1.31.1 fix
+
+- Replaced the hidden iframe/custom URL scheme with Outlook’s HTTPS calendar compose deep link.
+- Removed the unreliable timed ICS fallback that caused Apple Calendar to open on iPhone.
+- Apple ICS fallback now runs only when the Outlook window cannot be opened.
+- No Firebase, Firestore, authentication, appointment data or UI changes.

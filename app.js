@@ -419,20 +419,14 @@ function outlookAppointmentUrl(a,sourceDate=''){
   const end=new Date(start.getTime()+60*60*1000),type=appointmentType(a),address=a.address||'Address not recorded',contact=a.contactName||a.name||'Contact not recorded',phone=a.contactNumber||a.phone||'';
   const title=`[${type}] ${address} – ${contact}`;
   const description=[`Client name: ${contact}`,phone?`Client phone number: ${phone}`:'',`Appointment type: ${type}`].filter(Boolean).join('\n');
-  const params=new URLSearchParams({subject:title,startdt:start.toISOString(),enddt:end.toISOString(),location:address,body:description});
-  return `ms-outlook://events/new?${params.toString()}`;
+  const params=new URLSearchParams({path:'/calendar/action/compose',rru:'addevent',allday:'false',subject:title,startdt:start.toISOString(),enddt:end.toISOString(),location:address,body:description});
+  return `https://outlook.office.com/calendar/0/deeplink/compose?${params.toString()}`;
 }
 function exportAppointmentToOutlook(a,sourceDate=''){
   const outlookUrl=outlookAppointmentUrl(a,sourceDate);
   if(!outlookUrl)return toast('Appointment date or time is missing');
-  let completed=false;
-  const frame=document.createElement('iframe');
-  frame.hidden=true;frame.setAttribute('aria-hidden','true');frame.src=outlookUrl;document.body.appendChild(frame);
-  const cleanup=()=>{document.removeEventListener('visibilitychange',onVisibility);window.removeEventListener('pagehide',onOpened);frame.remove()};
-  const onOpened=()=>{if(completed)return;completed=true;clearTimeout(fallbackTimer);cleanup()};
-  const onVisibility=()=>{if(document.hidden)onOpened()};
-  document.addEventListener('visibilitychange',onVisibility);window.addEventListener('pagehide',onOpened,{once:true});
-  const fallbackTimer=setTimeout(()=>{if(completed)return;completed=true;cleanup();exportAppointmentToAppleCalendar(a,sourceDate)},1400);
+  const opened=window.open(outlookUrl,'_blank','noopener,noreferrer');
+  if(!opened)return exportAppointmentToAppleCalendar(a,sourceDate);
   markAppointmentAddedToCalendar(a,sourceDate);toast('Opening Outlook Calendar');
 }
 function exportAppointmentToCalendar(a,sourceDate=''){
