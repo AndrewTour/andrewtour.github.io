@@ -45,8 +45,15 @@ Appointment follow-up information is stored as optional fields on existing appoi
 - Existing appointment history, Firebase paths, follow-up UI, outcome UI and daily appointment storage remain unchanged.
 
 
-## v1.37.4
+## v1.37.5
 - Past appointment follow-up flow is Set Follow-Up → Mark Followed Up → action removed when complete.
 - Selected outcomes now replace the Update Outcome button label while remaining editable.
 - Upcoming appointments restore Add to Calendar with the saved green/ticked state.
 - No Firebase, history, logging, timeline or sync changes.
+
+## v1.37.5
+- Restored Smart Coach metric deadlines to the established prospecting timeline; calls, connects and data are planned toward the 2:00pm door-knocking transition rather than the last appointment time.
+- Appointments remain chronological timeline items without changing metric timing rules.
+- Added a compact delete control to daily log, past appointments and upcoming appointments.
+- Deletion requires confirmation and removes the appointment, follow-up state, calendar tracking state and timeline reminder without changing daily metrics.
+- No Firebase configuration, path or rules changes.

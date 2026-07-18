@@ -2706,3 +2706,25 @@ button:not(:disabled):active,.file-btn:active{
 /* v1.37.4 — appointment history action flow */
 .appointment-calendar-action.is-added{background:rgba(12,166,108,.14)!important;color:#0ca66c!important;border-color:rgba(12,166,108,.24)!important}
 .appointment-outcome-action.has-outcome{background:rgba(91,145,255,.16)!important}
+
+/* v1.37.5 — appointment deletion */
+.appointment-card-premium{position:relative}
+.appointment-delete{
+  position:absolute;
+  top:9px;
+  right:9px;
+  width:28px;
+  height:28px;
+  display:grid;
+  place-items:center;
+  border:0;
+  border-radius:50%;
+  background:rgba(120,128,142,.10)!important;
+  color:#8f98a7!important;
+  font-size:1.05rem!important;
+  line-height:1;
+  font-weight:500;
+  z-index:2;
+}
+.appointment-delete:active{transform:scale(.94);background:rgba(220,64,64,.12)!important;color:#d84b4b!important}
+.appointment-card-premium .appointment-card-top{padding-right:30px}

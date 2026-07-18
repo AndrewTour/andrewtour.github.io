@@ -553,7 +553,8 @@ function coachingEngine(viewDate=selectedDate,items=timelineItemsForDate(viewDat
     let priority=ranked[0];
     const nearlyComplete=state.incomplete.filter(m=>m.progress>=80).sort((a,b)=>a.remaining-b.remaining)[0];
     if(nearlyComplete&&ranked[0].progress>=65)priority=nearlyComplete;
-    const available=Math.max(1,Math.min(minutesToAppointment,17*60-nowMinutes));
+    const coreDeadlineMinutes=14*60;
+    const available=Math.max(1,coreDeadlineMinutes-nowMinutes);
     const possible=Math.max(1,Math.floor(available/60*priority.rate));
     const blockTarget=Math.min(priority.remaining,possible);
     const expected=expectedAt(priority.key,priority.target,now),behind=Math.max(0,expected-priority.value);
@@ -561,8 +562,7 @@ function coachingEngine(viewDate=selectedDate,items=timelineItemsForDate(viewDat
       const recoveryMinutes=Math.max(10,Math.ceil(behind/priority.rate*60/5)*5);
       return{title:'Increase activity',meta:`${behind} ${priority.label} behind pace · A focused ${recoveryMinutes}-minute block will recover the gap`};
     }
-    if(nextAppointment&&Number.isFinite(minutesToAppointment))return{title:priority.action,meta:`Target ${blockTarget} ${priority.label} before ${timelineTimeLabel(nextAppointment.minutes)}`};
-    return{title:priority.action,meta:`${priority.remaining} ${priority.label} remaining · Hold the pace`};
+    return{title:priority.action,meta:`Target ${blockTarget} ${priority.label} before ${timelineTimeLabel(coreDeadlineMinutes)}`};
   }
 
   return{title:'You’re ahead',meta:state.knockRemaining?`Core targets complete · Door knocking begins at 2:00pm`:'All targets complete'};
@@ -721,6 +721,7 @@ function appointmentCardMarkup(entry,{dailyLog=false,history=false}={}){
   const bookedMeta=history&&booked?`<small class="appointment-created-meta">Booked ${escapeHtml(booked)}</small>`:'';
   const dueMeta=history&&a.followUpDate?`<small class="appointment-followup-timestamp ${a.followUpDate<todayKey()?'overdue':''}">Follow-up due ${escapeHtml(shortAppointmentDate(a.followUpDate))}</small>`:'';
   return `<article class="appointment-card appointment-card-premium appointment-followup-card ${lifecycle}">
+    <button class="appointment-delete" data-delete-appointment="${escapeHtml(a.id)}" data-source-date="${escapeHtml(sourceDate)}" aria-label="Delete appointment" title="Delete appointment">×</button>
     <div class="appointment-card-copy"><div class="appointment-card-top"><span class="appointment-type-badge">${type}</span><span class="appointment-status-badge ${lifecycle}">${escapeHtml(statusText)}</span></div><strong>${address}</strong><small>${contact}${phone?` · ${phone}`:''}</small>${loggedMeta}${bookedMeta}${dueMeta}${note}</div>
     <div class="appointment-followup-actions">${actions}</div>
   </article>`;
@@ -763,7 +764,14 @@ async function addAppointment({contactName,contactNumber,address,date,time,type}
   toast(date===createdDate?'Appointment logged':'Appointment logged and reminder created');
   return appointment;
 }
-async function deleteAppointment(id,sourceDate=appointmentDate){if(!canEditDate(sourceDate))return lockedToast();const d=dayData(sourceDate);d.appointments=d.appointments.filter(a=>a.id!==id);days[sourceDate]=d;await saveDay(sourceDate);renderAppointments()}
+async function deleteAppointment(id,sourceDate=appointmentDate){
+  const d=dayData(sourceDate),index=d.appointments.findIndex(a=>String(a.id)===String(id));
+  if(index<0)return toast('Appointment could not be found');
+  const appointment=d.appointments[index],exportId=calendarExportId(appointment,sourceDate);
+  d.appointments.splice(index,1);days[sourceDate]=d;
+  const ids=calendarExportIds();ids.delete(exportId);localStorage.setItem(calendarExportStorageKey(),JSON.stringify([...ids]));
+  await saveDay(sourceDate);renderAll();toast('Appointment deleted');
+}
 
 
 function sortedTodayLeaderboard(){
@@ -1034,7 +1042,7 @@ $('#appointmentsView').onclick=e=>{
   const follow=e.target.closest('[data-set-followup]');if(follow){setAppointmentFollowUp(follow.dataset.setFollowup,follow.dataset.sourceDate);return;}
   const marked=e.target.closest('[data-mark-followedup]');if(marked){markAppointmentFollowedUp(marked.dataset.markFollowedup,marked.dataset.sourceDate);return;}
   const outcome=e.target.closest('[data-update-outcome]');if(outcome){updateAppointmentOutcome(outcome.dataset.updateOutcome,outcome.dataset.sourceDate);return;}
-  const b=e.target.closest('[data-delete-appointment]');if(b&&confirm('Delete this appointment?'))deleteAppointment(b.dataset.deleteAppointment,b.dataset.sourceDate||appointmentDate)
+  const b=e.target.closest('[data-delete-appointment]');if(b&&confirm('Delete this appointment?\n\nThis will permanently remove the appointment and any associated follow-up.'))deleteAppointment(b.dataset.deleteAppointment,b.dataset.sourceDate||appointmentDate)
 };
 
 $('#saveSettings').onclick=async()=>{const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;calendarPreference=$('[name=calendarPreference]:checked')?.value==='apple'?'apple':'outlook';saveLocal();await saveTargets();renderAll();toast('Settings saved')};
