@@ -381,6 +381,7 @@ function appointmentCreatedDate(a,sourceDate=''){return a.createdDate||a.logDate
 function appointmentTimestamp(a,sourceDate=''){if(Number.isFinite(Number(a.scheduledAt)))return Number(a.scheduledAt);const scheduledDate=appointmentScheduledDate(a,sourceDate);if(scheduledDate&&a.time){const t=new Date(`${scheduledDate}T${a.time}`);if(!Number.isNaN(t.getTime()))return t.getTime()}return Number(a.at)||0}
 function appointmentTimeLabel(a,sourceDate=''){const ts=appointmentTimestamp(a,sourceDate);return ts?new Date(ts).toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'}):(a.time||'Time not set')}
 function shortAppointmentDate(k){return k?parseKey(k).toLocaleDateString('en-AU',{day:'numeric',month:'long'}):'Date not set'}
+function appointmentBookedForLabel(k,time){if(!k)return 'Date not set';const d=parseKey(k);const t=new Date();const same=d.getFullYear()===t.getFullYear()&&d.getMonth()===t.getMonth()&&d.getDate()===t.getDate();return same?`Booked Today at ${time}`:`Booked for ${shortAppointmentDate(k)} at ${time}`}
 function escapeHtml(value){return String(value??'').replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]))}
 function appointmentEntriesForDate(viewDate){
   const entries=dayData(viewDate).appointments.map(a=>({appointment:a,sourceDate:viewDate,isReminder:false}));
@@ -420,7 +421,7 @@ function renderAppointments(){
           <small>${address}${phone?` · ${phone}`:''}</small>
           <small class="appointment-booked-on">Booked on ${escapeHtml(shortAppointmentDate(createdDate))}</small>
           <div class="appointment-reminder-footer">
-            <small class="appointment-booked-for">Booked for ${escapeHtml(shortAppointmentDate(scheduledDate))} at ${time}</small>
+            <small class="appointment-booked-for">${escapeHtml(appointmentBookedForLabel(scheduledDate,time))}</small>
             <small class="appointment-confirm-note">Call 2 hours prior to confirm</small>
           </div>
         </div>
@@ -436,7 +437,7 @@ function renderAppointments(){
         <div class="appointment-card-top"><span class="appointment-type-badge">${type}</span></div>
         <strong>${address}</strong>
         <small>${contact}${phone?` · ${phone}`:''}</small>
-        ${futureBooking?`<small class="appointment-booked-for">Booked for ${escapeHtml(shortAppointmentDate(scheduledDate))} at ${time}</small>`:''}
+        ${futureBooking?`<small class="appointment-booked-for">${escapeHtml(appointmentBookedForLabel(scheduledDate,time))}</small>`:''}
       </div>
       <div class="appointment-card-actions">
         ${dial?`<a class="appointment-call" href="tel:${dial}" aria-label="Call ${contact}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.2 3.5 4.8 5.9c-.7.7-.8 1.8-.3 2.7 2.5 4.7 6.3 8.5 11 11 .9.5 2 .4 2.7-.3l2.3-2.3-4.1-3-2.1 2.1c-2.6-1.4-4.7-3.5-6.1-6.1l2.1-2.1-3.1-4.4Z"/></svg></a>`:''}
