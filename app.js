@@ -380,7 +380,7 @@ function appointmentType(a){return normaliseAppointmentType(a.type||(Array.isArr
 function appointmentScheduledDate(a,sourceDate=''){return a.scheduledDate||a.date||sourceDate}
 function appointmentCreatedDate(a,sourceDate=''){return a.createdDate||a.logDate||sourceDate}
 function appointmentTimestamp(a,sourceDate=''){if(Number.isFinite(Number(a.scheduledAt)))return Number(a.scheduledAt);const scheduledDate=appointmentScheduledDate(a,sourceDate);if(scheduledDate&&a.time){const t=new Date(`${scheduledDate}T${a.time}`);if(!Number.isNaN(t.getTime()))return t.getTime()}return Number(a.at)||0}
-function appointmentTimeLabel(a,sourceDate=''){const ts=appointmentTimestamp(a,sourceDate);return ts?new Date(ts).toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'}):(a.time||'Time not set')}
+function appointmentTimeLabel(a,sourceDate=''){const ts=appointmentTimestamp(a,sourceDate);if(!ts)return a.time||'Time not set';return new Date(ts).toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true}).replace(/\s/g,'').toUpperCase()}
 function shortAppointmentDate(k){return k?parseKey(k).toLocaleDateString('en-AU',{day:'numeric',month:'long'}):'Date not set'}
 function escapeHtml(value){return String(value??'').replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]))}
 function calendarExportStorageKey(){return `${storagePrefix(uid)}calendar-exports`}

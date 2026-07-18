@@ -2628,3 +2628,22 @@ button:not(:disabled):active,.file-btn:active{
 .appointment-action-wide,.scorecard-call{background:#111318!important;color:#fff!important;width:auto;height:auto}
 .appointment-secondary-action,.scorecard-followup-actions button{background:rgba(91,145,255,.12)!important;color:var(--ink)!important}
 .appointment-outcome-note{padding-top:4px;font-style:italic}
+
+
+/* v1.36.1 — requested login copy, appointment time and action alignment refinements only. */
+#authGate .auth-card p{
+  text-transform:none!important;
+}
+.scorecard-followup-actions{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  align-items:stretch;
+}
+.scorecard-followup-actions a,
+.scorecard-followup-actions button{
+  width:100%!important;
+  height:46px!important;
+  min-height:46px!important;
+  margin-top:0!important;
+  padding:0 10px!important;
+}
