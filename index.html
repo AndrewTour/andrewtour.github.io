@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.38.9">
+<link rel="stylesheet" href="styles.css?v=1.39.0">
 <title>AGNT</title>
 </head>
 <body>
@@ -242,6 +242,40 @@
       </div>
     </section>
 
+
+    <section id="prospectingView" class="view prospecting-view">
+      <div class="prospecting-toolbar glass">
+        <div class="prospecting-search-wrap">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+          <input id="prospectSearch" type="search" placeholder="Search name, address or phone" autocomplete="off">
+        </div>
+        <button id="addProspectButton" class="prospecting-add" type="button" aria-label="Add prospect">+</button>
+      </div>
+
+      <div id="prospectingDashboard" class="prospecting-dashboard">
+        <section class="prospecting-hero glass">
+          <div><span>TODAY'S PIPELINE</span><strong id="prospectingDueCount">0</strong><small id="prospectingDueLabel">follow-ups ready</small></div>
+          <button id="startProspectingSession" class="primary" type="button">Start Session</button>
+        </section>
+        <section class="prospecting-stats" aria-label="Prospecting overview">
+          <button class="prospecting-stat glass" data-prospect-filter="overdue"><span>OVERDUE</span><strong id="prospectingOverdue">0</strong></button>
+          <button class="prospecting-stat glass" data-prospect-filter="today"><span>DUE TODAY</span><strong id="prospectingToday">0</strong></button>
+          <button class="prospecting-stat glass" data-prospect-filter="hot"><span>HOT</span><strong id="prospectingHot">0</strong></button>
+        </section>
+        <section class="prospecting-section glass">
+          <div class="prospecting-section-head"><div><span>PRIORITY QUEUE</span><h3>Who needs you next</h3></div><button id="clearProspectFilter" class="text-btn" type="button">View all</button></div>
+          <div id="prospectQueue" class="prospect-list"></div>
+        </section>
+        <section class="prospecting-section glass">
+          <div class="prospecting-section-head"><div><span>CONTACTS</span><h3>Your database</h3></div><label class="prospect-import-button">Import CSV<input id="prospectCsvImport" type="file" accept=".csv,text/csv"></label></div>
+          <div id="prospectContactList" class="prospect-list"></div>
+        </section>
+      </div>
+
+      <section id="prospectDetail" class="prospect-detail hidden" aria-live="polite"></section>
+      <section id="prospectingSession" class="prospecting-session hidden" aria-live="polite"></section>
+    </section>
+
     <section id="settingsView" class="view">
       <div class="settings glass">
         <div class="profile-hero">
@@ -300,6 +334,10 @@
     <button data-view="appointmentsView">
       <b class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="15" rx="3"/><path d="M7.5 3.5v4M16.5 3.5v4M3.5 9.5h17"/><path d="M8 13h3M13 13h3M8 17h3"/></svg></b>
       <span>Appointments</span>
+    </button>
+    <button data-view="prospectingView">
+      <b class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.25"/><path d="M3.5 19c.4-4 2.2-6 5.5-6s5.1 2 5.5 6"/><path d="M16 8h5M18.5 5.5v5"/><path d="M16 15h5M16 18h5"/></svg></b>
+      <span>Prospects</span>
     </button>
     <button data-view="insightsView">
       <b class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 18.5h16"/><path d="M5.5 16l4.25-4.25 3.1 2.8L18.5 8.5"/><path d="M14.5 8.5h4v4"/></svg></b>

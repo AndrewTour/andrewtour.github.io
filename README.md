@@ -149,9 +149,14 @@ Appointment follow-up information is stored as optional fields on existing appoi
 - No Firebase, Firestore, authentication, sync, scoring, appointment workflow or data-model changes.
 
 
-## v1.38.9 — Subheading Date Correction
+## v1.39.0 — Subheading Date Correction
 
 - Removed the compact grey date from Your Schedule, Appointments, Leaderboard and Settings.
 - Kept the contextual subtitle in the previous supporting-text position beneath each page title.
 - Restored the original title-to-supporting-text spacing and formatting.
 - No Firebase, authentication, Firestore, cache, sync, metric, appointment or leaderboard logic changes.
+
+
+## v1.39.0 — Prospecting OS
+
+Added a separate, user-specific prospecting workspace without changing the Home dashboard. Includes CSV import, contacts, search, priority follow-up queues, contact profiles, interaction history, tap-to-call/message actions, call logging, next-follow-up scheduling, pipeline stages, temperature, motivation and a focused Next → Call → Log → Next session workflow. Prospecting records use the existing permitted private Firestore subtree at `users/{uid}/prospecting/state` and the existing per-user local cache pattern. No Firebase rule changes are required.
