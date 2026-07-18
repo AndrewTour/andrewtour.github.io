@@ -283,7 +283,7 @@ function updateTopbar(id=activeViewId()){
     if(syncBadge&&syncBadge.parentElement!==dateLine)dateLine.append(syncBadge);
   }
   if(syncPopover&&syncPopover.parentElement!==document.body)document.body.append(syncPopover);
-  const showDateNav=id==='todayView'||id==='appointmentsView';
+  const showDateNav=id==='todayView'||id==='scheduleView'||id==='appointmentsView';
   $('#dateNavActions')?.classList.toggle('hidden',!showDateNav);
   $('#settingsShortcut')?.classList.toggle('hidden',id!=='insightsView');
   $('#homeShortcut')?.classList.toggle('hidden',id!=='settingsView');
@@ -350,6 +350,7 @@ function renderToday(){
     $('#todayAtGlance').innerHTML=`<span class="focus-primary">Focus Now: ${escapeHtml(guidance)}</span>`;
   }
   if($('#momentumWhisper'))$('#momentumWhisper').textContent=momentumWhisper();
+  renderNowCard();
 }
 function recentWorkKeys(endKey=selectedDate,count=8){
   const out=[],d=parseKey(endKey);
@@ -448,6 +449,79 @@ function appointmentEntriesForDate(viewDate){
   });
   return entries.sort((x,y)=>appointmentTimestamp(x.appointment,x.sourceDate)-appointmentTimestamp(y.appointment,y.sourceDate));
 }
+function timelineMinutes(value){
+  const parts=String(value||'').split(':').map(Number);
+  return Number.isFinite(parts[0])&&Number.isFinite(parts[1])?parts[0]*60+parts[1]:0;
+}
+function timelineTimeLabel(minutes){
+  const total=((minutes%1440)+1440)%1440,h=Math.floor(total/60),m=total%60;
+  return new Date(2000,0,1,h,m).toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'});
+}
+function timelineItemsForDate(viewDate){
+  const items=[
+    {id:'prospecting',minutes:8*60,title:'Prospecting',meta:'Calls, connects and data',kind:'focus',duration:6*60},
+    {id:'knocking',minutes:14*60,title:'Door Knock Focus',meta:`${rollingKnockTarget(viewDate)} minute target`,kind:'knock',duration:120},
+    {id:'progress',minutes:16*60,title:'Daily Progress Check',meta:'Review remaining targets',kind:'check',duration:30},
+    {id:'wrap',minutes:18*60,title:'Wrap Up',meta:'Review today and prepare tomorrow',kind:'wrap',duration:60}
+  ];
+  appointmentEntriesForDate(viewDate).forEach(({appointment:a,sourceDate})=>{
+    const scheduled=appointmentScheduledDate(a,sourceDate);
+    if(scheduled!==viewDate)return;
+    items.push({
+      id:`appointment-${calendarExportId(a,sourceDate)}`,
+      minutes:timelineMinutes(a.time),
+      title:`${appointmentType(a)} · ${a.address||'Address not recorded'}`,
+      meta:a.contactName||a.name||'Contact not recorded',
+      kind:'appointment',duration:60
+    });
+  });
+  return items.sort((a,b)=>a.minutes-b.minutes||a.title.localeCompare(b.title));
+}
+function timelineStatus(item,index,items,viewDate){
+  if(viewDate<todayKey())return'complete';
+  if(viewDate>todayKey())return'upcoming';
+  const now=new Date(),nowMinutes=now.getHours()*60+now.getMinutes();
+  const next=items[index+1]?.minutes??1440;
+  const end=Math.min(item.minutes+(item.duration||60),next);
+  if(nowMinutes>=item.minutes&&nowMinutes<end)return'current';
+  return nowMinutes>=end?'complete':'upcoming';
+}
+function timelinePriority(viewDate=selectedDate){
+  const items=timelineItemsForDate(viewDate);
+  if(!isWorkDayKey(viewDate))return{title:'No tracking day scheduled',meta:'Your metrics remain available for reference',items};
+  if(viewDate<todayKey())return{title:'Day complete',meta:`Final score ${completion(viewDate)}%`,items};
+  if(viewDate>todayKey())return{title:items[0]?.title||'Plan your day',meta:items[0]?`Starts ${timelineTimeLabel(items[0].minutes)}`:'No scheduled items',items};
+  const current=items.find((item,index)=>timelineStatus(item,index,items,viewDate)==='current');
+  const next=items.find((item,index)=>timelineStatus(item,index,items,viewDate)==='upcoming');
+  const d=dayData(viewDate),remaining=[];
+  if(d.calls<targets.calls)remaining.push(`${targets.calls-d.calls} calls`);
+  if(d.connects<targets.connects)remaining.push(`${targets.connects-d.connects} connects`);
+  if(d.data<targets.data)remaining.push(`${targets.data-d.data} data`);
+  if(current?.id==='prospecting')return{title:'Prospecting',meta:remaining.length?remaining.slice(0,2).join(' · '):'Core prospecting targets complete',items};
+  if(current?.id==='knocking')return{title:'Door Knock Focus',meta:knockRemainingText(Math.floor(liveKnockSeconds(d)/60),rollingKnockTarget(viewDate)),items};
+  if(current)return{title:current.title,meta:current.meta,items};
+  if(next)return{title:next.title,meta:`Starts ${timelineTimeLabel(next.minutes)} · ${next.meta}`,items};
+  return{title:'Day complete',meta:`Today finished at ${completion(viewDate)}%`,items};
+}
+function renderNowCard(){
+  const priority=timelinePriority(selectedDate);
+  if($('#nowCardTitle'))$('#nowCardTitle').textContent=priority.title;
+  if($('#nowCardMeta'))$('#nowCardMeta').textContent=priority.meta;
+}
+function renderTimeline(){
+  if(!$('#dailyTimeline'))return;
+  const priority=timelinePriority(selectedDate),items=priority.items;
+  $('#timelineDateLabel').textContent=fmtDate(selectedDate);
+  $('#timelineCurrentTitle').textContent=priority.title;
+  $('#timelineCurrentMeta').textContent=priority.meta;
+  $('#timelineSummary').textContent=`${items.filter(i=>i.kind==='appointment').length} appointment${items.filter(i=>i.kind==='appointment').length===1?'':'s'} · ${completion(selectedDate)}% complete`;
+  $('#dailyTimeline').innerHTML=items.length?items.map((item,index)=>{
+    const status=timelineStatus(item,index,items,selectedDate);
+    const marker=status==='complete'?'✓':status==='current'?'●':'○';
+    return `<article class="timeline-item ${status} ${item.kind}"><time>${escapeHtml(timelineTimeLabel(item.minutes))}</time><span class="timeline-marker">${marker}</span><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.meta)}</small></div></article>`;
+  }).join(''):'<div class="empty">Nothing scheduled for this date.</div>';
+}
+
 function renderAppointments(){
   const picker=$('#appointmentDatePicker');
   const locked=isPastDate(appointmentDate);
@@ -626,7 +700,7 @@ function levelClass(p){return p>=100?'l4':p>=67?'l3':p>=34?'l2':p>0?'l1':''}
 function renderMonth(){const y=monthCursor.getFullYear(),m=monthCursor.getMonth();$('#monthLabel').textContent=monthCursor.toLocaleDateString('en-AU',{month:'long',year:'numeric'});const vals=[];for(let d=1;d<=new Date(y,m+1,0).getDate();d++){const dt=new Date(y,m,d);if(workDays.includes(dt.getDay()))vals.push(completion(dateKey(dt)))}const groups=[];for(let i=0;i<vals.length;i+=4){const g=vals.slice(i,i+4);groups.push(Math.round(g.reduce((a,b)=>a+b,0)/Math.max(1,g.length)))}$('#monthBars').innerHTML=groups.map((p,i)=>`<div title="${p}%"><i style="height:${Math.max(3,p)}%"></i><small>W${i+1}</small></div>`).join('')}
 function renderCalendar(){const labels=['M','T','W','T','F','S','S'];$('#calendarYear').textContent=year;const months=[];for(let m=0;m<12;m++){const first=new Date(year,m,1),pad=(first.getDay()+6)%7;let cells=`<div class="weekday-row">${labels.map(x=>`<b>${x}</b>`).join('')}</div><div class="days">${'<i></i>'.repeat(pad)}`;for(let d=1;d<=new Date(year,m+1,0).getDate();d++){const dt=new Date(year,m,d),k=dateKey(dt),p=completion(k),off=!workDays.includes(dt.getDay());cells+=`<button class="day-cell ${levelClass(p)} ${off?'off':''} ${k===todayKey()?'today':''} ${k===selectedDate?'selected':''}" data-date="${k}" title="${fmtDate(k)} · ${p}%">${d}</button>`}cells+='</div>';months.push(`<section class="month"><h3>${new Date(year,m,1).toLocaleDateString('en-AU',{month:'long'})}</h3>${cells}</section>`)}$('#calendarGrid').innerHTML=months.join('')}
 function renderSettings(){const name=displayAgentName();$('#agentName').value=name;$('#callsTarget').value=targets.calls;$('#connectsTarget').value=targets.connects;$('#dataTarget').value=targets.data;$('#weeklyKnockTarget').value=targets.weeklyKnock;$$('[name=workDay]').forEach(el=>el.checked=workDays.includes(Number(el.value)));$$('[name=calendarPreference]').forEach(el=>el.checked=el.value===calendarPreference);$('#accountEmail').textContent=currentUser?.email||'Device-only mode';$('#modeNote').textContent=cloud?'Live sync is active. Use the same login on every device.':'Data is stored only on this device.';const initials=name.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]?.toUpperCase()||'').join('')||'A';if($('#profileAvatar'))$('#profileAvatar').textContent=initials;if($('#profileSyncState'))$('#profileSyncState').textContent=cloud?'Live sync active':'Device-only profile';if($('#profileTodayScore'))$('#profileTodayScore').textContent=`${completion(todayKey())}%`;if($('#profileWeekScore'))$('#profileWeekScore').textContent=`${weekSummary().score}%`;if($('#profileWorkDays'))$('#profileWorkDays').textContent=workDays.length}
-function renderAll(){renderToday();renderAppointments();renderInsights();renderSettings()}
+function renderAll(){renderToday();renderTimeline();renderAppointments();renderInsights();renderSettings()}
 
 async function startCloud(user){unsubDays?.();unsubProfile?.();unsubLeaderboard?.();currentUser=user;uid=user.uid;cloud=true;loadLocal(uid);await finaliseExpiredTimers();setSync('','Connecting');clearTimeout(syncTimer);syncTimer=setTimeout(()=>{if($('#syncBadge').dataset.label==='Connecting')setSync(navigator.onLine?'':'offline',navigator.onLine?'Connected':'Offline')},3500);unsubDays=onSnapshot(collection(db,'users',uid,'days'),{includeMetadataChanges:true},snap=>{snap.docChanges().forEach(ch=>{if(ch.type==='removed')delete days[ch.doc.id];else{const incoming=ch.doc.data();days[ch.doc.id]={...blankDay(),...incoming,appointments:incoming.appointments||[],events:incoming.events||[]}}});saveLocal();renderAll();ensureTick();clearTimeout(syncTimer);setSync(snap.metadata.fromCache&&!navigator.onLine?'offline':'live',snap.metadata.hasPendingWrites?'Saving':'Live')},err=>{console.error(err);setSync('error','Sync error');toast('Firestore access failed. Check rules and login.');showAuthMessage(err.message)});unsubProfile=onSnapshot(doc(db,'users',uid),snap=>{if(snap.exists()){const profile=snap.data();if(profile.targets)targets={...DEFAULTS,...profile.targets};if(Array.isArray(profile.workDays)&&profile.workDays.length)workDays=normaliseWorkDays(profile.workDays);if(profile.name)agentName=profile.name;saveLocal();renderAll();scheduleLeaderboardPublish()}},err=>console.error(err));unsubLeaderboard=onSnapshot(collection(db,'leaderboard'),{includeMetadataChanges:true},snap=>{leaderboardEntries=snap.docs.map(d=>({uid:d.id,...d.data()}));renderLeaderboard()},err=>{console.error('Leaderboard read failed',err);$('#leaderboardStatus').textContent='SYNC ERROR'});setSync(navigator.onLine?'live':'offline',navigator.onLine?'Live':'Offline');showApp();scheduleLeaderboardPublish()}
 function showApp(){$('#authGate').classList.add('hidden');$('#app').classList.remove('hidden');$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()}
@@ -654,7 +728,7 @@ function bindViewport(){
 }
 async function init(){bindViewport();loadLocal('local');await finaliseExpiredTimers();if(!configured()){showAuthMessage('Firebase is not configured. You can still use device-only mode.');return}try{const fb=initializeApp(firebaseConfig);auth=getAuth(fb);await setPersistence(auth,browserLocalPersistence);db=initializeFirestore(fb,{experimentalAutoDetectLongPolling:true,localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});onAuthStateChanged(auth,u=>{if(u){startCloud(u)}else{clearActiveSession();$('#app').classList.add('hidden');$('#authGate').classList.remove('hidden')}})}catch(err){console.error(err);showAuthMessage(err.message)}}
 function showAuthMessage(msg){$('#authMessage').textContent=msg}
-function switchView(id){$$('.tabbar button').forEach(b=>b.classList.toggle('active',b.dataset.view===id));$$('.view').forEach(v=>v.classList.toggle('active',v.id===id));updateTopbar(id);if(id==='appointmentsView')renderAppointments();if(id==='insightsView')renderInsights()}
+function switchView(id){$$('.tabbar button').forEach(b=>b.classList.toggle('active',b.dataset.view===id));$$('.view').forEach(v=>v.classList.toggle('active',v.id===id));updateTopbar(id);if(id==='scheduleView')renderTimeline();if(id==='appointmentsView')renderAppointments();if(id==='insightsView')renderInsights()}
 
 function shiftHeaderDate(delta){
   const id=activeViewId();
@@ -662,7 +736,7 @@ function shiftHeaderDate(delta){
     const d=parseKey(appointmentDate);d.setDate(d.getDate()+delta);appointmentDate=dateKey(d);
     $('#appointmentDatePicker').value=appointmentDate;renderAppointments();updateTopbar(id);return;
   }
-  if(id==='todayView'){
+  if(id==='todayView'||id==='scheduleView'){
     const d=parseKey(selectedDate);d.setDate(d.getDate()+delta);selectedDate=dateKey(d);appointmentDate=selectedDate;
     $('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick();
   }
@@ -674,7 +748,7 @@ $('#authForm').addEventListener('submit',async e=>{e.preventDefault();showAuthMe
 $('#createAccount').onclick=async()=>{try{await createUserWithEmailAndPassword(auth,$('#email').value,$('#password').value)}catch(err){showAuthMessage(err.message)}};
 $('#localMode').onclick=()=>{clearActiveSession();uid='local';loadLocal('local');setSync('offline','This device');showApp()};
 $$('[data-action]').forEach(b=>b.onclick=()=>changeMetric(b.dataset.metric,b.dataset.action==='plus'?1:-1));
-$('#timerButton').onclick=toggleTimer;$('#resetKnock').onclick=resetKnock;$('#previousDay').onclick=()=>shiftHeaderDate(-1);$('#nextDay').onclick=()=>shiftHeaderDate(1);$('#settingsShortcut').onclick=()=>switchView('settingsView');$('#homeShortcut').onclick=()=>switchView('todayView');$('#backToday').onclick=()=>{selectedDate=todayKey();appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()};
+$('#timerButton').onclick=toggleTimer;$('#openTodayTimeline').onclick=()=>switchView('scheduleView');$('#resetKnock').onclick=resetKnock;$('#previousDay').onclick=()=>shiftHeaderDate(-1);$('#nextDay').onclick=()=>shiftHeaderDate(1);$('#settingsShortcut').onclick=()=>switchView('settingsView');$('#homeShortcut').onclick=()=>switchView('todayView');$('#backToday').onclick=()=>{selectedDate=todayKey();appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()};
 $('.tabbar').onclick=e=>{const b=e.target.closest('button[data-view]');if(b)switchView(b.dataset.view)};
 $('.insights-switch').onclick=e=>{const b=e.target.closest('button[data-insights-page]');if(b)switchInsightsPage(b.dataset.insightsPage)};
 $('#weekPrev').onclick=()=>{leaderboardWeekOffset--;renderWeeklyLeaderboard()};

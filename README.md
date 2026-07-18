@@ -1,3 +1,19 @@
+# AGNT v1.32.0 — Daily Timeline
+
+Incremental update built from the confirmed working v1.31.1 package.
+
+## Added
+- A compact read-only **Now** card on Home.
+- A dedicated **Today** timeline tab generated from existing appointments and daily targets.
+- Current, completed and upcoming timeline states.
+- Existing appointments automatically appear in chronological order.
+- Generated prospecting, door knock, progress-check and wrap-up milestones.
+
+## Preserved
+Firebase, authentication, Firestore paths and rules, UID separation, appointment creation/editing/deletion/sorting, Outlook and Apple calendar export, calendar indicators, reminder logic, metric logging, local storage data structures, sync, analytics, icons and PWA installation behaviour. No Firebase or Firestore changes are required.
+
+---
+
 # AGNT v1.31.1 — Outlook Calendar Launch Fix
 
 Incremental update from the uploaded v1.30.0 package.

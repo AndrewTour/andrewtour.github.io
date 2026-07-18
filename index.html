@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.31.1">
+<link rel="stylesheet" href="styles.css?v=1.32.0">
 <title>AGNT</title>
 </head>
 <body>
@@ -76,6 +76,11 @@
           <strong id="leaderboardPosition">—</strong>
         </div>
         <div id="todayAtGlance" class="today-at-glance" aria-live="polite">Loading today’s focus…</div>
+        <button id="openTodayTimeline" class="now-card" type="button" aria-label="Open today timeline">
+          <span class="now-card-label">NOW</span>
+          <span class="now-card-copy"><strong id="nowCardTitle">Loading today…</strong><small id="nowCardMeta">Your next priority will appear here</small></span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+        </button>
       </section>
 
       <section class="metrics glass">
@@ -97,6 +102,19 @@
         </article>
       </section>
 
+    </section>
+
+    <section id="scheduleView" class="view today-timeline-view">
+      <div class="view-head timeline-view-head">
+        <div><span>TODAY</span><h2 id="timelineDateLabel"></h2></div>
+        <small id="timelineSummary">Your day at a glance</small>
+      </div>
+      <section class="timeline-overview glass">
+        <span class="timeline-overview-label">CURRENT PRIORITY</span>
+        <strong id="timelineCurrentTitle">Loading today…</strong>
+        <small id="timelineCurrentMeta">Your schedule will appear below.</small>
+      </section>
+      <section id="dailyTimeline" class="daily-timeline glass" aria-live="polite"></section>
     </section>
 
     <section id="appointmentsView" class="view">
@@ -238,6 +256,10 @@
 
   <nav class="tabbar glass">
     <button class="active" data-view="todayView">
+      <b class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m4 10 8-6 8 6"/><path d="M6.5 9.5V20h11V9.5"/><path d="M10 20v-6h4v6"/></svg></b>
+      <span>Home</span>
+    </button>
+    <button data-view="scheduleView">
       <b class="tab-icon tab-icon-today" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.25" fill="currentColor" stroke="none"/></svg></b>
       <span>Today</span>
     </button>
@@ -264,6 +286,6 @@
   </div>
 </div>
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=1.31.1"></script>
+<script type="module" src="app.js?v=1.32.0"></script>
 </body>
 </html>
