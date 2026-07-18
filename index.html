@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.39.0">
+<link rel="stylesheet" href="styles.css?v=2.0.0">
 <title>AGNT</title>
 </head>
 <body>
@@ -243,37 +243,68 @@
     </section>
 
 
-    <section id="prospectingView" class="view prospecting-view">
-      <div class="prospecting-toolbar glass">
-        <div class="prospecting-search-wrap">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
-          <input id="prospectSearch" type="search" placeholder="Search name, address or phone" autocomplete="off">
-        </div>
-        <button id="addProspectButton" class="prospecting-add" type="button" aria-label="Add prospect">+</button>
+    <section id="prospectingView" class="view prospecting-view prospector-v2">
+      <div class="prospector-brand-row">
+        <div><span class="prospector-eyebrow">AGNT PROSPECTOR</span><p>Remember everything. Know who’s next.</p></div>
+        <button id="addProspectButton" class="prospecting-add" type="button" aria-label="Add contact">+</button>
+      </div>
+      <div class="prospector-tabs" role="tablist" aria-label="Prospector sections">
+        <button class="active" type="button" data-prospector-tab="today">Today</button>
+        <button type="button" data-prospector-tab="contacts">Contacts</button>
+        <button type="button" data-prospector-tab="pipeline">Pipeline</button>
+        <button type="button" data-prospector-tab="health">Insights</button>
       </div>
 
       <div id="prospectingDashboard" class="prospecting-dashboard">
-        <section class="prospecting-hero glass">
-          <div><span>TODAY'S PIPELINE</span><strong id="prospectingDueCount">0</strong><small id="prospectingDueLabel">follow-ups ready</small></div>
-          <button id="startProspectingSession" class="primary" type="button">Start Session</button>
+        <section id="prospectorTodayPanel" class="prospector-panel active" data-prospector-panel="today">
+          <section class="prospector-focus glass">
+            <div class="prospector-focus-head"><div><span>TODAY’S FOCUS</span><h2 id="prospectingDueCount">0</h2><p id="prospectingDueLabel">contacts due today</p></div><div class="prospector-focus-orb" aria-hidden="true"></div></div>
+            <div class="prospector-focus-grid">
+              <button type="button" data-prospect-filter="today"><strong id="prospectingToday">0</strong><span>Due Today</span></button>
+              <button type="button" data-prospect-filter="overdue"><strong id="prospectingOverdue">0</strong><span>Overdue</span></button>
+              <button type="button" data-prospect-filter="hot"><strong id="prospectingHot">0</strong><span>Hot</span></button>
+              <button type="button" data-prospect-filter="appraisal"><strong id="prospectingAppraisal">0</strong><span>Appraisal</span></button>
+            </div>
+            <button id="startProspectingSession" class="primary prospector-start" type="button">Start Session</button>
+          </section>
+          <section class="prospecting-section glass prospector-next-five">
+            <div class="prospecting-section-head"><div><span>NEXT 5 CONTACTS</span><h3>Who needs you next</h3></div><button id="clearProspectFilter" class="text-btn" type="button">View all</button></div>
+            <div id="prospectQueue" class="prospect-list"></div>
+          </section>
+          <section class="prospector-momentum glass"><span>MOMENTUM</span><strong id="prospectorMomentumHeadline">Ready when you are.</strong><p id="prospectorMomentumCopy">Start a session and work the list one relationship at a time.</p></section>
         </section>
-        <section class="prospecting-stats" aria-label="Prospecting overview">
-          <button class="prospecting-stat glass" data-prospect-filter="overdue"><span>OVERDUE</span><strong id="prospectingOverdue">0</strong></button>
-          <button class="prospecting-stat glass" data-prospect-filter="today"><span>DUE TODAY</span><strong id="prospectingToday">0</strong></button>
-          <button class="prospecting-stat glass" data-prospect-filter="hot"><span>HOT</span><strong id="prospectingHot">0</strong></button>
+
+        <section class="prospector-panel" data-prospector-panel="contacts">
+          <div class="prospecting-toolbar glass">
+            <div class="prospecting-search-wrap"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg><input id="prospectSearch" type="search" placeholder="Search anything" autocomplete="off"></div>
+          </div>
+          <section class="prospecting-section glass">
+            <div class="prospecting-section-head"><div><span>CONTACTS</span><h3>Your relationships</h3></div><label class="prospect-import-button">Import CSV<input id="prospectCsvImport" type="file" accept=".csv,text/csv"></label></div>
+            <div id="prospectContactList" class="prospect-list"></div>
+          </section>
         </section>
-        <section class="prospecting-section glass">
-          <div class="prospecting-section-head"><div><span>PRIORITY QUEUE</span><h3>Who needs you next</h3></div><button id="clearProspectFilter" class="text-btn" type="button">View all</button></div>
-          <div id="prospectQueue" class="prospect-list"></div>
+
+        <section class="prospector-panel" data-prospector-panel="pipeline">
+          <section class="prospecting-section glass">
+            <div class="prospecting-section-head"><div><span>PIPELINE</span><h3>Move relationships forward</h3></div></div>
+            <div id="prospectorPipelineSegments" class="prospector-segments">
+              <button class="active" type="button" data-pipeline-stage="Nurture">Nurture</button><button type="button" data-pipeline-stage="Watching">Watching</button><button type="button" data-pipeline-stage="Likely">Likely</button><button type="button" data-pipeline-stage="Appraisal">Appraisal</button><button type="button" data-pipeline-stage="Listing">Listing</button>
+            </div>
+            <div id="prospectorPipelineList" class="prospect-list"></div>
+          </section>
         </section>
-        <section class="prospecting-section glass">
-          <div class="prospecting-section-head"><div><span>CONTACTS</span><h3>Your database</h3></div><label class="prospect-import-button">Import CSV<input id="prospectCsvImport" type="file" accept=".csv,text/csv"></label></div>
-          <div id="prospectContactList" class="prospect-list"></div>
+
+        <section class="prospector-panel" data-prospector-panel="health">
+          <section class="prospecting-section glass">
+            <div class="prospecting-section-head"><div><span>NEEDS ATTENTION</span><h3>Keep the database healthy</h3></div></div>
+            <div id="prospectorHealthList" class="prospector-health-list"></div>
+          </section>
         </section>
       </div>
 
       <section id="prospectDetail" class="prospect-detail hidden" aria-live="polite"></section>
       <section id="prospectingSession" class="prospecting-session hidden" aria-live="polite"></section>
+      <section id="prospectorImportSheet" class="prospector-import-sheet hidden" aria-live="polite"></section>
     </section>
 
     <section id="settingsView" class="view">
@@ -337,7 +368,7 @@
     </button>
     <button data-view="prospectingView">
       <b class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.25"/><path d="M3.5 19c.4-4 2.2-6 5.5-6s5.1 2 5.5 6"/><path d="M16 8h5M18.5 5.5v5"/><path d="M16 15h5M16 18h5"/></svg></b>
-      <span>Prospects</span>
+      <span>Prospector</span>
     </button>
     <button data-view="insightsView">
       <b class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 18.5h16"/><path d="M5.5 16l4.25-4.25 3.1 2.8L18.5 8.5"/><path d="M14.5 8.5h4v4"/></svg></b>
@@ -389,6 +420,6 @@
 </div>
 
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=1.38.9"></script>
+<script type="module" src="app.js?v=2.0.0"></script>
 </body>
 </html>
