@@ -602,29 +602,51 @@ async function updateAppointmentRecord(id,sourceDate,changes){
   d.appointments[index]={...d.appointments[index],...changes,updatedAt:Date.now()};
   days[sourceDate]=d;await saveDay(sourceDate);renderAll();
 }
-function followUpDateFromChoice(choice){
-  const d=new Date();
-  if(choice==='1')d.setDate(d.getDate()+1);
-  else if(choice==='2')d.setDate(d.getDate()+3);
-  else if(choice==='3')d.setDate(d.getDate()+7);
-  else if(/^\d{4}-\d{2}-\d{2}$/.test(choice||''))return choice;
-  else return null;
-  return dateKey(d);
+let pendingFollowUpAppointment=null;
+let pendingOutcomeAppointment=null;
+let selectedAppointmentOutcome='';
+
+function openActionModal(id){
+  const modal=$(id);if(!modal)return;
+  modal.classList.add('open');modal.setAttribute('aria-hidden','false');
 }
-async function setAppointmentFollowUp(id,sourceDate){
-  const choice=prompt('Follow-up due date:\n1 — Tomorrow\n2 — In 3 days\n3 — Next week\nOr enter YYYY-MM-DD');
-  if(choice===null)return;const followUpDate=followUpDateFromChoice(choice.trim());
-  if(!followUpDate)return toast('Enter 1, 2, 3 or a date in YYYY-MM-DD format');
+function closeActionModal(id){
+  const modal=$(id);if(!modal)return;
+  modal.classList.remove('open');modal.setAttribute('aria-hidden','true');
+}
+function defaultFollowUpDate(){const d=new Date();d.setDate(d.getDate()+1);return dateKey(d);}
+function setAppointmentFollowUp(id,sourceDate){
+  pendingFollowUpAppointment={id,sourceDate};
+  const input=$('#followUpDateInput');
+  input.min=todayKey();input.value=defaultFollowUpDate();
+  openActionModal('#followUpModal');
+  setTimeout(()=>{try{input.showPicker?.()}catch{}},180);
+}
+async function saveAppointmentFollowUp(){
+  if(!pendingFollowUpAppointment)return;
+  const followUpDate=$('#followUpDateInput').value;
+  if(!followUpDate)return toast('Choose a follow-up date');
+  const {id,sourceDate}=pendingFollowUpAppointment;
+  closeActionModal('#followUpModal');pendingFollowUpAppointment=null;
   await updateAppointmentRecord(id,sourceDate,{status:'follow-up',followUpDate,followedUpAt:null});toast('Follow-up scheduled');
 }
 async function markAppointmentFollowedUp(id,sourceDate){await updateAppointmentRecord(id,sourceDate,{status:'completed',followedUpAt:Date.now()});toast('Appointment marked followed up');}
-async function updateAppointmentOutcome(id,sourceDate){
-  const choice=prompt('Appointment outcome:\n1 — Still Nurturing\n2 — Price Update Booked\n3 — Listing Appointment Booked\n4 — Signed\n5 — Not Proceeding');
-  if(choice===null)return;const outcomes={'1':'Still Nurturing','2':'Price Update Booked','3':'Listing Appointment Booked','4':'Signed','5':'Not Proceeding'},outcome=outcomes[choice.trim()];
-  if(!outcome)return toast('Choose an outcome from 1 to 5');
-  const note=prompt('Optional note','')||'';
-  if(outcome==='Still Nurturing'){await updateAppointmentRecord(id,sourceDate,{outcome,outcomeNote:note,status:'follow-up',followedUpAt:Date.now()});await setAppointmentFollowUp(id,sourceDate);}
-  else{await updateAppointmentRecord(id,sourceDate,{outcome,outcomeNote:note,status:'completed',followedUpAt:Date.now(),followUpDate:null});toast('Appointment outcome saved');}
+function updateAppointmentOutcome(id,sourceDate){
+  pendingOutcomeAppointment={id,sourceDate};selectedAppointmentOutcome='';
+  $$('#outcomeOptions button').forEach(button=>button.classList.remove('selected'));
+  $('#outcomeNoteInput').value='';$('#saveAppointmentOutcome').disabled=true;
+  openActionModal('#outcomeModal');
+}
+async function saveSelectedAppointmentOutcome(){
+  if(!pendingOutcomeAppointment||!selectedAppointmentOutcome)return;
+  const {id,sourceDate}=pendingOutcomeAppointment,outcome=selectedAppointmentOutcome,note=$('#outcomeNoteInput').value.trim();
+  closeActionModal('#outcomeModal');pendingOutcomeAppointment=null;
+  if(outcome==='Still Nurturing'){
+    await updateAppointmentRecord(id,sourceDate,{outcome,outcomeNote:note,status:'follow-up',followedUpAt:Date.now()});
+    setAppointmentFollowUp(id,sourceDate);
+  }else{
+    await updateAppointmentRecord(id,sourceDate,{outcome,outcomeNote:note,status:'completed',followedUpAt:Date.now(),followUpDate:null});toast('Appointment outcome saved');
+  }
 }
 
 function renderAppointments(){
@@ -884,6 +906,14 @@ $('#scorecardPrev').onclick=()=>{scorecardWeekOffset--;renderScorecard()};$('#sc
 $('#appointmentDatePicker').onchange=()=>{};
 $('.appointment-filter').onclick=e=>{const b=e.target.closest('[data-appointment-filter]');if(!b)return;appointmentFilter=b.dataset.appointmentFilter;renderAppointments()};
 $('#appointmentForm').onsubmit=async e=>{e.preventDefault();const viewedDate=appointmentDate;const contactName=$('#appointmentContactName').value.trim(),contactNumber=$('#appointmentContactNumber').value.trim(),address=$('#appointmentAddress').value.trim(),date=$('#appointmentDatePicker').value,time=$('#appointmentTime').value,type=$('.appointment-types input:checked')?.value||'',error=$('#appointmentFormError');const missing=[];if(!contactName)missing.push('contact name');if(!contactNumber)missing.push('contact number');if(!address)missing.push('property address');if(!date)missing.push('booking date');if(!time)missing.push('booking time');if(!type)missing.push('appointment type');if(missing.length){error.textContent=`Add ${missing.join(', ')}`;error.classList.remove('hidden');return}error.textContent='';error.classList.add('hidden');const appointment=await addAppointment({contactName,contactNumber,address,date,time,type});if(appointment&&confirm(`Add to ${calendarPreference==='apple'?'Apple':'Outlook'} Calendar?`))exportAppointmentToCalendar(appointment,appointment.createdDate);e.target.reset();appointmentDate=viewedDate;$('#appointmentDatePicker').value=viewedDate;renderAppointments();updateTopbar('appointmentsView')};
+$('#saveFollowUpDate').onclick=saveAppointmentFollowUp;
+$$('[data-close-followup]').forEach(button=>button.onclick=()=>{closeActionModal('#followUpModal');pendingFollowUpAppointment=null;});
+$('#outcomeOptions').onclick=e=>{const button=e.target.closest('[data-outcome]');if(!button)return;selectedAppointmentOutcome=button.dataset.outcome;$$('#outcomeOptions button').forEach(item=>item.classList.toggle('selected',item===button));$('#saveAppointmentOutcome').disabled=false;};
+$('#saveAppointmentOutcome').onclick=saveSelectedAppointmentOutcome;
+$$('[data-close-outcome]').forEach(button=>button.onclick=()=>{closeActionModal('#outcomeModal');pendingOutcomeAppointment=null;selectedAppointmentOutcome='';});
+$('#followUpModal').onclick=e=>{if(e.target.id==='followUpModal'){closeActionModal('#followUpModal');pendingFollowUpAppointment=null;}};
+$('#outcomeModal').onclick=e=>{if(e.target.id==='outcomeModal'){closeActionModal('#outcomeModal');pendingOutcomeAppointment=null;selectedAppointmentOutcome='';}};
+
 $('#appointmentsList').onclick=e=>{
   const calendarButton=e.target.closest('[data-calendar-appointment]');
   if(calendarButton){

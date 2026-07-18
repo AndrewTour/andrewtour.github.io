@@ -294,7 +294,39 @@
     <div id="calendarGrid" class="calendar-grid"></div>
   </div>
 </div>
+<div id="followUpModal" class="modal action-sheet-modal" aria-hidden="true">
+  <div class="action-sheet glass" role="dialog" aria-modal="true" aria-labelledby="followUpModalTitle">
+    <div class="action-sheet-handle"></div>
+    <div class="action-sheet-head">
+      <div><small>FOLLOW-UP</small><h2 id="followUpModalTitle">Choose Follow-Up Date</h2></div>
+      <button type="button" class="action-sheet-close" data-close-followup aria-label="Close">×</button>
+    </div>
+    <p>Select the date you want this appointment to return for follow-up.</p>
+    <label class="native-date-field"><span>Follow-Up Date</span><input id="followUpDateInput" type="date"></label>
+    <div class="action-sheet-actions"><button type="button" class="secondary" data-close-followup>Cancel</button><button type="button" class="primary" id="saveFollowUpDate">Save Follow-Up</button></div>
+  </div>
+</div>
+
+<div id="outcomeModal" class="modal action-sheet-modal" aria-hidden="true">
+  <div class="action-sheet glass outcome-sheet" role="dialog" aria-modal="true" aria-labelledby="outcomeModalTitle">
+    <div class="action-sheet-handle"></div>
+    <div class="action-sheet-head">
+      <div><small>APPOINTMENT</small><h2 id="outcomeModalTitle">Update Outcome</h2></div>
+      <button type="button" class="action-sheet-close" data-close-outcome aria-label="Close">×</button>
+    </div>
+    <div class="outcome-options" id="outcomeOptions">
+      <button type="button" data-outcome="Still Nurturing"><span>Still Nurturing</span><i>Continue Follow-Up</i></button>
+      <button type="button" data-outcome="Price Update Booked"><span>Price Update Booked</span><i>Progressed To Price Update</i></button>
+      <button type="button" data-outcome="Listing Appointment Booked"><span>Listing Appointment Booked</span><i>Progressed To Listing Appointment</i></button>
+      <button type="button" data-outcome="Signed"><span>Signed</span><i>Listing Secured</i></button>
+      <button type="button" data-outcome="Not Proceeding"><span>Not Proceeding</span><i>Close Appointment</i></button>
+    </div>
+    <label class="outcome-note-field"><span>Optional Note</span><textarea id="outcomeNoteInput" rows="3" placeholder="Add a short follow-up note"></textarea></label>
+    <div class="action-sheet-actions"><button type="button" class="secondary" data-close-outcome>Cancel</button><button type="button" class="primary" id="saveAppointmentOutcome" disabled>Save Outcome</button></div>
+  </div>
+</div>
+
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=1.34.0"></script>
+<script type="module" src="app.js?v=1.36.2"></script>
 </body>
 </html>
