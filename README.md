@@ -109,3 +109,13 @@ Appointment follow-up information is stored as optional fields on existing appoi
 - Preserved Calendar Management and Plan Ahead for the end-of-day workflow.
 - Daily Timeline structure, titles, order, UI and timing remain unchanged.
 - No Firebase, Firestore, authentication, storage or data migration changes.
+
+
+## v1.38.4 — Unified Leaderboard
+- Merged the separate Daily and Weekly leaderboard cards into one larger stack.
+- Added Day and Week tabs, with Day selected first.
+- Added previous, current and next navigation controls to the Daily leaderboard.
+- Preserved Weekly history navigation.
+- Refined leaderboard rows with clearer metric progress while retaining the existing AGNT design language.
+- Extended the leaderboard stack to use the available space above the bottom navigation.
+- No Firebase rules, authentication, UID separation or unrelated app functionality changed.

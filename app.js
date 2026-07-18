@@ -8,7 +8,7 @@ const DEFAULT_WORK_DAYS=[1,2,4,5];
 let workDays=[...DEFAULT_WORK_DAYS];
 const CALL_PLAN=[[9,'Active Buyer Calls','Hot buyers, offers, contracts and second inspections'],[10,'Past OFI Calls','Recent attendees, missed callbacks and buyer feedback'],[11,'Pipeline Calls','Current sellers, warm leads and next-step conversations'],[12,'Past Appraisals','Owners with a likely 3–12 month move'],[13,'Database Reconnects','Long-term owners and dormant contacts'],[14,'Just Listed & Coming Soon','Buyers, neighbours and local owner awareness'],[15,'Just Sold Calls','Result calls and nearby owner follow-up'],[16,'Priority Follow-Up','Offers, appointments and tomorrow’s pipeline']];
 const DEFAULTS={calls:50,connects:25,data:10,weeklyKnock:240};
-let targets={...DEFAULTS}, days={}, selectedDate=dateKey(new Date()), appointmentDate=selectedDate, appointmentHistoryMode=null, agentName='', calendarPreference='outlook', leaderboardEntries=[], leaderboardWeekOffset=0, scorecardWeekOffset=0;
+let targets={...DEFAULTS}, days={}, selectedDate=dateKey(new Date()), appointmentDate=selectedDate, appointmentHistoryMode=null, agentName='', calendarPreference='outlook', leaderboardEntries=[], leaderboardMode='day', leaderboardDayOffset=0, leaderboardWeekOffset=0, scorecardWeekOffset=0;
 let year=new Date().getFullYear(), monthCursor=new Date(), uid='local', currentUser=null, cloud=false, db=null, auth=null;
 let unsubDays=null, unsubProfile=null, unsubLeaderboard=null, timerTick=null, syncTimer=null, leaderboardPublishTimer=null;
 const daySaveChains=new Map();
@@ -110,11 +110,15 @@ async function saveDay(k,{quiet=false}={}){
 async function saveTargets(){saveLocal();if(!cloud)return;setSync('','Saving');try{await setDoc(doc(db,'users',uid),{targets,workDays:[...workDays],name:displayAgentName(),email:currentUser?.email||'',updatedAt:serverTimestamp()},{merge:true});scheduleLeaderboardPublish();setSync('live','Live')}catch(err){console.error(err);setSync('error','Sync error');toast('Targets saved locally. Cloud sync failed.')}}
 function addEvent(d,type,label,delta=0){d.events.push({id:uuid(),type,label,delta,at:Date.now()});d.events=d.events.slice(-500)}
 
+function dailyLeaderboardRecord(k){
+  const d=dayData(k),knockMinutes=Math.floor(liveKnockSeconds(d)/60),knockTarget=rollingKnockTarget(k);
+  return{calls:d.calls,connects:d.connects,data:d.data,knockMinutes,score:completion(k),targets:{calls:targets.calls,connects:targets.connects,data:targets.data,knock:knockTarget}};
+}
 function recentDailyHistory(count=21){
   const history={},d=new Date();
   for(let i=0;i<60&&Object.keys(history).length<count;i++){
     const k=dateKey(d);
-    if(workDays.includes(d.getDay()))history[k]=completion(k);
+    if(workDays.includes(d.getDay()))history[k]=dailyLeaderboardRecord(k);
     d.setDate(d.getDate()-1);
   }
   return history;
@@ -883,8 +887,9 @@ async function deleteAppointment(id,sourceDate=appointmentDate){
 
 
 function sortedTodayLeaderboard(){
-  return leaderboardEntries.filter(x=>x.date===todayKey()&&x.activeToday!==false).sort((a,b)=>(b.score||0)-(a.score||0)||(b.calls||0)-(a.calls||0)||(b.connects||0)-(a.connects||0)||(b.data||0)-(a.data||0));
+  return leaderboardEntries.filter(x=>x.date===todayKey()&&x.activeToday!==false).sort(sortLeaderboardRows);
 }
+function sortLeaderboardRows(a,b){return (b.score||0)-(a.score||0)||(b.calls||0)-(a.calls||0)||(b.connects||0)-(a.connects||0)||(b.data||0)-(a.data||0)}
 function renderLeaderboardPosition(){
   const position=$('#leaderboardPosition'),meta=$('#leaderboardPositionMeta');
   if(!position||!meta)return;
@@ -895,25 +900,54 @@ function renderLeaderboardPosition(){
   position.textContent=`#${index+1}`;
   meta.textContent=`${me.score||0}% complete · ${rows.length} agent${rows.length===1?'':'s'} ranked`;
 }
+function selectedLeaderboardDayDate(){const d=new Date();d.setDate(d.getDate()+leaderboardDayOffset);return d}
+function selectedLeaderboardDayKey(){return dateKey(selectedLeaderboardDayDate())}
 function selectedLeaderboardWeekDate(){return weekDateFromOffset(leaderboardWeekOffset)}
 function selectedLeaderboardWeekKey(){return weekKeyFromDate(selectedLeaderboardWeekDate())}
 function formatWeekRange(base){const start=mondayOf(base),end=new Date(start);end.setDate(start.getDate()+6);return `${start.toLocaleDateString('en-AU',{day:'numeric',month:'short'})}–${end.toLocaleDateString('en-AU',{day:'numeric',month:'short'})}`}
+function normaliseDailyLeaderboardEntry(entry,key){
+  if(key===todayKey()&&entry.date===key)return{uid:entry.uid,name:entry.name,email:entry.email,calls:entry.calls||0,connects:entry.connects||0,data:entry.data||0,knockMinutes:entry.knockMinutes||0,score:entry.score||0,targets:entry.targets||{}};
+  const saved=entry.dailyHistory?.[key];
+  if(saved==null)return null;
+  if(typeof saved==='number')return{uid:entry.uid,name:entry.name,email:entry.email,calls:null,connects:null,data:null,knockMinutes:null,score:saved,targets:{}};
+  return{uid:entry.uid,name:entry.name,email:entry.email,calls:saved.calls??null,connects:saved.connects??null,data:saved.data??null,knockMinutes:saved.knockMinutes??null,score:saved.score||0,targets:saved.targets||{}};
+}
+function dailyLeaderboardRows(){const key=selectedLeaderboardDayKey();return leaderboardEntries.map(entry=>normaliseDailyLeaderboardEntry(entry,key)).filter(Boolean).sort(sortLeaderboardRows)}
 function weeklyLeaderboardRows(){
   const wk=selectedLeaderboardWeekKey();
-  return leaderboardEntries.map(entry=>{const w=entry.weekHistory?.[wk];return w?{uid:entry.uid,name:entry.name,email:entry.email,...w}:null}).filter(Boolean).sort((a,b)=>(b.score||0)-(a.score||0)||(b.calls||0)-(a.calls||0)||(b.connects||0)-(a.connects||0)||(b.data||0)-(a.data||0));
+  return leaderboardEntries.map(entry=>{const w=entry.weekHistory?.[wk];return w?{uid:entry.uid,name:entry.name,email:entry.email,...w}:null}).filter(Boolean).sort(sortLeaderboardRows);
 }
 function metricLabel(key){return({calls:'Calls',connects:'Connects',data:'Data',knocking:'Knocking'})[key]||'Calls'}
-function renderWeeklyLeaderboard(){
-  const rows=weeklyLeaderboardRows(),base=selectedLeaderboardWeekDate();
-  $('#weeklyLeaderboardDate').textContent=`Week ${formatWeekRange(base)}`;
-  $('#weeklyLeaderboardList').innerHTML=rows.length?rows.map((r,i)=>{const t=r.targets||{};return `<article class="leaderboard-row ${r.uid===uid?'me':''}"><b class="rank">${i+1}</b><div class="agent"><strong>${escapeHtml(r.name||r.email?.split('@')[0]||'Agent')}</strong>${r.uid===uid?'<small>You</small>':''}</div><span>${r.calls||0}<small>/${t.calls||0}</small></span><span>${r.connects||0}<small>/${t.connects||0}</small></span><span>${r.data||0}<small>/${t.data||0}</small></span><span>${r.knockMinutes||0}<small>m</small></span><em>${r.score||0}%</em></article>`}).join(''):`<div class="empty">No team data is available for this week yet.</div>`;
-  $('#improvementList').innerHTML=rows.length?rows.map(r=>{const metric=metricLabel(r.weakestMetric),value=r.weakestPct||0,gap=Math.max(0,100-value);return `<article class="improvement-row ${r.uid===uid?'me':''}"><div><strong>${escapeHtml(r.name||r.email?.split('@')[0]||'Agent')}</strong><small>${metric} is the lowest-performing metric</small></div><span>${value}%</span><em>${gap?`${gap}% gap`:'On target'}</em></article>`}).join(''):`<div class="empty">Improvement areas will appear once weekly activity is logged.</div>`;
-  $('#weekNext').disabled=leaderboardWeekOffset>=0;
+function metricCell(value,target,suffix=''){
+  if(value==null)return `<span class="leaderboard-metric-cell unavailable"><strong>—</strong><small>Not saved</small></span>`;
+  const safeTarget=Number(target)||0,p=safeTarget?Math.max(0,Math.min(100,Math.round((Number(value)||0)/safeTarget*100))):0;
+  return `<span class="leaderboard-metric-cell"><strong>${value}${suffix}</strong><small>${safeTarget?`/${safeTarget}${suffix}`:''}</small><i><b style="width:${p}%"></b></i></span>`;
 }
+function leaderboardRowHtml(r,i,weekly=false){
+  const t=r.targets||{},score=Math.max(0,Math.min(100,r.score||0));
+  return `<article class="leaderboard-row leaderboard-row-expanded ${r.uid===uid?'me':''}">
+    <b class="rank">${i+1}</b>
+    <div class="agent"><strong>${escapeHtml(r.name||r.email?.split('@')[0]||'Agent')}</strong>${r.uid===uid?'<small>You</small>':''}<i class="leaderboard-mini-progress"><span style="width:${score}%"></span></i></div>
+    ${metricCell(r.calls,t.calls)}${metricCell(r.connects,t.connects)}${metricCell(r.data,t.data)}${metricCell(r.knockMinutes,t.knock,'m')}
+    <em>${r.score||0}%<small>${weekly?'Week':'Day'}</small></em>
+  </article>`;
+}
+function renderUnifiedLeaderboard(){
+  const isWeek=leaderboardMode==='week',rows=isWeek?weeklyLeaderboardRows():dailyLeaderboardRows();
+  $('#leaderboardDayTab').classList.toggle('active',!isWeek);$('#leaderboardWeekTab').classList.toggle('active',isWeek);
+  $('#leaderboardDayTab').setAttribute('aria-selected',String(!isWeek));$('#leaderboardWeekTab').setAttribute('aria-selected',String(isWeek));
+  $('#dayHistoryControls').classList.toggle('hidden',isWeek);$('#weekHistoryControls').classList.toggle('hidden',!isWeek);
+  $('#leaderboardPeriodLabel').textContent=isWeek?'WEEKLY LEADERBOARD':'DAILY LEADERBOARD';
+  $('#leaderboardDate').textContent=isWeek?`Week ${formatWeekRange(selectedLeaderboardWeekDate())}`:fmtDate(selectedLeaderboardDayKey());
+  $('#leaderboardList').innerHTML=rows.length?rows.map((r,i)=>leaderboardRowHtml(r,i,isWeek)).join(''):`<div class="empty">No team data is available for this ${isWeek?'week':'day'} yet.</div>`;
+  $('#leaderboardNote').textContent=isWeek?'Ranked by weekly overall completion. Use the arrows to review prior weeks.':'Ranked by daily overall completion. Use the arrows to review prior days.';
+  $('#dayNext').disabled=leaderboardDayOffset>=0;$('#dayToday').disabled=leaderboardDayOffset===0;$('#weekNext').disabled=leaderboardWeekOffset>=0;
+}
+function renderWeeklyLeaderboard(){renderUnifiedLeaderboard()}
 function leaderboardMomentum(entry){
   const prevKey=previousScheduledKey(todayKey(),entry.workDays||workDays);
   if(!prevKey)return{diff:0,label:'—',className:'flat'};
-  const prev=Number(entry.dailyHistory?.[prevKey]);
+  const raw=entry.dailyHistory?.[prevKey],prev=typeof raw==='number'?raw:Number(raw?.score);
   if(!Number.isFinite(prev))return{diff:0,label:'—',className:'flat'};
   const diff=(entry.score||0)-prev;
   return{diff,label:diff>0?`▲ ${diff}%`:diff<0?`▼ ${Math.abs(diff)}%`:'• 0%',className:diff>0?'up':diff<0?'down':'flat'};
@@ -949,15 +983,9 @@ function renderMondayReview(){
   $('#mondayReviewText').textContent=`Strongest: ${metricLabel(strongest[0])} ${strongest[1]}% · Improve: ${metricLabel(weakest[0])} ${weakest[1]}%`;
 }
 function renderLeaderboard(){
-  const date=todayKey();
-  $('#leaderboardDate').textContent=fmtDate(date);
-  const rows=sortedTodayLeaderboard();
+  const date=todayKey(),rows=sortedTodayLeaderboard();
   $('#leaderboardStatus').textContent=cloud?'LIVE':'DEVICE ONLY';
-  const meIndex=rows.findIndex(r=>r.uid===uid);
-  const me=meIndex>=0?rows[meIndex]:null;
-  const myScore=me?.score??completion(date);
-  const leaderScore=rows[0]?.score||0;
-  const gap=rows.length?Math.max(0,leaderScore-myScore):0;
+  const meIndex=rows.findIndex(r=>r.uid===uid),me=meIndex>=0?rows[meIndex]:null,myScore=me?.score??completion(date),leaderScore=rows[0]?.score||0,gap=rows.length?Math.max(0,leaderScore-myScore):0;
   if($('#leaderboardRing'))$('#leaderboardRing').style.setProperty('--score',Math.max(0,Math.min(100,myScore)));
   if($('#leaderboardHeroScore'))$('#leaderboardHeroScore').textContent=`${myScore}%`;
   if($('#leaderboardHeroRank'))$('#leaderboardHeroRank').textContent=meIndex>=0?`#${meIndex+1}`:'—';
@@ -965,20 +993,8 @@ function renderLeaderboard(){
   if($('#leaderboardAgentCount'))$('#leaderboardAgentCount').textContent=rows.length;
   if($('#leaderboardTopScore'))$('#leaderboardTopScore').textContent=`${leaderScore}%`;
   if($('#leaderboardGap'))$('#leaderboardGap').textContent=rows.length?(gap?`${gap}%`:'Leading'):'—';
-  $('#leaderboardList').innerHTML=rows.length?rows.map((r,i)=>{
-    const t=r.targets||{};
-    const momentum=leaderboardMomentum(r);
-    const score=Math.max(0,Math.min(100,r.score||0));
-    return `<article class="leaderboard-row leaderboard-row-dashboard ${r.uid===uid?'me':''}">
-      <b class="rank">${i+1}</b>
-      <div class="agent"><strong>${escapeHtml(r.name||r.email?.split('@')[0]||'Agent')}</strong>${r.uid===uid?'<small>You</small>':''}<i class="leaderboard-mini-progress"><span style="width:${score}%"></span></i></div>
-      <span>${r.calls||0}<small>/${t.calls||50}</small></span><span>${r.connects||0}<small>/${t.connects||25}</small></span><span>${r.data||0}<small>/${t.data||10}</small></span><span>${r.knockMinutes||0}<small>m</small></span><em>${r.score||0}%<small class="momentum ${momentum.className}">${momentum.label}</small></em>
-    </article>`
-  }).join(''):`<div class="empty">No agents have logged activity today.</div>`;
-  renderLeaderboardPosition();
-  renderWeeklyLeaderboard();
+  renderUnifiedLeaderboard();renderLeaderboardPosition();
 }
-
 
 function scorecardWeekDate(){return weekDateFromOffset(scorecardWeekOffset)}
 function scorecardGrade(score){return score>=100?'A+':score>=95?'A':score>=90?'A−':score>=80?'B':score>=70?'C':'Needs Attention'}
@@ -1122,9 +1138,13 @@ $$('[data-action]').forEach(b=>b.onclick=()=>changeMetric(b.dataset.metric,b.dat
 $('#timerButton').onclick=toggleTimer;$('#openTodayTimeline').onclick=()=>switchView('scheduleView');$('#resetKnock').onclick=resetKnock;$('#previousDay').onclick=()=>shiftHeaderDate(-1);$('#nextDay').onclick=()=>shiftHeaderDate(1);$('#settingsShortcut').onclick=()=>switchView('settingsView');$('#homeShortcut').onclick=()=>switchView('todayView');$('#backToday').onclick=()=>{selectedDate=todayKey();appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()};
 $('.tabbar').onclick=e=>{const b=e.target.closest('button[data-view]');if(b)switchView(b.dataset.view)};
 $('.insights-switch').onclick=e=>{const b=e.target.closest('button[data-insights-page]');if(b)switchInsightsPage(b.dataset.insightsPage)};
-$('#weekPrev').onclick=()=>{leaderboardWeekOffset--;renderWeeklyLeaderboard()};
-$('#weekNext').onclick=()=>{if(leaderboardWeekOffset<0)leaderboardWeekOffset++;renderWeeklyLeaderboard()};
-$('#weekLast').onclick=()=>{leaderboardWeekOffset=-1;renderWeeklyLeaderboard()};
+document.querySelector('.leaderboard-mode-tabs').onclick=e=>{const b=e.target.closest('[data-leaderboard-mode]');if(!b)return;leaderboardMode=b.dataset.leaderboardMode==='week'?'week':'day';renderUnifiedLeaderboard()};
+$('#dayPrev').onclick=()=>{leaderboardDayOffset--;renderUnifiedLeaderboard()};
+$('#dayNext').onclick=()=>{if(leaderboardDayOffset<0)leaderboardDayOffset++;renderUnifiedLeaderboard()};
+$('#dayToday').onclick=()=>{leaderboardDayOffset=0;renderUnifiedLeaderboard()};
+$('#weekPrev').onclick=()=>{leaderboardWeekOffset--;renderUnifiedLeaderboard()};
+$('#weekNext').onclick=()=>{if(leaderboardWeekOffset<0)leaderboardWeekOffset++;renderUnifiedLeaderboard()};
+$('#weekLast').onclick=()=>{leaderboardWeekOffset=-1;renderUnifiedLeaderboard()};
 $('#scorecardPrev').onclick=()=>{scorecardWeekOffset--;renderScorecard()};$('#scorecardNext').onclick=()=>{if(scorecardWeekOffset<0)scorecardWeekOffset++;renderScorecard()};
 $('#appointmentDatePicker').onchange=()=>{};
 document.querySelector('.appointment-destination-grid').onclick=e=>{const b=e.target.closest('[data-open-appointment-history]');if(!b)return;setAppointmentHistoryScreen(b.dataset.openAppointmentHistory)};

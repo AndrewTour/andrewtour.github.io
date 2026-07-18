@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.38.3">
+<link rel="stylesheet" href="styles.css?v=1.38.4">
 <title>AGNT</title>
 </head>
 <body>
@@ -217,27 +217,26 @@
             <article><span>Gap</span><strong id="leaderboardGap">—</strong></article>
           </div>
         </section>
-        <section class="leaderboard-card glass">
-          <div class="leaderboard-head">
-            <div><span>DAILY LEADERBOARD</span><h2 id="leaderboardDate"></h2></div>
-            <div id="leaderboardStatus" class="leaderboard-live">LIVE</div>
+        <section class="leaderboard-card leaderboard-unified-card glass">
+          <div class="leaderboard-mode-tabs" role="tablist" aria-label="Leaderboard period">
+            <button id="leaderboardDayTab" class="active" type="button" role="tab" aria-selected="true" data-leaderboard-mode="day">Day</button>
+            <button id="leaderboardWeekTab" type="button" role="tab" aria-selected="false" data-leaderboard-mode="week">Week</button>
+          </div>
+          <div class="leaderboard-head leaderboard-unified-head">
+            <div><span id="leaderboardPeriodLabel">DAILY LEADERBOARD</span><h2 id="leaderboardDate"></h2></div>
+            <div class="leaderboard-head-actions">
+              <div id="leaderboardStatus" class="leaderboard-live">LIVE</div>
+              <div id="dayHistoryControls" class="week-history-controls leaderboard-period-controls">
+                <button id="dayPrev" type="button" aria-label="Previous day">‹</button><button id="dayToday" type="button">Today</button><button id="dayNext" type="button" aria-label="Next day">›</button>
+              </div>
+              <div id="weekHistoryControls" class="week-history-controls leaderboard-period-controls hidden">
+                <button id="weekPrev" type="button" aria-label="Previous week">‹</button><button id="weekLast" type="button">Last week</button><button id="weekNext" type="button" aria-label="Next week">›</button>
+              </div>
+            </div>
           </div>
           <div class="leaderboard-columns" aria-hidden="true"><span></span><span>Agent</span><span>Calls</span><span>Connects</span><span>Data</span><span>Knock</span><span>Score</span></div>
-          <div id="leaderboardList" class="leaderboard-list"><div class="empty">Waiting for team data…</div></div>
-          <p class="leaderboard-note">Ranked by today’s overall completion percentage. Updates appear live as each agent logs activity.</p>
-        </section>
-        <section class="leaderboard-card glass weekly-leaderboard-card">
-          <div class="leaderboard-head">
-            <div><span>WEEKLY LEADERBOARD</span><h2 id="weeklyLeaderboardDate"></h2></div>
-            <div class="week-history-controls"><button id="weekPrev" type="button" aria-label="Previous week">‹</button><button id="weekLast" type="button">Last week</button><button id="weekNext" type="button" aria-label="Next week">›</button></div>
-          </div>
-          <div class="leaderboard-columns" aria-hidden="true"><span></span><span>Agent</span><span>Calls</span><span>Connects</span><span>Data</span><span>Knock</span><span>Score</span></div>
-          <div id="weeklyLeaderboardList" class="leaderboard-list"><div class="empty">Waiting for weekly team data…</div></div>
-          <p class="leaderboard-note">Use the arrows to review prior weeks during Monday meetings.</p>
-        </section>
-        <section class="improvement-card glass">
-          <div class="leaderboard-head"><div><span>IMPROVEMENT FOCUS</span><h2>Lowest metric by agent</h2></div></div>
-          <div id="improvementList" class="improvement-list"><div class="empty">Waiting for weekly team data…</div></div>
+          <div id="leaderboardList" class="leaderboard-list leaderboard-unified-list"><div class="empty">Waiting for team data…</div></div>
+          <p id="leaderboardNote" class="leaderboard-note">Ranked by daily overall completion percentage.</p>
         </section>
       </div>
     </section>
@@ -351,6 +350,6 @@
 </div>
 
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=1.38.3"></script>
+<script type="module" src="app.js?v=1.38.4"></script>
 </body>
 </html>
