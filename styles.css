@@ -2728,3 +2728,17 @@ button:not(:disabled):active,.file-btn:active{
 }
 .appointment-delete:active{transform:scale(.94);background:rgba(220,64,64,.12)!important;color:#d84b4b!important}
 .appointment-card-premium .appointment-card-top{padding-right:30px}
+
+
+/* v1.37.6 — simplified, colour-coded appointment outcomes */
+.outcome-options .outcome-option{--outcome-color:var(--blue);--outcome-bg:rgba(52,119,255,.09);--outcome-border:rgba(52,119,255,.28)}
+.outcome-options .outcome-option.outcome-blue{--outcome-color:#2878ff;--outcome-bg:rgba(40,120,255,.10);--outcome-border:rgba(40,120,255,.30)}
+.outcome-options .outcome-option.outcome-green{--outcome-color:#0ca66c;--outcome-bg:rgba(12,166,108,.11);--outcome-border:rgba(12,166,108,.30)}
+.outcome-options .outcome-option.outcome-amber{--outcome-color:#b76b00;--outcome-bg:rgba(255,159,10,.12);--outcome-border:rgba(255,159,10,.34)}
+.outcome-options .outcome-option.outcome-red{--outcome-color:#d84b4b;--outcome-bg:rgba(216,75,75,.10);--outcome-border:rgba(216,75,75,.30)}
+.outcome-options .outcome-option.selected{border-color:var(--outcome-color);background:var(--outcome-bg);box-shadow:inset 0 0 0 1px var(--outcome-color)}
+.outcome-options .outcome-option.selected:after{background:var(--outcome-color)}
+.appointment-outcome-action.has-outcome.outcome-blue{background:rgba(40,120,255,.14)!important;color:#2878ff!important;border-color:rgba(40,120,255,.24)!important}
+.appointment-outcome-action.has-outcome.outcome-green{background:rgba(12,166,108,.14)!important;color:#0ca66c!important;border-color:rgba(12,166,108,.24)!important}
+.appointment-outcome-action.has-outcome.outcome-amber{background:rgba(255,159,10,.15)!important;color:#a86100!important;border-color:rgba(255,159,10,.28)!important}
+.appointment-outcome-action.has-outcome.outcome-red{background:rgba(216,75,75,.13)!important;color:#cf3f3f!important;border-color:rgba(216,75,75,.25)!important}

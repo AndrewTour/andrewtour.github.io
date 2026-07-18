@@ -57,3 +57,11 @@ Appointment follow-up information is stored as optional fields on existing appoi
 - Added a compact delete control to daily log, past appointments and upcoming appointments.
 - Deletion requires confirmation and removes the appointment, follow-up state, calendar tracking state and timeline reminder without changing daily metrics.
 - No Firebase configuration, path or rules changes.
+
+
+## v1.37.6
+- Simplified appointment outcomes to Still Nurturing, Listed, Not Proceeding and Missed.
+- Renamed the previous Signed display state to Listed while retaining compatibility with existing records.
+- Added outcome colours: blue, green, amber and red respectively.
+- Removed Price Update Booked and Listing Appointment Booked from the outcome selector without deleting historical appointment data.
+- No Firebase, appointment history, follow-up, calendar, timeline, logging or sync changes.
