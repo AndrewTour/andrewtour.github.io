@@ -91,3 +91,13 @@ Appointment follow-up information is stored as optional fields on existing appoi
 - Appointment preparation, scheduled follow-ups, prospecting, door knocking, progress review and wrap-up map to their existing timeline entries.
 - No timeline markup, styling, layout or visual design changes.
 - No Firebase configuration, rules, paths or migration changes.
+
+
+## v1.38.2 — Flowing Timeline Focus
+- Combined the separate home Focus Now prompt with the existing Timeline click-through card.
+- Removed the standalone Focus Now heading without redesigning the Timeline card or timeline screen.
+- Added a rolling 15-minute prospecting momentum window for positive Calls, Connects and Data activity.
+- Active prospecting sessions now receive steady momentum coaching instead of changing direction after each individual entry.
+- Core prioritisation now respects Calls → Connects → Data, while still allowing a materially behind metric to recover based on its existing pace timing.
+- Existing appointment, follow-up, 2:00pm knocking, progress-check and wrap-up timing rules remain unchanged.
+- No Firebase configuration, rules, paths or migration changes.

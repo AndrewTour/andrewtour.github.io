@@ -389,10 +389,6 @@ function renderToday(){
   $$('[data-action], #timerButton, #resetKnock').forEach(el=>{el.disabled=locked;el.setAttribute('aria-disabled',String(locked))});
   renderDayTrend();
   renderLeaderboardPosition();
-  if($('#todayAtGlance')){
-    const guidance=todayGuidance().replace(/^Focus Now:\s*/i,'');
-    $('#todayAtGlance').innerHTML=`<span class="focus-primary">Focus Now: ${escapeHtml(guidance)}</span>`;
-  }
   if($('#momentumWhisper'))$('#momentumWhisper').textContent=momentumWhisper();
   renderNowCard();
 }
@@ -564,6 +560,34 @@ function coachingMetricState(viewDate=selectedDate){
   ].map(m=>({...m,remaining:Math.max(0,m.target-m.value),progress:pct(m.value,m.target)}));
   return{d,knockTarget,knockMinutes,knockRemaining:Math.max(0,knockTarget-knockMinutes),metrics,incomplete:metrics.filter(m=>m.remaining>0)};
 }
+function activeProspectingMomentum(viewDate=selectedDate,now=Date.now()){
+  if(viewDate!==todayKey())return null;
+  const d=dayData(viewDate),windowMs=15*60*1000,events=(d.events||[]).filter(event=>{
+    const at=Number(event?.at)||0;
+    return ['calls','connects','data'].includes(event?.type)&&Number(event?.delta)>0&&now-at<=windowMs;
+  });
+  if(events.length<2)return null;
+  const counts={calls:0,connects:0,data:0};
+  events.forEach(event=>{counts[event.type]+=Math.max(1,Number(event.delta)||1)});
+  const active=Object.entries(counts).filter(([,value])=>value>0).map(([key])=>key);
+  const labels={calls:'calls',connects:'connects',data:'data'};
+  const detail=active.map(key=>labels[key]).join(active.length>1?' and ':', ');
+  return{events:events.length,counts,active,detail,lastAt:Math.max(...events.map(event=>Number(event.at)||0))};
+}
+function balancedCorePriority(state,now){
+  const order=['calls','connects','data'];
+  const incomplete=order.map(key=>state.metrics.find(metric=>metric.key===key)).filter(metric=>metric&&metric.remaining>0);
+  if(!incomplete.length)return null;
+  const behind=incomplete.map(metric=>{
+    const expected=expectedAt(metric.key,metric.target,now);
+    return{metric,gap:Math.max(0,expected-metric.value),ratio:Math.max(0,expected-metric.value)/Math.max(1,metric.target)};
+  }).filter(item=>item.gap>=Math.max(1,Math.ceil(item.metric.target*.1)));
+  if(behind.length){
+    behind.sort((a,b)=>b.ratio-a.ratio||order.indexOf(a.metric.key)-order.indexOf(b.metric.key));
+    return behind[0].metric;
+  }
+  return incomplete[0];
+}
 function coachingEngine(viewDate=selectedDate,items=timelineItemsForDate(viewDate)){
   if(!isWorkDayKey(viewDate))return{title:'No tracking day scheduled',meta:'Your metrics remain available for reference',focusItemId:''};
   if(viewDate<todayKey())return{title:'Day complete',meta:`Final score ${completion(viewDate)}%`,focusItemId:''};
@@ -601,20 +625,23 @@ function coachingEngine(viewDate=selectedDate,items=timelineItemsForDate(viewDat
   if(nowMinutes>=18*60+30)return{title:'Plan tomorrow',meta:allCoreComplete?'Today’s core targets are complete':'Review unfinished activity and prepare the next workday',focusItemId:wrapId};
 
   if(state.incomplete.length){
-    const ranked=[...state.incomplete].sort((a,b)=>a.progress-b.progress||a.remaining-b.remaining);
-    let priority=ranked[0];
-    const nearlyComplete=state.incomplete.filter(m=>m.progress>=80).sort((a,b)=>a.remaining-b.remaining)[0];
-    if(nearlyComplete&&ranked[0].progress>=65)priority=nearlyComplete;
+    const momentum=activeProspectingMomentum(viewDate,now.getTime());
+    if(momentum){
+      const primary=balancedCorePriority(state,now);
+      const remaining=primary?`${primary.remaining} ${primary.label} remaining`:'Core activity is moving';
+      return{title:'Prospecting momentum',meta:`${momentum.detail.charAt(0).toUpperCase()+momentum.detail.slice(1)} are moving · Keep the streak going · ${remaining}`,focusItemId:prospectingId};
+    }
+    const priority=balancedCorePriority(state,now)||state.incomplete[0];
     const coreDeadlineMinutes=14*60;
     const available=Math.max(1,coreDeadlineMinutes-nowMinutes);
     const possible=Math.max(1,Math.floor(available/60*priority.rate));
     const blockTarget=Math.min(priority.remaining,possible);
     const expected=expectedAt(priority.key,priority.target,now),behind=Math.max(0,expected-priority.value);
-    if(behind>0){
+    if(behind>=Math.max(1,Math.ceil(priority.target*.1))){
       const recoveryMinutes=Math.max(10,Math.ceil(behind/priority.rate*60/5)*5);
-      return{title:'Increase activity',meta:`${behind} ${priority.label} behind pace · A focused ${recoveryMinutes}-minute block will recover the gap`,focusItemId:prospectingId};
+      return{title:priority.action,meta:`${behind} ${priority.label} behind pace · Hold this focus for ${recoveryMinutes} minutes`,focusItemId:prospectingId};
     }
-    return{title:priority.action,meta:`Target ${blockTarget} ${priority.label} before ${timelineTimeLabel(coreDeadlineMinutes)}`,focusItemId:prospectingId};
+    return{title:priority.action,meta:`Build a steady block · ${blockTarget} ${priority.label} before ${timelineTimeLabel(coreDeadlineMinutes)}`,focusItemId:prospectingId};
   }
 
   return{title:'You’re ahead',meta:state.knockRemaining?`Core targets complete · Door knocking begins at 2:00pm`:'All targets complete',focusItemId:state.knockRemaining?knockingId:progressId};
