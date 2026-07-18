@@ -486,22 +486,68 @@ function timelineStatus(item,index,items,viewDate){
   if(nowMinutes>=item.minutes&&nowMinutes<end)return'current';
   return nowMinutes>=end?'complete':'upcoming';
 }
+function coachingMetricState(viewDate=selectedDate){
+  const d=dayData(viewDate),knockTarget=rollingKnockTarget(viewDate),knockMinutes=Math.floor(liveKnockSeconds(d)/60);
+  const metrics=[
+    {key:'calls',label:'calls',action:'Stay on the phones',value:d.calls,target:targets.calls,rate:10},
+    {key:'connects',label:'connects',action:'Focus on connects',value:d.connects,target:targets.connects,rate:5},
+    {key:'data',label:'data records',action:'Switch to data collection',value:d.data,target:targets.data,rate:2}
+  ].map(m=>({...m,remaining:Math.max(0,m.target-m.value),progress:pct(m.value,m.target)}));
+  return{d,knockTarget,knockMinutes,knockRemaining:Math.max(0,knockTarget-knockMinutes),metrics,incomplete:metrics.filter(m=>m.remaining>0)};
+}
+function coachingEngine(viewDate=selectedDate,items=timelineItemsForDate(viewDate)){
+  if(!isWorkDayKey(viewDate))return{title:'No tracking day scheduled',meta:'Your metrics remain available for reference'};
+  if(viewDate<todayKey())return{title:'Day complete',meta:`Final score ${completion(viewDate)}%`};
+  if(viewDate>todayKey())return{title:'Plan your day',meta:items[0]?`First block starts ${timelineTimeLabel(items[0].minutes)}`:'No scheduled items'};
+
+  const now=new Date(),nowMinutes=now.getHours()*60+now.getMinutes(),state=coachingMetricState(viewDate);
+  const currentAppointment=items.find((item,index)=>item.kind==='appointment'&&timelineStatus(item,index,items,viewDate)==='current');
+  const nextAppointment=items.find(item=>item.kind==='appointment'&&item.minutes>nowMinutes);
+  const minutesToAppointment=nextAppointment?nextAppointment.minutes-nowMinutes:Infinity;
+
+  if(currentAppointment)return{title:'Appointment in progress',meta:`${currentAppointment.title} · Resume prospecting afterwards`};
+  if(nextAppointment&&minutesToAppointment<=10)return{title:'Prepare for your appointment',meta:`${nextAppointment.title} starts in ${minutesToAppointment} min`};
+  if(nextAppointment&&minutesToAppointment<=30)return{title:'Wrap up shortly',meta:`Complete the current block, then prepare for ${timelineTimeLabel(nextAppointment.minutes)}`};
+
+  const allCoreComplete=state.incomplete.length===0;
+  if(allCoreComplete&&state.knockRemaining===0)return{title:'Day complete',meta:'All daily targets have been achieved'};
+
+  if(nowMinutes>=14*60&&state.knockRemaining>0){
+    const available=Math.max(0,17*60-nowMinutes);
+    if(available<=0)return{title:'Finish the weakest metric',meta:`${state.knockRemaining} knocking min will roll into the next scheduled day`};
+    const finish=new Date(now.getTime()+state.knockRemaining*60000);
+    const finishLabel=finish.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'});
+    return{title:'Continue door knocking',meta:`${state.knockRemaining} min remaining · Finish around ${finishLabel}`};
+  }
+
+  if(nowMinutes>=13*60+30&&nowMinutes<14*60&&state.knockRemaining>0){
+    return{title:'Prepare to door knock',meta:`Door knocking starts in ${14*60-nowMinutes} min · ${state.knockRemaining} min target`};
+  }
+
+  if(nowMinutes>=18*60+30)return{title:'Plan tomorrow',meta:allCoreComplete?'Today’s core targets are complete':'Review unfinished activity and prepare the next workday'};
+
+  if(state.incomplete.length){
+    const ranked=[...state.incomplete].sort((a,b)=>a.progress-b.progress||a.remaining-b.remaining);
+    let priority=ranked[0];
+    const nearlyComplete=state.incomplete.filter(m=>m.progress>=80).sort((a,b)=>a.remaining-b.remaining)[0];
+    if(nearlyComplete&&ranked[0].progress>=65)priority=nearlyComplete;
+    const available=Math.max(1,Math.min(minutesToAppointment,17*60-nowMinutes));
+    const possible=Math.max(1,Math.floor(available/60*priority.rate));
+    const blockTarget=Math.min(priority.remaining,possible);
+    const expected=expectedAt(priority.key,priority.target,now),behind=Math.max(0,expected-priority.value);
+    if(behind>0){
+      const recoveryMinutes=Math.max(10,Math.ceil(behind/priority.rate*60/5)*5);
+      return{title:'Increase activity',meta:`${behind} ${priority.label} behind pace · A focused ${recoveryMinutes}-minute block will recover the gap`};
+    }
+    if(nextAppointment&&Number.isFinite(minutesToAppointment))return{title:priority.action,meta:`Target ${blockTarget} ${priority.label} before ${timelineTimeLabel(nextAppointment.minutes)}`};
+    return{title:priority.action,meta:`${priority.remaining} ${priority.label} remaining · Hold the pace`};
+  }
+
+  return{title:'You’re ahead',meta:state.knockRemaining?`Core targets complete · Door knocking begins at 2:00pm`:'All targets complete'};
+}
 function timelinePriority(viewDate=selectedDate){
-  const items=timelineItemsForDate(viewDate);
-  if(!isWorkDayKey(viewDate))return{title:'No tracking day scheduled',meta:'Your metrics remain available for reference',items};
-  if(viewDate<todayKey())return{title:'Day complete',meta:`Final score ${completion(viewDate)}%`,items};
-  if(viewDate>todayKey())return{title:items[0]?.title||'Plan your day',meta:items[0]?`Starts ${timelineTimeLabel(items[0].minutes)}`:'No scheduled items',items};
-  const current=items.find((item,index)=>timelineStatus(item,index,items,viewDate)==='current');
-  const next=items.find((item,index)=>timelineStatus(item,index,items,viewDate)==='upcoming');
-  const d=dayData(viewDate),remaining=[];
-  if(d.calls<targets.calls)remaining.push(`${targets.calls-d.calls} calls`);
-  if(d.connects<targets.connects)remaining.push(`${targets.connects-d.connects} connects`);
-  if(d.data<targets.data)remaining.push(`${targets.data-d.data} data`);
-  if(current?.id==='prospecting')return{title:'Prospecting',meta:remaining.length?remaining.slice(0,2).join(' · '):'Core prospecting targets complete',items};
-  if(current?.id==='knocking')return{title:'Door Knock Focus',meta:knockRemainingText(Math.floor(liveKnockSeconds(d)/60),rollingKnockTarget(viewDate)),items};
-  if(current)return{title:current.title,meta:current.meta,items};
-  if(next)return{title:next.title,meta:`Starts ${timelineTimeLabel(next.minutes)} · ${next.meta}`,items};
-  return{title:'Day complete',meta:`Today finished at ${completion(viewDate)}%`,items};
+  const items=timelineItemsForDate(viewDate),coach=coachingEngine(viewDate,items);
+  return{...coach,items};
 }
 function renderNowCard(){
   const priority=timelinePriority(selectedDate);
