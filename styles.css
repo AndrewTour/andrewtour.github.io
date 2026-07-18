@@ -2520,3 +2520,80 @@ button:not(:disabled):active,.file-btn:active{
 .scorecard-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px}.scorecard-metric{appearance:none;text-align:left;border:0;border-radius:16px;padding:12px;background:rgba(255,255,255,.055);color:var(--ink)}.scorecard-metric span{display:block;color:var(--muted);font-size:.65rem}.scorecard-metric strong{display:block;font-size:1rem;margin:6px 0 3px}.scorecard-metric small{font-size:.62rem;color:var(--muted)}.scorecard-metric:disabled{opacity:1}.scorecard-appointments{grid-column:1/-1;background:rgba(91,145,255,.13);border:1px solid rgba(105,219,242,.18)}
 .scorecard-focus strong{display:block;margin:6px 0 4px}.scorecard-focus p{margin:12px 0 0;color:var(--muted);font-size:.78rem;line-height:1.45}.scorecard-records .personal-best-grid{margin-top:10px}
 .scorecard-appointment-list{display:grid;gap:8px;margin-top:10px}.scorecard-appointment-item{border-radius:16px;padding:12px;background:rgba(255,255,255,.055)}.scorecard-appointment-item header{display:flex;justify-content:space-between;gap:10px}.scorecard-appointment-item header span{font-size:.62rem;color:var(--cyan);font-weight:800}.scorecard-appointment-item h3{font-size:.92rem;margin:8px 0 4px}.scorecard-appointment-item p{margin:0;color:var(--muted);font-size:.72rem;line-height:1.45}.scorecard-call{display:inline-flex;align-items:center;justify-content:center;margin-top:10px;min-height:36px;padding:0 13px;border-radius:11px;background:rgba(255,255,255,.09);color:var(--ink);font-weight:750;text-decoration:none;font-size:.72rem}
+
+
+/* v1.34.1 — interface title case and exact Knocking metric alignment.
+   Visual-only: existing all-caps labels and specified comparison/supporting copy remain unchanged. */
+#app :is(h2,h3,label,button:not(.icon-btn),small,strong,p,span,em,.empty,.appointment-lock,.today-at-glance),
+#authGate :is(h1,p,button,small){
+  text-transform:capitalize;
+}
+
+/* Preserve sentence-case/established exceptions exactly. */
+#momentumWhisper,
+#leaderboardPositionMeta,
+.timeline-overview-label,
+.settings p,
+.settings small,
+.settings .settings-copy,
+.settings .setting-description,
+.sync-popover,
+.sync-popover *{
+  text-transform:none!important;
+}
+
+/* Match Knocking copy rhythm to Calls, Connects and Data. */
+.dashboard .metric.knock .metric-copy>small,
+.dashboard .metric.knock .metric-copy>em{
+  font-size:.73rem;
+  line-height:normal;
+  margin-top:4px;
+}
+.dashboard .metric.knock .metric-copy>strong{
+  margin-top:6px;
+}
+
+/* Use the same control spacing and centred progress-ring component as every other metric. */
+.dashboard .knock-actions{
+  grid-template-columns:54px 47px 54px;
+  gap:7px;
+}
+.dashboard .knock-actions .timer{
+  width:auto;
+}
+.dashboard .knock .metric-percent.metric-ring{
+  width:47px;
+  height:47px;
+  min-width:47px;
+  --agnt-ring-thickness:6px;
+  align-self:center;
+  justify-self:center;
+  transform:none;
+  color:var(--blue);
+  font-size:.61rem;
+  font-weight:700;
+  letter-spacing:-.02em;
+  border-color:#d8e3f7;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.8);
+}
+.dashboard .knock.complete .metric-percent.metric-ring,
+.dashboard .knock .metric-percent.metric-ring.complete{
+  color:var(--green);
+}
+
+@media(max-height:760px){
+  .dashboard .metric.knock .metric-copy>small,
+  .dashboard .metric.knock .metric-copy>em{
+    font-size:.55rem;
+    margin-top:2px;
+  }
+  .dashboard .metric.knock .metric-copy>strong{margin-top:4px}
+  .dashboard .knock-actions{grid-template-columns:46px 38px 46px;gap:6px}
+  .dashboard .knock .metric-percent.metric-ring{
+    width:38px;
+    height:38px;
+    min-width:38px;
+    --agnt-ring-thickness:4.5px;
+    font-size:.53rem;
+  }
+}
