@@ -8,7 +8,7 @@ const DEFAULT_WORK_DAYS=[1,2,4,5];
 let workDays=[...DEFAULT_WORK_DAYS];
 const CALL_PLAN=[[9,'Active Buyer Calls','Hot buyers, offers, contracts and second inspections'],[10,'Past OFI Calls','Recent attendees, missed callbacks and buyer feedback'],[11,'Pipeline Calls','Current sellers, warm leads and next-step conversations'],[12,'Past Appraisals','Owners with a likely 3–12 month move'],[13,'Database Reconnects','Long-term owners and dormant contacts'],[14,'Just Listed & Coming Soon','Buyers, neighbours and local owner awareness'],[15,'Just Sold Calls','Result calls and nearby owner follow-up'],[16,'Priority Follow-Up','Offers, appointments and tomorrow’s pipeline']];
 const DEFAULTS={calls:50,connects:25,data:10,weeklyKnock:240};
-let targets={...DEFAULTS}, days={}, selectedDate=dateKey(new Date()), appointmentDate=selectedDate, agentName='', calendarPreference='outlook', leaderboardEntries=[], leaderboardWeekOffset=0;
+let targets={...DEFAULTS}, days={}, selectedDate=dateKey(new Date()), appointmentDate=selectedDate, agentName='', calendarPreference='outlook', leaderboardEntries=[], leaderboardWeekOffset=0, scorecardWeekOffset=0;
 let year=new Date().getFullYear(), monthCursor=new Date(), uid='local', currentUser=null, cloud=false, db=null, auth=null;
 let unsubDays=null, unsubProfile=null, unsubLeaderboard=null, timerTick=null, syncTimer=null, leaderboardPublishTimer=null;
 
@@ -739,8 +739,62 @@ function renderLeaderboard(){
   renderWeeklyLeaderboard();
 }
 
-function switchInsightsPage(id){$$('.insights-switch button').forEach(b=>b.classList.toggle('active',b.dataset.insightsPage===id));$$('.insights-page').forEach(p=>p.classList.toggle('active',p.id===id));if(id==='leaderboardInsights')renderLeaderboard()}
-function renderInsights(){const w=weekSummary(),m=mondayOf(parseKey(selectedDate));$('#insightWeekScore').textContent=`${w.score}%`;$('#insightWeekLabel').textContent=`Week of ${m.toLocaleDateString('en-AU',{day:'numeric',month:'short'})}`;$('#insightCalls').textContent=w.calls;$('#insightCallsAvg').textContent=`${Math.round(w.calls/Math.max(1,w.count))}/day`;$('#insightConnects').textContent=w.connects;$('#insightConnectRate').textContent=`${w.calls?Math.round(w.connects/w.calls*100):0}% connect rate`;$('#insightData').textContent=w.data;$('#insightDataAvg').textContent=`${Math.round(w.data/Math.max(1,w.count))}/day`;$('#insightKnock').textContent=`${Math.floor(w.knock/60)} min`;$('#knockBar').style.width=`${pct(w.knock/60,targets.weeklyKnock)}%`;renderPersonalBests();renderMondayReview();renderMonth();$('#yearLabel').textContent=year;renderYearOverview();renderLeaderboard()}
+
+function scorecardWeekDate(){return weekDateFromOffset(scorecardWeekOffset)}
+function scorecardGrade(score){return score>=100?'A+':score>=95?'A':score>=90?'A−':score>=80?'B':score>=70?'C':'Needs Attention'}
+function scorecardAppointments(base=scorecardWeekDate()){
+  const start=mondayOf(base),end=new Date(start);end.setDate(start.getDate()+6);
+  const startKey=dateKey(start),endKey=dateKey(end),entries=[];
+  Object.entries(days).forEach(([sourceDate,day])=>(day?.appointments||[]).forEach(a=>{
+    const scheduled=appointmentScheduledDate(a,sourceDate);
+    if(scheduled>=startKey&&scheduled<=endKey)entries.push({appointment:a,sourceDate,scheduled});
+  }));
+  return entries.sort((x,y)=>appointmentTimestamp(x.appointment,x.sourceDate)-appointmentTimestamp(y.appointment,y.sourceDate));
+}
+function scorecardWeekRecords(){
+  const keys=Object.keys(days).sort();
+  if(!keys.length)return[];
+  const first=mondayOf(parseKey(keys[0])),last=mondayOf(new Date()),records=[];
+  for(let d=new Date(first);d<=last;d.setDate(d.getDate()+7)){const base=new Date(d),w=weekSummaryFor(base);records.push({base,score:w.score,calls:w.calls})}
+  return records;
+}
+function scorecardWeekStreak(records){let count=0;for(let i=records.length-1;i>=0;i--){if(records[i].score>=90)count++;else break}return count}
+function renderScorecardAppointments(entries,base){
+  const panel=$('#scorecardAppointmentHistory'),list=$('#scorecardAppointmentList');
+  if(!panel||!list)return;
+  $('#scorecardAppointmentHistoryLabel').textContent=`Week ${formatWeekRange(base)}`;
+  list.innerHTML=entries.length?entries.map(({appointment:a,sourceDate,scheduled})=>{
+    const phone=String(a.contactNumber||a.phone||'').trim(),contact=a.contactName||a.name||'Contact not recorded',address=a.address||'Address not recorded';
+    const when=`${parseKey(scheduled).toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long'})} at ${appointmentTimeLabel(a,sourceDate)}`;
+    const tel=phone?`<a class="scorecard-call" href="tel:${escapeHtml(phone.replace(/[^+\d]/g,''))}">Call ${escapeHtml(contact.split(/\s+/)[0]||'contact')}</a>`:'';
+    return `<article class="scorecard-appointment-item"><header><span>${escapeHtml(appointmentType(a))}</span><small>${scheduled<todayKey()?'Past':'Upcoming'}</small></header><h3>${escapeHtml(address)}</h3><p>${escapeHtml(contact)}${phone?` · ${escapeHtml(phone)}`:''}<br>Booked for ${escapeHtml(when)}</p>${tel}</article>`;
+  }).join(''):'<div class="empty">No appointments booked for this week.</div>';
+}
+function renderScorecard(){
+  if(!$('#scorecardScore'))return;
+  const base=scorecardWeekDate(),w=weekSummaryFor(base),m=w.metricPcts||{},entries=scorecardAppointments(base);
+  const metrics=Object.entries(m),strongest=[...metrics].sort((a,b)=>b[1]-a[1])[0]||['calls',0],weakest=[...metrics].sort((a,b)=>a[1]-b[1])[0]||['calls',0];
+  $('#scorecardWeekLabel').textContent=scorecardWeekOffset===0?`This week · ${formatWeekRange(base)}`:`Week ${formatWeekRange(base)}`;
+  $('#scorecardScore').textContent=`${w.score}%`;$('#scorecardGrade').textContent=scorecardGrade(w.score);
+  $('#scorecardStatus').textContent=w.score>=95?'A strong, balanced week.':w.score>=90?'On track for an A-grade week.':`${metricLabel(weakest[0])} is holding the week back.`;
+  $('#scorecardCalls').textContent=`${w.calls} / ${w.targets.calls}`;$('#scorecardCallsPct').textContent=`${m.calls||0}%`;
+  $('#scorecardConnects').textContent=`${w.connects} / ${w.targets.connects}`;$('#scorecardConnectsPct').textContent=`${m.connects||0}%`;
+  $('#scorecardData').textContent=`${w.data} / ${w.targets.data}`;$('#scorecardDataPct').textContent=`${m.data||0}%`;
+  $('#scorecardKnock').textContent=`${w.knockMinutes} / ${w.targets.knock} min`;$('#scorecardKnockPct').textContent=`${m.knocking||0}%`;
+  $('#scorecardAppointments').textContent=`${entries.length} booked`;
+  $('#scorecardStrongest').textContent=`Strongest: ${metricLabel(strongest[0])} · ${strongest[1]}%`;
+  $('#scorecardWeakest').textContent=`Focus: ${metricLabel(weakest[0])} · ${Math.max(0,100-weakest[1])}% remaining`;
+  const remaining=[Math.max(0,w.targets.calls-w.calls),Math.max(0,w.targets.connects-w.connects),Math.max(0,w.targets.data-w.data),Math.max(0,w.targets.knock-w.knockMinutes)];
+  $('#scorecardProjection').textContent=w.score>=100?'All weekly targets achieved.':`To close the week: ${remaining[0]} calls, ${remaining[1]} connects, ${remaining[2]} data and ${remaining[3]} knock minutes remaining.`;
+  const records=scorecardWeekRecords(),best=records.reduce((a,b)=>b.score>a.score?b:a,{score:0,base:null,calls:0}),mostCalls=records.reduce((a,b)=>b.calls>a.calls?b:a,{score:0,base:null,calls:0});
+  $('#recordBestWeek').textContent=`${best.score||0}%`;$('#recordBestWeekDate').textContent=best.base?`Week ${formatWeekRange(best.base)}`:'No activity yet';
+  $('#recordMostCalls').textContent=mostCalls.calls||0;$('#recordMostCallsDate').textContent=mostCalls.base?`Week ${formatWeekRange(mostCalls.base)}`:'No activity yet';
+  $('#recordWeekStreak').textContent=scorecardWeekStreak(records);
+  $('#scorecardNext').disabled=scorecardWeekOffset>=0;
+  renderScorecardAppointments(entries,base);
+}
+function switchInsightsPage(id){$$('.insights-switch button').forEach(b=>b.classList.toggle('active',b.dataset.insightsPage===id));$$('.insights-page').forEach(p=>p.classList.toggle('active',p.id===id));if(id==='leaderboardInsights')renderLeaderboard();else renderScorecard()}
+function renderInsights(){renderScorecard();renderLeaderboard()}
 function renderYearOverview(){const labels=['M','T','W','T','F','S','S'];const months=[];for(let m=0;m<12;m++){const first=new Date(year,m,1),pad=(first.getDay()+6)%7;let cells=`<div class="mini-weekdays">${labels.map(x=>`<b>${x}</b>`).join('')}</div><div class="mini-days">${'<i></i>'.repeat(pad)}`;for(let d=1;d<=new Date(year,m+1,0).getDate();d++){const dt=new Date(year,m,d),k=dateKey(dt),p=completion(k),off=!workDays.includes(dt.getDay());cells+=`<button class="mini-day ${levelClass(p)} ${off?'off':''} ${k===todayKey()?'today':''} ${k===selectedDate?'selected':''}" data-date="${k}" aria-label="${fmtDate(k)}, ${p}% complete">${d}</button>`}cells+='</div>';months.push(`<section class="mini-month"><h3>${new Date(year,m,1).toLocaleDateString('en-AU',{month:'short'})}</h3>${cells}</section>`)}$('#yearHeatmap').innerHTML=months.join('')}
 function levelClass(p){return p>=100?'l4':p>=67?'l3':p>=34?'l2':p>0?'l1':''}
 function renderMonth(){const y=monthCursor.getFullYear(),m=monthCursor.getMonth();$('#monthLabel').textContent=monthCursor.toLocaleDateString('en-AU',{month:'long',year:'numeric'});const vals=[];for(let d=1;d<=new Date(y,m+1,0).getDate();d++){const dt=new Date(y,m,d);if(workDays.includes(dt.getDay()))vals.push(completion(dateKey(dt)))}const groups=[];for(let i=0;i<vals.length;i+=4){const g=vals.slice(i,i+4);groups.push(Math.round(g.reduce((a,b)=>a+b,0)/Math.max(1,g.length)))}$('#monthBars').innerHTML=groups.map((p,i)=>`<div title="${p}%"><i style="height:${Math.max(3,p)}%"></i><small>W${i+1}</small></div>`).join('')}
@@ -800,6 +854,7 @@ $('.insights-switch').onclick=e=>{const b=e.target.closest('button[data-insights
 $('#weekPrev').onclick=()=>{leaderboardWeekOffset--;renderWeeklyLeaderboard()};
 $('#weekNext').onclick=()=>{if(leaderboardWeekOffset<0)leaderboardWeekOffset++;renderWeeklyLeaderboard()};
 $('#weekLast').onclick=()=>{leaderboardWeekOffset=-1;renderWeeklyLeaderboard()};
+$('#scorecardPrev').onclick=()=>{scorecardWeekOffset--;renderScorecard()};$('#scorecardNext').onclick=()=>{if(scorecardWeekOffset<0)scorecardWeekOffset++;renderScorecard()};$('#scorecardAppointmentsButton').onclick=()=>{const panel=$('#scorecardAppointmentHistory');panel.classList.toggle('hidden');if(!panel.classList.contains('hidden'))panel.scrollIntoView({behavior:'smooth',block:'start'})};
 $('#appointmentDatePicker').onchange=()=>{};
 $('#appointmentForm').onsubmit=async e=>{e.preventDefault();const viewedDate=appointmentDate;const contactName=$('#appointmentContactName').value.trim(),contactNumber=$('#appointmentContactNumber').value.trim(),address=$('#appointmentAddress').value.trim(),date=$('#appointmentDatePicker').value,time=$('#appointmentTime').value,type=$('.appointment-types input:checked')?.value||'',error=$('#appointmentFormError');const missing=[];if(!contactName)missing.push('contact name');if(!contactNumber)missing.push('contact number');if(!address)missing.push('property address');if(!date)missing.push('booking date');if(!time)missing.push('booking time');if(!type)missing.push('appointment type');if(missing.length){error.textContent=`Add ${missing.join(', ')}`;error.classList.remove('hidden');return}error.textContent='';error.classList.add('hidden');const appointment=await addAppointment({contactName,contactNumber,address,date,time,type});if(appointment&&confirm(`Add to ${calendarPreference==='apple'?'Apple':'Outlook'} Calendar?`))exportAppointmentToCalendar(appointment,appointment.createdDate);e.target.reset();appointmentDate=viewedDate;$('#appointmentDatePicker').value=viewedDate;renderAppointments();updateTopbar('appointmentsView')};
 $('#appointmentsList').onclick=e=>{
@@ -817,10 +872,10 @@ $('#saveSettings').onclick=async()=>{const selectedWorkDays=normaliseWorkDays($$
 $('#signOut').onclick=async()=>{clearActiveSession();if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
 $('#exportData').onclick=()=>{const blob=new Blob([JSON.stringify({targets,workDays,days},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`daily-accountability-${todayKey()}.json`;a.click();URL.revokeObjectURL(a.href)};
 $('#importData').onchange=async e=>{try{const raw=JSON.parse(await e.target.files[0].text());targets={...DEFAULTS,...raw.targets};if(Array.isArray(raw.workDays)&&raw.workDays.length)workDays=normaliseWorkDays(raw.workDays);days={...days,...raw.days};saveLocal();if(cloud){await saveTargets();for(const k of Object.keys(raw.days||{}))await saveDay(k,{quiet:true})}renderAll();toast('Backup imported')}catch{toast('Backup could not be read')}};
-$('#openCalendarFromInsights').onclick=openCalendar;$('#closeCalendar').onclick=()=>$('#calendarModal').classList.remove('open');$('#calendarPrev').onclick=$('#prevYear').onclick=()=>{year--;renderCalendar();renderInsights()};$('#calendarNext').onclick=$('#nextYear').onclick=()=>{year++;renderCalendar();renderInsights()};
+$('#openCalendarFromInsights')&&($('#openCalendarFromInsights').onclick=openCalendar);$('#closeCalendar').onclick=()=>$('#calendarModal').classList.remove('open');$('#calendarPrev').onclick=()=>{year--;renderCalendar();renderInsights()};$('#calendarNext').onclick=()=>{year++;renderCalendar();renderInsights()};$('#prevYear')&&($('#prevYear').onclick=()=>{year--;renderCalendar();renderInsights()});$('#nextYear')&&($('#nextYear').onclick=()=>{year++;renderCalendar();renderInsights()});
 $('#calendarGrid').onclick=e=>{const b=e.target.closest('[data-date]');if(!b)return;selectedDate=b.dataset.date;appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;$('#calendarModal').classList.remove('open');switchView('todayView');renderAll();ensureTick()};
-$('#yearHeatmap').onclick=e=>{const b=e.target.closest('[data-date]');if(!b)return;selectedDate=b.dataset.date;appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;switchView('todayView');renderAll();ensureTick()};
-$('#prevMonth').onclick=()=>{monthCursor.setMonth(monthCursor.getMonth()-1);renderMonth()};$('#nextMonth').onclick=()=>{monthCursor.setMonth(monthCursor.getMonth()+1);renderMonth()};
+$('#yearHeatmap')&&($('#yearHeatmap').onclick=e=>{const b=e.target.closest('[data-date]');if(!b)return;selectedDate=b.dataset.date;appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;switchView('todayView');renderAll();ensureTick()});
+$('#prevMonth')&&($('#prevMonth').onclick=()=>{monthCursor.setMonth(monthCursor.getMonth()-1);renderMonth()});$('#nextMonth')&&($('#nextMonth').onclick=()=>{monthCursor.setMonth(monthCursor.getMonth()+1);renderMonth()});
 function closeSyncPopover(){const p=$('#syncPopover'),b=$('#syncBadge');p?.classList.add('hidden');b?.setAttribute('aria-expanded','false');document.body.classList.remove('sync-popover-open')}
 $('#syncBadge').onclick=e=>{e.stopPropagation();const p=$('#syncPopover'),opening=p.classList.contains('hidden');if(p&&p.parentElement!==document.body)document.body.append(p);p.classList.toggle('hidden',!opening);$('#syncBadge').setAttribute('aria-expanded',String(opening));document.body.classList.toggle('sync-popover-open',opening)};
 $('#syncPopover').onclick=e=>e.stopPropagation();

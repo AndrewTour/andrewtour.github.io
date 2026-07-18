@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.33.0">
+<link rel="stylesheet" href="styles.css?v=1.34.0">
 <title>AGNT</title>
 </head>
 <body>
@@ -144,32 +144,40 @@
     <section id="insightsView" class="view">
       <div class="insights-switch glass" role="tablist" aria-label="Leaderboard pages">
         <button class="active" type="button" data-insights-page="leaderboardInsights">Leaderboard</button>
-        <button type="button" data-insights-page="personalInsights">Insights</button>
+        <button type="button" data-insights-page="personalInsights">Scorecard</button>
       </div>
       <div id="personalInsights" class="insights-page">
-      <div class="insight-grid">
-        <article class="insight glass"><span>WEEKLY SCORE</span><strong id="insightWeekScore">0%</strong><small id="insightWeekLabel"></small></article>
-        <article class="insight glass"><span>Calls</span><strong id="insightCalls">0</strong><small id="insightCallsAvg">0/day</small></article>
-        <article class="insight glass"><span>Connects</span><strong id="insightConnects">0</strong><small id="insightConnectRate">0% connect rate</small></article>
-        <article class="insight glass"><span>Data</span><strong id="insightData">0</strong><small id="insightDataAvg">0/day</small></article>
-        <article class="insight glass wide"><span>Knocking</span><strong id="insightKnock">0 min</strong><small>Minimum 240 minutes each week</small><div class="bar"><i id="knockBar"></i></div></article>
-      </div>
-      <section class="personal-bests glass">
-        <div class="section-label"><span>PERSONAL BESTS</span><small>Based on your saved accountability days</small></div>
-        <div class="personal-best-grid">
-          <article><span>BEST DAY</span><strong id="bestDayScore">0%</strong><small id="bestDayDate">No completed days yet</small></article>
-          <article><span>MOST CALLS</span><strong id="bestCallsValue">0</strong><small id="bestCallsDate">No activity yet</small></article>
-          <article><span>LONGEST KNOCK</span><strong id="bestKnockValue">0 min</strong><small id="bestKnockDate">No activity yet</small></article>
-        </div>
-      </section>
-      <section class="monday-review glass">
-        <div class="section-label"><span>MONDAY REVIEW</span><small id="mondayReviewWeek">Last completed week</small></div>
-        <strong id="mondayReviewScore">0%</strong>
-        <p id="mondayReviewText">Your weekly summary will appear once activity is logged.</p>
-      </section>
-      <section class="month-card glass"><div class="year-head"><button id="prevMonth">‹</button><strong id="monthLabel"></strong><button id="nextMonth">›</button></div><div id="monthBars" class="month-bars"></div></section>
-      <section class="year-card glass"><div class="year-head"><button id="prevYear">‹</button><strong id="yearLabel"></strong><button id="nextYear">›</button></div><div id="yearHeatmap" class="heatmap"></div></section>
-      <button id="openCalendarFromInsights" class="secondary full">Open full calendar</button>
+        <section class="scorecard-hero glass">
+          <div class="scorecard-head">
+            <button id="scorecardPrev" type="button" aria-label="Previous week">‹</button>
+            <div><span>WEEKLY SCORECARD</span><h2 id="scorecardWeekLabel">This week</h2></div>
+            <button id="scorecardNext" type="button" aria-label="Next week">›</button>
+          </div>
+          <div class="scorecard-score"><strong id="scorecardScore">0%</strong><div><span id="scorecardGrade">—</span><small id="scorecardStatus">Your weekly position will appear here.</small></div></div>
+        </section>
+        <section class="scorecard-metrics glass" aria-label="Weekly performance metrics">
+          <button class="scorecard-metric" type="button" disabled><span>Calls</span><strong id="scorecardCalls">0 / 0</strong><small id="scorecardCallsPct">0%</small></button>
+          <button class="scorecard-metric" type="button" disabled><span>Connects</span><strong id="scorecardConnects">0 / 0</strong><small id="scorecardConnectsPct">0%</small></button>
+          <button class="scorecard-metric" type="button" disabled><span>Data</span><strong id="scorecardData">0 / 0</strong><small id="scorecardDataPct">0%</small></button>
+          <button class="scorecard-metric" type="button" disabled><span>Door Knock</span><strong id="scorecardKnock">0 / 0 min</strong><small id="scorecardKnockPct">0%</small></button>
+          <button id="scorecardAppointmentsButton" class="scorecard-metric scorecard-appointments" type="button"><span>Appointments</span><strong id="scorecardAppointments">0 booked</strong><small>View appointments ›</small></button>
+        </section>
+        <section class="scorecard-focus glass">
+          <div><span>WEEKLY REVIEW</span><strong id="scorecardStrongest">Strongest: —</strong><small id="scorecardWeakest">Focus: —</small></div>
+          <p id="scorecardProjection">Your weekly projection will appear once activity is logged.</p>
+        </section>
+        <section class="scorecard-records glass">
+          <div class="section-label"><span>PERSONAL RECORDS</span><small>Calculated from your saved accountability history</small></div>
+          <div class="personal-best-grid">
+            <article><span>BEST WEEK</span><strong id="recordBestWeek">0%</strong><small id="recordBestWeekDate">No activity yet</small></article>
+            <article><span>MOST CALLS</span><strong id="recordMostCalls">0</strong><small id="recordMostCallsDate">No activity yet</small></article>
+            <article><span>90%+ STREAK</span><strong id="recordWeekStreak">0</strong><small>Current weekly streak</small></article>
+          </div>
+        </section>
+        <section id="scorecardAppointmentHistory" class="scorecard-history glass hidden">
+          <div class="section-label"><span>APPOINTMENTS</span><small id="scorecardAppointmentHistoryLabel">Selected week</small></div>
+          <div id="scorecardAppointmentList" class="scorecard-appointment-list"></div>
+        </section>
       </div>
       <div id="leaderboardInsights" class="insights-page active">
         <section class="leaderboard-dashboard glass" aria-label="Leaderboard overview">
@@ -286,6 +294,6 @@
   </div>
 </div>
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=1.33.0"></script>
+<script type="module" src="app.js?v=1.34.0"></script>
 </body>
 </html>

@@ -1,22 +1,14 @@
-# AGNT v1.33.0 — Smart Coaching
+# AGNT v1.34.0 — Weekly Scorecard
 
-Incremental update built from the confirmed working AGNT v1.32.0 Daily Timeline package.
+Incremental update built from AGNT v1.33.0.
 
-## Added
-- Deterministic, read-only smart coaching engine.
-- Coaching appears in the existing Home Now card and Today timeline priority panel.
-- Appointment-aware preparation and in-progress guidance.
-- Time-aware door-knocking guidance from the existing 2:00pm start.
-- Weakest-metric prioritisation using current progress and pace.
-- Recovery-block guidance when activity falls behind pace.
-- Clear completed-day and non-workday states.
+## Changes
+- Replaced the Leaderboard Insights page with a Weekly Scorecard.
+- Added week navigation, grade, core metric performance, strongest/weakest metric and remaining-target summary.
+- Added personal weekly records and current 90%+ weekly streak.
+- Added a clickable Appointments metric with a read-only weekly appointment list and direct phone call links.
 
-## Preserved
-- Firebase configuration, authentication, Firestore paths and rules.
-- UID separation, cloud sync and local cache structures.
-- Daily logging, targets, knocking timer and rollover logic.
-- Appointment creation, deletion, ordering, reminders and calendar export.
-- Outlook and Apple calendar preferences and status indicators.
-- Existing navigation, appointment cards, analytics, icons and PWA behaviour.
+## Unchanged
+Firebase, Firestore, authentication, UID separation, local cache, sync, appointment creation/editing/deletion, calendar exports, metric logging, targets, leaderboard calculations, reminders, styling language and PWA workflow remain unchanged.
 
 No Firebase or Firestore changes are required.
