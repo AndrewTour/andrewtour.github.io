@@ -600,36 +600,41 @@ function coachingEngine(viewDate=selectedDate,items=timelineItemsForDate(viewDat
   const todayFollowUps=scheduledFollowUpsForDate(viewDate);
   const prospectingId=timelineFocusId(items,'focus'),knockingId=timelineFocusId(items,'knock'),progressId=timelineFocusId(items,'check'),wrapId=timelineFocusId(items,'wrap');
 
-  if(currentAppointment)return{title:'Appointment in progress',meta:`${currentAppointment.title} · Resume prospecting afterwards`,focusItemId:currentAppointment.id};
-  if(nextAppointment&&minutesToAppointment<=10)return{title:'Prepare for your appointment',meta:`${nextAppointment.title} starts in ${minutesToAppointment} min`,focusItemId:nextAppointment.id};
-  if(nextAppointment&&minutesToAppointment<=30)return{title:'Wrap up shortly',meta:`Complete the current block, then prepare for ${timelineTimeLabel(nextAppointment.minutes)}`,focusItemId:nextAppointment.id};
-  if(todayFollowUps.length&&nowMinutes<12*60)return{title:'Complete appointment follow-ups',meta:`${todayFollowUps.length} follow-up call${todayFollowUps.length===1?' is':'s are'} prioritised this morning`,focusItemId:timelineFollowUpId(items,todayFollowUps[0])};
+  if(currentAppointment)return{title:'Appointment Window',meta:`${currentAppointment.title} · Resume prospecting afterwards`,focusItemId:currentAppointment.id};
+  if(nextAppointment&&minutesToAppointment<=10)return{title:'Appointment Window',meta:`${nextAppointment.title} starts in ${minutesToAppointment} min`,focusItemId:nextAppointment.id};
+  if(nextAppointment&&minutesToAppointment<=30)return{title:'Appointment Window',meta:`Complete the current block, then prepare for ${timelineTimeLabel(nextAppointment.minutes)}`,focusItemId:nextAppointment.id};
+  if(todayFollowUps.length&&nowMinutes<12*60)return{title:'Follow-Up Priority',meta:`${todayFollowUps.length} follow-up call${todayFollowUps.length===1?' is':'s are'} prioritised this morning`,focusItemId:timelineFollowUpId(items,todayFollowUps[0])};
   const followUps=dueFollowUps();
-  if(followUps.length)return{title:'Complete follow-ups',meta:`${followUps.length} past appointment${followUps.length===1?' needs':'s need'} an outcome`,focusItemId:timelineFollowUpId(items,followUps[0])||prospectingId};
+  if(followUps.length)return{title:'Follow-Up Priority',meta:`${followUps.length} past appointment${followUps.length===1?' needs':'s need'} an outcome`,focusItemId:timelineFollowUpId(items,followUps[0])||prospectingId};
 
   const allCoreComplete=state.incomplete.length===0;
-  if(allCoreComplete&&state.knockRemaining===0)return{title:'Day complete',meta:'All daily targets have been achieved',focusItemId:nowMinutes>=18*60?wrapId:progressId};
+  if(allCoreComplete&&state.knockRemaining===0){
+    if(nowMinutes>=18*60+30)return{title:'Plan Ahead',meta:'Today’s targets are complete · Prepare the next workday',focusItemId:wrapId};
+    if(nowMinutes>=17*60)return{title:'Calendar Management',meta:'Today’s targets are complete · Finalise follow-up and your calendar',focusItemId:wrapId};
+    return{title:'Day Complete',meta:'All daily targets have been achieved',focusItemId:progressId};
+  }
 
   if(nowMinutes>=14*60&&state.knockRemaining>0){
     const available=Math.max(0,17*60-nowMinutes);
-    if(available<=0)return{title:'Finish the weakest metric',meta:`${state.knockRemaining} knocking min will roll into the next scheduled day`,focusItemId:knockingId};
+    if(available<=0)return{title:'Finish Strong',meta:`${state.knockRemaining} knocking min will roll into the next scheduled day`,focusItemId:knockingId};
     const finish=new Date(now.getTime()+state.knockRemaining*60000);
     const finishLabel=finish.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'});
-    return{title:'Continue door knocking',meta:`${state.knockRemaining} min remaining · Finish around ${finishLabel}`,focusItemId:knockingId};
+    return{title:'Time To Knock',meta:`${state.knockRemaining} min remaining · Finish around ${finishLabel}`,focusItemId:knockingId};
   }
 
   if(nowMinutes>=13*60+30&&nowMinutes<14*60&&state.knockRemaining>0){
-    return{title:'Prepare to door knock',meta:`Door knocking starts in ${14*60-nowMinutes} min · ${state.knockRemaining} min target`,focusItemId:knockingId};
+    return{title:'Time To Knock',meta:`Door knocking starts in ${14*60-nowMinutes} min · ${state.knockRemaining} min target`,focusItemId:knockingId};
   }
 
-  if(nowMinutes>=18*60+30)return{title:'Plan tomorrow',meta:allCoreComplete?'Today’s core targets are complete':'Review unfinished activity and prepare the next workday',focusItemId:wrapId};
+  if(nowMinutes>=18*60+30)return{title:'Plan Ahead',meta:allCoreComplete?'Today’s core targets are complete':'Review unfinished activity and prepare the next workday',focusItemId:wrapId};
 
   if(state.incomplete.length){
     const momentum=activeProspectingMomentum(viewDate,now.getTime());
     if(momentum){
       const primary=balancedCorePriority(state,now);
       const remaining=primary?`${primary.remaining} ${primary.label} remaining`:'Core activity is moving';
-      return{title:'Prospecting momentum',meta:`${momentum.detail.charAt(0).toUpperCase()+momentum.detail.slice(1)} are moving · Keep the streak going · ${remaining}`,focusItemId:prospectingId};
+      const momentumTitle=momentum.active.length===1&&momentum.active[0]==='calls'?'Strong Calling Run':'Prospecting Momentum';
+      return{title:momentumTitle,meta:`${momentum.detail.charAt(0).toUpperCase()+momentum.detail.slice(1)} are moving · Keep the streak going · ${remaining}`,focusItemId:prospectingId};
     }
     const priority=balancedCorePriority(state,now)||state.incomplete[0];
     const coreDeadlineMinutes=14*60;
@@ -639,9 +644,11 @@ function coachingEngine(viewDate=selectedDate,items=timelineItemsForDate(viewDat
     const expected=expectedAt(priority.key,priority.target,now),behind=Math.max(0,expected-priority.value);
     if(behind>=Math.max(1,Math.ceil(priority.target*.1))){
       const recoveryMinutes=Math.max(10,Math.ceil(behind/priority.rate*60/5)*5);
-      return{title:priority.action,meta:`${behind} ${priority.label} behind pace · Hold this focus for ${recoveryMinutes} minutes`,focusItemId:prospectingId};
+      const recoveryTitle=nowMinutes>=16*60?'Finish Strong':nowMinutes>=12*60?'Afternoon Push':priority.key==='calls'?'Strong Calling Run':priority.action;
+      return{title:recoveryTitle,meta:`${behind} ${priority.label} behind pace · Hold this focus for ${recoveryMinutes} minutes`,focusItemId:prospectingId};
     }
-    return{title:priority.action,meta:`Build a steady block · ${blockTarget} ${priority.label} before ${timelineTimeLabel(coreDeadlineMinutes)}`,focusItemId:prospectingId};
+    const steadyTitle=nowMinutes>=16*60?'Finish Strong':nowMinutes>=12*60?'Afternoon Push':priority.key==='calls'?'Strong Calling Run':priority.action;
+    return{title:steadyTitle,meta:`Build a steady block · ${blockTarget} ${priority.label} before ${timelineTimeLabel(coreDeadlineMinutes)}`,focusItemId:prospectingId};
   }
 
   return{title:'You’re ahead',meta:state.knockRemaining?`Core targets complete · Door knocking begins at 2:00pm`:'All targets complete',focusItemId:state.knockRemaining?knockingId:progressId};

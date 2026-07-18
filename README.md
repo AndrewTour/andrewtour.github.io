@@ -101,3 +101,11 @@ Appointment follow-up information is stored as optional fields on existing appoi
 - Core prioritisation now respects Calls → Connects → Data, while still allowing a materially behind metric to recover based on its existing pace timing.
 - Existing appointment, follow-up, 2:00pm knocking, progress-check and wrap-up timing rules remain unchanged.
 - No Firebase configuration, rules, paths or migration changes.
+
+
+## v1.38.3 — Living Focus Headlines
+- Changed the compact home card label from TIMELINE to FOCUS.
+- Added context-aware focus headlines including Prospecting Momentum, Strong Calling Run, Time To Knock, Appointment Window, Follow-Up Priority, Afternoon Push and Finish Strong.
+- Preserved Calendar Management and Plan Ahead for the end-of-day workflow.
+- Daily Timeline structure, titles, order, UI and timing remain unchanged.
+- No Firebase, Firestore, authentication, storage or data migration changes.
