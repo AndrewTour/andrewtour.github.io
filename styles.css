@@ -2659,3 +2659,15 @@ button:not(:disabled):active,.file-btn:active{
 .action-sheet-actions{display:grid;grid-template-columns:1fr 1.35fr;gap:9px;margin-top:16px}.action-sheet-actions button{height:50px;border-radius:15px;border:0;font-weight:850;font-size:.73rem}.action-sheet-actions .secondary{background:#eef1f6;color:var(--ink)}.action-sheet-actions .primary{background:#101217;color:#fff}.action-sheet-actions .primary:disabled{opacity:.35}
 .outcome-options{display:grid;gap:8px;margin:14px 0}.outcome-options button{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:58px;padding:10px 13px;border:1px solid #e1e5ec;border-radius:16px;background:#fff;color:var(--ink);text-align:left}.outcome-options button span{font-size:.75rem;font-weight:850}.outcome-options button i{font-style:normal;font-size:.58rem;color:var(--muted);text-align:right}.outcome-options button.selected{border-color:var(--blue);background:rgba(52,119,255,.09);box-shadow:inset 0 0 0 1px var(--blue)}.outcome-options button.selected:after{content:'✓';display:grid;place-items:center;flex:0 0 24px;height:24px;border-radius:50%;background:var(--blue);color:#fff;font-size:.66rem;font-weight:900}.outcome-options button.selected i{display:none}
 @media(max-height:760px){.outcome-sheet{max-height:90dvh;overflow:auto}.outcome-options{gap:6px}.outcome-options button{min-height:50px}.action-sheet-head h2{font-size:1.05rem}}
+/* v1.37 insight refinement and appointment history placement */
+.appointment-period-filter{grid-template-columns:1fr 1fr}
+.appointment-period-filter button{font-size:.66rem;min-height:44px}
+.scorecard-trends,.scorecard-productivity,.scorecard-recommendations{border-radius:22px;padding:14px;margin-top:10px}
+.scorecard-trend-grid,.scorecard-productivity-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.scorecard-trend-grid article,.scorecard-productivity-grid article{border-radius:16px;padding:12px;background:rgba(255,255,255,.055)}
+.scorecard-trend-grid span,.scorecard-productivity-grid span{display:block;color:var(--muted);font-size:.65rem}
+.scorecard-trend-grid strong,.scorecard-productivity-grid strong{display:block;font-size:1rem;margin:6px 0 3px}
+.scorecard-trend-grid small,.scorecard-productivity-grid small{font-size:.62rem;color:var(--muted);line-height:1.35}
+.scorecard-insight-summary{margin:12px 0 0;color:var(--muted);font-size:.76rem;line-height:1.5}
+.scorecard-recommendation-list{display:grid;gap:8px;margin-top:10px}
+.scorecard-recommendation-list article{border-radius:15px;padding:12px;background:rgba(91,145,255,.1);font-size:.75rem;line-height:1.45}

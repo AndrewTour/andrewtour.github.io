@@ -23,7 +23,7 @@ Appointment follow-up information is stored as optional fields on existing appoi
 - No functional, Firebase, Firestore, authentication, sync or data-model changes.
 
 
-## v1.36.2
+## v1.37.0
 - Replaced follow-up text prompts with an iOS-native date input inside an AGNT sheet.
 - Replaced appointment outcome text prompts with a branded in-app outcome selector and optional note field.
 - No Firebase, Firestore, authentication, metric, calendar export or scoring changes.

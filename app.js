@@ -658,7 +658,8 @@ function renderAppointments(){
   $('#appointmentDateLabel').textContent=fmtDate(appointmentDate);
   if(picker&&!picker.value)picker.value=appointmentDate;
   $$('.appointment-filter button').forEach(b=>b.classList.toggle('active',b.dataset.appointmentFilter===appointmentFilter));
-  const list=allAppointmentEntries().filter(({appointment:a,sourceDate})=>appointmentLifecycle(a,sourceDate)===appointmentFilter);
+  const now=Date.now();
+  const list=allAppointmentEntries().filter(({scheduled})=>appointmentFilter==='past'?scheduled<now:scheduled>=now);
   $('#appointmentsList').innerHTML=list.length?list.map(({appointment:a,sourceDate,scheduled})=>{
     const contact=escapeHtml(a.contactName||a.name||'Contact not recorded'),rawPhone=String(a.contactNumber||a.phone||'').trim(),phone=escapeHtml(rawPhone),dial=rawPhone.replace(/[^+\d]/g,''),address=escapeHtml(a.address||'Address not recorded'),type=escapeHtml(appointmentType(a)),time=escapeHtml(appointmentTimeLabel(a,sourceDate)),lifecycle=appointmentLifecycle(a,sourceDate);
     const statusText=lifecycle==='upcoming'?'Upcoming':lifecycle==='completed'?(a.outcome||'Completed'):followUpDueLabel(a);
@@ -668,7 +669,7 @@ function renderAppointments(){
       <div class="appointment-card-copy"><div class="appointment-card-top"><span class="appointment-type-badge">${type}</span><span class="appointment-status-badge ${lifecycle}">${escapeHtml(statusText)}</span></div><strong>${address}</strong><small>${contact}${phone?` · ${phone}`:''}</small><small class="appointment-booked-for">${escapeHtml(shortAppointmentDate(scheduled))} at ${time}</small>${note}</div>
       <div class="appointment-followup-actions">${actions}</div>
     </article>`;
-  }).join(''):`<div class="empty">No ${appointmentFilter==='follow-up'?'follow-ups':appointmentFilter} appointments.</div>`;
+  }).join(''):`<div class="empty">No ${appointmentFilter==='past'?'past':'upcoming'} appointments.</div>`;
 }
 
 async function addAppointment({contactName,contactNumber,address,date,time,type}){
@@ -817,9 +818,30 @@ function renderScorecardAppointments(entries,base){
     return `<article class="scorecard-appointment-item"><header><span>${escapeHtml(appointmentType(a))}</span><small>${escapeHtml(status)}</small></header><h3>${escapeHtml(address)}</h3><p>${escapeHtml(contact)}${phone?` · ${escapeHtml(phone)}`:''}<br>Booked for ${escapeHtml(when)}</p><div class="scorecard-followup-actions">${tel}${lifecycle!=='upcoming'?`<button data-update-outcome="${a.id}" data-source-date="${sourceDate}">Update Outcome</button>`:''}</div></article>`;
   }).join(''):'<div class="empty">No appointments booked for this week.</div>';
 }
+function previousWeekDate(base){const d=new Date(base);d.setDate(d.getDate()-7);return d}
+function signedChange(current,previous,unit='%'){
+  if(!previous&&current)return `▲ ${current}${unit}`;
+  if(!previous&&!current)return `• 0${unit}`;
+  const delta=unit==='%'?Math.round((current-previous)/Math.max(1,previous)*100):current-previous;
+  return `${delta>0?'▲':delta<0?'▼':'•'} ${Math.abs(delta)}${unit}`;
+}
+function activityEvents(){return Object.entries(days).flatMap(([key,raw])=>(raw.events||[]).map(e=>({...e,key,date:new Date(e.at||`${key}T09:00:00`)}))).filter(e=>Number.isFinite(e.date.getTime()))}
+function productivityInsights(){
+  const workEntries=Object.keys(days).filter(isWorkDayKey).map(key=>({key,d:dayData(key),score:completion(key)}));
+  const dayGroups={};for(const x of workEntries){const name=workDayName(parseKey(x.key).getDay());(dayGroups[name]??=[]).push(x.score)}
+  const bestDay=Object.entries(dayGroups).map(([name,v])=>({name,avg:Math.round(v.reduce((a,b)=>a+b,0)/v.length)})).sort((a,b)=>b.avg-a.avg)[0];
+  const totals=workEntries.reduce((a,x)=>({calls:a.calls+x.d.calls,connects:a.connects+x.d.connects}),{calls:0,connects:0});
+  const events=activityEvents(),hours={};for(const e of events){if(!['calls','connects','data'].includes(e.type))continue;const h=e.date.getHours();if(h<7||h>19)continue;hours[h]=(hours[h]||0)+Math.max(1,Number(e.delta)||1)}
+  const bestHour=Object.entries(hours).sort((a,b)=>b[1]-a[1])[0];
+  const knockStarts=events.filter(e=>e.type==='knock'&&String(e.label||'').toLowerCase().includes('started')).map(e=>e.date.getHours()*60+e.date.getMinutes());
+  const avgKnock=knockStarts.length?Math.round(knockStarts.reduce((a,b)=>a+b,0)/knockStarts.length):null;
+  return{bestDay,bestHour,connectRate:totals.calls?Math.round(totals.connects/totals.calls*100):0,avgKnock};
+}
+function formatHourRange(hour){hour=Number(hour);const a=new Date(2026,0,1,hour),b=new Date(2026,0,1,hour+1);return `${a.toLocaleTimeString('en-AU',{hour:'numeric',hour12:true}).replace(' ','')}–${b.toLocaleTimeString('en-AU',{hour:'numeric',hour12:true}).replace(' ','')}`}
+function formatMinutesTime(minutes){if(minutes==null)return '—';const h=Math.floor(minutes/60),m=minutes%60;return new Date(2026,0,1,h,m).toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true}).replace(' ','')}
 function renderScorecard(){
   if(!$('#scorecardScore'))return;
-  const base=scorecardWeekDate(),w=weekSummaryFor(base),m=w.metricPcts||{},entries=scorecardAppointments(base);
+  const base=scorecardWeekDate(),w=weekSummaryFor(base),prev=weekSummaryFor(previousWeekDate(base)),m=w.metricPcts||{},pm=prev.metricPcts||{};
   const metrics=Object.entries(m),strongest=[...metrics].sort((a,b)=>b[1]-a[1])[0]||['calls',0],weakest=[...metrics].sort((a,b)=>a[1]-b[1])[0]||['calls',0];
   $('#scorecardWeekLabel').textContent=scorecardWeekOffset===0?`This week · ${formatWeekRange(base)}`:`Week ${formatWeekRange(base)}`;
   $('#scorecardScore').textContent=`${w.score}%`;$('#scorecardGrade').textContent=`Weekly Grade · ${scorecardGrade(w.score)}`;
@@ -828,19 +850,27 @@ function renderScorecard(){
   $('#scorecardConnects').textContent=`${w.connects} / ${w.targets.connects}`;$('#scorecardConnectsPct').textContent=`${m.connects||0}%`;
   $('#scorecardData').textContent=`${w.data} / ${w.targets.data}`;$('#scorecardDataPct').textContent=`${m.data||0}%`;
   $('#scorecardKnock').textContent=`${w.knockMinutes} / ${w.targets.knock} min`;$('#scorecardKnockPct').textContent=`${m.knocking||0}%`;
-  const appointmentCounts=entries.reduce((acc,{appointment:a,sourceDate})=>{acc[appointmentLifecycle(a,sourceDate)]++;return acc},{upcoming:0,'follow-up':0,completed:0});
-  $('#scorecardAppointments').textContent=`${entries.length} booked · ${appointmentCounts['follow-up']} follow-up`;
   $('#scorecardStrongest').textContent=`Strongest: ${metricLabel(strongest[0])} · ${strongest[1]}%`;
   $('#scorecardWeakest').textContent=`Focus: ${metricLabel(weakest[0])} · ${Math.max(0,100-weakest[1])}% remaining`;
   const remaining=[Math.max(0,w.targets.calls-w.calls),Math.max(0,w.targets.connects-w.connects),Math.max(0,w.targets.data-w.data),Math.max(0,w.targets.knock-w.knockMinutes)];
   $('#scorecardProjection').textContent=w.score>=100?'All weekly targets achieved.':`To close the week: ${remaining[0]} calls, ${remaining[1]} connects, ${remaining[2]} data and ${remaining[3]} knock minutes remaining.`;
-  const records=scorecardWeekRecords(),best=records.reduce((a,b)=>b.score>a.score?b:a,{score:0,base:null,calls:0}),mostCalls=records.reduce((a,b)=>b.calls>a.calls?b:a,{score:0,base:null,calls:0});
-  $('#recordBestWeek').textContent=`${best.score||0}%`;$('#recordBestWeekDate').textContent=best.base?`Week ${formatWeekRange(best.base)}`:'No activity yet';
-  $('#recordMostCalls').textContent=mostCalls.calls||0;$('#recordMostCallsDate').textContent=mostCalls.base?`Week ${formatWeekRange(mostCalls.base)}`:'No activity yet';
-  $('#recordWeekStreak').textContent=scorecardWeekStreak(records);
+  const trendData=[['Calls',w.calls,prev.calls,''],['Connects',w.connects,prev.connects,''],['Data',w.data,prev.data,''],['Knocking',w.knockMinutes,prev.knockMinutes,' min']];
+  $('#scorecardTrendGrid').innerHTML=trendData.map(([label,current,previous,unit])=>`<article><span>${label}</span><strong>${signedChange(current,previous,unit)}</strong><small>${current}${unit} vs ${previous}${unit}</small></article>`).join('');
+  const changes=trendData.map(([label,current,previous])=>({label,delta:current-previous}));const up=changes.filter(x=>x.delta>0).sort((a,b)=>b.delta-a.delta)[0],down=changes.filter(x=>x.delta<0).sort((a,b)=>a.delta-b.delta)[0];
+  $('#scorecardTrendSummary').textContent=up&&down?`${up.label} improved the most, while ${down.label.toLowerCase()} needs attention.`:up?`${up.label} showed the strongest improvement this week.`:down?`${down.label} declined compared with last week.`:'Performance is level with last week.';
+  const ins=productivityInsights();
+  $('#insightBestHour').textContent=ins.bestHour?formatHourRange(ins.bestHour[0]):'—';$('#insightBestHourMeta').textContent=ins.bestHour?`${ins.bestHour[1]} logged activities`:'Not enough activity yet';
+  $('#insightBestDay').textContent=ins.bestDay?.name||'—';$('#insightBestDayMeta').textContent=ins.bestDay?`${ins.bestDay.avg}% average completion`:'Not enough activity yet';
+  $('#insightConnectRate').textContent=`${ins.connectRate}%`;$('#insightKnockStart').textContent=formatMinutesTime(ins.avgKnock);
+  const rec=[];
+  if(ins.bestDay)rec.push(`${ins.bestDay.name} is your strongest day, averaging ${ins.bestDay.avg}% completion.`);
+  if(ins.bestHour)rec.push(`Your most productive prospecting hour is ${formatHourRange(ins.bestHour[0])}.`);
+  if(ins.avgKnock!=null){const diff=ins.avgKnock-14*60;rec.push(diff>0?`Your average knock start is ${diff} minutes later than the 2:00PM target.`:`Your average knock start is on or ahead of the 2:00PM target.`)}
+  if(weakest[1]<100)rec.push(`Improving ${metricLabel(weakest[0]).toLowerCase()} by ${100-weakest[1]}% would create the biggest lift in your weekly grade.`);
+  $('#scorecardRecommendations').innerHTML=(rec.slice(0,4).map(x=>`<article>${escapeHtml(x)}</article>`).join('')||'<div class="empty">Recommendations will appear once more activity is logged.</div>');
   $('#scorecardNext').disabled=scorecardWeekOffset>=0;
-  renderScorecardAppointments(entries,base);
 }
+
 function switchInsightsPage(id){$$('.insights-switch button').forEach(b=>b.classList.toggle('active',b.dataset.insightsPage===id));$$('.insights-page').forEach(p=>p.classList.toggle('active',p.id===id));if(id==='leaderboardInsights')renderLeaderboard();else renderScorecard()}
 function renderInsights(){renderScorecard();renderLeaderboard()}
 function renderYearOverview(){const labels=['M','T','W','T','F','S','S'];const months=[];for(let m=0;m<12;m++){const first=new Date(year,m,1),pad=(first.getDay()+6)%7;let cells=`<div class="mini-weekdays">${labels.map(x=>`<b>${x}</b>`).join('')}</div><div class="mini-days">${'<i></i>'.repeat(pad)}`;for(let d=1;d<=new Date(year,m+1,0).getDate();d++){const dt=new Date(year,m,d),k=dateKey(dt),p=completion(k),off=!workDays.includes(dt.getDay());cells+=`<button class="mini-day ${levelClass(p)} ${off?'off':''} ${k===todayKey()?'today':''} ${k===selectedDate?'selected':''}" data-date="${k}" aria-label="${fmtDate(k)}, ${p}% complete">${d}</button>`}cells+='</div>';months.push(`<section class="mini-month"><h3>${new Date(year,m,1).toLocaleDateString('en-AU',{month:'short'})}</h3>${cells}</section>`)}$('#yearHeatmap').innerHTML=months.join('')}
@@ -902,7 +932,7 @@ $('.insights-switch').onclick=e=>{const b=e.target.closest('button[data-insights
 $('#weekPrev').onclick=()=>{leaderboardWeekOffset--;renderWeeklyLeaderboard()};
 $('#weekNext').onclick=()=>{if(leaderboardWeekOffset<0)leaderboardWeekOffset++;renderWeeklyLeaderboard()};
 $('#weekLast').onclick=()=>{leaderboardWeekOffset=-1;renderWeeklyLeaderboard()};
-$('#scorecardPrev').onclick=()=>{scorecardWeekOffset--;renderScorecard()};$('#scorecardNext').onclick=()=>{if(scorecardWeekOffset<0)scorecardWeekOffset++;renderScorecard()};$('#scorecardAppointmentsButton').onclick=()=>{const panel=$('#scorecardAppointmentHistory');panel.classList.toggle('hidden');if(!panel.classList.contains('hidden'))panel.scrollIntoView({behavior:'smooth',block:'start'})};
+$('#scorecardPrev').onclick=()=>{scorecardWeekOffset--;renderScorecard()};$('#scorecardNext').onclick=()=>{if(scorecardWeekOffset<0)scorecardWeekOffset++;renderScorecard()};
 $('#appointmentDatePicker').onchange=()=>{};
 $('.appointment-filter').onclick=e=>{const b=e.target.closest('[data-appointment-filter]');if(!b)return;appointmentFilter=b.dataset.appointmentFilter;renderAppointments()};
 $('#appointmentForm').onsubmit=async e=>{e.preventDefault();const viewedDate=appointmentDate;const contactName=$('#appointmentContactName').value.trim(),contactNumber=$('#appointmentContactNumber').value.trim(),address=$('#appointmentAddress').value.trim(),date=$('#appointmentDatePicker').value,time=$('#appointmentTime').value,type=$('.appointment-types input:checked')?.value||'',error=$('#appointmentFormError');const missing=[];if(!contactName)missing.push('contact name');if(!contactNumber)missing.push('contact number');if(!address)missing.push('property address');if(!date)missing.push('booking date');if(!time)missing.push('booking time');if(!type)missing.push('appointment type');if(missing.length){error.textContent=`Add ${missing.join(', ')}`;error.classList.remove('hidden');return}error.textContent='';error.classList.add('hidden');const appointment=await addAppointment({contactName,contactNumber,address,date,time,type});if(appointment&&confirm(`Add to ${calendarPreference==='apple'?'Apple':'Outlook'} Calendar?`))exportAppointmentToCalendar(appointment,appointment.createdDate);e.target.reset();appointmentDate=viewedDate;$('#appointmentDatePicker').value=viewedDate;renderAppointments();updateTopbar('appointmentsView')};
@@ -928,7 +958,7 @@ $('#appointmentsList').onclick=e=>{
   const outcome=e.target.closest('[data-update-outcome]');if(outcome){updateAppointmentOutcome(outcome.dataset.updateOutcome,outcome.dataset.sourceDate);return;}
   const b=e.target.closest('[data-delete-appointment]');if(b&&confirm('Delete this appointment?'))deleteAppointment(b.dataset.deleteAppointment,b.dataset.sourceDate||appointmentDate)
 };
-$('#scorecardAppointmentList').onclick=e=>{const outcome=e.target.closest('[data-update-outcome]');if(outcome)updateAppointmentOutcome(outcome.dataset.updateOutcome,outcome.dataset.sourceDate)};
+
 $('#saveSettings').onclick=async()=>{const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;calendarPreference=$('[name=calendarPreference]:checked')?.value==='apple'?'apple':'outlook';saveLocal();await saveTargets();renderAll();toast('Settings saved')};
 $('#signOut').onclick=async()=>{clearActiveSession();if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
 $('#exportData').onclick=()=>{const blob=new Blob([JSON.stringify({targets,workDays,days},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`daily-accountability-${todayKey()}.json`;a.click();URL.revokeObjectURL(a.href)};

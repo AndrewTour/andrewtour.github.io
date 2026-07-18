@@ -121,7 +121,7 @@
       <div class="view-head">
         <div><span>APPOINTMENTS</span><h2 id="appointmentDateLabel"></h2></div>
       </div>
-      <div class="appointment-filter glass" aria-label="Appointment status filter"><button class="active" type="button" data-appointment-filter="upcoming">Upcoming</button><button type="button" data-appointment-filter="follow-up">Follow-Up</button><button type="button" data-appointment-filter="completed">Completed</button></div>
+      <div class="appointment-filter appointment-period-filter glass" aria-label="Appointment history"><button class="active" type="button" data-appointment-filter="upcoming">Upcoming Appointments</button><button type="button" data-appointment-filter="past">Past Appointments</button></div>
       <div id="appointmentLock" class="appointment-lock hidden">Past dates are locked and read-only.</div><form id="appointmentForm" class="appointment-form glass" novalidate>
         <label>Contact name<input id="appointmentContactName" type="text" placeholder="Contact name" autocomplete="name" autocapitalize="words" required></label>
         <label>Contact number<input id="appointmentContactNumber" type="tel" placeholder="04xx xxx xxx" autocomplete="tel" inputmode="tel" required></label>
@@ -161,23 +161,28 @@
           <button class="scorecard-metric" type="button" disabled><span>Connects</span><strong id="scorecardConnects">0 / 0</strong><small id="scorecardConnectsPct">0%</small></button>
           <button class="scorecard-metric" type="button" disabled><span>Data</span><strong id="scorecardData">0 / 0</strong><small id="scorecardDataPct">0%</small></button>
           <button class="scorecard-metric" type="button" disabled><span>Door Knock</span><strong id="scorecardKnock">0 / 0 min</strong><small id="scorecardKnockPct">0%</small></button>
-          <button id="scorecardAppointmentsButton" class="scorecard-metric scorecard-appointments" type="button"><span>Appointments</span><strong id="scorecardAppointments">0 booked</strong><small>View appointments ›</small></button>
         </section>
         <section class="scorecard-focus glass">
           <div><span>WEEKLY REVIEW</span><strong id="scorecardStrongest">Strongest: —</strong><small id="scorecardWeakest">Focus: —</small></div>
           <p id="scorecardProjection">Your weekly projection will appear once activity is logged.</p>
         </section>
-        <section class="scorecard-records glass">
-          <div class="section-label"><span>PERSONAL RECORDS</span><small>Calculated from your saved accountability history</small></div>
-          <div class="personal-best-grid">
-            <article><span>BEST WEEK</span><strong id="recordBestWeek">0%</strong><small id="recordBestWeekDate">No activity yet</small></article>
-            <article><span>MOST CALLS</span><strong id="recordMostCalls">0</strong><small id="recordMostCallsDate">No activity yet</small></article>
-            <article><span>90%+ STREAK</span><strong id="recordWeekStreak">0</strong><small>Current weekly streak</small></article>
+        <section class="scorecard-trends glass">
+          <div class="section-label"><span>WHAT CHANGED?</span><small>Compared with last week</small></div>
+          <div id="scorecardTrendGrid" class="scorecard-trend-grid"></div>
+          <p id="scorecardTrendSummary" class="scorecard-insight-summary"></p>
+        </section>
+        <section class="scorecard-productivity glass">
+          <div class="section-label"><span>PRODUCTIVITY INSIGHTS</span><small>Patterns from your saved activity</small></div>
+          <div class="scorecard-productivity-grid">
+            <article><span>Best Prospecting Hour</span><strong id="insightBestHour">—</strong><small id="insightBestHourMeta">Not enough activity yet</small></article>
+            <article><span>Strongest Day</span><strong id="insightBestDay">—</strong><small id="insightBestDayMeta">Not enough activity yet</small></article>
+            <article><span>Average Connect Rate</span><strong id="insightConnectRate">0%</strong><small>Across saved workdays</small></article>
+            <article><span>Average Knock Start</span><strong id="insightKnockStart">—</strong><small>Compared with the 2:00PM target</small></article>
           </div>
         </section>
-        <section id="scorecardAppointmentHistory" class="scorecard-history glass hidden">
-          <div class="section-label"><span>APPOINTMENTS</span><small id="scorecardAppointmentHistoryLabel">Selected week</small></div>
-          <div id="scorecardAppointmentList" class="scorecard-appointment-list"></div>
+        <section class="scorecard-recommendations glass">
+          <div class="section-label"><span>RECOMMENDATIONS</span><small>Most useful patterns to act on</small></div>
+          <div id="scorecardRecommendations" class="scorecard-recommendation-list"></div>
         </section>
       </div>
       <div id="leaderboardInsights" class="insights-page active">
@@ -327,6 +332,6 @@
 </div>
 
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=1.36.2"></script>
+<script type="module" src="app.js?v=1.37.0"></script>
 </body>
 </html>
