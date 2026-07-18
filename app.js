@@ -323,9 +323,11 @@ function updateTopbar(id=activeViewId()){
   const syncPopover=$('#syncPopover');
   $('#viewTitle').textContent=isToday?welcomeMessage():(id==='scheduleView'?'Your Schedule':label);
   $('#dateLabel').textContent=fmtDate(selectedDate);
-  $('#dateLabel').classList.remove('hidden');
-  dateLine?.classList.remove('today-sync-only');
-  if(isToday&&todaySlot){
+  const hideCompactDate=id==='scheduleView'||id==='insightsView';
+  $('#dateLabel').classList.toggle('hidden',hideCompactDate);
+  dateLine?.classList.toggle('today-sync-only',hideCompactDate);
+  const syncInTopActions=isToday||id==='scheduleView'||id==='appointmentsView'||id==='insightsView'||id==='settingsView';
+  if(syncInTopActions&&todaySlot){
     if(syncBadge&&syncBadge.parentElement!==todaySlot)todaySlot.append(syncBadge);
   }else if(dateLine){
     if(syncBadge&&syncBadge.parentElement!==dateLine)dateLine.append(syncBadge);
@@ -920,8 +922,8 @@ function weeklyLeaderboardRows(){
 function metricLabel(key){return({calls:'Calls',connects:'Connects',data:'Data',knocking:'Knocking'})[key]||'Calls'}
 function metricRing(value,target,label){
   if(value==null)return `<span class="leaderboard-metric-ring unavailable" style="--metric-score:0"><i><strong>—</strong></i><small>${label}</small></span>`;
-  const safeTarget=Number(target)||0,p=safeTarget?Math.max(0,Math.min(100,Math.round((Number(value)||0)/safeTarget*100))):0;
-  return `<span class="leaderboard-metric-ring" style="--metric-score:${p}" role="img" aria-label="${label}: ${p}% complete"><i><strong>${p}%</strong></i><small>${label}</small></span>`;
+  const safeValue=Math.max(0,Math.round(Number(value)||0)),safeTarget=Number(target)||0,p=safeTarget?Math.max(0,Math.min(100,Math.round(safeValue/safeTarget*100))):0;
+  return `<span class="leaderboard-metric-ring" style="--metric-score:${p}" role="img" aria-label="${label}: ${safeValue}, ${p}% complete"><i><strong>${safeValue}</strong></i><small>${label}</small></span>`;
 }
 function leaderboardRowHtml(r,i,weekly=false){
   const t=r.targets||{},score=Math.max(0,Math.min(100,r.score||0));

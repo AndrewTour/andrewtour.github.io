@@ -120,9 +120,16 @@ Appointment follow-up information is stored as optional fields on existing appoi
 - Extended the leaderboard stack to use the available space above the bottom navigation.
 - No Firebase rules, authentication, UID separation or unrelated app functionality changed.
 
-## v1.38.5 — Glanceable Leaderboard
+## v1.38.6 — Glanceable Leaderboard
 - Replaced wide leaderboard metric columns with compact percentage progress rings.
 - Removed horizontal leaderboard scrolling; team growth remains vertically scrollable.
 - Removed the secondary Appointments content label while retaining the large selected date.
 - Renamed the Today page heading to “Your Schedule” while preserving the Today bottom navigation label.
 - No Firebase, data model, authentication, scoring or workflow changes.
+
+
+## v1.38.6
+- Removed the compact top date from Your Schedule and Leaderboard only.
+- Reduced and repositioned the universal live sync dot as requested.
+- Leaderboard metric rings now show raw metric totals while the ring conveys progress.
+- Condensed leaderboard row spacing to keep approximately four agents visible on a typical iPhone screen.
