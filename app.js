@@ -8,7 +8,7 @@ const DEFAULT_WORK_DAYS=[1,2,4,5];
 let workDays=[...DEFAULT_WORK_DAYS];
 const CALL_PLAN=[[9,'Active Buyer Calls','Hot buyers, offers, contracts and second inspections'],[10,'Past OFI Calls','Recent attendees, missed callbacks and buyer feedback'],[11,'Pipeline Calls','Current sellers, warm leads and next-step conversations'],[12,'Past Appraisals','Owners with a likely 3–12 month move'],[13,'Database Reconnects','Long-term owners and dormant contacts'],[14,'Just Listed & Coming Soon','Buyers, neighbours and local owner awareness'],[15,'Just Sold Calls','Result calls and nearby owner follow-up'],[16,'Priority Follow-Up','Offers, appointments and tomorrow’s pipeline']];
 const DEFAULTS={calls:50,connects:25,data:10,weeklyKnock:240};
-let targets={...DEFAULTS}, days={}, selectedDate=dateKey(new Date()), appointmentDate=selectedDate, agentName='', calendarPreference='outlook', leaderboardEntries=[], leaderboardWeekOffset=0, scorecardWeekOffset=0;
+let targets={...DEFAULTS}, days={}, selectedDate=dateKey(new Date()), appointmentDate=selectedDate, appointmentFilter='upcoming', agentName='', calendarPreference='outlook', leaderboardEntries=[], leaderboardWeekOffset=0, scorecardWeekOffset=0;
 let year=new Date().getFullYear(), monthCursor=new Date(), uid='local', currentUser=null, cloud=false, db=null, auth=null;
 let unsubDays=null, unsubProfile=null, unsubLeaderboard=null, timerTick=null, syncTimer=null, leaderboardPublishTimer=null;
 
@@ -508,6 +508,8 @@ function coachingEngine(viewDate=selectedDate,items=timelineItemsForDate(viewDat
   if(currentAppointment)return{title:'Appointment in progress',meta:`${currentAppointment.title} · Resume prospecting afterwards`};
   if(nextAppointment&&minutesToAppointment<=10)return{title:'Prepare for your appointment',meta:`${nextAppointment.title} starts in ${minutesToAppointment} min`};
   if(nextAppointment&&minutesToAppointment<=30)return{title:'Wrap up shortly',meta:`Complete the current block, then prepare for ${timelineTimeLabel(nextAppointment.minutes)}`};
+  const followUps=dueFollowUps();
+  if(followUps.length)return{title:'Complete follow-ups',meta:`${followUps.length} past appointment${followUps.length===1?' needs':'s need'} an outcome`};
 
   const allCoreComplete=state.incomplete.length===0;
   if(allCoreComplete&&state.knockRemaining===0)return{title:'Day complete',meta:'All daily targets have been achieved'};
@@ -572,6 +574,59 @@ function renderTimeline(){
   }).join(''):'<div class="empty">Nothing scheduled for this date.</div>';
 }
 
+
+function allAppointmentEntries(){
+  const entries=[];
+  Object.entries(days).forEach(([sourceDate,day])=>(day?.appointments||[]).forEach(appointment=>entries.push({appointment,sourceDate,scheduled:appointmentScheduledDate(appointment,sourceDate)})));
+  return entries.sort((x,y)=>appointmentTimestamp(x.appointment,x.sourceDate)-appointmentTimestamp(y.appointment,y.sourceDate));
+}
+function appointmentLifecycle(a,sourceDate=''){
+  const ts=appointmentTimestamp(a,sourceDate),now=Date.now();
+  if(a.status==='completed'||a.followedUpAt||['Price Update Booked','Listing Appointment Booked','Signed','Not Proceeding'].includes(a.outcome))return'completed';
+  if(ts&&ts>now)return'upcoming';
+  return'follow-up';
+}
+function followUpDueLabel(a){
+  if(!a.followUpDate)return'Follow-up due';
+  const today=todayKey();
+  if(a.followUpDate===today)return'Due today';
+  const tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);
+  if(a.followUpDate===dateKey(tomorrow))return'Due tomorrow';
+  if(a.followUpDate<today){const diff=Math.max(1,Math.round((parseKey(today)-parseKey(a.followUpDate))/86400000));return`${diff} day${diff===1?'':'s'} overdue`;}
+  return`Due ${shortAppointmentDate(a.followUpDate)}`;
+}
+function dueFollowUps(){return allAppointmentEntries().filter(({appointment:a,sourceDate})=>appointmentLifecycle(a,sourceDate)==='follow-up'&&(!a.followUpDate||a.followUpDate<=todayKey()));}
+async function updateAppointmentRecord(id,sourceDate,changes){
+  const d=dayData(sourceDate),index=d.appointments.findIndex(a=>String(a.id)===String(id));
+  if(index<0)return toast('Appointment could not be found');
+  d.appointments[index]={...d.appointments[index],...changes,updatedAt:Date.now()};
+  days[sourceDate]=d;await saveDay(sourceDate);renderAll();
+}
+function followUpDateFromChoice(choice){
+  const d=new Date();
+  if(choice==='1')d.setDate(d.getDate()+1);
+  else if(choice==='2')d.setDate(d.getDate()+3);
+  else if(choice==='3')d.setDate(d.getDate()+7);
+  else if(/^\d{4}-\d{2}-\d{2}$/.test(choice||''))return choice;
+  else return null;
+  return dateKey(d);
+}
+async function setAppointmentFollowUp(id,sourceDate){
+  const choice=prompt('Follow-up due date:\n1 — Tomorrow\n2 — In 3 days\n3 — Next week\nOr enter YYYY-MM-DD');
+  if(choice===null)return;const followUpDate=followUpDateFromChoice(choice.trim());
+  if(!followUpDate)return toast('Enter 1, 2, 3 or a date in YYYY-MM-DD format');
+  await updateAppointmentRecord(id,sourceDate,{status:'follow-up',followUpDate,followedUpAt:null});toast('Follow-up scheduled');
+}
+async function markAppointmentFollowedUp(id,sourceDate){await updateAppointmentRecord(id,sourceDate,{status:'completed',followedUpAt:Date.now()});toast('Appointment marked followed up');}
+async function updateAppointmentOutcome(id,sourceDate){
+  const choice=prompt('Appointment outcome:\n1 — Still Nurturing\n2 — Price Update Booked\n3 — Listing Appointment Booked\n4 — Signed\n5 — Not Proceeding');
+  if(choice===null)return;const outcomes={'1':'Still Nurturing','2':'Price Update Booked','3':'Listing Appointment Booked','4':'Signed','5':'Not Proceeding'},outcome=outcomes[choice.trim()];
+  if(!outcome)return toast('Choose an outcome from 1 to 5');
+  const note=prompt('Optional note','')||'';
+  if(outcome==='Still Nurturing'){await updateAppointmentRecord(id,sourceDate,{outcome,outcomeNote:note,status:'follow-up',followedUpAt:Date.now()});await setAppointmentFollowUp(id,sourceDate);}
+  else{await updateAppointmentRecord(id,sourceDate,{outcome,outcomeNote:note,status:'completed',followedUpAt:Date.now(),followUpDate:null});toast('Appointment outcome saved');}
+}
+
 function renderAppointments(){
   const picker=$('#appointmentDatePicker');
   const locked=isPastDate(appointmentDate);
@@ -580,53 +635,18 @@ function renderAppointments(){
   $('#appointmentLock').classList.toggle('hidden',!locked);
   $('#appointmentDateLabel').textContent=fmtDate(appointmentDate);
   if(picker&&!picker.value)picker.value=appointmentDate;
-  const list=appointmentEntriesForDate(appointmentDate);
-  $('#appointmentsList').innerHTML=list.length?list.map(({appointment:a,sourceDate,isReminder})=>{
-    const contact=escapeHtml(a.contactName||a.name||'Contact not recorded');
-    const rawPhone=String(a.contactNumber||a.phone||'').trim();
-    const phone=escapeHtml(rawPhone);
-    const dial=rawPhone.replace(/[^+\d]/g,'');
-    const address=escapeHtml(a.address||'Address not recorded');
-    const type=escapeHtml(appointmentType(a));
-    const time=escapeHtml(appointmentTimeLabel(a,sourceDate));
-    const scheduledDate=appointmentScheduledDate(a,sourceDate);
-    const createdDate=appointmentCreatedDate(a,sourceDate);
-    const canDelete=canEditDate(sourceDate);
-    if(isReminder){
-      return `<article class="appointment-card appointment-card-premium appointment-reminder">
-        <div class="appointment-card-copy">
-          <div class="appointment-card-top"><span class="appointment-reminder-badge">BOOKED APPOINTMENT · ${type}</span></div>
-          <strong>${contact}</strong>
-          <small>${address}${phone?` · ${phone}`:''}</small>
-          <small class="appointment-booked-on">Booked on ${escapeHtml(shortAppointmentDate(createdDate))}</small>
-          <div class="appointment-reminder-footer">
-            <small class="appointment-booked-for">Booked for ${escapeHtml(shortAppointmentDate(scheduledDate))} at ${time}</small>
-            <small class="appointment-confirm-note">Call 2 hours prior to confirm</small>
-          </div>
-        </div>
-        <div class="appointment-card-actions">
-          ${appointmentCalendarButton(a,sourceDate)}
-          ${dial?`<a class="appointment-call" href="tel:${dial}" aria-label="Call ${contact}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.2 3.5 4.8 5.9c-.7.7-.8 1.8-.3 2.7 2.5 4.7 6.3 8.5 11 11 .9.5 2 .4 2.7-.3l2.3-2.3-4.1-3-2.1 2.1c-2.6-1.4-4.7-3.5-6.1-6.1l2.1-2.1-3.1-4.4Z"/></svg></a>`:''}
-          <button class="appointment-delete" data-delete-appointment="${a.id}" data-source-date="${sourceDate}" aria-label="Delete appointment" ${canDelete?'':'disabled'}>×</button>
-        </div>
-      </article>`;
-    }
-    const futureBooking=scheduledDate&&scheduledDate!==sourceDate;
-    const bookedTodayForToday=createdDate===todayKey()&&scheduledDate===todayKey();
-    return `<article class="appointment-card appointment-card-premium">
-      <div class="appointment-card-copy">
-        <div class="appointment-card-top"><span class="appointment-type-badge">${type}</span></div>
-        <strong>${address}</strong>
-        <small>${contact}${phone?` · ${phone}`:''}</small>
-        ${bookedTodayForToday?`<small class="appointment-booked-for">Booked Today at ${time}</small>`:(futureBooking?`<small class="appointment-booked-for">Booked for ${escapeHtml(shortAppointmentDate(scheduledDate))} at ${time}</small>`:'')}
-      </div>
-      <div class="appointment-card-actions">
-        ${appointmentCalendarButton(a,sourceDate)}
-        ${dial?`<a class="appointment-call" href="tel:${dial}" aria-label="Call ${contact}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.2 3.5 4.8 5.9c-.7.7-.8 1.8-.3 2.7 2.5 4.7 6.3 8.5 11 11 .9.5 2 .4 2.7-.3l2.3-2.3-4.1-3-2.1 2.1c-2.6-1.4-4.7-3.5-6.1-6.1l2.1-2.1-3.1-4.4Z"/></svg></a>`:''}
-        <button class="appointment-delete" data-delete-appointment="${a.id}" data-source-date="${sourceDate}" aria-label="Delete appointment" ${canDelete?'':'disabled'}>×</button>
-      </div>
-    </article>`
-  }).join(''):`<div class="empty">No appointments logged or scheduled for this date.</div>`
+  $$('.appointment-filter button').forEach(b=>b.classList.toggle('active',b.dataset.appointmentFilter===appointmentFilter));
+  const list=allAppointmentEntries().filter(({appointment:a,sourceDate})=>appointmentLifecycle(a,sourceDate)===appointmentFilter);
+  $('#appointmentsList').innerHTML=list.length?list.map(({appointment:a,sourceDate,scheduled})=>{
+    const contact=escapeHtml(a.contactName||a.name||'Contact not recorded'),rawPhone=String(a.contactNumber||a.phone||'').trim(),phone=escapeHtml(rawPhone),dial=rawPhone.replace(/[^+\d]/g,''),address=escapeHtml(a.address||'Address not recorded'),type=escapeHtml(appointmentType(a)),time=escapeHtml(appointmentTimeLabel(a,sourceDate)),lifecycle=appointmentLifecycle(a,sourceDate);
+    const statusText=lifecycle==='upcoming'?'Upcoming':lifecycle==='completed'?(a.outcome||'Completed'):followUpDueLabel(a);
+    const note=a.outcomeNote?`<small class="appointment-outcome-note">${escapeHtml(a.outcomeNote)}</small>`:'';
+    const actions=lifecycle==='upcoming'?`${dial?`<a class="appointment-call appointment-action-wide" href="tel:${dial}">Call</a>`:''}<button class="appointment-secondary-action" data-set-followup="${a.id}" data-source-date="${sourceDate}">Set Follow-Up</button>`:`${dial?`<a class="appointment-call appointment-action-wide" href="tel:${dial}">Call</a>`:''}${lifecycle==='follow-up'?`<button class="appointment-secondary-action" data-mark-followedup="${a.id}" data-source-date="${sourceDate}">Mark Followed Up</button>`:''}<button class="appointment-secondary-action" data-update-outcome="${a.id}" data-source-date="${sourceDate}">Update Outcome</button>`;
+    return `<article class="appointment-card appointment-card-premium appointment-followup-card ${lifecycle}">
+      <div class="appointment-card-copy"><div class="appointment-card-top"><span class="appointment-type-badge">${type}</span><span class="appointment-status-badge ${lifecycle}">${escapeHtml(statusText)}</span></div><strong>${address}</strong><small>${contact}${phone?` · ${phone}`:''}</small><small class="appointment-booked-for">${escapeHtml(shortAppointmentDate(scheduled))} at ${time}</small>${note}</div>
+      <div class="appointment-followup-actions">${actions}</div>
+    </article>`;
+  }).join(''):`<div class="empty">No ${appointmentFilter==='follow-up'?'follow-ups':appointmentFilter} appointments.</div>`;
 }
 
 async function addAppointment({contactName,contactNumber,address,date,time,type}){
@@ -771,7 +791,8 @@ function renderScorecardAppointments(entries,base){
     const phone=String(a.contactNumber||a.phone||'').trim(),contact=a.contactName||a.name||'Contact not recorded',address=a.address||'Address not recorded';
     const when=`${parseKey(scheduled).toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long'})} at ${appointmentTimeLabel(a,sourceDate)}`;
     const tel=phone?`<a class="scorecard-call" href="tel:${escapeHtml(phone.replace(/[^+\d]/g,''))}">Call ${escapeHtml(contact.split(/\s+/)[0]||'contact')}</a>`:'';
-    return `<article class="scorecard-appointment-item"><header><span>${escapeHtml(appointmentType(a))}</span><small>${scheduled<todayKey()?'Past':'Upcoming'}</small></header><h3>${escapeHtml(address)}</h3><p>${escapeHtml(contact)}${phone?` · ${escapeHtml(phone)}`:''}<br>Booked for ${escapeHtml(when)}</p>${tel}</article>`;
+    const lifecycle=appointmentLifecycle(a,sourceDate),status=lifecycle==='completed'?(a.outcome||'Completed'):lifecycle==='follow-up'?followUpDueLabel(a):'Upcoming';
+    return `<article class="scorecard-appointment-item"><header><span>${escapeHtml(appointmentType(a))}</span><small>${escapeHtml(status)}</small></header><h3>${escapeHtml(address)}</h3><p>${escapeHtml(contact)}${phone?` · ${escapeHtml(phone)}`:''}<br>Booked for ${escapeHtml(when)}</p><div class="scorecard-followup-actions">${tel}${lifecycle!=='upcoming'?`<button data-update-outcome="${a.id}" data-source-date="${sourceDate}">Update Outcome</button>`:''}</div></article>`;
   }).join(''):'<div class="empty">No appointments booked for this week.</div>';
 }
 function renderScorecard(){
@@ -785,7 +806,8 @@ function renderScorecard(){
   $('#scorecardConnects').textContent=`${w.connects} / ${w.targets.connects}`;$('#scorecardConnectsPct').textContent=`${m.connects||0}%`;
   $('#scorecardData').textContent=`${w.data} / ${w.targets.data}`;$('#scorecardDataPct').textContent=`${m.data||0}%`;
   $('#scorecardKnock').textContent=`${w.knockMinutes} / ${w.targets.knock} min`;$('#scorecardKnockPct').textContent=`${m.knocking||0}%`;
-  $('#scorecardAppointments').textContent=`${entries.length} booked`;
+  const appointmentCounts=entries.reduce((acc,{appointment:a,sourceDate})=>{acc[appointmentLifecycle(a,sourceDate)]++;return acc},{upcoming:0,'follow-up':0,completed:0});
+  $('#scorecardAppointments').textContent=`${entries.length} booked · ${appointmentCounts['follow-up']} follow-up`;
   $('#scorecardStrongest').textContent=`Strongest: ${metricLabel(strongest[0])} · ${strongest[1]}%`;
   $('#scorecardWeakest').textContent=`Focus: ${metricLabel(weakest[0])} · ${Math.max(0,100-weakest[1])}% remaining`;
   const remaining=[Math.max(0,w.targets.calls-w.calls),Math.max(0,w.targets.connects-w.connects),Math.max(0,w.targets.data-w.data),Math.max(0,w.targets.knock-w.knockMinutes)];
@@ -860,6 +882,7 @@ $('#weekNext').onclick=()=>{if(leaderboardWeekOffset<0)leaderboardWeekOffset++;r
 $('#weekLast').onclick=()=>{leaderboardWeekOffset=-1;renderWeeklyLeaderboard()};
 $('#scorecardPrev').onclick=()=>{scorecardWeekOffset--;renderScorecard()};$('#scorecardNext').onclick=()=>{if(scorecardWeekOffset<0)scorecardWeekOffset++;renderScorecard()};$('#scorecardAppointmentsButton').onclick=()=>{const panel=$('#scorecardAppointmentHistory');panel.classList.toggle('hidden');if(!panel.classList.contains('hidden'))panel.scrollIntoView({behavior:'smooth',block:'start'})};
 $('#appointmentDatePicker').onchange=()=>{};
+$('.appointment-filter').onclick=e=>{const b=e.target.closest('[data-appointment-filter]');if(!b)return;appointmentFilter=b.dataset.appointmentFilter;renderAppointments()};
 $('#appointmentForm').onsubmit=async e=>{e.preventDefault();const viewedDate=appointmentDate;const contactName=$('#appointmentContactName').value.trim(),contactNumber=$('#appointmentContactNumber').value.trim(),address=$('#appointmentAddress').value.trim(),date=$('#appointmentDatePicker').value,time=$('#appointmentTime').value,type=$('.appointment-types input:checked')?.value||'',error=$('#appointmentFormError');const missing=[];if(!contactName)missing.push('contact name');if(!contactNumber)missing.push('contact number');if(!address)missing.push('property address');if(!date)missing.push('booking date');if(!time)missing.push('booking time');if(!type)missing.push('appointment type');if(missing.length){error.textContent=`Add ${missing.join(', ')}`;error.classList.remove('hidden');return}error.textContent='';error.classList.add('hidden');const appointment=await addAppointment({contactName,contactNumber,address,date,time,type});if(appointment&&confirm(`Add to ${calendarPreference==='apple'?'Apple':'Outlook'} Calendar?`))exportAppointmentToCalendar(appointment,appointment.createdDate);e.target.reset();appointmentDate=viewedDate;$('#appointmentDatePicker').value=viewedDate;renderAppointments();updateTopbar('appointmentsView')};
 $('#appointmentsList').onclick=e=>{
   const calendarButton=e.target.closest('[data-calendar-appointment]');
@@ -870,8 +893,12 @@ $('#appointmentsList').onclick=e=>{
     if(appointmentAddedToCalendar(entry.appointment,entry.sourceDate))return toast('Already added to calendar');
     exportAppointmentToCalendar(entry.appointment,entry.sourceDate);return;
   }
+  const follow=e.target.closest('[data-set-followup]');if(follow){setAppointmentFollowUp(follow.dataset.setFollowup,follow.dataset.sourceDate);return;}
+  const marked=e.target.closest('[data-mark-followedup]');if(marked){markAppointmentFollowedUp(marked.dataset.markFollowedup,marked.dataset.sourceDate);return;}
+  const outcome=e.target.closest('[data-update-outcome]');if(outcome){updateAppointmentOutcome(outcome.dataset.updateOutcome,outcome.dataset.sourceDate);return;}
   const b=e.target.closest('[data-delete-appointment]');if(b&&confirm('Delete this appointment?'))deleteAppointment(b.dataset.deleteAppointment,b.dataset.sourceDate||appointmentDate)
 };
+$('#scorecardAppointmentList').onclick=e=>{const outcome=e.target.closest('[data-update-outcome]');if(outcome)updateAppointmentOutcome(outcome.dataset.updateOutcome,outcome.dataset.sourceDate)};
 $('#saveSettings').onclick=async()=>{const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;calendarPreference=$('[name=calendarPreference]:checked')?.value==='apple'?'apple':'outlook';saveLocal();await saveTargets();renderAll();toast('Settings saved')};
 $('#signOut').onclick=async()=>{clearActiveSession();if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
 $('#exportData').onclick=()=>{const blob=new Blob([JSON.stringify({targets,workDays,days},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`daily-accountability-${todayKey()}.json`;a.click();URL.revokeObjectURL(a.href)};

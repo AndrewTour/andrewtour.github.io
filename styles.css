@@ -2615,3 +2615,16 @@ button:not(:disabled):active,.file-btn:active{
 @media(max-height:760px){
   .dashboard .knock-actions{grid-template-columns:38px 46px 46px;gap:6px}
 }
+
+/* v1.36 appointment follow-up tracker */
+.appointment-filter{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:5px;border-radius:18px;margin-bottom:10px}
+.appointment-filter button{border:0;background:transparent;color:var(--muted);font-weight:800;padding:10px 4px;border-radius:14px;font-size:.68rem}
+.appointment-filter button.active{background:rgba(255,255,255,.12);color:var(--ink);box-shadow:0 5px 14px rgba(25,31,43,.08)}
+.appointment-followup-card{display:block}
+.appointment-status-badge{margin-left:auto;font-size:.58rem;font-weight:800;color:var(--muted);text-transform:none}
+.appointment-status-badge.follow-up{color:#d88522}.appointment-status-badge.completed{color:#18a879}.appointment-status-badge.upcoming{color:var(--blue)}
+.appointment-followup-actions,.scorecard-followup-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+.appointment-followup-actions a,.appointment-followup-actions button,.scorecard-followup-actions a,.scorecard-followup-actions button{min-height:38px;border:0;border-radius:12px;padding:0 13px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-size:.68rem;font-weight:800}
+.appointment-action-wide,.scorecard-call{background:#111318!important;color:#fff!important;width:auto;height:auto}
+.appointment-secondary-action,.scorecard-followup-actions button{background:rgba(91,145,255,.12)!important;color:var(--ink)!important}
+.appointment-outcome-note{padding-top:4px;font-style:italic}

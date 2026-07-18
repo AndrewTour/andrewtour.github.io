@@ -1,30 +1,16 @@
-# AGNT v1.34.2 — Weekly Scorecard
+# AGNT v1.36.0 — Appointment Follow-Up Tracker
 
-Incremental update built from AGNT v1.33.0.
+Incremental update built from the confirmed working v1.34.2 package.
 
-## Changes
-- Replaced the Leaderboard Insights page with a Weekly Scorecard.
-- Added week navigation, grade, core metric performance, strongest/weakest metric and remaining-target summary.
-- Added personal weekly records and current 90%+ weekly streak.
-- Added a clickable Appointments metric with a read-only weekly appointment list and direct phone call links.
+## Added
+- Upcoming, Follow-Up and Completed appointment filters.
+- Follow-up due dates with tomorrow, three-day, next-week or custom-date options.
+- Quick Call, Mark Followed Up and Update Outcome actions.
+- Outcomes: Still Nurturing, Price Update Booked, Listing Appointment Booked, Signed and Not Proceeding.
+- Optional appointment outcome notes.
+- Due-today and overdue follow-up labels.
+- Smart Coach reminders when past appointments need an outcome.
+- Weekly Scorecard appointment outcome summary and follow-up actions.
 
-## Unchanged
-Firebase, Firestore, authentication, UID separation, local cache, sync, appointment creation/editing/deletion, calendar exports, metric logging, targets, leaderboard calculations, reminders, styling language and PWA workflow remain unchanged.
-
-No Firebase or Firestore changes are required.
-
-
-## v1.34.1 visual consistency update
-- Applied title case across interface copy while preserving existing all-caps labels.
-- Preserved the day-on-day comparison, leaderboard completion/ranking line, Smart Coach subheading, and longer Settings information.
-- Matched Knocking supporting-text spacing to the other daily metrics.
-- Matched the Knocking progress-ring placement, dimensions, typography and styling to the other progress rings.
-- No Firebase, data, sync, appointment, calendar or metric behaviour changes.
-
-
-## v1.34.2 refinement
-- Clarified the scorecard grade label as “Weekly Grade · [grade]”.
-- Moved the Knocking progress ring to the left of the Play button.
-- Kept the Play and Restart buttons together at their existing size.
-- Changed Smart Coach supporting messaging to sentence case while preserving the Smart Coach heading.
-- No Firebase, Firestore, authentication, sync, metric, appointment, calendar or coaching logic changes.
+## Compatibility
+Appointment follow-up information is stored as optional fields on existing appointment objects. Existing records remain compatible. Firebase paths, Firestore rules, authentication, UID separation, metric logging, calendar export, local cache and sync architecture are unchanged.
