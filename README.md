@@ -139,3 +139,11 @@ Appointment follow-up information is stored as optional fields on existing appoi
 - Added contextual grey subtitles under Your Schedule and Leaderboard.
 - Further condensed leaderboard row spacing to prioritise four complete agent data sets in the visible leaderboard window.
 - No Firebase, authentication, storage, scoring or workflow changes.
+
+
+## v1.38.8 — Shared Metric Header
+- Added contextual subtitles beneath Appointments and Settings.
+- Moved Calls, Connects, Data and Knock labels into one shared leaderboard header.
+- Removed repeated metric labels from each agent row.
+- Improved Day and Week tab text clarity while preserving the existing UI.
+- No Firebase, Firestore, authentication, sync, scoring, appointment workflow or data-model changes.

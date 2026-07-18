@@ -2904,3 +2904,34 @@ button:not(:disabled):active,.file-btn:active{
   .leaderboard-metric-ring>i{width:29px;height:29px}
   .leaderboard-metric-ring small{font-size:.36rem}
 }
+
+
+/* v1.38.8 — shared leaderboard metric headings and contextual page subtitles. */
+.leaderboard-metric-head{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:5px;
+  padding:0 1px 4px 29px;
+  color:#929aa8;
+  font-size:.48rem;
+  line-height:1;
+  font-weight:800;
+  letter-spacing:.06em;
+  text-align:center;
+  text-transform:uppercase;
+  flex:0 0 auto;
+}
+.leaderboard-metric-ring small{display:none!important}
+.leaderboard-ring-metrics{margin-top:3px}
+.leaderboard-metric-ring{gap:0}
+.leaderboard-mode-tabs button{
+  font-size:.76rem;
+  line-height:1;
+  font-weight:800;
+  letter-spacing:.01em;
+  -webkit-font-smoothing:antialiased;
+}
+.leaderboard-mode-tabs button#leaderboardWeekTab{font-size:.76rem}
+@media(max-width:390px){
+  .leaderboard-metric-head{gap:3px;padding-left:27px;font-size:.45rem}
+}

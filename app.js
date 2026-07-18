@@ -323,7 +323,7 @@ function updateTopbar(id=activeViewId()){
   const syncPopover=$('#syncPopover');
   $('#viewTitle').textContent=isToday?welcomeMessage():(id==='scheduleView'?'Your Schedule':label);
   const subtitle=$('#viewSubtitle');
-  const subtitleText=id==='scheduleView'?'Plan ahead. Win the day.':id==='insightsView'?'Set the pace. Raise the standard.':'';
+  const subtitleText=id==='scheduleView'?'Plan ahead. Win the day.':id==='appointmentsView'?'Stay prepared. Follow through.':id==='insightsView'?'Set the pace. Raise the standard.':id==='settingsView'?'Make AGNT work your way.':'';
   if(subtitle){subtitle.textContent=subtitleText;subtitle.classList.toggle('hidden',!subtitleText)}
   $('#dateLabel').textContent=fmtDate(selectedDate);
   const hideCompactDate=id==='scheduleView'||id==='insightsView';
@@ -924,9 +924,9 @@ function weeklyLeaderboardRows(){
 }
 function metricLabel(key){return({calls:'Calls',connects:'Connects',data:'Data',knocking:'Knocking'})[key]||'Calls'}
 function metricRing(value,target,label){
-  if(value==null)return `<span class="leaderboard-metric-ring unavailable" style="--metric-score:0"><i><strong>—</strong></i><small>${label}</small></span>`;
+  if(value==null)return `<span class="leaderboard-metric-ring unavailable" style="--metric-score:0"><i><strong>—</strong></i></span>`;
   const safeValue=Math.max(0,Math.round(Number(value)||0)),safeTarget=Number(target)||0,p=safeTarget?Math.max(0,Math.min(100,Math.round(safeValue/safeTarget*100))):0;
-  return `<span class="leaderboard-metric-ring" style="--metric-score:${p}" role="img" aria-label="${label}: ${safeValue}, ${p}% complete"><i><strong>${safeValue}</strong></i><small>${label}</small></span>`;
+  return `<span class="leaderboard-metric-ring" style="--metric-score:${p}" role="img" aria-label="${label}: ${safeValue}, ${p}% complete"><i><strong>${safeValue}</strong></i></span>`;
 }
 function leaderboardRowHtml(r,i,weekly=false){
   const t=r.targets||{},score=Math.max(0,Math.min(100,r.score||0));
