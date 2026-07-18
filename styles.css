@@ -2671,3 +2671,28 @@ button:not(:disabled):active,.file-btn:active{
 .scorecard-insight-summary{margin:12px 0 0;color:var(--muted);font-size:.76rem;line-height:1.5}
 .scorecard-recommendation-list{display:grid;gap:8px;margin-top:10px}
 .scorecard-recommendation-list article{border-radius:15px;padding:12px;background:rgba(91,145,255,.1);font-size:.75rem;line-height:1.45}
+
+/* v1.37.2 — restore appointment history and preserve the per-day appointment log */
+.appointment-history-section{margin-bottom:14px}
+.appointment-daily-log{margin-top:14px}
+.appointment-log-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:0 3px 9px}
+.appointment-log-heading span{font-size:.66rem;font-weight:850;letter-spacing:.14em;color:var(--muted)}
+.appointment-log-heading small{font-size:.64rem;color:var(--muted)}
+.appointment-log-scheduled{color:var(--blue)!important;font-weight:750}
+
+/* v1.37.2 dedicated appointment history screens */
+.appointment-destination-grid{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:14px}
+.appointment-destination-card{position:relative;width:100%;border:0;text-align:left;padding:16px 46px 16px 16px;color:inherit;min-height:92px}
+.appointment-destination-card span{display:block;font-size:.62rem;font-weight:800;letter-spacing:.1em;color:var(--muted);margin-bottom:5px}
+.appointment-destination-card strong{display:block;font-size:1rem;line-height:1.2;margin-bottom:5px}
+.appointment-destination-card small{display:block;color:var(--muted);font-size:.72rem;line-height:1.35}
+.appointment-destination-card b{position:absolute;right:17px;top:50%;transform:translateY(-50%);font-size:1.7rem;font-weight:400;color:var(--muted)}
+.appointment-history-screen{padding-bottom:20px}
+.appointment-history-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.appointment-history-head button{width:38px;height:38px;border:0;border-radius:50%;background:rgba(118,118,128,.12);font-size:1.7rem;line-height:1;color:inherit}
+.appointment-history-head span{display:block;font-size:.63rem;font-weight:800;letter-spacing:.1em;color:var(--muted)}
+.appointment-history-head h2{margin:2px 0 0;font-size:1.35rem}
+.appointment-reminder{margin:0 0 12px;padding:12px 14px;font-size:.76rem;font-weight:750;color:#8a4f00;background:rgba(255,159,10,.11);border-color:rgba(255,159,10,.24)}
+.appointment-created-meta,.appointment-followup-timestamp{display:block;margin-top:4px;color:var(--muted);font-size:.7rem}
+.appointment-followup-timestamp{font-weight:750;color:#8a4f00}
+.appointment-followup-timestamp.overdue{color:var(--danger,#d93025)}

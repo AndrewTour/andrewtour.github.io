@@ -27,3 +27,10 @@ Appointment follow-up information is stored as optional fields on existing appoi
 - Replaced follow-up text prompts with an iOS-native date input inside an AGNT sheet.
 - Replaced appointment outcome text prompts with a branded in-app outcome selector and optional note field.
 - No Firebase, Firestore, authentication, metric, calendar export or scoring changes.
+
+
+## v1.37.2
+- Restored the previous appointment history source and rendering behaviour.
+- Added separate Past Appointments and Upcoming Appointments history tabs, with Past first.
+- Preserved the selected-day appointment log at the bottom of the Appointments page.
+- Kept appointment creation, storage, follow-up and outcome workflows unchanged.

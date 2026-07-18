@@ -8,7 +8,7 @@ const DEFAULT_WORK_DAYS=[1,2,4,5];
 let workDays=[...DEFAULT_WORK_DAYS];
 const CALL_PLAN=[[9,'Active Buyer Calls','Hot buyers, offers, contracts and second inspections'],[10,'Past OFI Calls','Recent attendees, missed callbacks and buyer feedback'],[11,'Pipeline Calls','Current sellers, warm leads and next-step conversations'],[12,'Past Appraisals','Owners with a likely 3–12 month move'],[13,'Database Reconnects','Long-term owners and dormant contacts'],[14,'Just Listed & Coming Soon','Buyers, neighbours and local owner awareness'],[15,'Just Sold Calls','Result calls and nearby owner follow-up'],[16,'Priority Follow-Up','Offers, appointments and tomorrow’s pipeline']];
 const DEFAULTS={calls:50,connects:25,data:10,weeklyKnock:240};
-let targets={...DEFAULTS}, days={}, selectedDate=dateKey(new Date()), appointmentDate=selectedDate, appointmentFilter='upcoming', agentName='', calendarPreference='outlook', leaderboardEntries=[], leaderboardWeekOffset=0, scorecardWeekOffset=0;
+let targets={...DEFAULTS}, days={}, selectedDate=dateKey(new Date()), appointmentDate=selectedDate, appointmentHistoryMode=null, agentName='', calendarPreference='outlook', leaderboardEntries=[], leaderboardWeekOffset=0, scorecardWeekOffset=0;
 let year=new Date().getFullYear(), monthCursor=new Date(), uid='local', currentUser=null, cloud=false, db=null, auth=null;
 let unsubDays=null, unsubProfile=null, unsubLeaderboard=null, timerTick=null, syncTimer=null, leaderboardPublishTimer=null;
 
@@ -649,6 +649,46 @@ async function saveSelectedAppointmentOutcome(){
   }
 }
 
+function appointmentBookedLabel(a,sourceDate=''){
+  const raw=Number(a.at||a.createdAt||0);
+  if(raw){const d=new Date(raw);if(!Number.isNaN(d.getTime()))return`${shortAppointmentDate(dateKey(d))} at ${d.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true}).replace(/\s/g,'').toUpperCase()}`;}
+  const created=a.createdDate||a.logDate||sourceDate;
+  return created?shortAppointmentDate(parseKey(created)):'';
+}
+function appointmentHistoryEntries(mode){
+  const now=Date.now();
+  return allAppointmentEntries().filter(({appointment:a,sourceDate,scheduled})=>mode==='past'?(scheduled<now||appointmentLifecycle(a,sourceDate)!=='upcoming'):(scheduled>=now&&appointmentLifecycle(a,sourceDate)==='upcoming'));
+}
+function appointmentReminderText(){
+  const due=dueFollowUps();
+  if(!due.length)return'';
+  const overdue=due.filter(({appointment:a})=>a.followUpDate&&a.followUpDate<todayKey()).length;
+  if(overdue)return`${overdue} follow-up${overdue===1?' is':'s are'} overdue · ${due.length} due now`;
+  return`${due.length} appointment follow-up${due.length===1?' is':'s are'} due`;
+}
+function setAppointmentHistoryScreen(mode){
+  appointmentHistoryMode=mode;
+  $('#appointmentMainContent')?.classList.toggle('hidden',Boolean(mode));
+  $('#appointmentHistoryScreen')?.classList.toggle('hidden',!mode);
+  if(mode){$('#appointmentHistoryTitle').textContent=mode==='past'?'Past Appointments':'Upcoming Appointments';window.scrollTo({top:0,behavior:'instant'});}
+  renderAppointments();
+}
+
+function appointmentCardMarkup(entry,{dailyLog=false,history=false}={}){
+  const {appointment:a,sourceDate,scheduled}=entry;
+  const contact=escapeHtml(a.contactName||a.name||'Contact not recorded'),rawPhone=String(a.contactNumber||a.phone||'').trim(),phone=escapeHtml(rawPhone),dial=rawPhone.replace(/[^+\d]/g,''),address=escapeHtml(a.address||'Address not recorded'),type=escapeHtml(appointmentType(a)),time=escapeHtml(appointmentTimeLabel(a,sourceDate)),lifecycle=appointmentLifecycle(a,sourceDate);
+  const statusText=lifecycle==='upcoming'?'Upcoming':lifecycle==='completed'?(a.outcome||'Completed'):followUpDueLabel(a);
+  const note=a.outcomeNote?`<small class="appointment-outcome-note">${escapeHtml(a.outcomeNote)}</small>`:'';
+  const actions=lifecycle==='upcoming'?`${dial?`<a class="appointment-call appointment-action-wide" href="tel:${dial}">Call</a>`:''}<button class="appointment-secondary-action" data-set-followup="${a.id}" data-source-date="${sourceDate}">Set Follow-Up</button>`:`${dial?`<a class="appointment-call appointment-action-wide" href="tel:${dial}">Call</a>`:''}${lifecycle==='follow-up'?`<button class="appointment-secondary-action" data-mark-followedup="${a.id}" data-source-date="${sourceDate}">Mark Followed Up</button>`:''}<button class="appointment-secondary-action" data-update-outcome="${a.id}" data-source-date="${sourceDate}">Update Outcome</button>`;
+  const booked=appointmentBookedLabel(a,sourceDate);
+  const loggedMeta=dailyLog&&a.scheduledDate&&a.scheduledDate!==sourceDate?`<small class="appointment-log-scheduled">Scheduled for ${escapeHtml(shortAppointmentDate(scheduled))} at ${time}</small>`:`<small class="appointment-booked-for">${escapeHtml(shortAppointmentDate(scheduled))} at ${time}</small>`;
+  const bookedMeta=history&&booked?`<small class="appointment-created-meta">Booked ${escapeHtml(booked)}</small>`:'';
+  const dueMeta=history&&a.followUpDate?`<small class="appointment-followup-timestamp ${a.followUpDate<todayKey()?'overdue':''}">Follow-up due ${escapeHtml(shortAppointmentDate(a.followUpDate))}</small>`:'';
+  return `<article class="appointment-card appointment-card-premium appointment-followup-card ${lifecycle}">
+    <div class="appointment-card-copy"><div class="appointment-card-top"><span class="appointment-type-badge">${type}</span><span class="appointment-status-badge ${lifecycle}">${escapeHtml(statusText)}</span></div><strong>${address}</strong><small>${contact}${phone?` · ${phone}`:''}</small>${loggedMeta}${bookedMeta}${dueMeta}${note}</div>
+    <div class="appointment-followup-actions">${actions}</div>
+  </article>`;
+}
 function renderAppointments(){
   const picker=$('#appointmentDatePicker');
   const locked=isPastDate(appointmentDate);
@@ -656,20 +696,21 @@ function renderAppointments(){
   $$('#appointmentForm input, #appointmentForm button').forEach(el=>el.disabled=locked);
   $('#appointmentLock').classList.toggle('hidden',!locked);
   $('#appointmentDateLabel').textContent=fmtDate(appointmentDate);
+  if($('#appointmentLogDate'))$('#appointmentLogDate').textContent=fmtDate(appointmentDate);
   if(picker&&!picker.value)picker.value=appointmentDate;
-  $$('.appointment-filter button').forEach(b=>b.classList.toggle('active',b.dataset.appointmentFilter===appointmentFilter));
-  const now=Date.now();
-  const list=allAppointmentEntries().filter(({scheduled})=>appointmentFilter==='past'?scheduled<now:scheduled>=now);
-  $('#appointmentsList').innerHTML=list.length?list.map(({appointment:a,sourceDate,scheduled})=>{
-    const contact=escapeHtml(a.contactName||a.name||'Contact not recorded'),rawPhone=String(a.contactNumber||a.phone||'').trim(),phone=escapeHtml(rawPhone),dial=rawPhone.replace(/[^+\d]/g,''),address=escapeHtml(a.address||'Address not recorded'),type=escapeHtml(appointmentType(a)),time=escapeHtml(appointmentTimeLabel(a,sourceDate)),lifecycle=appointmentLifecycle(a,sourceDate);
-    const statusText=lifecycle==='upcoming'?'Upcoming':lifecycle==='completed'?(a.outcome||'Completed'):followUpDueLabel(a);
-    const note=a.outcomeNote?`<small class="appointment-outcome-note">${escapeHtml(a.outcomeNote)}</small>`:'';
-    const actions=lifecycle==='upcoming'?`${dial?`<a class="appointment-call appointment-action-wide" href="tel:${dial}">Call</a>`:''}<button class="appointment-secondary-action" data-set-followup="${a.id}" data-source-date="${sourceDate}">Set Follow-Up</button>`:`${dial?`<a class="appointment-call appointment-action-wide" href="tel:${dial}">Call</a>`:''}${lifecycle==='follow-up'?`<button class="appointment-secondary-action" data-mark-followedup="${a.id}" data-source-date="${sourceDate}">Mark Followed Up</button>`:''}<button class="appointment-secondary-action" data-update-outcome="${a.id}" data-source-date="${sourceDate}">Update Outcome</button>`;
-    return `<article class="appointment-card appointment-card-premium appointment-followup-card ${lifecycle}">
-      <div class="appointment-card-copy"><div class="appointment-card-top"><span class="appointment-type-badge">${type}</span><span class="appointment-status-badge ${lifecycle}">${escapeHtml(statusText)}</span></div><strong>${address}</strong><small>${contact}${phone?` · ${phone}`:''}</small><small class="appointment-booked-for">${escapeHtml(shortAppointmentDate(scheduled))} at ${time}</small>${note}</div>
-      <div class="appointment-followup-actions">${actions}</div>
-    </article>`;
-  }).join(''):`<div class="empty">No ${appointmentFilter==='past'?'past':'upcoming'} appointments.</div>`;
+  const all=allAppointmentEntries();
+  const past=appointmentHistoryEntries('past'),upcoming=appointmentHistoryEntries('upcoming');
+  if($('#pastAppointmentSummary'))$('#pastAppointmentSummary').textContent=`${past.length} past appointment${past.length===1?'':'s'} · follow-ups and outcomes`;
+  if($('#upcomingAppointmentSummary'))$('#upcomingAppointmentSummary').textContent=`${upcoming.length} upcoming appointment${upcoming.length===1?'':'s'} · schedule and calls`;
+  const reminder=appointmentReminderText();
+  for(const id of ['#appointmentReminder','#appointmentHistoryReminder']){const el=$(id);if(el){el.textContent=reminder;el.classList.toggle('hidden',!reminder);}}
+  if(appointmentHistoryMode&&$('#appointmentHistoryList')){
+    const history=appointmentHistoryEntries(appointmentHistoryMode);
+    $('#appointmentHistoryList').innerHTML=history.length?history.map(entry=>appointmentCardMarkup(entry,{history:true})).join(''):`<div class="empty">No ${appointmentHistoryMode} appointments.</div>`;
+  }
+
+  const daily=all.filter(({sourceDate})=>sourceDate===appointmentDate);
+  $('#appointmentsList').innerHTML=daily.length?daily.map(entry=>appointmentCardMarkup(entry,{dailyLog:true})).join(''):'<div class="empty">No appointments logged for this day.</div>';
 }
 
 async function addAppointment({contactName,contactNumber,address,date,time,type}){
@@ -906,7 +947,7 @@ function bindViewport(){
 }
 async function init(){bindViewport();loadLocal('local');await finaliseExpiredTimers();if(!configured()){showAuthMessage('Firebase is not configured. You can still use device-only mode.');return}try{const fb=initializeApp(firebaseConfig);auth=getAuth(fb);await setPersistence(auth,browserLocalPersistence);db=initializeFirestore(fb,{experimentalAutoDetectLongPolling:true,localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});onAuthStateChanged(auth,u=>{if(u){startCloud(u)}else{clearActiveSession();$('#app').classList.add('hidden');$('#authGate').classList.remove('hidden')}})}catch(err){console.error(err);showAuthMessage(err.message)}}
 function showAuthMessage(msg){$('#authMessage').textContent=msg}
-function switchView(id){$$('.tabbar button').forEach(b=>b.classList.toggle('active',b.dataset.view===id));$$('.view').forEach(v=>v.classList.toggle('active',v.id===id));updateTopbar(id);if(id==='scheduleView')renderTimeline();if(id==='appointmentsView')renderAppointments();if(id==='insightsView')renderInsights()}
+function switchView(id){if(id!=='appointmentsView'&&appointmentHistoryMode)setAppointmentHistoryScreen(null);$$('.tabbar button').forEach(b=>b.classList.toggle('active',b.dataset.view===id));$$('.view').forEach(v=>v.classList.toggle('active',v.id===id));updateTopbar(id);if(id==='scheduleView')renderTimeline();if(id==='appointmentsView')renderAppointments();if(id==='insightsView')renderInsights()}
 
 function shiftHeaderDate(delta){
   const id=activeViewId();
@@ -934,7 +975,8 @@ $('#weekNext').onclick=()=>{if(leaderboardWeekOffset<0)leaderboardWeekOffset++;r
 $('#weekLast').onclick=()=>{leaderboardWeekOffset=-1;renderWeeklyLeaderboard()};
 $('#scorecardPrev').onclick=()=>{scorecardWeekOffset--;renderScorecard()};$('#scorecardNext').onclick=()=>{if(scorecardWeekOffset<0)scorecardWeekOffset++;renderScorecard()};
 $('#appointmentDatePicker').onchange=()=>{};
-$('.appointment-filter').onclick=e=>{const b=e.target.closest('[data-appointment-filter]');if(!b)return;appointmentFilter=b.dataset.appointmentFilter;renderAppointments()};
+document.querySelector('.appointment-destination-grid').onclick=e=>{const b=e.target.closest('[data-open-appointment-history]');if(!b)return;setAppointmentHistoryScreen(b.dataset.openAppointmentHistory)};
+$('#closeAppointmentHistory').onclick=()=>setAppointmentHistoryScreen(null);
 $('#appointmentForm').onsubmit=async e=>{e.preventDefault();const viewedDate=appointmentDate;const contactName=$('#appointmentContactName').value.trim(),contactNumber=$('#appointmentContactNumber').value.trim(),address=$('#appointmentAddress').value.trim(),date=$('#appointmentDatePicker').value,time=$('#appointmentTime').value,type=$('.appointment-types input:checked')?.value||'',error=$('#appointmentFormError');const missing=[];if(!contactName)missing.push('contact name');if(!contactNumber)missing.push('contact number');if(!address)missing.push('property address');if(!date)missing.push('booking date');if(!time)missing.push('booking time');if(!type)missing.push('appointment type');if(missing.length){error.textContent=`Add ${missing.join(', ')}`;error.classList.remove('hidden');return}error.textContent='';error.classList.add('hidden');const appointment=await addAppointment({contactName,contactNumber,address,date,time,type});if(appointment&&confirm(`Add to ${calendarPreference==='apple'?'Apple':'Outlook'} Calendar?`))exportAppointmentToCalendar(appointment,appointment.createdDate);e.target.reset();appointmentDate=viewedDate;$('#appointmentDatePicker').value=viewedDate;renderAppointments();updateTopbar('appointmentsView')};
 $('#saveFollowUpDate').onclick=saveAppointmentFollowUp;
 $$('[data-close-followup]').forEach(button=>button.onclick=()=>{closeActionModal('#followUpModal');pendingFollowUpAppointment=null;});
@@ -944,7 +986,7 @@ $$('[data-close-outcome]').forEach(button=>button.onclick=()=>{closeActionModal(
 $('#followUpModal').onclick=e=>{if(e.target.id==='followUpModal'){closeActionModal('#followUpModal');pendingFollowUpAppointment=null;}};
 $('#outcomeModal').onclick=e=>{if(e.target.id==='outcomeModal'){closeActionModal('#outcomeModal');pendingOutcomeAppointment=null;selectedAppointmentOutcome='';}};
 
-$('#appointmentsList').onclick=e=>{
+$('#appointmentsView').onclick=e=>{
   const calendarButton=e.target.closest('[data-calendar-appointment]');
   if(calendarButton){
     const sourceDate=calendarButton.dataset.sourceDate||appointmentDate;

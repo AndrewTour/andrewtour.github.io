@@ -121,7 +121,16 @@
       <div class="view-head">
         <div><span>APPOINTMENTS</span><h2 id="appointmentDateLabel"></h2></div>
       </div>
-      <div class="appointment-filter appointment-period-filter glass" aria-label="Appointment history"><button class="active" type="button" data-appointment-filter="upcoming">Upcoming Appointments</button><button type="button" data-appointment-filter="past">Past Appointments</button></div>
+      <div id="appointmentMainContent">
+        <div class="appointment-destination-grid" aria-label="Appointment history">
+          <button class="appointment-destination-card glass" type="button" data-open-appointment-history="past">
+            <span>APPOINTMENT HISTORY</span><strong>Past Appointments</strong><small id="pastAppointmentSummary">View completed appointments and follow-ups</small><b aria-hidden="true">›</b>
+          </button>
+          <button class="appointment-destination-card glass" type="button" data-open-appointment-history="upcoming">
+            <span>SCHEDULE</span><strong>Upcoming Appointments</strong><small id="upcomingAppointmentSummary">View scheduled appointments</small><b aria-hidden="true">›</b>
+          </button>
+        </div>
+        <div id="appointmentReminder" class="appointment-reminder glass hidden" role="status"></div>
       <div id="appointmentLock" class="appointment-lock hidden">Past dates are locked and read-only.</div><form id="appointmentForm" class="appointment-form glass" novalidate>
         <label>Contact name<input id="appointmentContactName" type="text" placeholder="Contact name" autocomplete="name" autocapitalize="words" required></label>
         <label>Contact number<input id="appointmentContactNumber" type="tel" placeholder="04xx xxx xxx" autocomplete="tel" inputmode="tel" required></label>
@@ -139,7 +148,19 @@
         <div id="appointmentFormError" class="form-error hidden" role="alert"></div>
         <button class="primary" type="submit">Book appointment</button>
       </form>
-      <div id="appointmentsList" class="appointments-list"></div>
+      <section class="appointment-daily-log" aria-label="Appointments logged for selected day">
+        <div class="appointment-log-heading"><span>APPOINTMENT LOG</span><small id="appointmentLogDate"></small></div>
+        <div id="appointmentsList" class="appointments-list"></div>
+      </section>
+      </div>
+      <section id="appointmentHistoryScreen" class="appointment-history-screen hidden" aria-live="polite">
+        <div class="appointment-history-head">
+          <button id="closeAppointmentHistory" type="button" aria-label="Back to appointments">‹</button>
+          <div><span>APPOINTMENTS</span><h2 id="appointmentHistoryTitle">Past Appointments</h2></div>
+        </div>
+        <div id="appointmentHistoryReminder" class="appointment-reminder glass hidden" role="status"></div>
+        <div id="appointmentHistoryList" class="appointments-list"></div>
+      </section>
     </section>
 
     <section id="insightsView" class="view">
