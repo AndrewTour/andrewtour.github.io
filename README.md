@@ -203,3 +203,12 @@ Built incrementally from the confirmed working v1.55.0 package.
 - Home, accountability, appointments and leaderboards.
 
 Firebase changes required: none.
+
+
+## v1.56.1 — Contacts Cleanup
+
+- Contacts are sorted alphabetically by first name.
+- Contact cards now show name, property address, primary/mobile number and temperature only.
+- Mobile is preferred for call and SMS actions, with primary phone used as fallback.
+- Added select mode, select all and confirmed bulk deletion.
+- No Firebase configuration, authentication, Firestore path or data migration changes.

@@ -2992,3 +2992,18 @@ button:not(:disabled):active,.file-btn:active{
 .contact-card-v156 .prospect-card-copy em{margin-top:5px}
 .prospector-sections button:not(:disabled){cursor:pointer}
 @media(max-width:390px){.prospector-contacts-panel{padding:16px 13px 8px}.contact-card-v156{grid-template-columns:6px 40px minmax(0,1fr) auto 8px;gap:9px}.contact-card-v156 .prospect-temp{font-size:9px;padding:5px 6px}}
+
+/* AGNT v1.56.1 — simplified A–Z contacts and safe bulk management. */
+.contacts-head-actions{display:flex;align-items:center;gap:10px}
+.prospect-bulk-bar{display:flex;align-items:center;gap:10px;margin:2px 0 8px;padding:9px 11px;border-radius:13px;background:rgba(242,244,247,.78)}
+.prospect-bulk-bar span{margin-right:auto;color:#777e88;font-size:11px;font-weight:700}
+.prospect-bulk-bar .danger-btn{border:0;background:rgba(255,59,48,.10);color:#d93025;border-radius:10px;padding:7px 10px;font:inherit;font-size:11px;font-weight:750}
+.prospect-bulk-bar .danger-btn:disabled{opacity:.35}
+.contact-card-v156{grid-template-columns:44px minmax(0,1fr) auto 10px}
+.contact-card-v156 .prospect-card-copy em{font-style:normal;color:#777e88;font-size:12px;margin-top:5px}
+.contact-card-v156.bulk-mode{grid-template-columns:26px 44px minmax(0,1fr) auto}
+.contact-card-v156.selected{background:rgba(10,132,255,.055)}
+.prospect-select-mark{width:22px;height:22px;border:1.5px solid #b8bec7;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:12px;font-weight:800}
+.contact-card-v156.selected .prospect-select-mark{border-color:#0a84ff;background:#0a84ff}
+@media(max-width:390px){.contacts-head-actions{gap:6px}.prospect-bulk-bar{gap:7px}.contact-card-v156{grid-template-columns:40px minmax(0,1fr) auto 8px}.contact-card-v156.bulk-mode{grid-template-columns:24px 40px minmax(0,1fr) auto}}
+.prospect-bulk-bar.hidden{display:none!important}

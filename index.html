@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.56.0">
+<link rel="stylesheet" href="styles.css?v=1.56.1">
 <title>AGNT</title>
 </head>
 <body>
@@ -281,8 +281,9 @@
         </section>
         </div>
         <section id="prospectorContactsPanel" class="prospecting-section prospector-contacts-panel glass hidden">
-          <div class="prospecting-section-head contacts-head"><div><span>CONTACTS</span><h3>Your database</h3><small id="prospectContactCount">0 contacts</small></div><label class="prospect-import-button">Import CSV<input id="prospectCsvImport" type="file" accept=".csv,text/csv"></label></div>
-          <div class="contacts-search-hint">Search name, street, suburb, phone, email, tags, source or stage.</div>
+          <div class="prospecting-section-head contacts-head"><div><span>CONTACTS</span><h3>Your database</h3><small id="prospectContactCount">0 contacts · Sorted A–Z</small></div><div class="contacts-head-actions"><button id="toggleProspectBulk" class="text-btn" type="button">Select</button><label class="prospect-import-button">Import CSV<input id="prospectCsvImport" type="file" accept=".csv,text/csv"></label></div></div>
+          <div class="contacts-search-hint">Search name, street, suburb, phone, email, tags or stage.</div>
+          <div class="prospect-bulk-bar"><span id="prospectSelectedCount">0 selected</span><button id="selectAllProspects" class="text-btn" type="button">Select All</button><button id="deleteSelectedProspects" class="danger-btn" type="button" disabled>Delete</button></div>
           <div id="prospectContactList" class="prospect-list contacts-list"></div>
         </section>
       </div>
@@ -404,6 +405,6 @@
 </div>
 
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=1.56.0"></script>
+<script type="module" src="app.js?v=1.56.1"></script>
 </body>
 </html>
