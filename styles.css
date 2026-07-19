@@ -3059,3 +3059,13 @@ button:not(:disabled):active,.file-btn:active{
   .contacts-head-actions .prospect-import-button,
   .contacts-head-actions .manage-contacts-btn{font-size:11px;padding:8px 11px}
 }
+
+/* v1.56.6 session persistence and review */
+.prospect-session-complete{text-align:center;padding-top:28px}
+.prospect-session-review-overlay{position:fixed;inset:0;z-index:9999;display:flex;align-items:flex-end;justify-content:center;padding:20px;background:rgba(10,14,20,.38);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.prospect-session-review{width:min(100%,520px);padding:24px;border-radius:30px;margin-bottom:max(10px,env(safe-area-inset-bottom));background:rgba(250,251,253,.96)}
+.prospect-session-review h2{margin:8px 0 4px;font-size:30px}.prospect-session-review p{margin:0 0 20px;color:var(--muted)}
+.prospect-session-review-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:18px 0 22px}
+.prospect-session-review-grid div{display:flex;flex-direction:column;gap:2px;padding:18px;border-radius:20px;background:rgba(235,239,245,.88)}
+.prospect-session-review-grid strong{font-size:30px}.prospect-session-review-grid span{font-size:13px;color:var(--muted);font-weight:700}
+.prospect-session-review .primary{width:100%}
