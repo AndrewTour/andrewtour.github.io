@@ -3012,3 +3012,50 @@ button:not(:disabled):active,.file-btn:active{
 /* AGNT v1.56.2 — CSV address fallback and explicit contact management. */
 .manage-contacts-btn{white-space:nowrap}
 @media(max-width:390px){.contacts-head-actions{align-items:flex-end;flex-direction:column-reverse;gap:5px}.manage-contacts-btn{font-size:10px}.prospect-import-button{font-size:10px}}
+
+/* AGNT v1.56.3 — Contacts header alignment cleanup. Visual-only. */
+.contacts-head{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  column-gap:12px;
+  row-gap:8px;
+  align-items:start;
+}
+.contacts-head>div:first-child{min-width:0}
+.contacts-head-actions{
+  align-self:start;
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  justify-content:flex-end;
+  gap:6px;
+  white-space:nowrap;
+}
+.contacts-head-actions .prospect-import-button,
+.contacts-head-actions .manage-contacts-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:34px;
+  box-sizing:border-box;
+  border-radius:11px;
+  padding:7px 10px;
+  font-size:11px;
+  line-height:1;
+  font-weight:780;
+  white-space:nowrap;
+}
+.contacts-head-actions .prospect-import-button{
+  background:rgba(10,132,255,.09);
+  color:#0a84ff;
+}
+.contacts-head-actions .manage-contacts-btn{
+  background:rgba(118,118,128,.08);
+  color:#69717d;
+}
+@media(max-width:600px){
+  .contacts-head{grid-template-columns:1fr;row-gap:10px}
+  .contacts-head-actions{width:100%;justify-content:flex-start;gap:8px}
+  .contacts-head-actions .prospect-import-button,
+  .contacts-head-actions .manage-contacts-btn{font-size:11px;padding:8px 11px}
+}

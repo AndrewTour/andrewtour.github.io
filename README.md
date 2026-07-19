@@ -220,3 +220,11 @@ Firebase changes required: none.
 - Added a clear Manage Contacts button beside Import CSV.
 - Manage mode supports individual selection, Select All, Deselect All, confirmed deletion and Done.
 - Firebase configuration, authentication, Firestore paths, UID separation, Home, appointments and leaderboards are unchanged.
+
+
+## v1.56.3 — Contacts Header Cleanup
+
+- Cleaned the Contacts card header layout on iPhone.
+- Kept Your Database, contact count, Import CSV and Manage Contacts.
+- Prevented action labels and the A–Z count from crowding or wrapping awkwardly.
+- Visual-only update; contact data, bulk actions and app logic are unchanged.
