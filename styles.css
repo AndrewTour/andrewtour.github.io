@@ -3263,3 +3263,12 @@ html,body{max-width:100%;overflow-x:hidden;overscroll-behavior-x:none}
 .prospect-selling-status strong{font-size:.9rem;font-weight:800;text-align:right}
 .prospect-selling-status small{grid-column:1/-1;font-size:.74rem;font-weight:600;color:var(--muted)}
 @media(max-width:390px){.pipeline-summary-card{padding:10px 6px}.pipeline-summary-card span{font-size:.53rem}.pipeline-controls{align-items:stretch;flex-direction:column}.pipeline-controls label{justify-content:space-between}.pipeline-controls select{flex:1}}
+
+
+/* AGNT V70 — Pipeline logic and UI refinement */
+.pipeline-timeframe-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 5px 11px}
+.pipeline-timeframe-head h3{margin:0;font-size:var(--type-section-title);line-height:var(--leading-heading);font-weight:600;letter-spacing:-.02em}
+#prospectLogForm .prospect-form-grid{grid-template-columns:minmax(0,.92fr) minmax(0,1.08fr);gap:8px;min-width:0}
+#prospectLogForm .prospect-form-grid label{min-width:0}
+#prospectLogForm .prospect-form-grid select,#prospectLogForm .prospect-form-grid input{min-width:0;padding-left:11px;padding-right:10px;font-size:14px}
+@media(max-width:390px){#prospectLogForm .prospect-form-grid{grid-template-columns:minmax(0,.88fr) minmax(0,1.12fr);gap:7px}#prospectLogForm .prospect-form-grid select,#prospectLogForm .prospect-form-grid input{padding-left:9px;padding-right:8px;font-size:13px}}
