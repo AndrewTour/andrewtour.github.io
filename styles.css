@@ -3089,3 +3089,134 @@ html,body{max-width:100%;overflow-x:hidden;overscroll-behavior-x:none}
 .prospect-followup-open{display:grid;grid-template-columns:42px minmax(0,1fr) auto 10px;gap:11px;align-items:center;width:100%;min-width:0;padding:14px 1px;border:0;background:transparent;text-align:left;color:inherit}
 .prospect-followup-open>.prospect-temp{white-space:nowrap}
 @media(max-width:390px){.prospect-form-grid{grid-template-columns:1fr}.prospect-followup-item{grid-template-columns:31px minmax(0,1fr)}.prospect-followup-open{grid-template-columns:40px minmax(0,1fr) auto 8px;gap:8px}.prospect-followup-open>.prospect-temp{font-size:9px;padding:5px 6px}}
+
+/* AGNT V68 — cohesive typography and restrained iOS-style page motion.
+   Home remains the visual source of truth; layout and application logic are unchanged. */
+:root{
+  --type-page-title:1.38rem;
+  --type-section-title:1.15rem;
+  --type-card-title:.93rem;
+  --type-body:.72rem;
+  --type-support:.62rem;
+  --type-label:.67rem;
+  --weight-page:800;
+  --weight-section:800;
+  --weight-card:750;
+  --weight-body:500;
+  --weight-label:850;
+  --leading-body:1.42;
+}
+
+/* Shared page hierarchy, matched to Home. */
+.view:not(#todayView) .view-head h2,
+.view:not(#todayView) > .view-head h2,
+.view:not(#todayView) .prospector-intro h2,
+.view:not(#todayView) .settings h2{
+  font-size:var(--type-page-title);
+  line-height:1.08;
+  font-weight:var(--weight-page);
+  letter-spacing:-.025em;
+}
+
+.view:not(#todayView) .prospecting-section-head h3,
+.view:not(#todayView) .scorecard-head h2,
+.view:not(#todayView) .leaderboard-head h2,
+.view:not(#todayView) .appointment-history-head h2{
+  font-size:var(--type-section-title);
+  line-height:1.16;
+  font-weight:var(--weight-section);
+  letter-spacing:-.018em;
+}
+
+.view:not(#todayView) .section-label>span,
+.view:not(#todayView) .prospector-eyebrow,
+.view:not(#todayView) .prospecting-hero span,
+.view:not(#todayView) .prospecting-section-head>div>span,
+.view:not(#todayView) .prospecting-stat span,
+.view:not(#todayView) .timeline-overview-label,
+.view:not(#todayView) .appointment-log-heading span,
+.view:not(#todayView) .scorecard-head span,
+.view:not(#todayView) .scorecard-focus>span,
+.view:not(#todayView) .leaderboard-head span{
+  font-size:var(--type-label);
+  line-height:1.2;
+  font-weight:var(--weight-label);
+  letter-spacing:.16em;
+}
+
+.view:not(#todayView) p,
+.view:not(#todayView) .empty,
+.view:not(#todayView) .contacts-search-hint,
+.view:not(#todayView) .scorecard-insight-summary,
+.view:not(#todayView) .scorecard-recommendation-list article{
+  font-size:var(--type-body);
+  line-height:var(--leading-body);
+  font-weight:var(--weight-body);
+}
+
+.view:not(#todayView) .appointment-card strong,
+.view:not(#todayView) .timeline-item strong,
+.view:not(#todayView) .scorecard-appointment-item h3,
+.view:not(#todayView) .prospect-card-copy strong,
+.view:not(#todayView) .contact-card-v156 .prospect-card-copy strong,
+.view:not(#todayView) .appointment-destination-card strong{
+  font-size:var(--type-card-title);
+  line-height:1.24;
+  font-weight:var(--weight-card);
+  letter-spacing:-.01em;
+}
+
+.view:not(#todayView) .appointment-card small,
+.view:not(#todayView) .timeline-item small,
+.view:not(#todayView) .scorecard-metric small,
+.view:not(#todayView) .scorecard-trend-grid small,
+.view:not(#todayView) .scorecard-productivity-grid small,
+.view:not(#todayView) .prospect-card-copy small,
+.view:not(#todayView) .prospect-card-copy em,
+.view:not(#todayView) .appointment-destination-card small,
+.view:not(#todayView) .section-label>small{
+  font-size:var(--type-support);
+  line-height:1.36;
+  font-weight:550;
+}
+
+/* Prospector keeps its light visual language while sharing Home's hierarchy. */
+.prospecting-view .prospector-intro h2{max-width:310px}
+.prospecting-view .prospecting-section-head h3{margin-top:4px}
+.prospecting-view .prospecting-hero small,
+.prospecting-view .contacts-head small{font-size:var(--type-support);line-height:1.36;font-weight:550}
+.prospecting-view .prospector-sections button,
+.prospecting-view .prospect-import-button,
+.prospecting-view .manage-contacts-btn{font-weight:750}
+
+/* Fast, understated page movement. */
+.view.active,
+.insights-page.active{
+  animation:agntPageIn .18s cubic-bezier(.22,.75,.25,1) both;
+  transform-origin:50% 18%;
+  will-change:opacity,transform;
+}
+
+.tabbar button,
+.insights-switch button,
+.prospector-sections button{
+  transition:background-color .16s ease,color .16s ease,box-shadow .16s ease,transform .12s ease;
+}
+.tabbar button:active,
+.insights-switch button:active,
+.prospector-sections button:active{transform:scale(.975)}
+
+@keyframes agntPageIn{
+  from{opacity:.01;transform:translate3d(0,4px,0) scale(.998)}
+  to{opacity:1;transform:translate3d(0,0,0) scale(1)}
+}
+
+@media(max-width:390px){
+  :root{--type-page-title:1.28rem;--type-section-title:1.08rem}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .view.active,.insights-page.active{animation:none!important;will-change:auto}
+  .tabbar button,.insights-switch button,.prospector-sections button{transition:none!important}
+  .tabbar button:active,.insights-switch button:active,.prospector-sections button:active{transform:none}
+}
