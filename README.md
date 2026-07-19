@@ -21,3 +21,10 @@ Built incrementally from the confirmed working v1.56.7 package.
 - Contacts, appointments, Home and leaderboard behaviour
 
 No Firebase Console, Firestore rules or GitHub settings changes are required.
+
+
+## v1.56.8.1 — Login Initialisation Fix
+
+- Restored the viewport/bootstrap functions accidentally omitted in v1.56.8.
+- Firebase Auth now initialises before login actions are available.
+- No changes to sync efficiency logic, app screens, data structures, Firebase paths, or rules.

@@ -1251,6 +1251,29 @@ async function startCloud(user){
   refreshSyncStatus();showApp();scheduleLeaderboardPublish();
 }
 
+function showApp(){$('#authGate').classList.add('hidden');$('#app').classList.remove('hidden');$('#appointmentDatePicker').value=appointmentDate;restoreProspectingSessionState();renderAll();ensureTick()}
+let viewportFrame=0;
+function updateAppViewport(){
+  cancelAnimationFrame(viewportFrame);
+  viewportFrame=requestAnimationFrame(()=>{
+    const standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+    const vv=window.visualViewport;
+    const candidates=[window.innerHeight,document.documentElement.clientHeight];
+    if(vv)candidates.push(vv.height+vv.offsetTop);
+    if(standalone)candidates.push(window.screen?.height||0,window.screen?.availHeight||0);
+    const height=Math.round(Math.max(...candidates.filter(Number.isFinite)));
+    document.documentElement.style.setProperty('--app-height',`${height}px`);
+    document.documentElement.style.setProperty('--visual-height',`${Math.round(vv?.height||window.innerHeight)}px`);
+  });
+}
+function bindViewport(){
+  updateAppViewport();
+  window.addEventListener('resize',updateAppViewport,{passive:true});
+  window.addEventListener('orientationchange',()=>setTimeout(updateAppViewport,180),{passive:true});
+  window.visualViewport?.addEventListener('resize',updateAppViewport,{passive:true});
+  window.visualViewport?.addEventListener('scroll',updateAppViewport,{passive:true});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){updateAppViewport();finaliseExpiredTimers().then(()=>renderAll())}});
+}
 async function init(){bindViewport();loadLocal('local');await finaliseExpiredTimers();if(!configured()){showAuthMessage('Firebase is not configured. You can still use device-only mode.');return}try{const fb=initializeApp(firebaseConfig);auth=getAuth(fb);await setPersistence(auth,browserLocalPersistence);db=initializeFirestore(fb,{experimentalAutoDetectLongPolling:true,localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});onAuthStateChanged(auth,u=>{if(u){startCloud(u)}else{clearActiveSession();$('#app').classList.add('hidden');$('#authGate').classList.remove('hidden')}})}catch(err){console.error(err);showAuthMessage(err.message)}}
 function showAuthMessage(msg){$('#authMessage').textContent=msg}
 function switchView(id){if(id!=='appointmentsView'&&appointmentHistoryMode)setAppointmentHistoryScreen(null);$$('.tabbar button').forEach(b=>b.classList.toggle('active',b.dataset.view===id));$$('.view').forEach(v=>v.classList.toggle('active',v.id===id));updateTopbar(id);if(id==='scheduleView')renderTimeline();if(id==='appointmentsView')renderAppointments();if(id==='prospectingView')renderProspecting();if(id==='insightsView')renderInsights()}
