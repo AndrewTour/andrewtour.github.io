@@ -3069,3 +3069,23 @@ button:not(:disabled):active,.file-btn:active{
 .prospect-session-review-grid div{display:flex;flex-direction:column;gap:2px;padding:18px;border-radius:20px;background:rgba(235,239,245,.88)}
 .prospect-session-review-grid strong{font-size:30px}.prospect-session-review-grid span{font-size:13px;color:var(--muted);font-weight:700}
 .prospect-session-review .primary{width:100%}
+
+/* AGNT V66 — Prospector viewport lock and pipeline/follow-up workflow */
+html,body{max-width:100%;overflow-x:hidden;overscroll-behavior-x:none}
+#app,.app-shell,.view,.prospecting-view,#prospectingDashboard,.prospector-panel,.prospecting-section,.prospecting-session,#prospectDetail{min-width:0;max-width:100%;box-sizing:border-box}
+.prospecting-view{width:100%;overflow-x:hidden;touch-action:pan-y}
+.prospecting-view *{max-width:100%;box-sizing:border-box}
+.prospector-intro,.prospecting-toolbar,.prospecting-dashboard,.prospector-panel,.prospecting-section,.prospecting-session,.prospect-editor,.prospect-profile{width:100%;min-width:0}
+.prospector-sections{grid-template-columns:repeat(4,minmax(0,1fr));width:100%;overflow:hidden}
+.prospecting-toolbar{grid-template-columns:minmax(0,1fr) auto}
+.prospecting-search-wrap,.prospect-list,.prospect-card,.prospect-card-copy,.prospect-session-card,.prospect-session-context>div{min-width:0}
+.prospect-card-copy strong,.prospect-card-copy small,.prospect-card-copy em,.prospect-session-card h2,.prospect-session-card p{overflow-wrap:anywhere;word-break:break-word}
+.prospecting-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+.prospect-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.prospect-followup-item{display:grid;grid-template-columns:34px minmax(0,1fr);align-items:center;border-top:1px solid rgba(20,28,40,.055)}
+.prospect-followup-item:first-child{border-top:0}
+.prospect-followup-check{width:28px;height:28px;margin:0;border:1.5px solid #b8bec7;border-radius:50%;background:#fff;color:transparent;display:grid;place-items:center;font-size:14px;font-weight:900;padding:0}
+.prospect-followup-check:active{background:#0a84ff;border-color:#0a84ff;color:#fff;transform:scale(.94)}
+.prospect-followup-open{display:grid;grid-template-columns:42px minmax(0,1fr) auto 10px;gap:11px;align-items:center;width:100%;min-width:0;padding:14px 1px;border:0;background:transparent;text-align:left;color:inherit}
+.prospect-followup-open>.prospect-temp{white-space:nowrap}
+@media(max-width:390px){.prospect-form-grid{grid-template-columns:1fr}.prospect-followup-item{grid-template-columns:31px minmax(0,1fr)}.prospect-followup-open{grid-template-columns:40px minmax(0,1fr) auto 8px;gap:8px}.prospect-followup-open>.prospect-temp{font-size:9px;padding:5px 6px}}
