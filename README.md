@@ -1,17 +1,14 @@
-# AGNT V66 — Prospector Viewport & Pipeline Workflow
+# AGNT V67 — Targeted Rendering & Sync Efficiency
 
-Built incrementally from the user-confirmed stable AGNT V65 package.
+Built incrementally from the confirmed stable AGNT V66 release.
 
-## Changed
-- Locked the Prospector interface to the iPhone viewport and removed horizontal page movement.
-- Added a completable Who Needs You Next checklist for due and overdue follow-ups.
-- Completing a follow-up clears it from the list without adding it to Today’s Pipeline.
-- Today’s Pipeline is a stable daily batch of up to 50 contacts with a valid phone number.
-- Contacts with no genuine connection in the last three months are eligible.
-- No answer, voicemail and SMS attempts do not start the three-month exclusion period.
-- Do Not Contact records and due follow-ups are excluded from the pipeline.
+## Changes
+- Day logging now refreshes only day-related views instead of redrawing Prospector.
+- Prospector cloud saves are deduplicated when content has not changed.
+- Rapid Prospector updates are briefly batched into one Firestore write.
+- Pending Prospector writes are flushed when the PWA backgrounds or closes.
+- Firestore metadata-only events do not trigger unnecessary Prospector redraws.
+- Existing UI, pipeline logic, authentication and Firestore document paths are unchanged.
 
-## Unchanged
-- Authentication, Firebase configuration, Firestore paths and security rules.
-- UID separation and existing cloud data structure.
-- Home, metrics, appointments, leaderboards, contacts and all non-Prospector workflows.
+## Firebase
+No Firebase configuration, Firestore rule, collection or document-path changes are required.
