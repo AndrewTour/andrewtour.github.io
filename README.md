@@ -1,23 +1,23 @@
-# AGNT v1.56.7 — Session Interface State Fix
+# AGNT v1.56.8 — Safe Sync Efficiency
 
-Built incrementally from the confirmed working v1.56.6 package.
+Built incrementally from the confirmed working v1.56.7 package.
 
 ## Changed
 
-- Active Prospector sessions now remain visible during Firebase, prospect and Home metric re-renders.
-- Save & Next stays inside the same session and advances to the next queued contact.
-- Back from a session log returns to the current session contact.
-- Start Session resumes an already active session rather than creating a replacement queue.
-- Session queue, position and review totals are saved locally and restored when the installed PWA is reopened.
-- Skips and completed outcomes persist the current session position.
+- Added a per-user dirty-day retry queue so reconnecting retries only day records that genuinely remain unsynced.
+- Successful day writes clear their matching retry item without clearing newer local changes.
+- Unchanged leaderboard payloads are no longer republished.
+- Day, profile, Prospector and leaderboard listeners avoid full interface renders when their underlying data has not changed.
+- Added central pending-operation tracking so the sync badge does not report Live while another save is still running.
+- Sync errors remain visible until a confirmed reconnect or successful server snapshot clears them.
 
 ## Unchanged
 
-- Authentication and login flow
-- Firebase configuration
-- Firestore paths and rules
-- Prospect logging and metric logic
-- Contact import and management
-- Home, appointments and leaderboards
+- All screens and visible workflows
+- Prospector sessions and outcome-to-metric logic
+- Authentication and Firebase configuration
+- Firestore paths and security rules
+- UID separation and existing stored data shapes
+- Contacts, appointments, Home and leaderboard behaviour
 
-No Firebase changes are required.
+No Firebase Console, Firestore rules or GitHub settings changes are required.
