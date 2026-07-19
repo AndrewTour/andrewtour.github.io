@@ -3007,3 +3007,8 @@ button:not(:disabled):active,.file-btn:active{
 .contact-card-v156.selected .prospect-select-mark{border-color:#0a84ff;background:#0a84ff}
 @media(max-width:390px){.contacts-head-actions{gap:6px}.prospect-bulk-bar{gap:7px}.contact-card-v156{grid-template-columns:40px minmax(0,1fr) auto 8px}.contact-card-v156.bulk-mode{grid-template-columns:24px 40px minmax(0,1fr) auto}}
 .prospect-bulk-bar.hidden{display:none!important}
+
+
+/* AGNT v1.56.2 — CSV address fallback and explicit contact management. */
+.manage-contacts-btn{white-space:nowrap}
+@media(max-width:390px){.contacts-head-actions{align-items:flex-end;flex-direction:column-reverse;gap:5px}.manage-contacts-btn{font-size:10px}.prospect-import-button{font-size:10px}}

@@ -212,3 +212,11 @@ Firebase changes required: none.
 - Mobile is preferred for call and SMS actions, with primary phone used as fallback.
 - Added select mode, select all and confirmed bulk deletion.
 - No Firebase configuration, authentication, Firestore path or data migration changes.
+
+
+## v1.56.2 — Contact Address & Management Fix
+- Contact cards now use the CSV `Address` field first and fall back to `Company` when Address is blank.
+- The CSV importer preserves the optional Company value for backwards-compatible display fallback.
+- Added a clear Manage Contacts button beside Import CSV.
+- Manage mode supports individual selection, Select All, Deselect All, confirmed deletion and Done.
+- Firebase configuration, authentication, Firestore paths, UID separation, Home, appointments and leaderboards are unchanged.
