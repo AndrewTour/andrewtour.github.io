@@ -182,3 +182,24 @@ Built incrementally from the confirmed working AGNT V54 Experimental package.
 - Home, accountability, appointments and leaderboards.
 
 Firebase changes required: none.
+
+
+## v1.56.0 — Contacts Redesign
+
+Built incrementally from the confirmed working v1.55.0 package.
+
+### Changed
+- Activated the Contacts section inside Prospector while keeping Today available.
+- Added a dedicated contact database view with a live result count.
+- Expanded search guidance across existing name, address, suburb, phone, email, tags, source and stage fields.
+- Refined contact cards with clearer property-first supporting information, temperature, follow-up status and a small activity indicator.
+- Improved empty states and compact iPhone spacing.
+- Updated the service-worker cache version for installed PWAs.
+
+### Unchanged
+- Authentication, login and Firebase initialisation.
+- Firestore paths, rules, UID separation, local cache and sync architecture.
+- Existing prospect records, importer, contact editor, call logging, session workflow and actions.
+- Home, accountability, appointments and leaderboards.
+
+Firebase changes required: none.

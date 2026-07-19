@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.55.0">
+<link rel="stylesheet" href="styles.css?v=1.56.0">
 <title>AGNT</title>
 </head>
 <body>
@@ -251,20 +251,21 @@
         </div>
       </div>
       <nav class="prospector-sections glass" aria-label="Prospector sections">
-        <button class="active" type="button" aria-current="page">Today</button>
-        <button type="button" disabled aria-label="Contacts coming in a future update">Contacts</button>
+        <button class="active" type="button" data-prospector-section="today" aria-current="page">Today</button>
+        <button type="button" data-prospector-section="contacts">Contacts</button>
         <button type="button" disabled aria-label="Pipeline coming in a future update">Pipeline</button>
         <button type="button" disabled aria-label="Insights coming in a future update">Insights</button>
       </nav>
       <div class="prospecting-toolbar glass">
         <div class="prospecting-search-wrap">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
-          <input id="prospectSearch" type="search" placeholder="Search name, address or phone" autocomplete="off">
+          <input id="prospectSearch" type="search" placeholder="Search anything" autocomplete="off">
         </div>
         <button id="addProspectButton" class="prospecting-add" type="button" aria-label="Add prospect">+</button>
       </div>
 
       <div id="prospectingDashboard" class="prospecting-dashboard">
+        <div id="prospectorTodayPanel" class="prospector-panel">
         <section class="prospecting-hero glass">
           <div><span>TODAY'S PIPELINE</span><strong id="prospectingDueCount">0</strong><small id="prospectingDueLabel">follow-ups ready</small></div>
           <button id="startProspectingSession" class="primary" type="button">Start Session</button>
@@ -278,9 +279,11 @@
           <div class="prospecting-section-head"><div><span>PRIORITY QUEUE</span><h3>Who needs you next</h3></div><button id="clearProspectFilter" class="text-btn" type="button">View all</button></div>
           <div id="prospectQueue" class="prospect-list"></div>
         </section>
-        <section class="prospecting-section glass">
-          <div class="prospecting-section-head"><div><span>CONTACTS</span><h3>Your database</h3></div><label class="prospect-import-button">Import CSV<input id="prospectCsvImport" type="file" accept=".csv,text/csv"></label></div>
-          <div id="prospectContactList" class="prospect-list"></div>
+        </div>
+        <section id="prospectorContactsPanel" class="prospecting-section prospector-contacts-panel glass hidden">
+          <div class="prospecting-section-head contacts-head"><div><span>CONTACTS</span><h3>Your database</h3><small id="prospectContactCount">0 contacts</small></div><label class="prospect-import-button">Import CSV<input id="prospectCsvImport" type="file" accept=".csv,text/csv"></label></div>
+          <div class="contacts-search-hint">Search name, street, suburb, phone, email, tags, source or stage.</div>
+          <div id="prospectContactList" class="prospect-list contacts-list"></div>
         </section>
       </div>
 
@@ -401,6 +404,6 @@
 </div>
 
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=1.55.0"></script>
+<script type="module" src="app.js?v=1.56.0"></script>
 </body>
 </html>

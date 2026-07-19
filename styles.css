@@ -2971,3 +2971,24 @@ button:not(:disabled):active,.file-btn:active{
 .prospect-card-copy small{color:#777e88}
 .prospect-temp{padding:5px 8px}
 @media(max-width:390px){.prospector-intro h2{font-size:22px}.prospector-sections button{font-size:11px}.prospecting-hero strong{font-size:38px}}
+
+
+/* AGNT v1.56 — Contacts redesign. Existing storage and contact actions remain unchanged. */
+.prospector-panel{display:grid;gap:14px}
+.prospector-contacts-panel{margin:0;padding:18px 16px 10px}
+.prospector-contacts-panel.hidden,.prospector-panel.hidden{display:none!important}
+.contacts-head{align-items:flex-start;margin-bottom:8px}
+.contacts-head small{display:block;margin-top:5px;color:#8a9099;font-size:12px;font-weight:650}
+.contacts-search-hint{margin:0 0 8px;padding:10px 12px;border-radius:13px;background:rgba(242,244,247,.78);color:#7a818b;font-size:11px;line-height:1.35}
+.contacts-list{margin-top:2px}
+.contact-card-v156{grid-template-columns:7px 44px minmax(0,1fr) auto 10px;padding:15px 1px;position:relative}
+.prospect-activity{width:6px;height:6px;border-radius:50%;background:#c7ccd2;align-self:center}
+.activity-overdue{background:#ef554d;box-shadow:0 0 0 4px rgba(239,85,77,.10)}
+.activity-today{background:#0a84ff;box-shadow:0 0 0 4px rgba(10,132,255,.10)}
+.activity-recent{background:#34c759}
+.activity-new{background:#b5bac1}
+.contact-card-v156 .prospect-card-copy strong{font-size:16px;line-height:1.2}
+.contact-card-v156 .prospect-card-copy small{margin-top:4px;font-size:12px;color:#777e88}
+.contact-card-v156 .prospect-card-copy em{margin-top:5px}
+.prospector-sections button:not(:disabled){cursor:pointer}
+@media(max-width:390px){.prospector-contacts-panel{padding:16px 13px 8px}.contact-card-v156{grid-template-columns:6px 40px minmax(0,1fr) auto 8px;gap:9px}.contact-card-v156 .prospect-temp{font-size:9px;padding:5px 6px}}
