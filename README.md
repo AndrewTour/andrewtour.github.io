@@ -160,3 +160,25 @@ Appointment follow-up information is stored as optional fields on existing appoi
 ## v1.39.0 — Prospecting OS
 
 Added a separate, user-specific prospecting workspace without changing the Home dashboard. Includes CSV import, contacts, search, priority follow-up queues, contact profiles, interaction history, tap-to-call/message actions, call logging, next-follow-up scheduling, pipeline stages, temperature, motivation and a focused Next → Call → Log → Next session workflow. Prospecting records use the existing permitted private Firestore subtree at `users/{uid}/prospecting/state` and the existing per-user local cache pattern. No Firebase rule changes are required.
+
+
+## v1.55.0 — Prospector Visual Foundation
+
+Built incrementally from the confirmed working AGNT V54 Experimental package.
+
+### Changed
+- Renamed the bottom navigation label from Prospects to Prospector.
+- Added the Prospector identity line: “Remember everything. Know who’s next.”
+- Added a four-section visual navigation shell for Today, Contacts, Pipeline and Insights.
+- Kept Today active while future sections remain non-interactive placeholders.
+- Refined spacing, typography, cards, search and priority styling to establish the new Prospector design language.
+- Updated the service-worker cache version so installed PWAs receive the release.
+
+### Unchanged
+- Authentication and login flow.
+- Firebase configuration, Firestore paths and security rules.
+- UID separation, local cache and sync architecture.
+- Prospect storage, import, session, filters and contact actions.
+- Home, accountability, appointments and leaderboards.
+
+Firebase changes required: none.
