@@ -18,3 +18,11 @@ Incremental update from V69. Pipeline-only UI and seller timeframe logic refinem
 - Added shared period controls, conversion, pipeline, follow-up, appointment, database-quality and priority-direction cards.
 - Added action links into existing pages without duplicating records or workflows.
 - No Firebase configuration, Firestore path or rules changes.
+
+## V73 — Integration Engine
+- Added a shared event layer using the existing synced prospect interaction state; no new Firestore path or collection was introduced.
+- Conversations, completed follow-ups, contact updates, pipeline timeframe changes, appointment bookings, edits, outcomes, follow-up scheduling and deletions now create connected timeline events.
+- Appointment events link to existing contacts by stored prospect ID, phone, name or property address.
+- Existing linked appointments are safely backfilled into contact history without duplicating appointment records.
+- Completing a prospect follow-up now opens the existing Log Contact flow so the outcome, note, temperature, timeframe and next action are captured once and applied everywhere.
+- Existing scoring, appointment records, pipeline records, authentication and sync architecture remain unchanged.
