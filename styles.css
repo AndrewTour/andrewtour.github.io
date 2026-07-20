@@ -3299,3 +3299,36 @@ html,body{max-width:100%;overflow-x:hidden;overscroll-behavior-x:none}
 .prospect-insight-summary{margin-top:12px}.prospect-insight-link{width:100%;min-height:40px;margin-top:12px;border:0;border-radius:13px;background:rgba(91,145,255,.1);color:var(--ink);font-size:.7rem;font-weight:800}
 .prospect-weekly-focus{background:linear-gradient(145deg,rgba(91,145,255,.14),rgba(255,255,255,.055))}
 @media (prefers-reduced-motion:reduce){.insight-period-switch button,.prospect-insight-link{transition:none}}
+
+/* v73 — daily welcome brief */
+.welcome-screen{position:fixed;inset:0;z-index:100;display:grid;place-items:center;overflow:hidden;background:linear-gradient(180deg,#07101f 0%,#070a12 48%,#03050a 100%);padding:max(18px,env(safe-area-inset-top)) 20px max(20px,env(safe-area-inset-bottom));transition:opacity .38s ease,visibility .38s ease}
+.welcome-screen.hidden{display:none}
+.welcome-screen.is-leaving{opacity:0;visibility:hidden}
+.welcome-ambient{position:absolute;border-radius:999px;filter:blur(16px);opacity:.62;pointer-events:none}
+.welcome-ambient-one{width:320px;height:320px;left:-120px;top:15%;background:radial-gradient(circle,rgba(37,126,255,.48),transparent 68%)}
+.welcome-ambient-two{width:300px;height:300px;right:-125px;bottom:12%;background:radial-gradient(circle,rgba(162,63,255,.32),transparent 68%)}
+.welcome-shell{position:relative;width:min(100%,520px);height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:8px 0 4px}
+.welcome-top{display:flex;align-items:center;justify-content:space-between;color:#aab3c5;font-size:.72rem;font-weight:750;letter-spacing:.04em}
+.welcome-clock{color:#f7f9ff;font-variant-numeric:tabular-nums}
+.welcome-heading{margin-top:auto;padding:34px 4px 22px}
+.welcome-kicker,.welcome-focus>span,.welcome-summary-head>span{display:block;color:#8c97aa;font-size:.65rem;font-weight:900;letter-spacing:.18em}
+.welcome-heading h1{margin:14px 0 10px;color:#f7f9ff;font-size:clamp(2.25rem,10vw,3.35rem);line-height:.98;font-weight:430;letter-spacing:-.045em}
+.welcome-heading h1 strong{font-weight:880}
+.welcome-heading p{max-width:340px;margin:0;color:#9ba4b7;font-size:.82rem;line-height:1.45}
+.welcome-summary{border-radius:28px;padding:17px 18px 18px;background:linear-gradient(145deg,rgba(255,255,255,.11),rgba(255,255,255,.045));box-shadow:0 22px 60px rgba(0,0,0,.28)}
+.welcome-summary-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px}
+.welcome-summary-head small{color:#76e5ba;font-size:.61rem;font-weight:900;letter-spacing:.14em}
+.welcome-summary-head small.risk{color:#ffd46e}.welcome-summary-head small.off{color:#ff8796}
+.welcome-summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.welcome-summary-grid div{min-width:0;border-right:1px solid rgba(255,255,255,.1);padding-right:8px}
+.welcome-summary-grid div:last-child{border-right:0;padding-right:0}
+.welcome-summary-grid strong{display:block;color:#fff;font-size:1.65rem;line-height:1;font-variant-numeric:tabular-nums}
+.welcome-summary-grid span{display:block;margin-top:7px;color:#9ca6b9;font-size:.62rem;font-weight:750;white-space:nowrap}
+.welcome-focus{padding:23px 5px 21px}
+.welcome-focus h2{margin:9px 0 7px;color:#f5f7fc;font-size:1.28rem;line-height:1.14;letter-spacing:-.02em}
+.welcome-focus p{margin:0;color:#a2abbd;font-size:.78rem;line-height:1.42}
+.welcome-start{width:100%;min-height:58px;border:1px solid rgba(255,255,255,.18);border-radius:21px;background:linear-gradient(180deg,rgba(111,173,255,.98),rgba(66,104,218,.98));color:#fff;display:flex;align-items:center;justify-content:center;gap:10px;font-size:.88rem;font-weight:900;box-shadow:0 16px 34px rgba(40,93,207,.28);-webkit-tap-highlight-color:transparent}
+.welcome-start svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s ease}
+.welcome-start:active{transform:scale(.985)}.welcome-start:active svg{transform:translateX(2px)}
+@media(max-height:760px){.welcome-heading{padding:18px 4px 15px}.welcome-heading h1{font-size:2.35rem}.welcome-summary{padding:14px 15px 15px}.welcome-focus{padding:16px 5px}.welcome-start{min-height:54px}}
+@media(prefers-reduced-motion:reduce){.welcome-screen,.welcome-start,.welcome-start svg{transition:none}}

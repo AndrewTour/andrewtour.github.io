@@ -103,6 +103,48 @@ function clearDayDirty(k,clientUpdatedAt){if(Number(days[k]?.clientUpdatedAt)===
 function saveLocal(){const prefix=storagePrefix(uid);try{const serialised=JSON.stringify(normaliseDaysMap(days));const previous=localStorage.getItem(prefix+'days');if(previous)localStorage.setItem(prefix+'days-backup',previous);localStorage.setItem(prefix+'days',serialised);localStorage.setItem(prefix+'targets',JSON.stringify(targets));localStorage.setItem(prefix+'agent-name',agentName);localStorage.setItem(prefix+'work-days',JSON.stringify(workDays));localStorage.setItem(prefix+'calendar-preference',calendarPreference);localStorage.setItem(prefix+'prospects',JSON.stringify(prospects));localStorage.setItem(prefix+'prospect-interactions',JSON.stringify(prospectInteractions));return true}catch(err){console.error('Local save failed',err);return false}}
 function clearActiveSession(){unsubDays?.();unsubProfile?.();unsubLeaderboard?.();unsubProspecting?.();unsubDays=unsubProfile=unsubLeaderboard=unsubProspecting=null;clearInterval(timerTick);clearTimeout(syncTimer);clearTimeout(leaderboardPublishTimer);clearTimeout(prospectingSaveTimer);prospectingSaveTimer=null;pendingProspectingPayload=null;pendingProspectingSignature='';prospectingWriteInFlight=false;prospectingSaveWaiters.splice(0).forEach(({resolve})=>resolve());currentUser=null;uid='local';cloud=false;pendingSyncOperations=0;syncHasError=false;lastLeaderboardSignature='';lastProspectingSignature='';dirtyDayKeys=new Set();resetState()}
 function displayAgentName(){return (agentName||currentUser?.displayName||currentUser?.email?.split('@')[0]||'Agent').trim()}
+function welcomeStorageKey(){return `${storagePrefix(uid)}welcome:${todayKey()}`}
+function welcomeSeenToday(){try{return localStorage.getItem(welcomeStorageKey())==='1'}catch{return false}}
+function firstAgentName(){return displayAgentName().split(/\s+/).filter(Boolean)[0]||'Agent'}
+function welcomeGreetingFor(date=new Date()){const hour=date.getHours();return hour<12?'Good morning':hour<17?'Good afternoon':'Good evening'}
+function welcomeOpportunity(){
+  const k=todayKey(),d=dayData(k),now=new Date(),hour=now.getHours(),followUps=scheduledFollowUpsForDate(k).length;
+  if(!isWorkDayKey(k))return{title:'Use today deliberately',text:'No prospecting targets are scheduled. Review the pipeline and prepare the next workday.'};
+  if(followUps>0&&hour<12)return{title:'Follow up first',text:`Clear ${followUps} scheduled follow-up${followUps===1?'':'s'} before the day gets busy.`};
+  const metrics=[
+    {key:'calls',label:'calls',value:d.calls,target:targets.calls},
+    {key:'connects',label:'connects',value:d.connects,target:targets.connects},
+    {key:'data',label:'data records',value:d.data,target:targets.data},
+    {key:'knock',label:'minutes knocking',value:Math.floor(liveKnockSeconds(d)/60),target:rollingKnockTarget(k)}
+  ].map(m=>({...m,ratio:m.target?m.value/m.target:1,remaining:Math.max(0,m.target-m.value)})).filter(m=>m.remaining>0).sort((a,b)=>a.ratio-b.ratio);
+  if(!metrics.length)return{title:'Targets complete',text:'You have built the day. Protect the result and prepare tomorrow’s opportunities.'};
+  const next=metrics[0];
+  if(next.key==='knock'&&hour<14)return{title:'Protect the knocking window',text:`Your ${next.remaining}-minute knocking target opens from 2:00pm. Build calls and connects first.`};
+  const action=next.key==='knock'?`${next.remaining} minutes of knocking`:`${next.remaining} more ${next.label}`;
+  return{title:`Opportunity: ${next.label.charAt(0).toUpperCase()+next.label.slice(1)}`,text:`Complete ${action} to lift today’s position and keep campaign momentum moving.`};
+}
+function renderWelcomeScreen(){
+  const screen=$('#welcomeScreen');if(!screen)return;
+  const now=new Date(),k=todayKey(),appointments=appointmentEntriesForDate(k).length,followUps=scheduledFollowUpsForDate(k).length,score=completion(k),track=dayTrackState(k),focus=welcomeOpportunity();
+  $('#welcomeName').textContent=firstAgentName();
+  $('#welcomeGreeting').childNodes[0].nodeValue=`${welcomeGreetingFor(now)},`;
+  $('#welcomeDate').textContent=now.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long'});
+  $('#welcomeClock').textContent=now.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true}).replace(/\s/g,' ');
+  $('#welcomeAppointments').textContent=appointments;
+  $('#welcomeFollowUps').textContent=followUps;
+  $('#welcomeScore').textContent=`${score}%`;
+  const label=$('#welcomeTrackLabel'),labels={on:'ON TRACK',risk:'AT RISK',off:'OFF TRACK'};label.textContent=labels[track];label.className=track==='risk'?'risk':track==='off'?'off':'';
+  $('#welcomeFocusTitle').textContent=focus.title;$('#welcomeFocusText').textContent=focus.text;
+}
+function showDailyWelcome(){
+  const screen=$('#welcomeScreen');if(!screen||welcomeSeenToday())return;
+  renderWelcomeScreen();screen.classList.remove('hidden','is-leaving');screen.setAttribute('aria-hidden','false');
+}
+function dismissDailyWelcome(){
+  const screen=$('#welcomeScreen');if(!screen)return;
+  try{localStorage.setItem(welcomeStorageKey(),'1')}catch{}
+  screen.classList.add('is-leaving');screen.setAttribute('aria-hidden','true');setTimeout(()=>screen.classList.add('hidden'),380);
+}
 function leaderboardPayload(){
   const k=todayKey(),d=dayData(k),knockMinutes=Math.floor(liveKnockSeconds(d)/60),knockTarget=rollingKnockTarget(k);
   return{uid,name:displayAgentName(),email:currentUser?.email||'',date:k,activeToday:isWorkDayKey(k),workDays:[...workDays],calls:d.calls,connects:d.connects,data:d.data,knockMinutes,score:completion(k),targets:{calls:targets.calls,connects:targets.connects,data:targets.data,knock:knockTarget},dailyHistory:recentDailyHistory(),weekHistory:recentWeekHistory(),clientUpdatedAt:Date.now(),updatedAt:serverTimestamp()}
@@ -1409,7 +1451,7 @@ async function startCloud(user){
   refreshSyncStatus();showApp();scheduleLeaderboardPublish();
 }
 
-function showApp(){$('#authGate').classList.add('hidden');$('#app').classList.remove('hidden');$('#appointmentDatePicker').value=appointmentDate;restoreProspectingSessionState();renderAll();ensureTick()}
+function showApp(){$('#authGate').classList.add('hidden');$('#app').classList.remove('hidden');$('#appointmentDatePicker').value=appointmentDate;restoreProspectingSessionState();renderAll();ensureTick();showDailyWelcome()}
 let viewportFrame=0;
 function updateAppViewport(){
   cancelAnimationFrame(viewportFrame);
@@ -1452,6 +1494,7 @@ function openCalendar(){$('#calendarModal').classList.add('open');renderCalendar
 
 $('#authForm').addEventListener('submit',async e=>{e.preventDefault();showAuthMessage('');try{await signInWithEmailAndPassword(auth,$('#email').value,$('#password').value)}catch(err){showAuthMessage(err.message)}});
 $('#createAccount').onclick=async()=>{try{await createUserWithEmailAndPassword(auth,$('#email').value,$('#password').value)}catch(err){showAuthMessage(err.message)}};
+$('#startDayButton').onclick=dismissDailyWelcome;
 $('#localMode').onclick=()=>{clearActiveSession();uid='local';loadLocal('local');setSync('offline','This device');showApp()};
 $$('[data-action]').forEach(b=>b.onclick=()=>changeMetric(b.dataset.metric,b.dataset.action==='plus'?1:-1));
 $('#timerButton').onclick=toggleTimer;$('#openTodayTimeline').onclick=()=>switchView('scheduleView');$('#resetKnock').onclick=resetKnock;$('#previousDay').onclick=()=>shiftHeaderDate(-1);$('#nextDay').onclick=()=>shiftHeaderDate(1);$('#settingsShortcut').onclick=()=>switchView('settingsView');$('#homeShortcut').onclick=()=>switchView('todayView');$('#backToday').onclick=()=>{selectedDate=todayKey();appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()};

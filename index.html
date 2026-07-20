@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=71">
+<link rel="stylesheet" href="styles.css?v=73">
 <title>AGNT</title>
 </head>
 <body>
@@ -25,6 +25,43 @@
     <button id="localMode" class="text-btn" type="button">Continue on this device only</button>
     <small id="authMessage"></small>
   </form>
+</div>
+
+<div id="welcomeScreen" class="welcome-screen hidden" aria-hidden="true">
+  <div class="welcome-ambient welcome-ambient-one"></div>
+  <div class="welcome-ambient welcome-ambient-two"></div>
+  <section class="welcome-shell" aria-labelledby="welcomeGreeting">
+    <div class="welcome-top">
+      <span id="welcomeClock" class="welcome-clock">6:14 AM</span>
+      <span id="welcomeDate" class="welcome-date"></span>
+    </div>
+
+    <div class="welcome-heading">
+      <span class="welcome-kicker">AGNT DAILY BRIEF</span>
+      <h1 id="welcomeGreeting">Good morning,<br><strong id="welcomeName">Agent</strong></h1>
+      <p>Here’s where we are. Start clear, then build momentum.</p>
+    </div>
+
+    <div class="welcome-summary glass">
+      <div class="welcome-summary-head"><span>TODAY</span><small id="welcomeTrackLabel">ON TRACK</small></div>
+      <div class="welcome-summary-grid">
+        <div><strong id="welcomeAppointments">0</strong><span>Appointments</span></div>
+        <div><strong id="welcomeFollowUps">0</strong><span>Follow Ups</span></div>
+        <div><strong id="welcomeScore">0%</strong><span>Complete</span></div>
+      </div>
+    </div>
+
+    <div class="welcome-focus">
+      <span>FOCUS TODAY</span>
+      <h2 id="welcomeFocusTitle">Build early momentum</h2>
+      <p id="welcomeFocusText">Your next best action will appear here.</p>
+    </div>
+
+    <button id="startDayButton" class="welcome-start" type="button">
+      <span>Start My Day</span>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+    </button>
+  </section>
 </div>
 
 <div id="app" class="app hidden">
@@ -467,6 +504,6 @@
 </div>
 
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=71"></script>
+<script type="module" src="app.js?v=73"></script>
 </body>
 </html>
