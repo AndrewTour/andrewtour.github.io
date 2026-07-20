@@ -26,3 +26,10 @@ Incremental update from V69. Pipeline-only UI and seller timeframe logic refinem
 - Existing linked appointments are safely backfilled into contact history without duplicating appointment records.
 - Completing a prospect follow-up now opens the existing Log Contact flow so the outcome, note, temperature, timeframe and next action are captured once and applied everywhere.
 - Existing scoring, appointment records, pipeline records, authentication and sync architecture remain unchanged.
+
+
+## V73.1 Login Hotfix
+- Removed integration backfill from the synchronous login/local-data load path.
+- Integration backfill now runs safely after the app is visible, during browser idle time.
+- Added guarded error handling so historical event migration cannot block authentication or startup.
+- No Firebase, Firestore, UI, scoring, appointment, pipeline or prospecting workflow changes.
