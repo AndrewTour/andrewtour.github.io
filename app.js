@@ -14,6 +14,7 @@ let year=new Date().getFullYear(), monthCursor=new Date(), uid='local', currentU
 let unsubDays=null, unsubProfile=null, unsubLeaderboard=null, unsubProspecting=null, timerTick=null, syncTimer=null, leaderboardPublishTimer=null, prospectingSaveTimer=null;
 let pendingSyncOperations=0, syncHasError=false, lastLeaderboardSignature='', lastProspectingSignature='';
 let pendingProspectingPayload=null, pendingProspectingSignature='', prospectingWriteInFlight=false, prospectingSaveWaiters=[];
+let editingAppointment=null;
 const daySaveChains=new Map();
 let dirtyDayKeys=new Set();
 const appointmentSubmitLocks=new Set();
@@ -298,7 +299,7 @@ function todayGuidance(){
   if(total===0)return 'All daily targets complete. Keep building tomorrow’s pipeline.';
   return `Focus Now: ${metricLabel(weakest)} · ${remaining[weakest]} ${labels[weakest]} remaining`;
 }
-function rollingKnockTarget(k){const date=parseKey(k),m=mondayOf(date);let prior=0,seen=0;for(const n of workDays){const x=new Date(m);x.setDate(m.getDate()+n-1);const key=dateKey(x);if(key===k)break;prior+=Math.floor(liveKnockSeconds(dayData(key))/60);seen++}return Math.ceil(Math.max(0,targets.weeklyKnock-prior)/Math.max(1,workDays.length-seen))}
+function rollingKnockTarget(k){const weekStart=mondayOf(parseKey(k));const ordered=weekKeys(weekStart);let prior=0,seen=0;for(const key of ordered){if(key===k)break;prior+=Math.floor(liveKnockSeconds(dayData(key))/60);seen++}return Math.ceil(Math.max(0,targets.weeklyKnock-prior)/Math.max(1,ordered.length-seen))}
 function completion(k){if(!isWorkDayKey(k))return 0;const d=dayData(k),kt=rollingKnockTarget(k);return Math.round((pct(d.calls,targets.calls)+pct(d.connects,targets.connects)+pct(d.data,targets.data)+pct(liveKnockSeconds(d)/60,kt))/4)}
 function weekSummary(base=parseKey(selectedDate)){const ks=weekKeys(base);let calls=0,connects=0,data=0,knock=0,complete=0,total=0;ks.forEach(k=>{const d=dayData(k);calls+=d.calls;connects+=d.connects;data+=d.data;knock+=liveKnockSeconds(d);const c=completion(k);total+=c;if(c>=100)complete++});const count=Math.max(1,ks.length);return{calls,connects,data,knock,complete,avg:Math.round(total/count),score:Math.round((pct(calls,targets.calls*count)+pct(connects,targets.connects*count)+pct(data,targets.data*count)+pct(knock/60,targets.weeklyKnock))/4),count}}
 function weekKeyFromDate(base=new Date()){return dateKey(mondayOf(base))}
@@ -851,6 +852,7 @@ function appointmentCardMarkup(entry,{dailyLog=false,history=false}={}){
   const bookedMeta=history&&booked?`<small class="appointment-created-meta">Booked ${escapeHtml(booked)}</small>`:'';
   const dueMeta=history&&a.followUpDate?`<small class="appointment-followup-timestamp ${a.followUpDate<todayKey()?'overdue':''}">Follow-up due ${escapeHtml(shortAppointmentDate(a.followUpDate))}</small>`:'';
   return `<article class="appointment-card appointment-card-premium appointment-followup-card ${lifecycle}">
+    <button class="appointment-edit" data-edit-appointment="${escapeHtml(a.id)}" data-source-date="${escapeHtml(sourceDate)}" aria-label="Edit appointment" title="Edit appointment">Edit</button>
     <button class="appointment-delete" data-delete-appointment="${escapeHtml(a.id)}" data-source-date="${escapeHtml(sourceDate)}" aria-label="Delete appointment" title="Delete appointment">×</button>
     <div class="appointment-card-copy"><div class="appointment-card-top"><span class="appointment-type-badge">${type}</span><span class="appointment-status-badge ${lifecycle}">${escapeHtml(statusText)}</span></div><strong>${address}</strong><small>${contact}${phone?` · ${phone}`:''}</small>${loggedMeta}${bookedMeta}${dueMeta}${note}</div>
     <div class="appointment-followup-actions">${actions}</div>
@@ -858,10 +860,11 @@ function appointmentCardMarkup(entry,{dailyLog=false,history=false}={}){
 }
 function renderAppointments(){
   const picker=$('#appointmentDatePicker');
-  const locked=isPastDate(appointmentDate);
+  const locked=isPastDate(appointmentDate)&&!editingAppointment;
   $('#appointmentForm').classList.toggle('date-locked',locked);
   $$('#appointmentForm input, #appointmentForm button').forEach(el=>el.disabled=locked);
   $('#appointmentLock').classList.toggle('hidden',!locked);
+  const submitButton=$('#appointmentSubmitButton');if(submitButton)submitButton.textContent=editingAppointment?'Save changes':'Book appointment';
   $('#appointmentDateLabel').textContent=fmtDate(appointmentDate);
   if($('#appointmentLogDate'))$('#appointmentLogDate').textContent=fmtDate(appointmentDate);
   if(picker&&!picker.value)picker.value=appointmentDate;
@@ -899,6 +902,24 @@ async function addAppointment({contactName,contactNumber,address,date,time,type}
   days[createdDate]=d;
   try{await saveDay(createdDate);renderAppointments();toast(date===createdDate?'Appointment logged':'Appointment logged and reminder created');return appointment}
   finally{appointmentSubmitLocks.delete(signature)}
+}
+function beginEditAppointment(id,sourceDate){
+  const d=dayData(sourceDate),appointment=d.appointments.find(a=>String(a.id)===String(id));
+  if(!appointment)return toast('Appointment could not be found');
+  editingAppointment={id:String(id),sourceDate};appointmentHistoryMode=null;setAppointmentHistoryScreen(null);
+  appointmentDate=appointmentCreatedDate(appointment,sourceDate)||todayKey();
+  $('#appointmentContactName').value=appointment.contactName||'';$('#appointmentContactNumber').value=appointment.contactNumber||'';$('#appointmentAddress').value=appointment.address||'';$('#appointmentDatePicker').value=appointmentScheduledDate(appointment,sourceDate);$('#appointmentTime').value=appointment.time||'12:00';
+  const type=appointmentType(appointment);$$('[name=appointmentType]').forEach(el=>el.checked=el.value===type);
+  renderAppointments();window.scrollTo({top:0,behavior:'smooth'});
+}
+async function editAppointment({contactName,contactNumber,address,date,time,type}){
+  if(!editingAppointment)return null;
+  const {id,sourceDate}=editingAppointment,d=dayData(sourceDate),index=d.appointments.findIndex(a=>String(a.id)===String(id));
+  if(index<0)return toast('Appointment could not be found');
+  const existing=d.appointments[index],scheduledAt=new Date(`${date}T${time}`).getTime();if(!validDateKey(date)||!Number.isFinite(scheduledAt))return toast('Appointment date or time is invalid');
+  let prospectId=existing.prospectId||'';if(normaliseAppointmentType(type)==='LAP'){const linked=await connectListingAppointmentToPipeline({contactName,contactNumber,address});prospectId=linked?.id||prospectId}
+  d.appointments[index]=normaliseAppointmentRecord({...existing,contactName,contactNumber,address,date,scheduledDate:date,time,type,types:[type],scheduledAt,prospectId,updatedAt:Date.now()},sourceDate);
+  addEvent(d,'appointment',`${type} · ${contactName} · appointment updated for ${date} ${time}`);days[sourceDate]=d;await saveDay(sourceDate);editingAppointment=null;renderAll();toast('Appointment updated');return d.appointments[index];
 }
 async function deleteAppointment(id,sourceDate=appointmentDate){
   const d=dayData(sourceDate),index=d.appointments.findIndex(a=>String(a.id)===String(id));
@@ -1403,7 +1424,7 @@ $('#scorecardPrev').onclick=()=>{scorecardWeekOffset--;renderScorecard()};$('#sc
 $('#appointmentDatePicker').onchange=()=>{};
 document.querySelector('.appointment-destination-grid').onclick=e=>{const b=e.target.closest('[data-open-appointment-history]');if(!b)return;setAppointmentHistoryScreen(b.dataset.openAppointmentHistory)};
 $('#closeAppointmentHistory').onclick=()=>setAppointmentHistoryScreen(null);
-$('#appointmentForm').onsubmit=async e=>{e.preventDefault();const viewedDate=appointmentDate;const contactName=$('#appointmentContactName').value.trim(),contactNumber=$('#appointmentContactNumber').value.trim(),address=$('#appointmentAddress').value.trim(),date=$('#appointmentDatePicker').value,time=$('#appointmentTime').value,type=$('.appointment-types input:checked')?.value||'',error=$('#appointmentFormError');const missing=[];if(!contactName)missing.push('contact name');if(!contactNumber)missing.push('contact number');if(!address)missing.push('property address');if(!date)missing.push('booking date');if(!time)missing.push('booking time');if(!type)missing.push('appointment type');if(missing.length){error.textContent=`Add ${missing.join(', ')}`;error.classList.remove('hidden');return}error.textContent='';error.classList.add('hidden');const appointment=await addAppointment({contactName,contactNumber,address,date,time,type});if(appointment&&confirm(`Add to ${calendarPreference==='apple'?'Apple':'Outlook'} Calendar?`))exportAppointmentToCalendar(appointment,appointment.createdDate);e.target.reset();appointmentDate=viewedDate;$('#appointmentDatePicker').value=viewedDate;$('#appointmentTime').value='12:00';renderAppointments();updateTopbar('appointmentsView')};
+$('#appointmentForm').onsubmit=async e=>{e.preventDefault();const viewedDate=appointmentDate;const contactName=$('#appointmentContactName').value.trim(),contactNumber=$('#appointmentContactNumber').value.trim(),address=$('#appointmentAddress').value.trim(),date=$('#appointmentDatePicker').value,time=$('#appointmentTime').value,type=$('.appointment-types input:checked')?.value||'',error=$('#appointmentFormError');const missing=[];if(!contactName)missing.push('contact name');if(!contactNumber)missing.push('contact number');if(!address)missing.push('property address');if(!date)missing.push('booking date');if(!time)missing.push('booking time');if(!type)missing.push('appointment type');if(missing.length){error.textContent=`Add ${missing.join(', ')}`;error.classList.remove('hidden');return}error.textContent='';error.classList.add('hidden');const wasEditing=Boolean(editingAppointment);const appointment=wasEditing?await editAppointment({contactName,contactNumber,address,date,time,type}):await addAppointment({contactName,contactNumber,address,date,time,type});if(appointment&&!wasEditing&&confirm(`Add to ${calendarPreference==='apple'?'Apple':'Outlook'} Calendar?`))exportAppointmentToCalendar(appointment,appointment.createdDate);if(appointment){e.target.reset();editingAppointment=null;appointmentDate=viewedDate;$('#appointmentDatePicker').value=viewedDate;$('#appointmentTime').value='12:00';renderAppointments();updateTopbar('appointmentsView')}};
 $('#saveFollowUpDate').onclick=saveAppointmentFollowUp;
 $$('[data-close-followup]').forEach(button=>button.onclick=()=>{closeActionModal('#followUpModal');pendingFollowUpAppointment=null;});
 $('#outcomeOptions').onclick=e=>{const button=e.target.closest('[data-outcome]');if(!button)return;selectedAppointmentOutcome=button.dataset.outcome;$$('#outcomeOptions button').forEach(item=>item.classList.toggle('selected',item===button));$('#saveAppointmentOutcome').disabled=false;};
@@ -1424,6 +1445,7 @@ $('#appointmentsView').onclick=e=>{
   const follow=e.target.closest('[data-set-followup]');if(follow){setAppointmentFollowUp(follow.dataset.setFollowup,follow.dataset.sourceDate);return;}
   const marked=e.target.closest('[data-mark-followedup]');if(marked){markAppointmentFollowedUp(marked.dataset.markFollowedup,marked.dataset.sourceDate);return;}
   const outcome=e.target.closest('[data-update-outcome]');if(outcome){updateAppointmentOutcome(outcome.dataset.updateOutcome,outcome.dataset.sourceDate);return;}
+  const edit=e.target.closest('[data-edit-appointment]');if(edit){beginEditAppointment(edit.dataset.editAppointment,edit.dataset.sourceDate||appointmentDate);return}
   const b=e.target.closest('[data-delete-appointment]');if(b&&confirm('Delete this appointment?\n\nThis will permanently remove the appointment and any associated follow-up.'))deleteAppointment(b.dataset.deleteAppointment,b.dataset.sourceDate||appointmentDate)
 };
 

@@ -3272,3 +3272,12 @@ html,body{max-width:100%;overflow-x:hidden;overscroll-behavior-x:none}
 #prospectLogForm .prospect-form-grid label{min-width:0}
 #prospectLogForm .prospect-form-grid select,#prospectLogForm .prospect-form-grid input{min-width:0;padding-left:11px;padding-right:10px;font-size:14px}
 @media(max-width:390px){#prospectLogForm .prospect-form-grid{grid-template-columns:minmax(0,.88fr) minmax(0,1.12fr);gap:7px}#prospectLogForm .prospect-form-grid select,#prospectLogForm .prospect-form-grid input{padding-left:9px;padding-right:8px;font-size:13px}}
+
+
+/* V71 — beta feedback refinement: typography, navigation and appointment editing only. */
+.scorecard-focus > div > span{font-size:.65rem;line-height:1.2;font-weight:600;letter-spacing:0;color:var(--muted);text-transform:none}
+.appointment-card-premium{position:relative}
+.appointment-edit{position:absolute;top:12px;right:42px;border:0;background:transparent;color:#0b63f3;font:inherit;font-size:.72rem;font-weight:650;padding:6px 8px;z-index:2}
+.appointment-delete{top:12px}
+.tab-icon-home svg circle{transform-origin:center}
+@media (max-width:390px){.appointment-edit{right:38px;padding-inline:5px}}

@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=69">
+<link rel="stylesheet" href="styles.css?v=71">
 <title>AGNT</title>
 </head>
 <body>
@@ -146,7 +146,7 @@
           <label><input type="radio" name="appointmentType" value="PU"><span>PU</span></label>
         </fieldset>
         <div id="appointmentFormError" class="form-error hidden" role="alert"></div>
-        <button class="primary" type="submit">Book appointment</button>
+        <button id="appointmentSubmitButton" class="primary" type="submit">Book appointment</button>
       </form>
       <section class="appointment-daily-log" aria-label="Appointments logged for selected day">
         <div class="appointment-log-heading"><span>APPOINTMENT LOG</span><small id="appointmentLogDate"></small></div>
@@ -359,20 +359,20 @@
 
   <nav class="tabbar glass">
     <button class="active" data-view="todayView">
-      <b class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m4 10 8-6 8 6"/><path d="M6.5 9.5V20h11V9.5"/><path d="M10 20v-6h4v6"/></svg></b>
+      <b class="tab-icon tab-icon-home" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.25" fill="currentColor" stroke="none"/></svg></b>
       <span>Home</span>
     </button>
     <button data-view="scheduleView">
-      <b class="tab-icon tab-icon-today" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.25" fill="currentColor" stroke="none"/></svg></b>
+      <b class="tab-icon tab-icon-today" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4.5" width="16" height="15.5" rx="3"/><path d="M8 2.75v4M16 2.75v4M4 8.5h16"/><path d="m8.25 14 2.2 2.2 5.3-5.4"/></svg></b>
       <span>Today</span>
-    </button>
-    <button data-view="appointmentsView">
-      <b class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="15" rx="3"/><path d="M7.5 3.5v4M16.5 3.5v4M3.5 9.5h17"/><path d="M8 13h3M13 13h3M8 17h3"/></svg></b>
-      <span>Appointments</span>
     </button>
     <button data-view="prospectingView">
       <b class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.25"/><path d="M3.5 19c.4-4 2.2-6 5.5-6s5.1 2 5.5 6"/><path d="M16 8h5M18.5 5.5v5"/><path d="M16 15h5M16 18h5"/></svg></b>
       <span>Prospector</span>
+    </button>
+    <button data-view="appointmentsView">
+      <b class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="15" rx="3"/><path d="M7.5 3.5v4M16.5 3.5v4M3.5 9.5h17"/><path d="M8 13h3M13 13h3M8 17h3"/></svg></b>
+      <span>Appointments</span>
     </button>
     <button data-view="insightsView">
       <b class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 18.5h16"/><path d="M5.5 16l4.25-4.25 3.1 2.8L18.5 8.5"/><path d="M14.5 8.5h4v4"/></svg></b>
@@ -424,6 +424,6 @@
 </div>
 
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=69"></script>
+<script type="module" src="app.js?v=71"></script>
 </body>
 </html>
