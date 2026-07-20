@@ -3322,3 +3322,24 @@ html,body{max-width:100%;overflow-x:hidden;overscroll-behavior-x:none}
 .welcome-start svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s ease}.welcome-start:active{transform:scale(.985)}.welcome-start:active svg{transform:translateX(2px)}
 @media(max-height:760px){.welcome-heading{padding:22px 4px 19px}.welcome-heading h1{font-size:2.6rem}.welcome-brief-row{padding:14px 17px 13px}.welcome-brief-row h2{font-size:.96rem}.welcome-brief-row p{font-size:.68rem}.welcome-start{min-height:54px;margin-top:14px}}
 @media(prefers-reduced-motion:reduce){.welcome-screen,.welcome-start,.welcome-start svg{transition:none}}
+
+
+/* v75 — airy morning brief aligned to the AGNT light UI */
+.welcome-screen{background:linear-gradient(180deg,#fbfcff 0%,#f6f8fc 100%);padding:max(18px,env(safe-area-inset-top)) 20px max(18px,env(safe-area-inset-bottom))}
+.welcome-screen::before{width:360px;height:360px;left:-250px;top:15%;background:radial-gradient(circle,rgba(56,113,236,.09),transparent 70%)}
+.welcome-screen::after{display:none}
+.welcome-shell{width:min(100%,500px)}
+.welcome-top{min-height:30px;color:#8c95a5;font-size:.67rem;font-weight:750}
+.welcome-brand{color:#151923;font-size:.76rem;font-weight:950;letter-spacing:.13em}.welcome-brand span{color:#ff5a1f;margin-left:1px}
+.welcome-heading{padding:clamp(28px,5.4vh,54px) 6px clamp(22px,3.2vh,30px)}
+.welcome-kicker,.welcome-brief-label{color:#6e85b5;font-size:.58rem;letter-spacing:.17em}
+.welcome-heading h1{margin:11px 0 12px;font-size:clamp(2.45rem,10vw,3.35rem);line-height:.99;font-weight:430}
+.welcome-heading h1 strong{font-weight:850}.welcome-heading p{font-size:.8rem;color:#858e9d}
+.welcome-brief{display:grid;gap:12px;border:0;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;overflow:visible}
+.welcome-brief-row{grid-template-columns:1fr;gap:0;padding:17px 18px 16px;border:1px solid rgba(32,44,66,.065)!important;border-radius:22px;background:rgba(255,255,255,.82);box-shadow:0 9px 24px rgba(41,55,82,.055)}
+.welcome-brief-index{display:none}
+.welcome-brief-row h2{margin:7px 0 5px;font-size:.97rem;line-height:1.22;letter-spacing:-.02em;font-weight:780}
+.welcome-brief-row p{font-size:.71rem;line-height:1.48;color:#7a8392}
+.welcome-first-win{background:linear-gradient(135deg,rgba(240,245,255,.9),rgba(255,255,255,.92));border-color:rgba(55,107,219,.09)!important}.welcome-first-win .welcome-brief-label{color:#3570df}
+.welcome-start{min-height:56px;margin-top:clamp(18px,3vh,30px);border-radius:18px;background:#1768eb;font-size:.86rem;box-shadow:0 12px 26px rgba(23,104,235,.18)}
+@media(max-height:760px){.welcome-heading{padding:20px 6px 17px}.welcome-heading h1{font-size:2.35rem}.welcome-brief{gap:9px}.welcome-brief-row{padding:13px 15px 12px}.welcome-brief-row h2{font-size:.9rem}.welcome-brief-row p{font-size:.66rem}.welcome-start{min-height:52px;margin-top:12px}}
