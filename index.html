@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=72-concept-os">
+<link rel="stylesheet" href="styles.css?v=71">
 <title>AGNT</title>
 </head>
 <body>
@@ -62,7 +62,7 @@
       <section class="score-week glass">
         <div class="score-overview">
           <div class="score-copy">
-            <span id="welcomeMessage">TODAY'S MOMENTUM</span>
+            <span id="welcomeMessage">DAILY COMPLETION</span>
             <strong id="dailyScore">0%</strong>
             <small id="momentumWhisper" class="momentum-whisper">Building today’s momentum…</small>
           </div>
@@ -77,7 +77,7 @@
           <strong id="leaderboardPosition">—</strong>
         </div>
         <button id="openTodayTimeline" class="now-card" type="button" aria-label="Open today timeline">
-          <span class="now-card-label">NEXT BEST ACTION</span>
+          <span class="now-card-label">FOCUS</span>
           <span class="now-card-copy"><strong id="nowCardTitle">Loading today…</strong><small id="nowCardMeta">Your next priority will appear here</small></span>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
         </button>
@@ -106,11 +106,11 @@
 
     <section id="scheduleView" class="view today-timeline-view">
       <div class="view-head timeline-view-head">
-        <div><span>MISSION CONTROL</span><h2 id="timelineDateLabel"></h2></div>
+        <div><span>TODAY</span><h2 id="timelineDateLabel"></h2></div>
         <small id="timelineSummary">Your day at a glance</small>
       </div>
       <section class="timeline-overview glass">
-        <span class="timeline-overview-label">LIVE DIRECTION</span>
+        <span class="timeline-overview-label">SMART COACH</span>
         <strong id="timelineCurrentTitle">Loading today…</strong>
         <small id="timelineCurrentMeta">Your schedule will appear below.</small>
       </section>
@@ -358,7 +358,7 @@
       <div class="settings glass">
         <div class="profile-hero">
           <div id="profileAvatar" class="profile-avatar" aria-hidden="true">A</div>
-          <div class="profile-hero-copy"><h2>Operating System</h2><div id="accountEmail" class="account-email"></div><span id="profileSyncState">Live accountability profile</span></div>
+          <div class="profile-hero-copy"><h2>Your Profile</h2><div id="accountEmail" class="account-email"></div><span id="profileSyncState">Live accountability profile</span></div>
         </div>
         <div class="profile-kpis" aria-label="Profile performance summary">
           <article><span>Today</span><strong id="profileTodayScore">0%</strong></article>
@@ -411,7 +411,7 @@
     </button>
     <button data-view="prospectingView">
       <b class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.25"/><path d="M3.5 19c.4-4 2.2-6 5.5-6s5.1 2 5.5 6"/><path d="M16 8h5M18.5 5.5v5"/><path d="M16 15h5M16 18h5"/></svg></b>
-      <span>People</span>
+      <span>Prospector</span>
     </button>
     <button data-view="appointmentsView">
       <b class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="15" rx="3"/><path d="M7.5 3.5v4M16.5 3.5v4M3.5 9.5h17"/><path d="M8 13h3M13 13h3M8 17h3"/></svg></b>
@@ -419,11 +419,11 @@
     </button>
     <button data-view="insightsView">
       <b class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 18.5h16"/><path d="M5.5 16l4.25-4.25 3.1 2.8L18.5 8.5"/><path d="M14.5 8.5h4v4"/></svg></b>
-      <span>Coach</span>
+      <span>Leaderboard</span>
     </button>
     <button data-view="settingsView">
       <b class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9.6 3.4l.55-1.4h3.7l.55 1.4a2 2 0 0 0 2.55 1.15l1.38-.57 2.62 2.62-.57 1.38a2 2 0 0 0 1.15 2.55l1.4.55v3.7l-1.4.55a2 2 0 0 0-1.15 2.55l.57 1.38-2.62 2.62-1.38-.57a2 2 0 0 0-2.55 1.15l-.55 1.4h-3.7l-.55-1.4a2 2 0 0 0-2.55-1.15l-1.38.57-2.62-2.62.57-1.38a2 2 0 0 0-1.15-2.55l-1.4-.55v-3.7l1.4-.55a2 2 0 0 0 1.15-2.55L3.05 6.6l2.62-2.62 1.38.57A2 2 0 0 0 9.6 3.4Z"/><circle cx="12" cy="12.85" r="3.15"/></svg></b>
-      <span>More</span>
+      <span>Settings</span>
     </button>
   </nav>
 </div>
