@@ -254,7 +254,7 @@
         <button class="active" type="button" data-prospector-section="today" aria-current="page">Today</button>
         <button type="button" data-prospector-section="contacts">Contacts</button>
         <button type="button" data-prospector-section="pipeline">Pipeline</button>
-        <button type="button" disabled aria-label="Insights coming in a future update">Insights</button>
+        <button type="button" data-prospector-section="insights">Insights</button>
       </nav>
       <div class="prospecting-toolbar glass">
         <div class="prospecting-search-wrap">
@@ -304,6 +304,49 @@
           <section class="pipeline-timeframe glass"><div class="pipeline-timeframe-head"><h3>1–3 months</h3></div><div id="pipelineList1" class="pipeline-seller-list"></div></section>
           <section class="pipeline-timeframe glass"><div class="pipeline-timeframe-head"><h3>6–12 months</h3></div><div id="pipelineList2" class="pipeline-seller-list"></div></section>
           <section class="pipeline-timeframe glass"><div class="pipeline-timeframe-head"><h3>12 months+</h3></div><div id="pipelineList3" class="pipeline-seller-list"></div></section>
+        </section>
+        <section id="prospectorInsightsPanel" class="prospector-insights-panel hidden" aria-live="polite">
+          <div class="insight-period-switch glass" role="tablist" aria-label="Prospecting insight period">
+            <button class="active" type="button" data-prospect-insight-period="week">This Week</button>
+            <button type="button" data-prospect-insight-period="last">Last Week</button>
+            <button type="button" data-prospect-insight-period="four">4 Weeks</button>
+          </div>
+          <section class="prospect-intelligence-hero glass">
+            <div><span>PROSPECTING HEALTH</span><h3 id="prospectHealthTitle">Building</h3><p id="prospectHealthSummary">Your prospecting intelligence will appear as activity is recorded.</p></div>
+            <strong id="prospectHealthScore">—</strong>
+          </section>
+          <section class="prospect-intelligence-card glass">
+            <div class="section-label"><span>CONVERSION FLOW</span><small>Where activity becomes opportunity</small></div>
+            <div id="prospectConversionGrid" class="prospect-insight-grid prospect-conversion-grid"></div>
+            <p id="prospectConversionSummary" class="prospect-insight-summary"></p>
+          </section>
+          <section class="prospect-intelligence-card glass">
+            <div class="section-label"><span>PIPELINE QUALITY</span><small>Composition, urgency and movement</small></div>
+            <div id="prospectPipelineInsightGrid" class="prospect-insight-grid"></div>
+            <p id="prospectPipelineSummary" class="prospect-insight-summary"></p>
+            <button class="prospect-insight-link" type="button" data-insight-open="pipeline">Open Pipeline</button>
+          </section>
+          <section class="prospect-intelligence-card glass">
+            <div class="section-label"><span>FOLLOW-UP DISCIPLINE</span><small>Protect the opportunities already created</small></div>
+            <div id="prospectFollowupInsightGrid" class="prospect-insight-grid"></div>
+            <p id="prospectFollowupSummary" class="prospect-insight-summary"></p>
+            <button class="prospect-insight-link" type="button" data-insight-open="today">Open Follow-ups</button>
+          </section>
+          <section class="prospect-intelligence-card glass">
+            <div class="section-label"><span>APPOINTMENT PERFORMANCE</span><small>What your prospecting is producing</small></div>
+            <div id="prospectAppointmentInsightGrid" class="prospect-insight-grid"></div>
+            <p id="prospectAppointmentSummary" class="prospect-insight-summary"></p>
+            <button class="prospect-insight-link" type="button" data-insight-open="appointments">Open Appointments</button>
+          </section>
+          <section class="prospect-intelligence-card glass">
+            <div class="section-label"><span>DATABASE QUALITY</span><small>Small gaps that weaken future follow-through</small></div>
+            <div id="prospectQualityInsightGrid" class="prospect-insight-grid"></div>
+            <p id="prospectQualitySummary" class="prospect-insight-summary"></p>
+            <button class="prospect-insight-link" type="button" data-insight-open="contacts">Review Contacts</button>
+          </section>
+          <section class="prospect-weekly-focus glass">
+            <span>PRIORITY DIRECTION</span><h3 id="prospectWeeklyFocusTitle">Build meaningful activity</h3><p id="prospectWeeklyFocusText">Log prospecting activity to unlock a focused recommendation.</p>
+          </section>
         </section>
       </div>
 

@@ -3281,3 +3281,21 @@ html,body{max-width:100%;overflow-x:hidden;overscroll-behavior-x:none}
 .appointment-delete{top:12px}
 .tab-icon-home svg circle{transform-origin:center}
 @media (max-width:390px){.appointment-edit{right:38px;padding-inline:5px}}
+
+/* V72 — Prospecting intelligence */
+.prospector-insights-panel{display:grid;gap:10px}.prospector-insights-panel.hidden{display:none}
+.insight-period-switch{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:5px;border-radius:18px}
+.insight-period-switch button{min-height:38px;border:0;border-radius:14px;background:transparent;color:var(--muted);font-size:.68rem;font-weight:750}
+.insight-period-switch button.active{background:rgba(255,255,255,.12);color:var(--ink)}
+.prospect-intelligence-hero,.prospect-intelligence-card,.prospect-weekly-focus{border-radius:22px;padding:14px}
+.prospect-intelligence-hero{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center}
+.prospect-intelligence-hero span,.prospect-weekly-focus>span{display:block;color:var(--muted);font-size:.65rem;font-weight:600}
+.prospect-intelligence-hero h3,.prospect-weekly-focus h3{margin:6px 0 4px;font-size:1.08rem;font-weight:750}
+.prospect-intelligence-hero p,.prospect-weekly-focus p,.prospect-insight-summary{margin:0;color:var(--muted);font-size:.75rem;line-height:1.5}
+.prospect-intelligence-hero>strong{display:grid;place-items:center;min-width:66px;min-height:66px;border-radius:50%;background:rgba(91,145,255,.11);border:1px solid rgba(105,219,242,.18);font-size:1.15rem}
+.prospect-insight-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.prospect-insight-grid article{min-width:0;border-radius:16px;padding:12px;background:rgba(255,255,255,.055)}
+.prospect-insight-grid span{display:block;color:var(--muted);font-size:.65rem}.prospect-insight-grid strong{display:block;margin:6px 0 3px;font-size:1rem}.prospect-insight-grid small{display:block;color:var(--muted);font-size:.62rem;line-height:1.35}
+.prospect-insight-summary{margin-top:12px}.prospect-insight-link{width:100%;min-height:40px;margin-top:12px;border:0;border-radius:13px;background:rgba(91,145,255,.1);color:var(--ink);font-size:.7rem;font-weight:800}
+.prospect-weekly-focus{background:linear-gradient(145deg,rgba(91,145,255,.14),rgba(255,255,255,.055))}
+@media (prefers-reduced-motion:reduce){.insight-period-switch button,.prospect-insight-link{transition:none}}
