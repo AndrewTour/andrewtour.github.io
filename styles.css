@@ -3299,3 +3299,11 @@ html,body{max-width:100%;overflow-x:hidden;overscroll-behavior-x:none}
 .prospect-insight-summary{margin-top:12px}.prospect-insight-link{width:100%;min-height:40px;margin-top:12px;border:0;border-radius:13px;background:rgba(91,145,255,.1);color:var(--ink);font-size:.7rem;font-weight:800}
 .prospect-weekly-focus{background:linear-gradient(145deg,rgba(91,145,255,.14),rgba(255,255,255,.055))}
 @media (prefers-reduced-motion:reduce){.insight-period-switch button,.prospect-insight-link{transition:none}}
+
+/* V73.1 — Contact Timeline */
+.contact-timeline-item{position:relative}
+.contact-timeline-kind{display:inline-flex!important;width:max-content;margin:0 0 5px;padding:3px 7px;border-radius:999px;background:#eef5ff;color:#0a69d8!important;font-size:9px!important;font-weight:850;letter-spacing:.07em;text-transform:uppercase}
+.contact-timeline-item.kind-appointment i{background:#7d5cff;box-shadow:0 0 0 4px #eeeaff}
+.contact-timeline-item.kind-appointment .contact-timeline-kind{background:#f0edff;color:#6748d8!important}
+.contact-timeline-item.kind-pipeline i{background:#ff9f0a;box-shadow:0 0 0 4px #fff1d9}
+.contact-timeline-item.kind-pipeline .contact-timeline-kind{background:#fff1d9;color:#9a6000!important}
