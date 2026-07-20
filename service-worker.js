@@ -1,4 +1,4 @@
-const CACHE='agnt-v73-daily-welcome';
+const CACHE='agnt-v74-daily-welcome';
 const ASSETS=['./','./index.html','./styles.css?v=73','./app.js?v=73','./firebase-config.js','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));

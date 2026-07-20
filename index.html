@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=73">
+<link rel="stylesheet" href="styles.css?v=74">
 <title>AGNT</title>
 </head>
 <body>
@@ -28,33 +28,45 @@
 </div>
 
 <div id="welcomeScreen" class="welcome-screen hidden" aria-hidden="true">
-  <div class="welcome-ambient welcome-ambient-one"></div>
-  <div class="welcome-ambient welcome-ambient-two"></div>
   <section class="welcome-shell" aria-labelledby="welcomeGreeting">
     <div class="welcome-top">
-      <span id="welcomeClock" class="welcome-clock">6:14 AM</span>
+      <span class="welcome-brand">AGNT</span>
       <span id="welcomeDate" class="welcome-date"></span>
     </div>
 
     <div class="welcome-heading">
-      <span class="welcome-kicker">AGNT DAILY BRIEF</span>
+      <span class="welcome-kicker">COACH'S BRIEF</span>
       <h1 id="welcomeGreeting">Good morning,<br><strong id="welcomeName">Agent</strong></h1>
-      <p>Here’s where we are. Start clear, then build momentum.</p>
+      <p id="welcomeIntro">Here’s what matters most today.</p>
     </div>
 
-    <div class="welcome-summary glass">
-      <div class="welcome-summary-head"><span>TODAY</span><small id="welcomeTrackLabel">ON TRACK</small></div>
-      <div class="welcome-summary-grid">
-        <div><strong id="welcomeAppointments">0</strong><span>Appointments</span></div>
-        <div><strong id="welcomeFollowUps">0</strong><span>Follow Ups</span></div>
-        <div><strong id="welcomeScore">0%</strong><span>Complete</span></div>
-      </div>
-    </div>
+    <div class="welcome-brief" aria-label="Daily coaching brief">
+      <article class="welcome-brief-row">
+        <span class="welcome-brief-index">01</span>
+        <div>
+          <span class="welcome-brief-label">PRIORITY</span>
+          <h2 id="welcomePriorityTitle">Create the day</h2>
+          <p id="welcomePriorityText">Your priority will appear here.</p>
+        </div>
+      </article>
 
-    <div class="welcome-focus">
-      <span>FOCUS TODAY</span>
-      <h2 id="welcomeFocusTitle">Build early momentum</h2>
-      <p id="welcomeFocusText">Your next best action will appear here.</p>
+      <article class="welcome-brief-row">
+        <span class="welcome-brief-index">02</span>
+        <div>
+          <span class="welcome-brief-label">RISK</span>
+          <h2 id="welcomeRiskTitle">Protect momentum</h2>
+          <p id="welcomeRiskText">Your biggest risk will appear here.</p>
+        </div>
+      </article>
+
+      <article class="welcome-brief-row welcome-first-win">
+        <span class="welcome-brief-index">03</span>
+        <div>
+          <span class="welcome-brief-label">FIRST WIN</span>
+          <h2 id="welcomeWinTitle">Start with one clear action</h2>
+          <p id="welcomeWinText">Your first move will appear here.</p>
+        </div>
+      </article>
     </div>
 
     <button id="startDayButton" class="welcome-start" type="button">
@@ -504,6 +516,6 @@
 </div>
 
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=73"></script>
+<script type="module" src="app.js?v=74"></script>
 </body>
 </html>
