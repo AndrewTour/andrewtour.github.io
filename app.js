@@ -11,6 +11,7 @@ const DEFAULTS={calls:50,connects:25,data:10,weeklyKnock:240};
 const SELLING_TIMEFRAMES=['Now','1–3 months','6–12 months','12 months+'];
 let targets={...DEFAULTS}, days={}, prospects=[], prospectInteractions=[], prospectFilter='priority', prospectSection='today', pipelineTemperature='All', pipelineSort='followup', prospectBulkMode=false, selectedProspectIds=new Set(), activeProspectId=null, prospectSessionIds=[], prospectSessionIndex=0, prospectSessionActive=false, prospectSessionStats={calls:0,connects:0,temperate:0,appointments:0}, selectedDate=dateKey(new Date()), appointmentDate=selectedDate, appointmentHistoryMode=null, agentName='', calendarPreference='outlook', leaderboardEntries=[], leaderboardMode='day', leaderboardDayOffset=0, leaderboardWeekOffset=0, scorecardWeekOffset=0, prospectInsightPeriod='week';
 let year=new Date().getFullYear(), monthCursor=new Date(), uid='local', currentUser=null, cloud=false, db=null, auth=null;
+let welcomeDaysReady=false, welcomeProfileReady=false, welcomeReadyTimer=null;
 let unsubDays=null, unsubProfile=null, unsubLeaderboard=null, unsubProspecting=null, timerTick=null, syncTimer=null, leaderboardPublishTimer=null, prospectingSaveTimer=null;
 let pendingSyncOperations=0, syncHasError=false, lastLeaderboardSignature='', lastProspectingSignature='';
 let pendingProspectingPayload=null, pendingProspectingSignature='', prospectingWriteInFlight=false, prospectingSaveWaiters=[];
@@ -101,12 +102,16 @@ function saveDirtyDays(){try{localStorage.setItem(storagePrefix(uid)+'dirty-days
 function markDayDirty(k){dirtyDayKeys.add(k);saveDirtyDays()}
 function clearDayDirty(k,clientUpdatedAt){if(Number(days[k]?.clientUpdatedAt)===Number(clientUpdatedAt)){dirtyDayKeys.delete(k);saveDirtyDays()}}
 function saveLocal(){const prefix=storagePrefix(uid);try{const serialised=JSON.stringify(normaliseDaysMap(days));const previous=localStorage.getItem(prefix+'days');if(previous)localStorage.setItem(prefix+'days-backup',previous);localStorage.setItem(prefix+'days',serialised);localStorage.setItem(prefix+'targets',JSON.stringify(targets));localStorage.setItem(prefix+'agent-name',agentName);localStorage.setItem(prefix+'work-days',JSON.stringify(workDays));localStorage.setItem(prefix+'calendar-preference',calendarPreference);localStorage.setItem(prefix+'prospects',JSON.stringify(prospects));localStorage.setItem(prefix+'prospect-interactions',JSON.stringify(prospectInteractions));return true}catch(err){console.error('Local save failed',err);return false}}
-function clearActiveSession(){unsubDays?.();unsubProfile?.();unsubLeaderboard?.();unsubProspecting?.();unsubDays=unsubProfile=unsubLeaderboard=unsubProspecting=null;clearInterval(timerTick);clearTimeout(syncTimer);clearTimeout(leaderboardPublishTimer);clearTimeout(prospectingSaveTimer);prospectingSaveTimer=null;pendingProspectingPayload=null;pendingProspectingSignature='';prospectingWriteInFlight=false;prospectingSaveWaiters.splice(0).forEach(({resolve})=>resolve());currentUser=null;uid='local';cloud=false;pendingSyncOperations=0;syncHasError=false;lastLeaderboardSignature='';lastProspectingSignature='';dirtyDayKeys=new Set();resetState()}
+function clearActiveSession(){unsubDays?.();unsubProfile?.();unsubLeaderboard?.();unsubProspecting?.();unsubDays=unsubProfile=unsubLeaderboard=unsubProspecting=null;clearInterval(timerTick);clearTimeout(syncTimer);clearTimeout(leaderboardPublishTimer);clearTimeout(welcomeReadyTimer);welcomeReadyTimer=null;welcomeDaysReady=false;welcomeProfileReady=false;clearTimeout(prospectingSaveTimer);prospectingSaveTimer=null;pendingProspectingPayload=null;pendingProspectingSignature='';prospectingWriteInFlight=false;prospectingSaveWaiters.splice(0).forEach(({resolve})=>resolve());currentUser=null;uid='local';cloud=false;pendingSyncOperations=0;syncHasError=false;lastLeaderboardSignature='';lastProspectingSignature='';dirtyDayKeys=new Set();resetState()}
 function displayAgentName(){return (agentName||currentUser?.displayName||currentUser?.email?.split('@')[0]||'Agent').trim()}
 function welcomeStorageKey(){return `${storagePrefix(uid)}welcome:${todayKey()}`}
 function welcomeSeenToday(){try{return localStorage.getItem(welcomeStorageKey())==='1'}catch{return false}}
 function firstAgentName(){return displayAgentName().split(/\s+/).filter(Boolean)[0]||'Agent'}
 function welcomeGreetingFor(date=new Date()){const hour=date.getHours();return hour<12?'Good morning':hour<17?'Good afternoon':'Good evening'}
+function welcomeIsVisible(){const screen=$('#welcomeScreen');return Boolean(screen&&!screen.classList.contains('hidden'))}
+function refreshWelcomeIfVisible(){if(welcomeIsVisible())renderWelcomeScreen()}
+function welcomeCloudReady(){return welcomeDaysReady&&welcomeProfileReady}
+function showSyncedDailyWelcome(){if(!cloud||welcomeCloudReady()){clearTimeout(welcomeReadyTimer);welcomeReadyTimer=null;showDailyWelcome();return}clearTimeout(welcomeReadyTimer);welcomeReadyTimer=setTimeout(()=>{showDailyWelcome();refreshWelcomeIfVisible()},4500)}
 function welcomeBrief(){
   const k=todayKey(),now=new Date(),hour=now.getHours();
   const appointmentEntries=appointmentEntriesForDate(k);
@@ -1460,7 +1465,7 @@ function renderDayViews(){renderToday();renderTimeline();renderAppointments();re
 function renderAll(){renderDayViews();renderProspecting()}
 
 async function startCloud(user){
-  unsubDays?.();unsubProfile?.();unsubLeaderboard?.();currentUser=user;uid=user.uid;cloud=true;loadLocal(uid);await finaliseExpiredTimers();
+  unsubDays?.();unsubProfile?.();unsubLeaderboard?.();currentUser=user;uid=user.uid;cloud=true;welcomeDaysReady=false;welcomeProfileReady=false;clearTimeout(welcomeReadyTimer);welcomeReadyTimer=null;loadLocal(uid);await finaliseExpiredTimers();
   syncHasError=false;pendingSyncOperations=0;setSync('','Connecting');clearTimeout(syncTimer);syncTimer=setTimeout(()=>{if($('#syncBadge').dataset.label==='Connecting')refreshSyncStatus()},3500);
   unsubDays=onSnapshot(collection(db,'users',uid,'days'),{includeMetadataChanges:true},snap=>{
     let dataChanged=false;
@@ -1473,15 +1478,16 @@ async function startCloud(user){
       if(!useLocal&&incoming.clientUpdatedAt>=local.clientUpdatedAt)dirtyDayKeys.delete(ch.doc.id);
     });
     if(dataChanged){saveLocal();renderDayViews();ensureTick()}else saveDirtyDays();
+    welcomeDaysReady=true;refreshWelcomeIfVisible();if(welcomeCloudReady())showSyncedDailyWelcome();
     clearTimeout(syncTimer);if(!snap.metadata.hasPendingWrites&&!snap.metadata.fromCache)syncHasError=false;refreshSyncStatus();
   },err=>{console.error(err);syncHasError=true;refreshSyncStatus();toast('Firestore access failed. Check rules and login.');showAuthMessage(err.message)});
-  unsubProfile=onSnapshot(doc(db,'users',uid),snap=>{if(snap.exists()){const profile=snap.data();let changed=false;if(profile.targets&&JSON.stringify({...DEFAULTS,...profile.targets})!==JSON.stringify(targets)){targets={...DEFAULTS,...profile.targets};changed=true}if(Array.isArray(profile.workDays)&&profile.workDays.length&&JSON.stringify(normaliseWorkDays(profile.workDays))!==JSON.stringify(workDays)){workDays=normaliseWorkDays(profile.workDays);changed=true}if(profile.name&&profile.name!==agentName){agentName=profile.name;changed=true}if(changed){saveLocal();renderAll();scheduleLeaderboardPublish()}}},err=>console.error(err));
+  unsubProfile=onSnapshot(doc(db,'users',uid),snap=>{if(snap.exists()){const profile=snap.data();let changed=false;if(profile.targets&&JSON.stringify({...DEFAULTS,...profile.targets})!==JSON.stringify(targets)){targets={...DEFAULTS,...profile.targets};changed=true}if(Array.isArray(profile.workDays)&&profile.workDays.length&&JSON.stringify(normaliseWorkDays(profile.workDays))!==JSON.stringify(workDays)){workDays=normaliseWorkDays(profile.workDays);changed=true}if(profile.name&&profile.name!==agentName){agentName=profile.name;changed=true}if(changed){saveLocal();renderAll();scheduleLeaderboardPublish()}}welcomeProfileReady=true;refreshWelcomeIfVisible();if(welcomeCloudReady())showSyncedDailyWelcome()},err=>{welcomeProfileReady=true;console.error(err);showSyncedDailyWelcome()});
   unsubProspecting=onSnapshot(doc(db,'users',uid,'prospecting','state'),{includeMetadataChanges:true},snap=>{if(snap.exists()){const data=snap.data(),nextProspects=normaliseProspects(data.prospects),nextInteractions=normaliseProspectInteractions(data.interactions),nextSignature=prospectingSignature(nextProspects,nextInteractions);if(!snap.metadata.hasPendingWrites)lastProspectingSignature=nextSignature;if(nextSignature!==prospectingSignature()){prospects=nextProspects;prospectInteractions=nextInteractions;saveLocal();renderProspecting()}}},err=>{console.error('Prospecting sync failed',err);toast('Prospecting data is saved locally. Cloud sync needs attention.')});
   unsubLeaderboard=onSnapshot(collection(db,'leaderboard'),{includeMetadataChanges:true},snap=>{const next=snap.docs.map(d=>({uid:d.id,...d.data()}));if(JSON.stringify(next)!==JSON.stringify(leaderboardEntries)){leaderboardEntries=next;renderLeaderboard()}const own=next.find(entry=>entry.uid===uid);if(own)lastLeaderboardSignature=leaderboardSignature(own)},err=>{console.error('Leaderboard read failed',err);$('#leaderboardStatus').textContent='SYNC ERROR'});
-  refreshSyncStatus();showApp();scheduleLeaderboardPublish();
+  refreshSyncStatus();showApp({deferWelcome:true});showSyncedDailyWelcome();scheduleLeaderboardPublish();
 }
 
-function showApp(){$('#authGate').classList.add('hidden');$('#app').classList.remove('hidden');$('#appointmentDatePicker').value=appointmentDate;restoreProspectingSessionState();renderAll();ensureTick();showDailyWelcome()}
+function showApp({deferWelcome=false}={}){$('#authGate').classList.add('hidden');$('#app').classList.remove('hidden');$('#appointmentDatePicker').value=appointmentDate;restoreProspectingSessionState();renderAll();ensureTick();if(!deferWelcome)showDailyWelcome()}
 let viewportFrame=0;
 function updateAppViewport(){
   cancelAnimationFrame(viewportFrame);
@@ -1502,7 +1508,7 @@ function bindViewport(){
   window.addEventListener('orientationchange',()=>setTimeout(updateAppViewport,180),{passive:true});
   window.visualViewport?.addEventListener('resize',updateAppViewport,{passive:true});
   window.visualViewport?.addEventListener('scroll',updateAppViewport,{passive:true});
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden){updateAppViewport();finaliseExpiredTimers().then(()=>renderAll())}});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){updateAppViewport();finaliseExpiredTimers().then(()=>{renderAll();refreshWelcomeIfVisible()});if(auth?.currentUser)auth.currentUser.reload().catch(()=>{})}});
 }
 async function init(){bindViewport();loadLocal('local');await finaliseExpiredTimers();if(!configured()){showAuthMessage('Firebase is not configured. You can still use device-only mode.');return}try{const fb=initializeApp(firebaseConfig);auth=getAuth(fb);await setPersistence(auth,browserLocalPersistence);db=initializeFirestore(fb,{experimentalAutoDetectLongPolling:true,localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});onAuthStateChanged(auth,u=>{if(u){startCloud(u)}else{clearActiveSession();$('#app').classList.add('hidden');$('#authGate').classList.remove('hidden')}})}catch(err){console.error(err);showAuthMessage(err.message)}}
 function showAuthMessage(msg){$('#authMessage').textContent=msg}
