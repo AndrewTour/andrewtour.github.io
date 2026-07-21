@@ -4109,3 +4109,7 @@ body.appointment-editing{overflow:hidden}
 #appointmentsView.appointment-edit-mode>.view-head,
 #appointmentsView.appointment-edit-mode .appointment-destination-grid,
 #appointmentsView.appointment-edit-mode .appointment-daily-log{display:none!important}
+
+
+/* V91 — editor header is rendered only for an active appointment edit */
+#appointmentEditHeader[hidden]{display:none!important}

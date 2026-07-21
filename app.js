@@ -1044,6 +1044,7 @@ function renderAppointments(){
   const editing=Boolean(editingAppointment);
   $('#appointmentsView')?.classList.toggle('appointment-edit-mode',editing);
   document.body.classList.toggle('appointment-editing',editing);
+  const editHeader=$('#appointmentEditHeader');if(editHeader)editHeader.hidden=!editing;
   const locked=isPastDate(appointmentDate)&&!editingAppointment;
   $('#appointmentForm').classList.toggle('date-locked',locked);
   $$('#appointmentForm input, #appointmentForm button').forEach(el=>el.disabled=locked);

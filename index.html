@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=90.0">
+<link rel="stylesheet" href="styles.css?v=91.0">
 <title>AGNT</title>
 </head>
 <body>
@@ -180,7 +180,7 @@
           </button>
         </div>
       <div id="appointmentLock" class="appointment-lock hidden">Past dates are locked and read-only.</div><form id="appointmentForm" class="appointment-form glass" novalidate>
-        <div class="appointment-edit-header"><div><span>APPOINTMENTS</span><h2>Editing Appointment</h2></div><button id="closeAppointmentEditor" type="button" aria-label="Close appointment editor">×</button></div>
+        <div id="appointmentEditHeader" class="appointment-edit-header" hidden><div><span>APPOINTMENTS</span><h2>Editing Appointment</h2></div><button id="closeAppointmentEditor" type="button" aria-label="Close appointment editor">×</button></div>
         <label>Contact name<input id="appointmentContactName" type="text" placeholder="Contact name" autocomplete="name" autocapitalize="words" required></label>
         <label>Contact number<input id="appointmentContactNumber" type="tel" placeholder="04xx xxx xxx" autocomplete="tel" inputmode="tel" required></label>
         <label>Property address<input id="appointmentAddress" type="text" placeholder="14 Calla Grove, Pendle Hill" autocomplete="street-address" required></label>
@@ -510,6 +510,6 @@
 </div>
 
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=90.0"></script>
+<script type="module" src="app.js?v=91.0"></script>
 </body>
 </html>
