@@ -33,3 +33,8 @@ No Firebase changes are required.
 - Restored the approved appointment-led welcome screen.
 - Welcome greeting now uses only the saved profile/display name and never derives a name from the email address.
 - No Firebase, scoring, tracking, appointment, leaderboard, navigation or sync logic changed.
+
+## V83 — Unified Language & Empty States
+- Standardised empty-state language across Schedule, Appointments, Leaderboard, Prospecting, Pipeline and Scorecard.
+- Preserved all app logic, data models, Firebase configuration, authentication, Firestore paths, UID separation, cache and sync behaviour.
+- Home remains free of a dynamic supporting line.

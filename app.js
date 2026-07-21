@@ -400,20 +400,20 @@ function pageHeaderState(id=activeViewId()){
 }
 function getEmptyState(type,context={}){
   if(type==='appointments-daily'){
-    if(context.date<todayKey())return{title:'No appointments logged',message:'There are no appointments recorded for this day.'};
-    if(context.date>todayKey())return{title:'Nothing planned yet',message:'Appointments added for this date will appear here.'};
-    return{title:'No appointments logged',message:'Appointments added today will appear here.'};
+    if(context.date<todayKey())return{title:'No appointments recorded',message:'No appointments were logged for this day.'};
+    if(context.date>todayKey())return{title:'Nothing booked yet',message:'Appointments booked for this date will appear here.'};
+    return{title:'No appointments yet',message:'Add an appointment when the next opportunity is confirmed.'};
   }
   if(type==='appointments-history'){
-    if(context.mode==='past')return{title:'No appointment history yet',message:'Completed appointments will build a record here over time.'};
-    return{title:'Nothing upcoming',message:'Your appointment schedule is currently clear.'};
+    if(context.mode==='past')return{title:'No appointment history yet',message:'Completed appointments will appear here as your record grows.'};
+    return{title:'Schedule clear',message:'New appointments will appear here once they are booked.'};
   }
   if(type==='leaderboard'){
-    if(context.future)return{title:'This period hasn’t started',message:'Leaderboard results will populate once the team begins logging.'};
-    if(context.past)return{title:'No recorded scores',message:'There is no team activity available for this period.'};
-    return{title:'Waiting for today’s activity',message:'Team rankings will appear as activity is logged.'};
+    if(context.future)return{title:'This period hasn’t started',message:'Team results will appear once activity begins.'};
+    if(context.past)return{title:'No scores recorded',message:'No team activity was logged for this period.'};
+    return{title:'Waiting for today’s activity',message:'Rankings will appear as the team logs progress.'};
   }
-  return{title:'Nothing here yet',message:''};
+  return{title:'Nothing here yet',message:'New activity will appear here when it is available.'};
 }
 function emptyStateMarkup(state){return `<div class="empty-state" role="status"><strong>${escapeHtml(state.title||'')}</strong>${state.message?`<p>${escapeHtml(state.message)}</p>`:''}</div>`}
 function updateTopbar(id=activeViewId()){
@@ -803,7 +803,7 @@ function renderTimeline(){
     const marker=status==='complete'?'✓':status==='current'?'●':'○';
     const call=(item.kind==='followup'||item.kind==='appointment')&&item.dial?`<a class="timeline-call" href="tel:${escapeHtml(item.dial)}">Call</a>`:'';
     return `<article class="timeline-item ${status} ${item.kind}${timeActive}"><time>${escapeHtml(timelineTimeLabel(item.minutes))}</time><span class="timeline-marker">${marker}</span><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.meta)}</small>${call}</div></article>`;
-  }).join(''):'<div class="empty">Nothing scheduled for this date.</div>';
+  }).join(''):'<div class="empty"><strong>Schedule clear</strong><small>Appointments and follow-ups for this date will appear here.</small></div>';
 }
 
 
@@ -1122,9 +1122,9 @@ function renderPersonalBests(){
   $('#bestDayScore').textContent=`${b.bestDay.value}%`;
   $('#bestDayDate').textContent=b.bestDay.key?fmtDate(b.bestDay.key):'No completed days yet';
   $('#bestCallsValue').textContent=b.bestCalls.value;
-  $('#bestCallsDate').textContent=b.bestCalls.key?fmtDate(b.bestCalls.key):'No activity yet';
+  $('#bestCallsDate').textContent=b.bestCalls.key?fmtDate(b.bestCalls.key):'No activity recorded yet';
   $('#bestKnockValue').textContent=`${b.bestKnock.value} min`;
-  $('#bestKnockDate').textContent=b.bestKnock.key?fmtDate(b.bestKnock.key):'No activity yet';
+  $('#bestKnockDate').textContent=b.bestKnock.key?fmtDate(b.bestKnock.key):'No activity recorded yet';
 }
 function renderMondayReview(){
   if(!$('#mondayReviewScore'))return;
@@ -1179,7 +1179,7 @@ function renderScorecardAppointments(entries,base){
     const tel=phone?`<a class="scorecard-call" href="tel:${escapeHtml(phone.replace(/[^+\d]/g,''))}">Call ${escapeHtml(contact.split(/\s+/)[0]||'contact')}</a>`:'';
     const lifecycle=appointmentLifecycle(a,sourceDate),status=lifecycle==='completed'?(appointmentOutcomeLabel(a.outcome)||'Completed'):lifecycle==='follow-up'?followUpDueLabel(a):'Upcoming';
     return `<article class="scorecard-appointment-item"><header><span>${escapeHtml(appointmentType(a))}</span><small>${escapeHtml(status)}</small></header><h3>${escapeHtml(address)}</h3><p>${escapeHtml(contact)}${phone?` · ${escapeHtml(phone)}`:''}<br>Booked for ${escapeHtml(when)}</p><div class="scorecard-followup-actions">${tel}${lifecycle!=='upcoming'?`<button data-update-outcome="${a.id}" data-source-date="${sourceDate}">Update Outcome</button>`:''}</div></article>`;
-  }).join(''):'<div class="empty">No appointments booked for this week.</div>';
+  }).join(''):'<div class="empty"><strong>No appointments this week</strong><small>Booked appointments will appear here.</small></div>';
 }
 function previousWeekDate(base){const d=new Date(base);d.setDate(d.getDate()-7);return d}
 function signedChange(current,previous,unit='%'){
@@ -1222,15 +1222,15 @@ function renderScorecard(){
   const changes=trendData.map(([label,current,previous])=>({label,delta:current-previous}));const up=changes.filter(x=>x.delta>0).sort((a,b)=>b.delta-a.delta)[0],down=changes.filter(x=>x.delta<0).sort((a,b)=>a.delta-b.delta)[0];
   $('#scorecardTrendSummary').textContent=up&&down?`${up.label} improved the most, while ${down.label.toLowerCase()} needs attention.`:up?`${up.label} showed the strongest improvement this week.`:down?`${down.label} declined compared with last week.`:'Performance is level with last week.';
   const ins=productivityInsights();
-  $('#insightBestHour').textContent=ins.bestHour?formatHourRange(ins.bestHour[0]):'—';$('#insightBestHourMeta').textContent=ins.bestHour?`${ins.bestHour[1]} logged activities`:'Not enough activity yet';
-  $('#insightBestDay').textContent=ins.bestDay?.name||'—';$('#insightBestDayMeta').textContent=ins.bestDay?`${ins.bestDay.avg}% average completion`:'Not enough activity yet';
+  $('#insightBestHour').textContent=ins.bestHour?formatHourRange(ins.bestHour[0]):'—';$('#insightBestHourMeta').textContent=ins.bestHour?`${ins.bestHour[1]} logged activities`:'More activity needed';
+  $('#insightBestDay').textContent=ins.bestDay?.name||'—';$('#insightBestDayMeta').textContent=ins.bestDay?`${ins.bestDay.avg}% average completion`:'More activity needed';
   $('#insightConnectRate').textContent=`${ins.connectRate}%`;$('#insightKnockStart').textContent=formatMinutesTime(ins.avgKnock);
   const rec=[];
   if(ins.bestDay)rec.push(`${ins.bestDay.name} is your strongest day, averaging ${ins.bestDay.avg}% completion.`);
   if(ins.bestHour)rec.push(`Your most productive prospecting hour is ${formatHourRange(ins.bestHour[0])}.`);
   if(ins.avgKnock!=null){const diff=ins.avgKnock-14*60;rec.push(diff>0?`Your average knock start is ${diff} minutes later than the 2:00PM target.`:`Your average knock start is on or ahead of the 2:00PM target.`)}
   if(weakest[1]<100)rec.push(`Improving ${metricLabel(weakest[0]).toLowerCase()} by ${100-weakest[1]}% would create the biggest lift in your weekly grade.`);
-  $('#scorecardRecommendations').innerHTML=(rec.slice(0,4).map(x=>`<article>${escapeHtml(x)}</article>`).join('')||'<div class="empty">Recommendations will appear once more activity is logged.</div>');
+  $('#scorecardRecommendations').innerHTML=(rec.slice(0,4).map(x=>`<article>${escapeHtml(x)}</article>`).join('')||'<div class="empty"><strong>Not enough activity yet</strong><small>Recommendations will appear as more activity is logged.</small></div>');
   $('#scorecardNext').disabled=scorecardWeekOffset>=0;
 }
 
@@ -1325,7 +1325,7 @@ function pipelineSellerCard(p){
 function renderSellerPipeline(){
   const panel=$('#prospectorPipelinePanel');if(!panel)return;
   const sellers=sellerPipelineProspects();
-  SELLING_TIMEFRAMES.forEach((timeframe,index)=>{const list=filteredPipelineProspects(timeframe),count=$(`#pipelineCount${index}`),target=$(`#pipelineList${index}`);if(count)count.textContent=list.length;if(target)target.innerHTML=list.length?list.map(pipelineSellerCard).join(''):`<div class="pipeline-empty">No sellers in ${escapeHtml(timeframe)}.</div>`});
+  SELLING_TIMEFRAMES.forEach((timeframe,index)=>{const list=filteredPipelineProspects(timeframe),count=$(`#pipelineCount${index}`),target=$(`#pipelineList${index}`);if(count)count.textContent=list.length;if(target)target.innerHTML=list.length?list.map(pipelineSellerCard).join(''):`<div class="pipeline-empty"><strong>No sellers in ${escapeHtml(timeframe)}</strong><small>Qualify a contact into this timeframe to build the pipeline.</small></div>`});
   const total=$('#pipelineTotal');if(total)total.textContent=sellers.length;
   const meta=$('#pipelineTotalMeta');if(meta)meta.textContent=`${sellers.length} active seller${sellers.length===1?'':'s'} across your pipeline`;
   $$('.pipeline-summary-card').forEach((card,index)=>card.classList.toggle('active',filteredPipelineProspects(SELLING_TIMEFRAMES[index]).length>0));
@@ -1409,8 +1409,8 @@ function renderProspecting(){
   if(!$('#prospectingView'))return;
   const today=todayKey(),overdue=prospects.filter(p=>p.nextFollowUp&&p.nextFollowUp<today).length,due=prospects.filter(p=>p.nextFollowUp===today).length,hot=prospects.filter(p=>p.temperature==='Hot').length,followUps=dueProspectFollowUps(),pipeline=getDailyProspectPipeline(),remainingPipeline=pipeline.filter(id=>!prospectContactedToday(id));
   $('#prospectingOverdue').textContent=overdue;$('#prospectingToday').textContent=due;$('#prospectingHot').textContent=hot;$('#prospectingDueCount').textContent=remainingPipeline.length;$('#prospectingDueLabel').textContent=remainingPipeline.length===1?'client ready':'clients ready';
-  $('#prospectQueue').innerHTML=followUps.length?followUps.map(followUpChecklistCard).join(''):'<div class="prospect-empty"><strong>Follow-ups cleared</strong><small>No due or overdue follow-ups need action.</small></div>';
-  const list=filteredProspects();$('#prospectContactList').innerHTML=list.length?list.slice(0,200).map(p=>prospectCard(p,{contactsView:true})).join(''):'<div class="prospect-empty"><strong>No contacts found</strong><small>Try another search, add a prospect or import a CSV.</small></div>';
+  $('#prospectQueue').innerHTML=followUps.length?followUps.map(followUpChecklistCard).join(''):'<div class="prospect-empty"><strong>Follow-ups cleared</strong><small>You’re up to date. New due and overdue follow-ups will appear here.</small></div>';
+  const list=filteredProspects();$('#prospectContactList').innerHTML=list.length?list.slice(0,200).map(p=>prospectCard(p,{contactsView:true})).join(''):'<div class="prospect-empty"><strong>No matching contacts</strong><small>Try another search, add a contact or import a CSV.</small></div>';
   const count=$('#prospectContactCount');if(count)count.textContent=`${list.length} contact${list.length===1?'':'s'} · Sorted A–Z`;
   const selectedCount=$('#prospectSelectedCount');if(selectedCount)selectedCount.textContent=`${selectedProspectIds.size} selected`;const deleteButton=$('#deleteSelectedProspects');if(deleteButton)deleteButton.disabled=!selectedProspectIds.size;const selectAll=$('#selectAllProspects');if(selectAll)selectAll.textContent=list.length&&list.every(p=>selectedProspectIds.has(p.id))?'Deselect All':'Select All';const bulkBar=$('.prospect-bulk-bar');if(bulkBar)bulkBar.classList.toggle('hidden',!prospectBulkMode);const bulkToggle=$('#toggleProspectBulk');if(bulkToggle)bulkToggle.textContent=prospectBulkMode?'Done':'Manage Contacts';
   renderSellerPipeline();
@@ -1424,7 +1424,7 @@ function renderProspecting(){
 }
 function prospectForm(p={}){return`<form id="prospectEditor" class="prospect-editor glass"><div class="prospect-detail-nav"><button type="button" data-close-prospect>‹ Back</button><strong>${p.id?'Edit Contact':'New Contact'}</strong><span></span></div><label>Name<input name="name" value="${escapeHtml(p.name||'')}" required></label><div class="prospect-form-grid"><label>Phone<input name="phone" type="tel" value="${escapeHtml(p.phone||'')}"></label><label>Email<input name="email" type="email" value="${escapeHtml(p.email||'')}"></label></div><label>Address<input name="address" value="${escapeHtml(p.address||'')}"></label><div class="prospect-form-grid"><label>Source<input name="source" value="${escapeHtml(p.source||'')}" placeholder="Door knock, database…"></label><label>Stage<select name="stage">${['New Lead','Nurture','Appraisal Opportunity','Appointment Booked','Pipeline','Past Client'].map(x=>`<option ${p.stage===x?'selected':''}>${x}</option>`).join('')}</select></label></div><div class="prospect-form-grid"><label>Temperature<select name="temperature" data-pipeline-temperature-field>${['Cold','Warm','Hot'].map(x=>`<option ${p.temperature===x?'selected':''}>${x}</option>`).join('')}</select></label><label>Motivation<select name="motivation" data-pipeline-motivation-field>${[1,2,3,4,5].map(x=>`<option value="${x}" ${Number(p.motivation)===x?'selected':''}>${x} / 5</option>`).join('')}</select></label></div><label>Selling timeframe<select name="sellingTimeframe" data-pipeline-timeframe-field><option value="">Not currently selling</option>${SELLING_TIMEFRAMES.map(x=>`<option value="${x}" ${p.sellingTimeframe===x?'selected':''}>${x}</option>`).join('')}</select></label><label>Tags<input name="tags" value="${escapeHtml((p.tags||[]).join(', '))}" placeholder="Vendor, Toongabbie, Past client"></label><label>Next follow-up<input name="nextFollowUp" type="date" value="${p.nextFollowUp||''}"></label><label>Background notes<textarea name="notes" rows="4" placeholder="Long-term context, plans and personal details">${escapeHtml(p.notes||'')}</textarea></label><button class="primary" type="submit">${p.id?'Save Contact':'Add Contact'}</button></form>`}
 function openProspectEditor(id=''){const p=id?prospectById(id):{};activeProspectId=id||null;$('#prospectingDashboard').classList.add('hidden');$('#prospectingSession').classList.add('hidden');$('#prospectDetail').classList.remove('hidden');$('#prospectDetail').innerHTML=prospectForm(p)}
-function renderProspectDetail(id){const p=prospectById(id);if(!p)return closeProspectDetail();activeProspectId=id;const history=interactionsFor(id),phone=primaryProspectPhone(p),tel=prospectTel(p),sms=phone?`sms:${phone.replace(/[^+\d]/g,'')}`:'#';$('#prospectDetail').innerHTML=`<div class="prospect-detail-nav"><button type="button" data-close-prospect>‹ Back</button><button type="button" data-edit-prospect="${p.id}">Edit</button></div><section class="prospect-profile glass"><div class="prospect-profile-top"><span class="prospect-avatar large">${escapeHtml(p.name.split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase())}</span><div><span>${escapeHtml(p.stage)}</span><h2>${escapeHtml(p.name)}</h2><small>${escapeHtml(formatProspectAddress(p.address||p.company,p.suburb)||'No address added')}</small></div><span class="prospect-temp temp-${p.temperature.toLowerCase()}">${p.temperature}</span></div><div class="prospect-quick-actions"><a href="${tel}" class="${phone?'':'disabled'}">Call</a><a href="${sms}" class="${phone?'':'disabled'}">Message</a><button type="button" data-log-prospect="${p.id}">Log Contact</button></div><div class="prospect-profile-grid"><div><span>NEXT FOLLOW-UP</span><strong>${p.nextFollowUp?fmtDate(p.nextFollowUp):'Not set'}</strong></div><div><span>LAST CONTACT</span><strong>${p.lastContact?fmtDate(p.lastContact):'Never'}</strong></div><div><span>MOTIVATION</span><strong>${p.motivation}/5</strong></div><div><span>CONTACTS</span><strong>${history.length}</strong></div></div>${pipelineTimeframeForProspect(p)?`<div class="prospect-selling-status"><span>SELLING TIMEFRAME</span><strong>${escapeHtml(pipelineTimeframeForProspect(p))}</strong>${pipelineAppointmentLabel(p)?`<small>${escapeHtml(pipelineAppointmentLabel(p))}</small>`:''}</div>`:''}${p.tags.length?`<div class="prospect-tags">${p.tags.map(t=>`<span>${escapeHtml(t)}</span>`).join('')}</div>`:''}${p.notes?`<p class="prospect-background">${escapeHtml(p.notes)}</p>`:''}</section><section class="prospecting-section glass"><div class="prospecting-section-head"><div><span>CONTACT HISTORY</span><h3>Every conversation</h3></div></div><div class="prospect-history">${history.length?history.map(x=>`<article><i></i><div><strong>${escapeHtml(x.outcome||x.type)}</strong><small>${fmtDate(x.date)} · ${new Date(x.at).toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'})}</small>${x.note?`<p>${escapeHtml(x.note)}</p>`:''}${x.nextFollowUp?`<em>Follow-up: ${fmtDate(x.nextFollowUp)}</em>`:''}</div></article>`).join(''):'<div class="prospect-empty"><strong>No interactions yet</strong><small>Log the first conversation to begin building context.</small></div>'}</div></section><button class="prospect-delete" type="button" data-delete-prospect="${p.id}">Delete Contact</button>`}
+function renderProspectDetail(id){const p=prospectById(id);if(!p)return closeProspectDetail();activeProspectId=id;const history=interactionsFor(id),phone=primaryProspectPhone(p),tel=prospectTel(p),sms=phone?`sms:${phone.replace(/[^+\d]/g,'')}`:'#';$('#prospectDetail').innerHTML=`<div class="prospect-detail-nav"><button type="button" data-close-prospect>‹ Back</button><button type="button" data-edit-prospect="${p.id}">Edit</button></div><section class="prospect-profile glass"><div class="prospect-profile-top"><span class="prospect-avatar large">${escapeHtml(p.name.split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase())}</span><div><span>${escapeHtml(p.stage)}</span><h2>${escapeHtml(p.name)}</h2><small>${escapeHtml(formatProspectAddress(p.address||p.company,p.suburb)||'No address added')}</small></div><span class="prospect-temp temp-${p.temperature.toLowerCase()}">${p.temperature}</span></div><div class="prospect-quick-actions"><a href="${tel}" class="${phone?'':'disabled'}">Call</a><a href="${sms}" class="${phone?'':'disabled'}">Message</a><button type="button" data-log-prospect="${p.id}">Log Contact</button></div><div class="prospect-profile-grid"><div><span>NEXT FOLLOW-UP</span><strong>${p.nextFollowUp?fmtDate(p.nextFollowUp):'Not set'}</strong></div><div><span>LAST CONTACT</span><strong>${p.lastContact?fmtDate(p.lastContact):'Never'}</strong></div><div><span>MOTIVATION</span><strong>${p.motivation}/5</strong></div><div><span>CONTACTS</span><strong>${history.length}</strong></div></div>${pipelineTimeframeForProspect(p)?`<div class="prospect-selling-status"><span>SELLING TIMEFRAME</span><strong>${escapeHtml(pipelineTimeframeForProspect(p))}</strong>${pipelineAppointmentLabel(p)?`<small>${escapeHtml(pipelineAppointmentLabel(p))}</small>`:''}</div>`:''}${p.tags.length?`<div class="prospect-tags">${p.tags.map(t=>`<span>${escapeHtml(t)}</span>`).join('')}</div>`:''}${p.notes?`<p class="prospect-background">${escapeHtml(p.notes)}</p>`:''}</section><section class="prospecting-section glass"><div class="prospecting-section-head"><div><span>CONTACT HISTORY</span><h3>Every conversation</h3></div></div><div class="prospect-history">${history.length?history.map(x=>`<article><i></i><div><strong>${escapeHtml(x.outcome||x.type)}</strong><small>${fmtDate(x.date)} · ${new Date(x.at).toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'})}</small>${x.note?`<p>${escapeHtml(x.note)}</p>`:''}${x.nextFollowUp?`<em>Follow-up: ${fmtDate(x.nextFollowUp)}</em>`:''}</div></article>`).join(''):'<div class="prospect-empty"><strong>No contact history yet</strong><small>Log the first conversation to start building context.</small></div>'}</div></section><button class="prospect-delete" type="button" data-delete-prospect="${p.id}">Delete Contact</button>`}
 function closeProspectDetail(){activeProspectId=null;$('#prospectDetail').classList.add('hidden');$('#prospectDetail').innerHTML='';$('#prospectingSession').classList.add('hidden');$('#prospectingDashboard').classList.remove('hidden');renderProspecting()}
 function prospectingSignature(prospectList=prospects,interactionList=prospectInteractions){return JSON.stringify({prospects:prospectList,interactions:interactionList})}
 async function flushProspectingSave(){
