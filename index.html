@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=82-1-home-header-clean">
+<link rel="stylesheet" href="styles.css?v=82.2">
 <title>AGNT</title>
 </head>
 <body>
@@ -30,43 +30,31 @@
 <div id="welcomeScreen" class="welcome-screen hidden" aria-hidden="true">
   <section class="welcome-shell" aria-labelledby="welcomeGreeting">
     <div class="welcome-top">
-      <span class="welcome-brand">AGNT</span>
+      <span class="welcome-brand">AGNT<span aria-hidden="true">.</span></span>
       <span id="welcomeDate" class="welcome-date"></span>
     </div>
 
-    <div class="welcome-heading">
-      <span class="welcome-kicker">COACH'S BRIEF</span>
-      <h1 id="welcomeGreeting">Good morning,<br><strong id="welcomeName">Agent</strong></h1>
-      <p id="welcomeIntro">Here’s what matters most today.</p>
+    <div class="welcome-heading welcome-heading-approved">
+      <h1 id="welcomeGreeting"><span id="welcomeGreetingText">Good morning</span>, <strong id="welcomeName">Agent</strong></h1>
+      <p>Here’s what’s ahead today.</p>
     </div>
 
-    <div class="welcome-brief" aria-label="Daily coaching brief">
-      <article class="welcome-brief-row">
-        <span class="welcome-brief-index">01</span>
-        <div>
-          <span class="welcome-brief-label">PRIORITY</span>
-          <h2 id="welcomePriorityTitle">Create the day</h2>
-          <p id="welcomePriorityText">Your priority will appear here.</p>
-        </div>
-      </article>
+    <div class="welcome-day-content">
+      <section class="welcome-appointments" aria-label="Today's appointments">
+        <h2 id="welcomeAppointmentSummary">You’ve got no appointments today.</h2>
+        <div id="welcomeAppointmentList" class="welcome-appointment-list hidden"></div>
+      </section>
 
-      <article class="welcome-brief-row">
-        <span class="welcome-brief-index">02</span>
-        <div>
-          <span class="welcome-brief-label">RISK</span>
-          <h2 id="welcomeRiskTitle">Protect momentum</h2>
-          <p id="welcomeRiskText">Your biggest risk will appear here.</p>
-        </div>
-      </article>
+      <section class="welcome-simple-section welcome-pipeline-section">
+        <span>PIPELINE</span>
+        <p id="welcomePipelineText">You’ve got no pipeline follow-ups today.</p>
+      </section>
 
-      <article class="welcome-brief-row welcome-first-win">
-        <span class="welcome-brief-index">03</span>
-        <div>
-          <span class="welcome-brief-label">FIRST WIN</span>
-          <h2 id="welcomeWinTitle">Start with one clear action</h2>
-          <p id="welcomeWinText">Your first move will appear here.</p>
-        </div>
-      </article>
+      <section class="welcome-simple-section welcome-momentum-section">
+        <span>MOMENTUM</span>
+        <h2 id="welcomeMomentumTitle">Create the conversations that shape tomorrow.</h2>
+        <p id="welcomeMomentumText">Your calendar is open. Use the space for focused prospecting and finish the day with a stronger pipeline than you started with.</p>
+      </section>
     </div>
 
     <button id="startDayButton" class="welcome-start" type="button">
@@ -516,6 +504,6 @@
 </div>
 
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=82-1-home-header-clean"></script>
+<script type="module" src="app.js?v=82.2"></script>
 </body>
 </html>

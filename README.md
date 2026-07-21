@@ -27,3 +27,9 @@ No Firebase changes are required.
 - Dynamic supporting lines remain on Schedule, Appointments and Leaderboard.
 - All V82 empty states and existing functionality remain unchanged.
 - No Firebase changes required.
+
+
+## V82.2 — Approved Welcome Restored
+- Restored the approved appointment-led welcome screen.
+- Welcome greeting now uses only the saved profile/display name and never derives a name from the email address.
+- No Firebase, scoring, tracking, appointment, leaderboard, navigation or sync logic changed.

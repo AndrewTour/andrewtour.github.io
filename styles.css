@@ -3976,3 +3976,32 @@ a.button:focus-visible,
 .leaderboard-unified-list>.empty-state{min-height:100%;padding:34px 18px}
 .appointments-list>.empty-state{border:1px solid #edf0f4;border-radius:18px;background:rgba(255,255,255,.45)}
 @media (prefers-reduced-motion:reduce){.view-subtitle,.empty-state{transition:none!important}}
+
+
+/* AGNT V82.2 — restore approved welcome screen; profile-name-only greeting. */
+.welcome-screen{background:#f7f8fb}
+.welcome-screen::before,.welcome-screen::after{display:none}
+.welcome-shell{width:min(100%,520px)}
+.welcome-brand span{color:#f05d3d;margin-left:2px}
+.welcome-heading-approved{padding:clamp(66px,12vh,126px) 4px 38px}
+.welcome-heading-approved h1{margin:0 0 12px;font-size:clamp(2.35rem,9.8vw,3.45rem);line-height:1.02;font-weight:430;letter-spacing:-.06em;white-space:normal}
+.welcome-heading-approved h1 strong{font-weight:900}
+.welcome-heading-approved p{font-size:.86rem}
+.welcome-day-content{padding:0 4px 116px;overflow:auto;scrollbar-width:none}
+.welcome-day-content::-webkit-scrollbar{display:none}
+.welcome-appointments h2,.welcome-momentum-section h2{margin:0;color:#202532;font-size:1rem;line-height:1.25;letter-spacing:-.025em}
+.welcome-appointment-list{display:grid;margin-top:17px}
+.welcome-appointment{display:grid;grid-template-columns:64px 16px minmax(0,1fr);gap:12px;align-items:start;min-height:62px}
+.welcome-appointment time{padding-top:2px;color:#8a93a5;font-size:.72rem;font-weight:800;font-variant-numeric:tabular-nums}
+.welcome-appointment-dot{position:relative;width:9px;height:9px;margin-top:4px;border-radius:50%;background:#1f73ed;box-shadow:0 0 0 6px rgba(31,115,237,.08)}
+.welcome-appointment:not(:last-child) .welcome-appointment-dot::after{content:"";position:absolute;left:4px;top:12px;width:1px;height:48px;background:#d8dde7}
+.welcome-appointment strong,.welcome-appointment small{display:block;overflow:hidden;text-overflow:ellipsis}
+.welcome-appointment strong{font-size:.91rem;line-height:1.25;color:#202532}
+.welcome-appointment small{margin-top:5px;color:#8a93a5;font-size:.72rem;line-height:1.35;white-space:normal}
+.welcome-simple-section{margin-top:30px;padding-top:24px;border-top:1px solid #dde1e9}
+.welcome-simple-section>span{display:block;margin-bottom:11px;color:#7284b0;font-size:.61rem;font-weight:950;letter-spacing:.18em}
+.welcome-simple-section p{margin:0;color:#3c4350;font-size:.84rem;line-height:1.48}
+.welcome-momentum-section h2{margin-bottom:10px}
+.welcome-momentum-section p{color:#7d8697}
+.welcome-start{position:absolute;left:0;right:0;bottom:0;margin-top:0;min-height:58px}
+@media(max-height:760px){.welcome-heading-approved{padding:44px 4px 28px}.welcome-heading-approved h1{font-size:2.25rem}.welcome-day-content{padding-bottom:96px}.welcome-simple-section{margin-top:22px;padding-top:18px}}

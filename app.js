@@ -103,52 +103,32 @@ function clearDayDirty(k,clientUpdatedAt){if(Number(days[k]?.clientUpdatedAt)===
 function saveLocal(){const prefix=storagePrefix(uid);try{const serialised=JSON.stringify(normaliseDaysMap(days));const previous=localStorage.getItem(prefix+'days');if(previous)localStorage.setItem(prefix+'days-backup',previous);localStorage.setItem(prefix+'days',serialised);localStorage.setItem(prefix+'targets',JSON.stringify(targets));localStorage.setItem(prefix+'agent-name',agentName);localStorage.setItem(prefix+'work-days',JSON.stringify(workDays));localStorage.setItem(prefix+'calendar-preference',calendarPreference);localStorage.setItem(prefix+'prospects',JSON.stringify(prospects));localStorage.setItem(prefix+'prospect-interactions',JSON.stringify(prospectInteractions));return true}catch(err){console.error('Local save failed',err);return false}}
 function clearActiveSession(){unsubDays?.();unsubProfile?.();unsubLeaderboard?.();unsubProspecting?.();unsubDays=unsubProfile=unsubLeaderboard=unsubProspecting=null;clearInterval(timerTick);clearTimeout(syncTimer);clearTimeout(leaderboardPublishTimer);clearTimeout(prospectingSaveTimer);prospectingSaveTimer=null;pendingProspectingPayload=null;pendingProspectingSignature='';prospectingWriteInFlight=false;prospectingSaveWaiters.splice(0).forEach(({resolve})=>resolve());currentUser=null;uid='local';cloud=false;pendingSyncOperations=0;syncHasError=false;lastLeaderboardSignature='';lastProspectingSignature='';dirtyDayKeys=new Set();resetState()}
 function displayAgentName(){return (agentName||currentUser?.displayName||currentUser?.email?.split('@')[0]||'Agent').trim()}
+function welcomeProfileName(){return (agentName||currentUser?.displayName||'Agent').trim()||'Agent'}
 function welcomeStorageKey(){return `${storagePrefix(uid)}welcome:${todayKey()}`}
 function welcomeSeenToday(){try{return localStorage.getItem(welcomeStorageKey())==='1'}catch{return false}}
-function firstAgentName(){return displayAgentName().split(/\s+/).filter(Boolean)[0]||'Agent'}
+function firstWelcomeName(){return welcomeProfileName().split(/\s+/).filter(Boolean)[0]||'Agent'}
 function welcomeGreetingFor(date=new Date()){const hour=date.getHours();return hour<12?'Good morning':hour<17?'Good afternoon':'Good evening'}
-function welcomeBrief(){
-  const k=todayKey(),now=new Date(),hour=now.getHours(),appointments=appointmentEntriesForDate(k).length,followUps=scheduledFollowUpsForDate(k).length;
-  if(!isWorkDayKey(k))return{
-    priorityTitle:'Use the quiet day well',priorityText:'There are no prospecting targets scheduled. Use the space to sharpen the pipeline and prepare the next workday.',
-    riskTitle:'Drifting into reactive work',riskText:'Without a defined outcome, admin can consume the day without creating future business.',
-    winTitle:'Choose tomorrow’s three best opportunities',winText:'Review the pipeline and identify the three people most likely to create an appointment or decision next.'
-  };
-
-  let priority;
-  if(appointments>=3)priority={title:'Protect an appointment-led day',text:`You have ${appointments} appointments. The day is won by preparing properly, creating clear next steps and using the gaps between them deliberately.`};
-  else if(appointments>0)priority={title:'Convert today, build tomorrow',text:`You have ${appointments} appointment${appointments===1?'':'s'}. Give them full attention, then use the remaining capacity to create the next opportunity.`};
-  else priority={title:'Make this a pipeline creation day',text:'With no appointments controlling the calendar, today’s value comes from creating conversations that become next week’s meetings.'};
-
-  const wk=weekSummary(new Date()),ordered=weekKeys(new Date()),todayIndex=Math.max(0,ordered.indexOf(k)),elapsed=Math.max(1,todayIndex+1);
-  const expected={calls:targets.calls*elapsed,connects:targets.connects*elapsed,data:targets.data*elapsed,knock:targets.weeklyKnock*(elapsed/Math.max(1,ordered.length))};
-  const actual={calls:wk.calls,connects:wk.connects,data:wk.data,knock:Math.floor(wk.knock/60)};
-  const labels={calls:'calls',connects:'quality connects',data:'new data',knock:'knocking minutes'};
-  const deficits=Object.keys(expected).map(key=>({key,gap:Math.max(0,Math.round(expected[key]-actual[key])),ratio:expected[key]?actual[key]/expected[key]:1})).sort((a,b)=>b.gap-a.gap||a.ratio-b.ratio);
-  const weakest=deficits[0];
-  let risk;
-  if(followUps>=3)risk={title:'Warm opportunities are waiting',text:`There are ${followUps} follow-ups due. Leaving them too long risks turning active interest into a colder conversation.`};
-  else if(weakest&&weakest.gap>0)risk={title:`${labels[weakest.key][0].toUpperCase()+labels[weakest.key].slice(1)} are carrying the most pressure`,text:`You are ${weakest.gap} ${labels[weakest.key]} behind the pace required by this point in the week. That is the gap most likely to compound.`};
-  else risk={title:'Activity is on pace — quality is the risk',text:'The numbers are holding. The danger now is rushing conversations instead of creating a clear next step from each one.'};
-
-  let win;
-  if(followUps>0)win={title:`Close the loop on ${followUps} follow-up${followUps===1?'':'s'}`,text:'Handle the warmest opportunities first, record the outcome and leave each conversation with a defined next action.'};
-  else if(appointments>0)win={title:'Prepare the next decision before the first appointment',text:'Review the motivation, likely objection and exact next step you want before the appointment begins.'};
-  else if(hour<10)win={title:'Create 10 genuine conversations before 10am',text:'Do not chase the call count first. Focus on enough quality conversations to uncover one appointment opportunity.'};
-  else if(hour<14)win={title:'Create one appointment before lunch',text:'Work the strongest part of the database until one conversation produces a clear appointment or next step.'};
-  else win={title:'Create one meaningful outcome in the next hour',text:'Choose the activity with the strongest pipeline impact and stay with it until it produces a conversation, appointment or decision.'};
-
-  return{priorityTitle:priority.title,priorityText:priority.text,riskTitle:risk.title,riskText:risk.text,winTitle:win.title,winText:win.text};
+function welcomeAppointmentDetail(a){
+  const type=appointmentType(a),address=a.address||'Address not recorded',time=appointmentTimeLabel(a,todayKey());
+  return `${type} · ${address} · ${time}`;
+}
+function welcomeMomentumCopy(appointments,followUps){
+  if(appointments.length){return{title:'Convert today, then build tomorrow.',text:'You have meaningful face-to-face opportunity today. Prepare well, leave each meeting with a next step, then create the next appointment.'}}
+  if(followUps.length){return{title:'Turn warm conversations into clear next steps.',text:'Work the strongest follow-ups first, record the outcome and keep building tomorrow’s pipeline.'}}
+  return{title:'Create the conversations that shape tomorrow.',text:'Your calendar is open. Use the space for focused prospecting and finish the day with a stronger pipeline than you started with.'};
 }
 function renderWelcomeScreen(){
   const screen=$('#welcomeScreen');if(!screen)return;
-  const now=new Date(),brief=welcomeBrief();
-  $('#welcomeName').textContent=firstAgentName();
-  $('#welcomeGreeting').childNodes[0].nodeValue=`${welcomeGreetingFor(now)},`;
+  const now=new Date(),k=todayKey(),appointments=appointmentEntriesForDate(k),followUps=scheduledFollowUpsForDate(k),momentum=welcomeMomentumCopy(appointments,followUps);
+  $('#welcomeName').textContent=firstWelcomeName();
+  $('#welcomeGreetingText').textContent=welcomeGreetingFor(now);
   $('#welcomeDate').textContent=now.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long'});
-  $('#welcomePriorityTitle').textContent=brief.priorityTitle;$('#welcomePriorityText').textContent=brief.priorityText;
-  $('#welcomeRiskTitle').textContent=brief.riskTitle;$('#welcomeRiskText').textContent=brief.riskText;
-  $('#welcomeWinTitle').textContent=brief.winTitle;$('#welcomeWinText').textContent=brief.winText;
+  const appointmentSummary=$('#welcomeAppointmentSummary'),appointmentList=$('#welcomeAppointmentList');
+  appointmentSummary.textContent=appointments.length?`You’ve got ${appointments.length} appointment${appointments.length===1?'':'s'} today.`:'You’ve got no appointments today.';
+  appointmentList.innerHTML=appointments.map(({appointment:a,sourceDate})=>`<article class="welcome-appointment"><time>${escapeHtml(appointmentTimeLabel(a,sourceDate))}</time><span class="welcome-appointment-dot" aria-hidden="true"></span><div><strong>${escapeHtml(a.contactName||a.name||'Appointment')}</strong><small>${escapeHtml(welcomeAppointmentDetail(a))}</small></div></article>`).join('');
+  appointmentList.classList.toggle('hidden',!appointments.length);
+  $('#welcomePipelineText').textContent=followUps.length?`You’ve got ${followUps.length} pipeline follow-up${followUps.length===1?'':'s'} today.`:'You’ve got no pipeline follow-ups today.';
+  $('#welcomeMomentumTitle').textContent=momentum.title;$('#welcomeMomentumText').textContent=momentum.text;
 }
 function showDailyWelcome(){
   const screen=$('#welcomeScreen');if(!screen||welcomeSeenToday())return;
