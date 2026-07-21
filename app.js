@@ -390,15 +390,7 @@ function renderCallPlan(){const now=new Date(),h=now.getHours();let current=CALL
 function callsPaceText(value){if(selectedDate!==todayKey())return `${Math.max(0,targets.calls-value)} remaining`;const expected=expectedAt('calls',targets.calls,new Date()),diff=value-expected;return value>=targets.calls?'Target complete':diff===0?'On track':diff>0?`${diff} ahead of target`:`${Math.abs(diff)} behind target`}
 function activeViewId(){return document.querySelector('.view.active')?.id||'todayView'}
 function pageHeaderState(id=activeViewId()){
-  if(id==='todayView'){
-    if(selectedDate!==todayKey())return{title:welcomeMessage(),subtitle:`Reviewing ${fmtDate(selectedDate)} · ${completion(selectedDate)}% complete`};
-    if(!isWorkDayKey(selectedDate))return{title:welcomeMessage(),subtitle:'No targets scheduled today.'};
-    const score=completion(selectedDate),track=dayTrackState(selectedDate);
-    if(score>=100)return{title:welcomeMessage(),subtitle:'Targets complete. Finish with intention.'};
-    if(track==='risk')return{title:welcomeMessage(),subtitle:'One focused block gets you moving again.'};
-    if(track==='off')return{title:welcomeMessage(),subtitle:'Start with the metric that moves the day.'};
-    return{title:welcomeMessage(),subtitle:score>=50?'You’ve created breathing room.':'Keep the current pace.'};
-  }
+  if(id==='todayView')return{title:welcomeMessage(),subtitle:''};
   if(id==='scheduleView'){
     const count=timelineItemsForDate(selectedDate).filter(item=>item.kind==='appointment').length;
     if(selectedDate<todayKey())return{title:'Your Schedule',subtitle:'Review how the day unfolded.'};

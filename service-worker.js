@@ -1,4 +1,4 @@
-const CACHE='agnt-v82-dynamic-headers';
+const CACHE='agnt-v82-1-home-header-clean';
 const ASSETS=['./','./index.html','./styles.css?v=82-dynamic-headers','./app.js?v=82-dynamic-headers','./firebase-config.js','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));

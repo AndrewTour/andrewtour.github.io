@@ -20,3 +20,10 @@ No Firebase changes are required.
 - Added state-aware supporting lines for Today, Schedule, Appointments and Leaderboard.
 - Added shared, context-aware empty states for Appointments and Leaderboard.
 - No Firebase, data-model, scoring or workflow changes.
+
+## V82.1 — Home Header Cleanup
+
+- Removed the dynamic supporting line from the Today/Home view only.
+- Dynamic supporting lines remain on Schedule, Appointments and Leaderboard.
+- All V82 empty states and existing functionality remain unchanged.
+- No Firebase changes required.
