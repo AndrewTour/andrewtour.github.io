@@ -119,7 +119,7 @@ function welcomeMomentumCopy(appointments,followUps){
 }
 function renderWelcomeScreen(){
   const screen=$('#welcomeScreen');if(!screen)return;
-  const now=new Date(),k=todayKey(),appointments=appointmentEntriesForDate(k),followUps=scheduledFollowUpsForDate(k),momentum=welcomeMomentumCopy(appointments,followUps);
+  const now=new Date(),k=todayKey(),appointments=appointmentEntriesForDate(k),followUps=allFollowUpsForDate(k),momentum=welcomeMomentumCopy(appointments,followUps);
   $('#welcomeName').textContent=firstWelcomeName();
   $('#welcomeGreetingText').textContent=welcomeGreetingFor(now);
   $('#welcomeDate').textContent=now.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long'});
@@ -395,7 +395,7 @@ function pageHeaderState(id=activeViewId()){
     return{title:'Leaderboard',subtitle:'Log activity to enter the board.'};
   }
   const label=document.querySelector(`.tabbar button[data-view="${id}"] span`)?.textContent||'AGNT';
-  const subtitle=id==='prospectingView'?'Know who to call. Never lose momentum.':id==='settingsView'?'Make AGNT work your way.':id==='insightsView'?'Set the pace. Raise the standard.':'';
+  const subtitle=id==='prospectingView'?'':id==='settingsView'?'Make AGNT work your way.':id==='insightsView'?'Set the pace. Raise the standard.':'';
   return{title:label,subtitle};
 }
 function getEmptyState(type,context={}){
@@ -616,6 +616,20 @@ function timelineTimeLabel(minutes){
 function scheduledFollowUpsForDate(viewDate){
   return allAppointmentEntries().filter(({appointment:a,sourceDate})=>a.followUpDate===viewDate&&appointmentLifecycle(a,sourceDate)==='follow-up');
 }
+function prospectFollowUpsForDate(viewDate){
+  return prospects.filter(p=>{
+    if(!p.nextFollowUp)return false;
+    return viewDate===todayKey()?p.nextFollowUp<=viewDate:p.nextFollowUp===viewDate;
+  }).sort((a,b)=>{
+    const dateCompare=String(a.nextFollowUp).localeCompare(String(b.nextFollowUp));
+    if(dateCompare)return dateCompare;
+    const temperatureOrder={Hot:0,Warm:1,Cold:2};
+    return (temperatureOrder[a.temperature]??9)-(temperatureOrder[b.temperature]??9)||String(a.name||'').localeCompare(String(b.name||''));
+  });
+}
+function allFollowUpsForDate(viewDate){
+  return [...scheduledFollowUpsForDate(viewDate),...prospectFollowUpsForDate(viewDate)];
+}
 function timelineItemsForDate(viewDate){
   const items=[
     {id:'prospecting',minutes:9*60,title:'Prospecting',meta:'Calls, connects and data',kind:'focus',duration:5*60},
@@ -630,6 +644,18 @@ function timelineItemsForDate(viewDate){
       minutes:8*60+(index*5),
       title:`Follow-Up · ${appointmentType(a)} · ${a.address||'Address not recorded'}`,
       meta:`${a.contactName||a.name||'Contact not recorded'}${rawPhone?` · ${rawPhone}`:''}`,
+      kind:'followup',duration:30,dial
+    });
+  });
+  const appointmentFollowUpCount=scheduledFollowUpsForDate(viewDate).length;
+  prospectFollowUpsForDate(viewDate).forEach((p,index)=>{
+    const rawPhone=String(primaryProspectPhone(p)||'').trim(),dial=rawPhone.replace(/[^+\d]/g,'');
+    const overdue=viewDate===todayKey()&&p.nextFollowUp<viewDate;
+    items.push({
+      id:`contact-followup-${p.id}`,
+      minutes:8*60+((appointmentFollowUpCount+index)*5),
+      title:`Follow-Up · ${p.name||'Contact not recorded'}`,
+      meta:`${overdue?'Overdue · ':''}${formatProspectAddress(p.address||p.company,p.suburb)||p.stage||'Contact follow-up'}${rawPhone?` · ${rawPhone}`:''}`,
       kind:'followup',duration:30,dial
     });
   });
@@ -672,7 +698,10 @@ function timelineFocusId(items,kind){
   return items.find(item=>item.kind===kind)?.id||'';
 }
 function timelineFollowUpId(items,entry){
-  return entry?`followup-${calendarExportId(entry.appointment,entry.sourceDate)}`:'';
+  if(!entry)return'';
+  if(entry.appointment)return`followup-${calendarExportId(entry.appointment,entry.sourceDate)}`;
+  if(entry.id)return`contact-followup-${entry.id}`;
+  return items.find(item=>item.kind==='followup')?.id||'';
 }
 function coachingMetricState(viewDate=selectedDate){
   const d=dayData(viewDate),knockTarget=rollingKnockTarget(viewDate),knockMinutes=Math.floor(liveKnockSeconds(d)/60);
@@ -720,7 +749,7 @@ function coachingEngine(viewDate=selectedDate,items=timelineItemsForDate(viewDat
   const currentAppointment=items.find(item=>item.kind==='appointment'&&nowMinutes>=item.minutes&&nowMinutes<item.minutes+(item.duration||60));
   const nextAppointment=items.find(item=>item.kind==='appointment'&&item.minutes>nowMinutes);
   const minutesToAppointment=nextAppointment?nextAppointment.minutes-nowMinutes:Infinity;
-  const todayFollowUps=scheduledFollowUpsForDate(viewDate);
+  const todayFollowUps=allFollowUpsForDate(viewDate);
   const prospectingId=timelineFocusId(items,'focus'),knockingId=timelineFocusId(items,'knock'),progressId=timelineFocusId(items,'check'),wrapId=timelineFocusId(items,'wrap');
 
   if(currentAppointment)return{title:'Appointment Window',meta:`${currentAppointment.title} · Resume prospecting afterwards`,focusItemId:currentAppointment.id};
