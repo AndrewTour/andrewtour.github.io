@@ -389,6 +389,61 @@ function formatHour(h){return `${h%12||12}:00 ${h>=12?'PM':'AM'}`}
 function renderCallPlan(){const now=new Date(),h=now.getHours();let current=CALL_PLAN.find(x=>x[0]===h);if(h<9)current=[8,'Prepare your priority list','Before 9:00 AM'];if(h>=17)current=[17,'Review follow-up and plan tomorrow','9:00 AM–5:00 PM call day complete'];$('#currentCall').textContent=current[1];$('#currentSlot').textContent=h>=9&&h<17?`${formatHour(h)}–${formatHour(h+1)} · 10 call target`:current[2];$('#callPlan').innerHTML=CALL_PLAN.map(([hour,title,note])=>`<div class="call-row ${hour===h?'active':''}"><b>${formatHour(hour)}</b><span><strong>${title}</strong><small>${note}</small></span><em>10</em></div>`).join('')}
 function callsPaceText(value){if(selectedDate!==todayKey())return `${Math.max(0,targets.calls-value)} remaining`;const expected=expectedAt('calls',targets.calls,new Date()),diff=value-expected;return value>=targets.calls?'Target complete':diff===0?'On track':diff>0?`${diff} ahead of target`:`${Math.abs(diff)} behind target`}
 function activeViewId(){return document.querySelector('.view.active')?.id||'todayView'}
+function pageHeaderState(id=activeViewId()){
+  if(id==='todayView'){
+    if(selectedDate!==todayKey())return{title:welcomeMessage(),subtitle:`Reviewing ${fmtDate(selectedDate)} · ${completion(selectedDate)}% complete`};
+    if(!isWorkDayKey(selectedDate))return{title:welcomeMessage(),subtitle:'No targets scheduled today.'};
+    const score=completion(selectedDate),track=dayTrackState(selectedDate);
+    if(score>=100)return{title:welcomeMessage(),subtitle:'Targets complete. Finish with intention.'};
+    if(track==='risk')return{title:welcomeMessage(),subtitle:'One focused block gets you moving again.'};
+    if(track==='off')return{title:welcomeMessage(),subtitle:'Start with the metric that moves the day.'};
+    return{title:welcomeMessage(),subtitle:score>=50?'You’ve created breathing room.':'Keep the current pace.'};
+  }
+  if(id==='scheduleView'){
+    const count=timelineItemsForDate(selectedDate).filter(item=>item.kind==='appointment').length;
+    if(selectedDate<todayKey())return{title:'Your Schedule',subtitle:'Review how the day unfolded.'};
+    if(selectedDate>todayKey())return{title:'Your Schedule',subtitle:count?`${count} appointment${count===1?'':'s'} shape this day.`:'Plan ahead before the day fills.'};
+    if(!isWorkDayKey(selectedDate))return{title:'Your Schedule',subtitle:'No workday schedule is set.'};
+    return{title:'Your Schedule',subtitle:count?`${count} appointment${count===1?'':'s'} shape today.`:'Your day is clear — protect the prospecting blocks.'};
+  }
+  if(id==='appointmentsView'){
+    if(appointmentHistoryMode==='past')return{title:'Appointments',subtitle:'Review appointments and follow-ups.'};
+    if(appointmentHistoryMode==='upcoming')return{title:'Appointments',subtitle:'Prepare before the meeting arrives.'};
+    const entries=allAppointmentEntries().filter(({appointment:a,sourceDate})=>appointmentCreatedDate(a,sourceDate)===appointmentDate);
+    if(appointmentDate<todayKey())return{title:'Appointments',subtitle:'Review appointments and follow-ups.'};
+    if(appointmentDate>todayKey())return{title:'Appointments',subtitle:entries.length?`${entries.length} appointment${entries.length===1?'':'s'} logged for this day.`:'No appointments booked for this day.'};
+    return{title:'Appointments',subtitle:entries.length?`${entries.length} appointment${entries.length===1?'':'s'} logged today.`:'No appointments booked for today.'};
+  }
+  if(id==='insightsView'&&document.querySelector('#leaderboardInsights.active')){
+    const rows=leaderboardMode==='week'?weeklyLeaderboardRows():dailyLeaderboardRows();
+    const meIndex=rows.findIndex(row=>row.uid===uid);
+    if(!rows.length)return{title:'Leaderboard',subtitle:'Scores appear as the team begins logging.'};
+    if(meIndex===0)return{title:'Leaderboard',subtitle:leaderboardMode==='week'?'You’re setting this week’s pace.':'You’re setting today’s pace.'};
+    if(meIndex>0){const gap=Math.max(0,(rows[0]?.score||0)-(rows[meIndex]?.score||0));return{title:'Leaderboard',subtitle:gap?`${gap}% from the lead.`:'Consistency decides the week.'};}
+    return{title:'Leaderboard',subtitle:'Log activity to enter the board.'};
+  }
+  const label=document.querySelector(`.tabbar button[data-view="${id}"] span`)?.textContent||'AGNT';
+  const subtitle=id==='prospectingView'?'Know who to call. Never lose momentum.':id==='settingsView'?'Make AGNT work your way.':id==='insightsView'?'Set the pace. Raise the standard.':'';
+  return{title:label,subtitle};
+}
+function getEmptyState(type,context={}){
+  if(type==='appointments-daily'){
+    if(context.date<todayKey())return{title:'No appointments logged',message:'There are no appointments recorded for this day.'};
+    if(context.date>todayKey())return{title:'Nothing planned yet',message:'Appointments added for this date will appear here.'};
+    return{title:'No appointments logged',message:'Appointments added today will appear here.'};
+  }
+  if(type==='appointments-history'){
+    if(context.mode==='past')return{title:'No appointment history yet',message:'Completed appointments will build a record here over time.'};
+    return{title:'Nothing upcoming',message:'Your appointment schedule is currently clear.'};
+  }
+  if(type==='leaderboard'){
+    if(context.future)return{title:'This period hasn’t started',message:'Leaderboard results will populate once the team begins logging.'};
+    if(context.past)return{title:'No recorded scores',message:'There is no team activity available for this period.'};
+    return{title:'Waiting for today’s activity',message:'Team rankings will appear as activity is logged.'};
+  }
+  return{title:'Nothing here yet',message:''};
+}
+function emptyStateMarkup(state){return `<div class="empty-state" role="status"><strong>${escapeHtml(state.title||'')}</strong>${state.message?`<p>${escapeHtml(state.message)}</p>`:''}</div>`}
 function updateTopbar(id=activeViewId()){
   const isToday=id==='todayView';
   const label=document.querySelector(`.tabbar button[data-view="${id}"] span`)?.textContent||'AGNT';
@@ -396,9 +451,10 @@ function updateTopbar(id=activeViewId()){
   const todaySlot=$('#todaySyncSlot');
   const syncBadge=$('#syncBadge');
   const syncPopover=$('#syncPopover');
-  $('#viewTitle').textContent=isToday?welcomeMessage():(id==='scheduleView'?'Your Schedule':label);
+  const headerState=pageHeaderState(id);
+  $('#viewTitle').textContent=headerState.title;
   const subtitle=$('#viewSubtitle');
-  const subtitleText=id==='prospectingView'?'Know who to call. Never lose momentum.':id==='scheduleView'?'Plan ahead. Win the day.':id==='appointmentsView'?'Stay prepared. Follow through.':id==='insightsView'?'Set the pace. Raise the standard.':id==='settingsView'?'Make AGNT work your way.':'';
+  const subtitleText=headerState.subtitle||'';
   if(subtitle){subtitle.textContent=subtitleText;subtitle.classList.toggle('hidden',!subtitleText)}
   $('#dateLabel').textContent=fmtDate(selectedDate);
   const hideCompactDate=id==='prospectingView'||id==='scheduleView'||id==='appointmentsView'||id==='insightsView'||id==='settingsView';
@@ -946,11 +1002,12 @@ function renderAppointments(){
   for(const id of ['#appointmentReminder','#appointmentHistoryReminder']){const el=$(id);if(el){el.textContent=reminder;el.classList.toggle('hidden',!reminder);}}
   if(appointmentHistoryMode&&$('#appointmentHistoryList')){
     const history=appointmentHistoryEntries(appointmentHistoryMode);
-    $('#appointmentHistoryList').innerHTML=history.length?history.map(entry=>appointmentCardMarkup(entry,{history:true})).join(''):`<div class="empty">No ${appointmentHistoryMode} appointments.</div>`;
+    $('#appointmentHistoryList').innerHTML=history.length?history.map(entry=>appointmentCardMarkup(entry,{history:true})).join(''):emptyStateMarkup(getEmptyState('appointments-history',{mode:appointmentHistoryMode}));
   }
 
   const daily=all.filter(({appointment:a,sourceDate})=>appointmentCreatedDate(a,sourceDate)===appointmentDate);
-  $('#appointmentsList').innerHTML=daily.length?daily.map(entry=>appointmentCardMarkup(entry,{dailyLog:true})).join(''):'<div class="empty">No appointments logged for this day.</div>';
+  $('#appointmentsList').innerHTML=daily.length?daily.map(entry=>appointmentCardMarkup(entry,{dailyLog:true})).join(''):emptyStateMarkup(getEmptyState('appointments-daily',{date:appointmentDate}));
+  if(activeViewId()==='appointmentsView')updateTopbar('appointmentsView');
 }
 
 async function addAppointment({contactName,contactNumber,address,date,time,type}){
@@ -1062,7 +1119,8 @@ function renderUnifiedLeaderboard(){
   $('#dayHistoryControls').classList.toggle('hidden',isWeek);$('#weekHistoryControls').classList.toggle('hidden',!isWeek);
   $('#leaderboardPeriodLabel').textContent=isWeek?'WEEKLY LEADERBOARD':'DAILY LEADERBOARD';
   $('#leaderboardDate').textContent=isWeek?`Week ${formatWeekRange(selectedLeaderboardWeekDate())}`:fmtDate(selectedLeaderboardDayKey());
-  $('#leaderboardList').innerHTML=rows.length?rows.map((r,i)=>leaderboardRowHtml(r,i,isWeek)).join(''):`<div class="empty">No team data is available for this ${isWeek?'week':'day'} yet.</div>`;
+  const periodDate=isWeek?selectedLeaderboardWeekDate():selectedLeaderboardDayDate(),periodKey=isWeek?selectedLeaderboardWeekKey():selectedLeaderboardDayKey();
+  $('#leaderboardList').innerHTML=rows.length?rows.map((r,i)=>leaderboardRowHtml(r,i,isWeek)).join(''):emptyStateMarkup(getEmptyState('leaderboard',{future:periodKey>todayKey(),past:periodKey<todayKey(),date:periodDate}));
   $('#leaderboardNote').textContent=isWeek?'Ranked by weekly overall completion. Use the arrows to review prior weeks.':'Ranked by daily overall completion. Use the arrows to review prior days.';
   $('#dayNext').disabled=leaderboardDayOffset>=0;$('#dayToday').disabled=leaderboardDayOffset===0;$('#weekNext').disabled=leaderboardWeekOffset>=0;
 }
@@ -1117,6 +1175,7 @@ function renderLeaderboard(){
   if($('#leaderboardTopScore'))$('#leaderboardTopScore').textContent=`${leaderScore}%`;
   if($('#leaderboardGap'))$('#leaderboardGap').textContent=rows.length?(gap?`${gap}%`:'Leading'):'—';
   renderUnifiedLeaderboard();renderLeaderboardPosition();
+  if(activeViewId()==='insightsView')updateTopbar('insightsView');
 }
 
 function scorecardWeekDate(){return weekDateFromOffset(scorecardWeekOffset)}

@@ -14,3 +14,9 @@ Built on AGNT V80 Design System Sprint 4.
 - Leaderboard calculations, Day/Week logic and all other app functionality.
 
 No Firebase changes are required.
+
+
+## v1.38.8
+- Added state-aware supporting lines for Today, Schedule, Appointments and Leaderboard.
+- Added shared, context-aware empty states for Appointments and Leaderboard.
+- No Firebase, data-model, scoring or workflow changes.

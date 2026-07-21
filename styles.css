@@ -3967,3 +3967,12 @@ a.button:focus-visible,
   .leaderboard-performance-metrics{gap:5px}
   .leaderboard-performance-metric strong{font-size:.56rem}
 }
+
+/* v1.38.8 — dynamic page headers and shared empty states. */
+.view-subtitle{max-width:290px;line-height:1.35}
+.empty-state{display:grid;place-items:center;align-content:center;min-height:112px;padding:24px 18px;text-align:center;color:#111318}
+.empty-state strong{font-size:.82rem;line-height:1.25;font-weight:850;letter-spacing:-.01em}
+.empty-state p{max-width:290px;margin:7px 0 0;color:#8d95a3;font-size:.68rem;line-height:1.45}
+.leaderboard-unified-list>.empty-state{min-height:100%;padding:34px 18px}
+.appointments-list>.empty-state{border:1px solid #edf0f4;border-radius:18px;background:rgba(255,255,255,.45)}
+@media (prefers-reduced-motion:reduce){.view-subtitle,.empty-state{transition:none!important}}
