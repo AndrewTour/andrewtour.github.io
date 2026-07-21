@@ -25,3 +25,12 @@ Incremental update from V69. Pipeline-only UI and seller timeframe logic refinem
 - Visible welcome brief refreshes when profile or appointment data arrives.
 - Installed PWA uses refreshed cache keys and network-first loading for critical app assets.
 - No Firebase schema, path, rules or authentication changes.
+
+
+## v78 — Subtle Welcome Motion
+
+- Added staged, non-looping entrance motion to the welcome page.
+- Added restrained timeline marker and connector reveals.
+- Added smoother Start My Day press and exit transitions.
+- Respects iOS Reduce Motion.
+- No Firebase, Firestore, authentication, sync, data-shape or routing changes.

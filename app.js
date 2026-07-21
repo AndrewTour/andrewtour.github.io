@@ -173,12 +173,15 @@ function renderWelcomeScreen(){
 }
 function showDailyWelcome(){
   const screen=$('#welcomeScreen');if(!screen||welcomeSeenToday())return;
-  renderWelcomeScreen();screen.classList.remove('hidden','is-leaving');screen.setAttribute('aria-hidden','false');
+  renderWelcomeScreen();
+  screen.classList.remove('hidden','is-leaving','is-ready');
+  screen.setAttribute('aria-hidden','false');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>screen.classList.add('is-ready')));
 }
 function dismissDailyWelcome(){
   const screen=$('#welcomeScreen');if(!screen)return;
   try{localStorage.setItem(welcomeStorageKey(),'1')}catch{}
-  screen.classList.add('is-leaving');screen.setAttribute('aria-hidden','true');setTimeout(()=>screen.classList.add('hidden'),320);
+  screen.classList.remove('is-ready');screen.classList.add('is-leaving');screen.setAttribute('aria-hidden','true');setTimeout(()=>screen.classList.add('hidden'),420);
 }
 function leaderboardPayload(){
   const k=todayKey(),d=dayData(k),knockMinutes=Math.floor(liveKnockSeconds(d)/60),knockTarget=rollingKnockTarget(k);
