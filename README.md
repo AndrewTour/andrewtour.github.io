@@ -1,6 +1,6 @@
-# AGNT V85 — Smart Prospector & Day Loop
+# AGNT V86 — Day Review on Today
 
-- Added smart Prospector subheadings based on the active section, due follow-ups, contacts and seller pipeline.
-- Added a morning-to-evening workflow: Start My Day captures the morning plan locally and the Day in Review compares it with completed activity.
-- Day in Review appears automatically from 6:00pm once per workday and can be opened manually from Today after 5:00pm.
-- No Firebase, authentication, Firestore path, UID separation, data-shape, cache behaviour or sync changes.
+- Removed the Day in Review manual card from Home and restored the prior Home layout.
+- Added the unchanged Day in Review manual card after the Today timeline.
+- Preserved the existing visibility rules, morning snapshot, automatic 6:00pm prompt and once-per-workday behaviour.
+- No Firebase, authentication, Firestore path, UID separation, data-shape, local cache, scoring or sync changes.
