@@ -15,6 +15,7 @@ let unsubDays=null, unsubProfile=null, unsubLeaderboard=null, unsubProspecting=n
 let pendingSyncOperations=0, syncHasError=false, lastLeaderboardSignature='', lastProspectingSignature='';
 let pendingProspectingPayload=null, pendingProspectingSignature='', prospectingWriteInFlight=false, prospectingSaveWaiters=[];
 let editingAppointment=null;
+let appointmentEditReturnState=null;
 const daySaveChains=new Map();
 let dirtyDayKeys=new Set();
 const appointmentSubmitLocks=new Set();
@@ -1040,6 +1041,9 @@ function appointmentCardMarkup(entry,{dailyLog=false,history=false}={}){
 }
 function renderAppointments(){
   const picker=$('#appointmentDatePicker');
+  const editing=Boolean(editingAppointment);
+  $('#appointmentsView')?.classList.toggle('appointment-edit-mode',editing);
+  document.body.classList.toggle('appointment-editing',editing);
   const locked=isPastDate(appointmentDate)&&!editingAppointment;
   $('#appointmentForm').classList.toggle('date-locked',locked);
   $$('#appointmentForm input, #appointmentForm button').forEach(el=>el.disabled=locked);
@@ -1087,11 +1091,24 @@ async function addAppointment({contactName,contactNumber,address,date,time,type}
 function beginEditAppointment(id,sourceDate){
   const d=dayData(sourceDate),appointment=d.appointments.find(a=>String(a.id)===String(id));
   if(!appointment)return toast('Appointment could not be found');
+  appointmentEditReturnState={date:appointmentDate,historyMode:appointmentHistoryMode,scrollY:window.scrollY};
   editingAppointment={id:String(id),sourceDate};appointmentHistoryMode=null;setAppointmentHistoryScreen(null);
   appointmentDate=appointmentCreatedDate(appointment,sourceDate)||todayKey();
   $('#appointmentContactName').value=appointment.contactName||'';$('#appointmentContactNumber').value=appointment.contactNumber||'';$('#appointmentAddress').value=appointment.address||'';$('#appointmentDatePicker').value=appointmentScheduledDate(appointment,sourceDate);$('#appointmentTime').value=appointment.time||'12:00';
   const type=appointmentType(appointment);$$('[name=appointmentType]').forEach(el=>el.checked=el.value===type);
-  renderAppointments();window.scrollTo({top:0,behavior:'smooth'});
+  renderAppointments();$('#appointmentContactName')?.focus({preventScroll:true});
+}
+function closeAppointmentEditor(){
+  if(!editingAppointment)return;
+  const returnState=appointmentEditReturnState;
+  editingAppointment=null;appointmentEditReturnState=null;
+  $('#appointmentForm')?.reset();
+  $('#appointmentFormError')?.classList.add('hidden');
+  if(returnState){appointmentDate=returnState.date;appointmentHistoryMode=returnState.historyMode;}
+  $('#appointmentMainContent')?.classList.toggle('hidden',Boolean(appointmentHistoryMode));
+  $('#appointmentHistoryScreen')?.classList.toggle('hidden',!appointmentHistoryMode);
+  renderAppointments();
+  requestAnimationFrame(()=>window.scrollTo({top:returnState?.scrollY||0,behavior:'instant'}));
 }
 async function editAppointment({contactName,contactNumber,address,date,time,type}){
   if(!editingAppointment)return null;
@@ -1658,7 +1675,9 @@ $('#scorecardPrev').onclick=()=>{scorecardWeekOffset--;renderScorecard()};$('#sc
 $('#appointmentDatePicker').onchange=()=>{};
 document.querySelector('.appointment-destination-grid').onclick=e=>{const b=e.target.closest('[data-open-appointment-history]');if(!b)return;setAppointmentHistoryScreen(b.dataset.openAppointmentHistory)};
 $('#closeAppointmentHistory').onclick=()=>setAppointmentHistoryScreen(null);
-$('#appointmentForm').onsubmit=async e=>{e.preventDefault();const viewedDate=appointmentDate;const contactName=$('#appointmentContactName').value.trim(),contactNumber=$('#appointmentContactNumber').value.trim(),address=$('#appointmentAddress').value.trim(),date=$('#appointmentDatePicker').value,time=$('#appointmentTime').value,type=$('.appointment-types input:checked')?.value||'',error=$('#appointmentFormError');const missing=[];if(!contactName)missing.push('contact name');if(!contactNumber)missing.push('contact number');if(!address)missing.push('property address');if(!date)missing.push('booking date');if(!time)missing.push('booking time');if(!type)missing.push('appointment type');if(missing.length){error.textContent=`Add ${missing.join(', ')}`;error.classList.remove('hidden');return}error.textContent='';error.classList.add('hidden');const wasEditing=Boolean(editingAppointment);const appointment=wasEditing?await editAppointment({contactName,contactNumber,address,date,time,type}):await addAppointment({contactName,contactNumber,address,date,time,type});if(appointment&&!wasEditing&&confirm(`Add to ${calendarPreference==='apple'?'Apple':'Outlook'} Calendar?`))exportAppointmentToCalendar(appointment,appointment.createdDate);if(appointment){e.target.reset();editingAppointment=null;appointmentDate=viewedDate;$('#appointmentDatePicker').value=viewedDate;$('#appointmentTime').value='12:00';renderAppointments();updateTopbar('appointmentsView')}};
+$('#appointmentForm').onsubmit=async e=>{e.preventDefault();const viewedDate=appointmentDate,returnState=appointmentEditReturnState;const contactName=$('#appointmentContactName').value.trim(),contactNumber=$('#appointmentContactNumber').value.trim(),address=$('#appointmentAddress').value.trim(),date=$('#appointmentDatePicker').value,time=$('#appointmentTime').value,type=$('.appointment-types input:checked')?.value||'',error=$('#appointmentFormError');const missing=[];if(!contactName)missing.push('contact name');if(!contactNumber)missing.push('contact number');if(!address)missing.push('property address');if(!date)missing.push('booking date');if(!time)missing.push('booking time');if(!type)missing.push('appointment type');if(missing.length){error.textContent=`Add ${missing.join(', ')}`;error.classList.remove('hidden');return}error.textContent='';error.classList.add('hidden');const wasEditing=Boolean(editingAppointment);const appointment=wasEditing?await editAppointment({contactName,contactNumber,address,date,time,type}):await addAppointment({contactName,contactNumber,address,date,time,type});if(appointment&&!wasEditing&&confirm(`Add to ${calendarPreference==='apple'?'Apple':'Outlook'} Calendar?`))exportAppointmentToCalendar(appointment,appointment.createdDate);if(appointment){e.target.reset();editingAppointment=null;appointmentEditReturnState=null;if(wasEditing&&returnState){appointmentDate=returnState.date;appointmentHistoryMode=returnState.historyMode;$('#appointmentMainContent')?.classList.toggle('hidden',Boolean(appointmentHistoryMode));$('#appointmentHistoryScreen')?.classList.toggle('hidden',!appointmentHistoryMode);}else{appointmentDate=viewedDate;}$('#appointmentDatePicker').value=appointmentDate;$('#appointmentTime').value='12:00';renderAppointments();updateTopbar('appointmentsView');if(wasEditing)requestAnimationFrame(()=>window.scrollTo({top:returnState?.scrollY||0,behavior:'instant'}));}};
+$('#closeAppointmentEditor').onclick=closeAppointmentEditor;
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&editingAppointment)closeAppointmentEditor();});
 $('#saveFollowUpDate').onclick=saveAppointmentFollowUp;
 $$('[data-close-followup]').forEach(button=>button.onclick=()=>{closeActionModal('#followUpModal');pendingFollowUpAppointment=null;});
 $('#outcomeOptions').onclick=e=>{const button=e.target.closest('[data-outcome]');if(!button)return;selectedAppointmentOutcome=button.dataset.outcome;$$('#outcomeOptions button').forEach(item=>item.classList.toggle('selected',item===button));$('#saveAppointmentOutcome').disabled=false;};

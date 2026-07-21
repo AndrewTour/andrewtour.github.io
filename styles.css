@@ -4015,3 +4015,70 @@ a.button:focus-visible,
 .day-review-metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:20px}.day-review-metric{padding:14px;border:1px solid #e2e6ed;border-radius:17px;background:#fff}.day-review-metric span,.day-review-metric small{display:block;color:#8a93a5;font-size:.65rem}.day-review-metric strong{display:inline-block;margin:7px 5px 0 0;color:#202532;font-size:1.22rem}.day-review-metric small{display:inline}.day-review-metric.complete{border-color:rgba(35,158,101,.25);background:rgba(35,158,101,.055)}.day-review-metric.complete strong{color:#168052}
 .day-review-plan{display:grid;gap:10px;margin-top:16px;padding:15px 16px;border-radius:18px;background:#fff}.day-review-plan div{display:grid;grid-template-columns:42px 1fr;align-items:center}.day-review-plan strong{font-size:.9rem;color:#202532}.day-review-plan span{font-size:.72rem;color:#6f7888}.day-review-coach{margin-top:16px;padding:16px;border-radius:18px;background:rgba(31,115,237,.07)}.day-review-coach p{margin:8px 0 0;color:#34415b;font-size:.78rem;line-height:1.48}.day-review-close{width:100%;margin-top:16px;min-height:52px;border-radius:17px}.day-review-open{overflow:hidden}
 @media(min-width:700px){.day-review-overlay{align-items:center}}
+\n\n/* V88 — focused appointment editing overlay */
+.appointment-edit-header{display:none}
+body.appointment-editing{overflow:hidden}
+#appointmentsView.appointment-edit-mode::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:145;
+  background:rgba(20,25,35,.32);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+#appointmentsView.appointment-edit-mode #appointmentForm{
+  position:fixed;
+  inset:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));
+  z-index:146;
+  width:min(calc(100% - 24px),520px);
+  max-height:calc(100dvh - max(24px,env(safe-area-inset-top) + env(safe-area-inset-bottom)));
+  overflow:auto;
+  overscroll-behavior:contain;
+  margin:auto;
+  padding:20px 16px 18px;
+  border-radius:28px;
+  background:#f8f9fb;
+  box-shadow:0 24px 70px rgba(20,28,45,.22);
+}
+#appointmentsView.appointment-edit-mode .appointment-edit-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  margin:0 2px 8px;
+  padding-bottom:12px;
+  border-bottom:1px solid rgba(120,128,145,.18);
+}
+#appointmentsView.appointment-edit-mode .appointment-edit-header span{
+  display:block;
+  color:var(--muted);
+  font-size:.63rem;
+  font-weight:800;
+  letter-spacing:.1em;
+}
+#appointmentsView.appointment-edit-mode .appointment-edit-header h2{
+  margin:2px 0 0;
+  color:var(--ink);
+  font-size:1.35rem;
+  letter-spacing:-.03em;
+}
+#appointmentsView.appointment-edit-mode .appointment-edit-header button{
+  flex:0 0 auto;
+  width:38px;
+  height:38px;
+  border:0;
+  border-radius:50%;
+  background:rgba(118,118,128,.12);
+  color:var(--ink);
+  font-size:1.55rem;
+  line-height:1;
+}
+@media(min-width:700px){
+  #appointmentsView.appointment-edit-mode #appointmentForm{
+    inset:50% auto auto 50%;
+    width:min(calc(100% - 40px),520px);
+    max-height:calc(100dvh - 40px);
+    transform:translate(-50%,-50%);
+  }
+}
