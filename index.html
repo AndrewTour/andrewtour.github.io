@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=74">
+<link rel="stylesheet" href="styles.css?v=77">
 <title>AGNT</title>
 </head>
 <body>
@@ -30,43 +30,29 @@
 <div id="welcomeScreen" class="welcome-screen hidden" aria-hidden="true">
   <section class="welcome-shell" aria-labelledby="welcomeGreeting">
     <div class="welcome-top">
-      <span class="welcome-brand">AGNT</span>
+      <span class="welcome-brand" aria-label="AGNT">AGNT<span>.</span></span>
       <span id="welcomeDate" class="welcome-date"></span>
     </div>
 
     <div class="welcome-heading">
-      <span class="welcome-kicker">COACH'S BRIEF</span>
-      <h1 id="welcomeGreeting">Good morning,<br><strong id="welcomeName">Agent</strong></h1>
-      <p id="welcomeIntro">Here’s what matters most today.</p>
+      <h1 id="welcomeGreeting">Good morning, <strong id="welcomeName">Agent</strong></h1>
+      <p id="welcomeIntro">Here’s what’s ahead today.</p>
     </div>
 
-    <div class="welcome-brief" aria-label="Daily coaching brief">
-      <article class="welcome-brief-row">
-        <span class="welcome-brief-index">01</span>
-        <div>
-          <span class="welcome-brief-label">PRIORITY</span>
-          <h2 id="welcomePriorityTitle">Create the day</h2>
-          <p id="welcomePriorityText">Your priority will appear here.</p>
-        </div>
-      </article>
+    <div class="welcome-day-summary">
+      <p id="welcomeAppointmentCount" class="welcome-summary-line">You’ve got no appointments today.</p>
+      <div id="welcomeTimeline" class="welcome-timeline" aria-label="Today’s appointments"></div>
+    </div>
 
-      <article class="welcome-brief-row">
-        <span class="welcome-brief-index">02</span>
-        <div>
-          <span class="welcome-brief-label">RISK</span>
-          <h2 id="welcomeRiskTitle">Protect momentum</h2>
-          <p id="welcomeRiskText">Your biggest risk will appear here.</p>
-        </div>
-      </article>
+    <div class="welcome-pipeline">
+      <span class="welcome-section-label">PIPELINE</span>
+      <p id="welcomeFollowupCount">You’ve got no pipeline follow-ups today.</p>
+    </div>
 
-      <article class="welcome-brief-row welcome-first-win">
-        <span class="welcome-brief-index">03</span>
-        <div>
-          <span class="welcome-brief-label">FIRST WIN</span>
-          <h2 id="welcomeWinTitle">Start with one clear action</h2>
-          <p id="welcomeWinText">Your first move will appear here.</p>
-        </div>
-      </article>
+    <div class="welcome-momentum">
+      <span class="welcome-section-label">MOMENTUM</span>
+      <h2 id="welcomeMomentumTitle">Create the first opportunity.</h2>
+      <p id="welcomeMomentumText">A clear start gives the rest of the day somewhere to go.</p>
     </div>
 
     <button id="startDayButton" class="welcome-start" type="button">
@@ -256,46 +242,37 @@
         </section>
       </div>
       <div id="leaderboardInsights" class="insights-page active">
-        <section class="leaderboard-standings" aria-label="Team leaderboard">
-          <div class="leaderboard-topbar">
-            <div>
-              <span class="leaderboard-eyebrow">TEAM PERFORMANCE</span>
-              <h2>Leaderboard</h2>
-            </div>
-            <div id="leaderboardStatus" class="leaderboard-status-dot" aria-label="Leaderboard sync status">LIVE</div>
+        <section class="leaderboard-dashboard glass" aria-label="Leaderboard overview">
+          <div class="leaderboard-dashboard-main">
+            <div class="leaderboard-ring" id="leaderboardRing" style="--score:0"><strong id="leaderboardHeroScore">0%</strong><span>Today</span></div>
+            <div class="leaderboard-hero-copy"><span>TEAM POSITION</span><strong id="leaderboardHeroRank">—</strong><small id="leaderboardHeroMessage">Waiting for today’s rankings</small></div>
           </div>
-
+          <div class="leaderboard-kpis">
+            <article><span>Agents</span><strong id="leaderboardAgentCount">0</strong></article>
+            <article><span>Leader</span><strong id="leaderboardTopScore">0%</strong></article>
+            <article><span>Gap</span><strong id="leaderboardGap">—</strong></article>
+          </div>
+        </section>
+        <section class="leaderboard-card leaderboard-unified-card glass">
           <div class="leaderboard-mode-tabs" role="tablist" aria-label="Leaderboard period">
             <button id="leaderboardDayTab" class="active" type="button" role="tab" aria-selected="true" data-leaderboard-mode="day">Day</button>
             <button id="leaderboardWeekTab" type="button" role="tab" aria-selected="false" data-leaderboard-mode="week">Week</button>
           </div>
-
-          <div class="leaderboard-period-bar">
-            <div id="dayHistoryControls" class="leaderboard-period-controls">
-              <button id="dayPrev" type="button" aria-label="Previous day">‹</button>
-              <button id="dayToday" type="button"><span id="leaderboardDate"></span></button>
-              <button id="dayNext" type="button" aria-label="Next day">›</button>
-            </div>
-            <div id="weekHistoryControls" class="leaderboard-period-controls hidden">
-              <button id="weekPrev" type="button" aria-label="Previous week">‹</button>
-              <button id="weekLast" type="button"><span id="leaderboardWeekDate"></span></button>
-              <button id="weekNext" type="button" aria-label="Next week">›</button>
+          <div class="leaderboard-head leaderboard-unified-head">
+            <div><span id="leaderboardPeriodLabel">DAILY LEADERBOARD</span><h2 id="leaderboardDate"></h2></div>
+            <div class="leaderboard-head-actions">
+              <div id="leaderboardStatus" class="leaderboard-live">LIVE</div>
+              <div id="dayHistoryControls" class="week-history-controls leaderboard-period-controls">
+                <button id="dayPrev" type="button" aria-label="Previous day">‹</button><button id="dayToday" type="button">Today</button><button id="dayNext" type="button" aria-label="Next day">›</button>
+              </div>
+              <div id="weekHistoryControls" class="week-history-controls leaderboard-period-controls hidden">
+                <button id="weekPrev" type="button" aria-label="Previous week">‹</button><button id="weekLast" type="button">Last week</button><button id="weekNext" type="button" aria-label="Next week">›</button>
+              </div>
             </div>
           </div>
-
-          <p id="leaderboardPositionSummary" class="leaderboard-position-summary">Waiting for team data…</p>
-
-          <section class="leaderboard-table-card glass">
-            <div id="leaderboardList" class="leaderboard-list leaderboard-standings-list"><div class="empty">Waiting for team data…</div></div>
-          </section>
-
-          <section class="leaderboard-action glass" aria-label="Leaderboard opportunity">
-            <span>OPPORTUNITY</span>
-            <p id="leaderboardActionInsight">Your clearest next move will appear here.</p>
-          </section>
-
+          <div class="leaderboard-metric-head" aria-hidden="true"><span>Calls</span><span>Connects</span><span>Data</span><span>Knock</span></div>
+          <div id="leaderboardList" class="leaderboard-list leaderboard-unified-list"><div class="empty">Waiting for team data…</div></div>
           <p id="leaderboardNote" class="leaderboard-note">Ranked by daily overall completion percentage.</p>
-          <span id="leaderboardPeriodLabel" class="hidden">DAILY LEADERBOARD</span>
         </section>
       </div>
     </section>
@@ -525,6 +502,6 @@
 </div>
 
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=74"></script>
+<script type="module" src="app.js?v=77"></script>
 </body>
 </html>
