@@ -1,17 +1,6 @@
-# AGNT V84 — Connected Follow-Ups
+# AGNT V85 — Smart Prospector & Day Loop
 
-Built incrementally from the stable AGNT V83 package.
-
-## Changes
-- Contact follow-ups dated today now appear in the Today timeline and morning follow-up count.
-- Overdue contact follow-ups also remain visible on Today until rescheduled or completed.
-- Appointment follow-ups continue to behave as before.
-- Removed the repeated Prospector intro/subheader so the page heading matches Home.
-
-## Preserved
-- Firebase configuration, authentication and Firestore paths.
-- UID separation, local cache and sync.
-- Existing appointments, prospecting, pipeline, targets, scoring and leaderboard behaviour.
-- Vanilla HTML/CSS/JS and GitHub Pages deployment workflow.
-
-No Firebase changes are required.
+- Added smart Prospector subheadings based on the active section, due follow-ups, contacts and seller pipeline.
+- Added a morning-to-evening workflow: Start My Day captures the morning plan locally and the Day in Review compares it with completed activity.
+- Day in Review appears automatically from 6:00pm once per workday and can be opened manually from Today after 5:00pm.
+- No Firebase, authentication, Firestore path, UID separation, data-shape, cache behaviour or sync changes.

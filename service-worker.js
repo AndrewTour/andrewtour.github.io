@@ -1,5 +1,5 @@
-const CACHE='agnt-v84-connected-followups';
-const ASSETS=['./','./index.html','./styles.css?v=84.0','./app.js?v=84.0','./firebase-config.js','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
+const CACHE='agnt-v85-day-loop';
+const ASSETS=['./','./index.html','./styles.css?v=85.0','./app.js?v=85.0','./firebase-config.js','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{

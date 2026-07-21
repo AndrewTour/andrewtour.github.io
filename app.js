@@ -105,6 +105,18 @@ function clearActiveSession(){unsubDays?.();unsubProfile?.();unsubLeaderboard?.(
 function displayAgentName(){return (agentName||currentUser?.displayName||currentUser?.email?.split('@')[0]||'Agent').trim()}
 function welcomeProfileName(){return (agentName||currentUser?.displayName||'Agent').trim()||'Agent'}
 function welcomeStorageKey(){return `${storagePrefix(uid)}welcome:${todayKey()}`}
+function dayPlanStorageKey(k=todayKey()){return `${storagePrefix(uid)}day-plan:${k}`}
+function dayReviewSeenKey(k=todayKey()){return `${storagePrefix(uid)}day-review-seen:${k}`}
+function readDayPlan(k=todayKey()){try{return safeJsonParse(localStorage.getItem(dayPlanStorageKey(k))||'null',null)}catch{return null}}
+function captureDayPlan(k=todayKey()){
+  if(readDayPlan(k))return;
+  const appointments=appointmentEntriesForDate(k).map(({appointment:a,sourceDate})=>({id:a.id||calendarExportId(a,sourceDate),sourceDate,name:a.contactName||a.name||'Appointment',type:appointmentType(a),address:a.address||''}));
+  const followUps=allFollowUpsForDate(k).map(item=>({id:item.id||item.prospect?.id||item.appointment?.id||'',name:item.name||item.prospect?.name||item.appointment?.contactName||item.appointment?.name||'Follow-up'}));
+  const plan={date:k,capturedAt:Date.now(),targets:{calls:targets.calls,connects:targets.connects,data:targets.data,knock:rollingKnockTarget(k)},appointments,followUps};
+  try{localStorage.setItem(dayPlanStorageKey(k),JSON.stringify(plan))}catch{}
+}
+function dayReviewSeen(k=todayKey()){try{return localStorage.getItem(dayReviewSeenKey(k))==='1'}catch{return false}}
+function markDayReviewSeen(k=todayKey()){try{localStorage.setItem(dayReviewSeenKey(k),'1')}catch{}}
 function welcomeSeenToday(){try{return localStorage.getItem(welcomeStorageKey())==='1'}catch{return false}}
 function firstWelcomeName(){return welcomeProfileName().split(/\s+/).filter(Boolean)[0]||'Agent'}
 function welcomeGreetingFor(date=new Date()){const hour=date.getHours();return hour<12?'Good morning':hour<17?'Good afternoon':'Good evening'}
@@ -136,9 +148,43 @@ function showDailyWelcome(){
 }
 function dismissDailyWelcome(){
   const screen=$('#welcomeScreen');if(!screen)return;
+  captureDayPlan();
   try{localStorage.setItem(welcomeStorageKey(),'1')}catch{}
   screen.classList.add('is-leaving');screen.setAttribute('aria-hidden','true');setTimeout(()=>screen.classList.add('hidden'),320);
 }
+function currentDayPlan(k=todayKey()){
+  const saved=readDayPlan(k);if(saved)return saved;
+  const appointments=appointmentEntriesForDate(k).map(({appointment:a,sourceDate})=>({id:a.id||calendarExportId(a,sourceDate),sourceDate,name:a.contactName||a.name||'Appointment',type:appointmentType(a),address:a.address||''}));
+  const followUps=allFollowUpsForDate(k).map(item=>({id:item.id||item.prospect?.id||item.appointment?.id||'',name:item.name||item.prospect?.name||item.appointment?.contactName||item.appointment?.name||'Follow-up'}));
+  return{date:k,targets:{calls:targets.calls,connects:targets.connects,data:targets.data,knock:rollingKnockTarget(k)},appointments,followUps};
+}
+function dayReviewSummary(k=todayKey()){
+  const plan=currentDayPlan(k),d=dayData(k),target=plan.targets||{},knock=Math.floor(liveKnockSeconds(d)/60);
+  const currentDueIds=new Set(allFollowUpsForDate(k).map(item=>String(item.id||item.prospect?.id||item.appointment?.id||'')));
+  const followUpTotal=plan.followUps?.length||0,followUpsCleared=(plan.followUps||[]).filter(item=>item.id&&!currentDueIds.has(String(item.id))).length;
+  const appointmentTotal=plan.appointments?.length||0;
+  const appointmentsCompleted=(plan.appointments||[]).filter(item=>{const entry=appointmentEntriesForDate(k).find(({appointment:a,sourceDate})=>String(a.id||calendarExportId(a,sourceDate))===String(item.id));return entry&&appointmentLifecycle(entry.appointment,entry.sourceDate)==='completed'}).length;
+  const metrics=[['Calls',d.calls,target.calls||targets.calls],['Connects',d.connects,target.connects||targets.connects],['Data',d.data,target.data||targets.data],['Knocking',knock,target.knock||rollingKnockTarget(k)]];
+  const goalsHit=metrics.filter(([,value,goal])=>value>=goal).length,score=completion(k);
+  let title='Day reviewed. Tomorrow is clearer.';
+  let coach='Carry the unfinished priorities forward and protect the first prospecting block.';
+  if(goalsHit===4){title='You closed the loop.';coach='All four activity goals were achieved. Start tomorrow by building on the strongest conversations from today.'}
+  else if(goalsHit>=2){title='Good progress. Finish with intent.';coach='You moved the day forward. Note the missed targets and make them tomorrow’s first controllable wins.'}
+  else if(score<35){title='Reset, don’t drift.';coach='Today fell short of the plan. Keep tomorrow simple: start on time, clear the follow-ups and build momentum early.'}
+  return{plan,metrics,goalsHit,score,followUpTotal,followUpsCleared,appointmentTotal,appointmentsCompleted,title,coach};
+}
+function renderDayReview(){
+  const overlay=$('#dayReviewOverlay');if(!overlay)return;const summary=dayReviewSummary();
+  $('#dayReviewScore').textContent=`${summary.score}%`;$('#dayReviewTitle').textContent=summary.title;$('#dayReviewCoach').textContent=summary.coach;
+  $('#dayReviewMetrics').innerHTML=summary.metrics.map(([label,value,goal])=>`<article class="day-review-metric ${value>=goal?'complete':''}"><span>${escapeHtml(label)}</span><strong>${label==='Knocking'?`${value}m`:value}</strong><small>of ${label==='Knocking'?`${goal}m`:goal}</small></article>`).join('');
+  $('#dayReviewPlan').innerHTML=`<div><strong>${summary.appointmentsCompleted}/${summary.appointmentTotal}</strong><span>Morning appointments completed</span></div><div><strong>${summary.followUpsCleared}/${summary.followUpTotal}</strong><span>Morning follow-ups cleared</span></div><div><strong>${summary.goalsHit}/4</strong><span>Daily activity goals achieved</span></div>`;
+}
+function showDayReview({automatic=false}={}){
+  if(!isWorkDayKey(todayKey()))return;const overlay=$('#dayReviewOverlay');if(!overlay)return;if(automatic&&dayReviewSeen())return;
+  renderDayReview();overlay.classList.remove('hidden');overlay.setAttribute('aria-hidden','false');document.body.classList.add('day-review-open');
+}
+function closeDayReview(){const overlay=$('#dayReviewOverlay');if(!overlay)return;markDayReviewSeen();overlay.classList.add('hidden');overlay.setAttribute('aria-hidden','true');document.body.classList.remove('day-review-open')}
+function maybeShowDayReview(){const now=new Date();if(now.getHours()<18||!welcomeSeenToday()||dayReviewSeen())return;showDayReview({automatic:true})}
 function leaderboardPayload(){
   const k=todayKey(),d=dayData(k),knockMinutes=Math.floor(liveKnockSeconds(d)/60),knockTarget=rollingKnockTarget(k);
   return{uid,name:displayAgentName(),email:currentUser?.email||'',date:k,activeToday:isWorkDayKey(k),workDays:[...workDays],calls:d.calls,connects:d.connects,data:d.data,knockMinutes,score:completion(k),targets:{calls:targets.calls,connects:targets.connects,data:targets.data,knock:knockTarget},dailyHistory:recentDailyHistory(),weekHistory:recentWeekHistory(),clientUpdatedAt:Date.now(),updatedAt:serverTimestamp()}
@@ -395,7 +441,16 @@ function pageHeaderState(id=activeViewId()){
     return{title:'Leaderboard',subtitle:'Log activity to enter the board.'};
   }
   const label=document.querySelector(`.tabbar button[data-view="${id}"] span`)?.textContent||'AGNT';
-  const subtitle=id==='prospectingView'?'':id==='settingsView'?'Make AGNT work your way.':id==='insightsView'?'Set the pace. Raise the standard.':'';
+  if(id==='prospectingView'){
+    const overdue=prospects.filter(p=>p.nextFollowUp&&p.nextFollowUp<todayKey()).length,due=prospects.filter(p=>p.nextFollowUp===todayKey()).length,sellers=sellerPipelineProspects().length;
+    if(prospectSection==='contacts')return{title:label,subtitle:prospects.length?`${prospects.length} contact${prospects.length===1?'':'s'} ready to work.`:'Build the database one useful conversation at a time.'};
+    if(prospectSection==='pipeline')return{title:label,subtitle:sellers?`${sellers} active seller${sellers===1?'':'s'} across your pipeline.`:'Qualify the next opportunity into your pipeline.'};
+    if(prospectSection==='insights')return{title:label,subtitle:'See what is creating conversations and appointments.'};
+    if(overdue)return{title:label,subtitle:`${overdue} overdue follow-up${overdue===1?'':'s'} need attention.`};
+    if(due)return{title:label,subtitle:`${due} follow-up${due===1?'':'s'} due today.`};
+    return{title:label,subtitle:'Your follow-up list is clear — create the next opportunity.'};
+  }
+  const subtitle=id==='settingsView'?'Make AGNT work your way.':id==='insightsView'?'Set the pace. Raise the standard.':'';
   return{title:label,subtitle};
 }
 function getEmptyState(type,context={}){
@@ -1384,6 +1439,7 @@ function setProspectorSection(section='today'){
   $('#prospectorContactsPanel')?.classList.toggle('hidden',prospectSection!=='contacts');
   $('#prospectorPipelinePanel')?.classList.toggle('hidden',prospectSection!=='pipeline');
   $('#prospectorInsightsPanel')?.classList.toggle('hidden',prospectSection!=='insights');
+  if(document.querySelector('.view.active')?.id==='prospectingView')updateTopbar();
   $('.prospecting-toolbar')?.classList.toggle('hidden',prospectSection==='insights');
   const input=$('#prospectSearch');if(input)input.placeholder=prospectSection==='contacts'?'Search anything':prospectSection==='pipeline'?'Search seller pipeline':'Search name, address or phone';
   if(prospectSessionActive)return;
@@ -1519,7 +1575,7 @@ async function importProspectCsv(file){const rows=parseCsv(await file.text());if
 
 function renderSettings(){const name=displayAgentName();$('#agentName').value=name;$('#callsTarget').value=targets.calls;$('#connectsTarget').value=targets.connects;$('#dataTarget').value=targets.data;$('#weeklyKnockTarget').value=targets.weeklyKnock;$$('[name=workDay]').forEach(el=>el.checked=workDays.includes(Number(el.value)));$$('[name=calendarPreference]').forEach(el=>el.checked=el.value===calendarPreference);$('#accountEmail').textContent=currentUser?.email||'Device-only mode';$('#modeNote').textContent=cloud?'Live sync is active. Use the same login on every device.':'Data is stored only on this device.';const initials=name.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]?.toUpperCase()||'').join('')||'A';if($('#profileAvatar'))$('#profileAvatar').textContent=initials;if($('#profileSyncState'))$('#profileSyncState').textContent=cloud?'Live sync active':'Device-only profile';if($('#profileTodayScore'))$('#profileTodayScore').textContent=`${completion(todayKey())}%`;if($('#profileWeekScore'))$('#profileWeekScore').textContent=`${weekSummary().score}%`;if($('#profileWorkDays'))$('#profileWorkDays').textContent=workDays.length}
 function renderDayViews(){renderToday();renderTimeline();renderAppointments();renderInsights();renderSettings()}
-function renderAll(){renderDayViews();renderProspecting()}
+function renderAll(){renderDayViews();renderProspecting();const reviewButton=$('#openDayReview');if(reviewButton)reviewButton.classList.toggle('hidden',new Date().getHours()<17||selectedDate!==todayKey()||!isWorkDayKey(todayKey()));maybeShowDayReview()}
 
 async function startCloud(user){
   unsubDays?.();unsubProfile?.();unsubLeaderboard?.();currentUser=user;uid=user.uid;cloud=true;loadLocal(uid);await finaliseExpiredTimers();
@@ -1675,6 +1731,9 @@ $('#prospectingView').onsubmit=async e=>{
     if(fromSession&&prospectSessionActive){prospectSessionStats.calls+=delta.calls;prospectSessionStats.connects+=delta.connects;if(temperature==='Warm'||temperature==='Hot')prospectSessionStats.temperate++;if(outcome==='Appointment booked')prospectSessionStats.appointments++;prospectSessionIndex++;saveProspectingSessionState();toast('Contact logged');showProspectingSession()}else{toast('Contact logged');renderProspectDetail(p.id)}return}
 };
 
+$('#openDayReview')&&($('#openDayReview').onclick=()=>showDayReview());
+$('#closeDayReview')&&($('#closeDayReview').onclick=closeDayReview);
+$('#dayReviewOverlay')&&($('#dayReviewOverlay').onclick=e=>{if(e.target.id==='dayReviewOverlay')closeDayReview()});
 $('#saveSettings').onclick=async()=>{const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;calendarPreference=$('[name=calendarPreference]:checked')?.value==='apple'?'apple':'outlook';saveLocal();await saveTargets();renderAll();toast('Settings saved')};
 $('#signOut').onclick=async()=>{clearActiveSession();if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
 $('#exportData').onclick=()=>{const blob=new Blob([JSON.stringify({targets,workDays,days},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`daily-accountability-${todayKey()}.json`;a.click();URL.revokeObjectURL(a.href)};
@@ -1695,5 +1754,5 @@ window.addEventListener('error',event=>console.error('Unhandled app error',event
 window.addEventListener('unhandledrejection',event=>console.error('Unhandled promise rejection',event.reason));
 renderProspecting();
 if('serviceWorker'in navigator)window.addEventListener('load',async()=>{const reg=await navigator.serviceWorker.register('./service-worker.js');reg.update()});
-setInterval(()=>{finaliseExpiredTimers().then(()=>{if(selectedDate<todayKey())renderAll()});updateAppViewport();if(cloud)scheduleLeaderboardPublish()},30000);
+setInterval(()=>{finaliseExpiredTimers().then(()=>{if(selectedDate<todayKey())renderAll()});maybeShowDayReview();updateAppViewport();if(cloud)scheduleLeaderboardPublish()},30000);
 init();

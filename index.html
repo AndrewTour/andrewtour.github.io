@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=84.0">
+<link rel="stylesheet" href="styles.css?v=85.0">
 <title>AGNT</title>
 </head>
 <body>
@@ -61,6 +61,18 @@
       <span>Start My Day</span>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
     </button>
+  </section>
+</div>
+
+<div id="dayReviewOverlay" class="day-review-overlay hidden" aria-hidden="true">
+  <section class="day-review-card" role="dialog" aria-modal="true" aria-labelledby="dayReviewTitle">
+    <div class="day-review-head"><span>DAY IN REVIEW</span><strong id="dayReviewScore">0%</strong></div>
+    <h2 id="dayReviewTitle">Day reviewed. Tomorrow is clearer.</h2>
+    <p>The plan you started with, measured against what you completed.</p>
+    <div id="dayReviewMetrics" class="day-review-metrics"></div>
+    <div id="dayReviewPlan" class="day-review-plan"></div>
+    <section class="day-review-coach"><span>TOMORROW'S FOCUS</span><p id="dayReviewCoach"></p></section>
+    <button id="closeDayReview" class="primary day-review-close" type="button">Finish My Day</button>
   </section>
 </div>
 
@@ -138,6 +150,7 @@
           <div class="actions knock-actions"><div id="knockPercent" class="metric-percent metric-ring" role="img" aria-label="Knocking: 0% complete, expected pace 0%, target 60 minutes">0%</div><button id="timerButton" class="timer" type="button" aria-label="Start knocking timer"><svg class="timer-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 6.5 17 12l-8.5 5.5Z"/></svg></button><button id="resetKnock" class="reset" aria-label="Reset today’s knocking">↶</button></div>
         </article>
       </section>
+      <button id="openDayReview" class="open-day-review hidden" type="button"><span>DAY IN REVIEW</span><strong>Review today and prepare tomorrow</strong><b aria-hidden="true">›</b></button>
 
     </section>
 
@@ -498,6 +511,6 @@
 </div>
 
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=84.0"></script>
+<script type="module" src="app.js?v=85.0"></script>
 </body>
 </html>
