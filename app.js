@@ -11,7 +11,6 @@ const DEFAULTS={calls:50,connects:25,data:10,weeklyKnock:240};
 const SELLING_TIMEFRAMES=['Now','1–3 months','6–12 months','12 months+'];
 let targets={...DEFAULTS}, days={}, prospects=[], prospectInteractions=[], prospectFilter='priority', prospectSection='today', pipelineTemperature='All', pipelineSort='followup', prospectBulkMode=false, selectedProspectIds=new Set(), activeProspectId=null, prospectSessionIds=[], prospectSessionIndex=0, prospectSessionActive=false, prospectSessionStats={calls:0,connects:0,temperate:0,appointments:0}, selectedDate=dateKey(new Date()), appointmentDate=selectedDate, appointmentHistoryMode=null, agentName='', calendarPreference='outlook', leaderboardEntries=[], leaderboardMode='day', leaderboardDayOffset=0, leaderboardWeekOffset=0, scorecardWeekOffset=0, prospectInsightPeriod='week';
 let year=new Date().getFullYear(), monthCursor=new Date(), uid='local', currentUser=null, cloud=false, db=null, auth=null;
-let welcomeDaysReady=false, welcomeProfileReady=false, welcomeReadyTimer=null;
 let unsubDays=null, unsubProfile=null, unsubLeaderboard=null, unsubProspecting=null, timerTick=null, syncTimer=null, leaderboardPublishTimer=null, prospectingSaveTimer=null;
 let pendingSyncOperations=0, syncHasError=false, lastLeaderboardSignature='', lastProspectingSignature='';
 let pendingProspectingPayload=null, pendingProspectingSignature='', prospectingWriteInFlight=false, prospectingSaveWaiters=[];
@@ -102,74 +101,54 @@ function saveDirtyDays(){try{localStorage.setItem(storagePrefix(uid)+'dirty-days
 function markDayDirty(k){dirtyDayKeys.add(k);saveDirtyDays()}
 function clearDayDirty(k,clientUpdatedAt){if(Number(days[k]?.clientUpdatedAt)===Number(clientUpdatedAt)){dirtyDayKeys.delete(k);saveDirtyDays()}}
 function saveLocal(){const prefix=storagePrefix(uid);try{const serialised=JSON.stringify(normaliseDaysMap(days));const previous=localStorage.getItem(prefix+'days');if(previous)localStorage.setItem(prefix+'days-backup',previous);localStorage.setItem(prefix+'days',serialised);localStorage.setItem(prefix+'targets',JSON.stringify(targets));localStorage.setItem(prefix+'agent-name',agentName);localStorage.setItem(prefix+'work-days',JSON.stringify(workDays));localStorage.setItem(prefix+'calendar-preference',calendarPreference);localStorage.setItem(prefix+'prospects',JSON.stringify(prospects));localStorage.setItem(prefix+'prospect-interactions',JSON.stringify(prospectInteractions));return true}catch(err){console.error('Local save failed',err);return false}}
-function clearActiveSession(){unsubDays?.();unsubProfile?.();unsubLeaderboard?.();unsubProspecting?.();unsubDays=unsubProfile=unsubLeaderboard=unsubProspecting=null;clearInterval(timerTick);clearTimeout(syncTimer);clearTimeout(leaderboardPublishTimer);clearTimeout(welcomeReadyTimer);welcomeReadyTimer=null;welcomeDaysReady=false;welcomeProfileReady=false;clearTimeout(prospectingSaveTimer);prospectingSaveTimer=null;pendingProspectingPayload=null;pendingProspectingSignature='';prospectingWriteInFlight=false;prospectingSaveWaiters.splice(0).forEach(({resolve})=>resolve());currentUser=null;uid='local';cloud=false;pendingSyncOperations=0;syncHasError=false;lastLeaderboardSignature='';lastProspectingSignature='';dirtyDayKeys=new Set();resetState()}
+function clearActiveSession(){unsubDays?.();unsubProfile?.();unsubLeaderboard?.();unsubProspecting?.();unsubDays=unsubProfile=unsubLeaderboard=unsubProspecting=null;clearInterval(timerTick);clearTimeout(syncTimer);clearTimeout(leaderboardPublishTimer);clearTimeout(prospectingSaveTimer);prospectingSaveTimer=null;pendingProspectingPayload=null;pendingProspectingSignature='';prospectingWriteInFlight=false;prospectingSaveWaiters.splice(0).forEach(({resolve})=>resolve());currentUser=null;uid='local';cloud=false;pendingSyncOperations=0;syncHasError=false;lastLeaderboardSignature='';lastProspectingSignature='';dirtyDayKeys=new Set();resetState()}
 function displayAgentName(){return (agentName||currentUser?.displayName||currentUser?.email?.split('@')[0]||'Agent').trim()}
 function welcomeStorageKey(){return `${storagePrefix(uid)}welcome:${todayKey()}`}
 function welcomeSeenToday(){try{return localStorage.getItem(welcomeStorageKey())==='1'}catch{return false}}
 function firstAgentName(){return displayAgentName().split(/\s+/).filter(Boolean)[0]||'Agent'}
 function welcomeGreetingFor(date=new Date()){const hour=date.getHours();return hour<12?'Good morning':hour<17?'Good afternoon':'Good evening'}
-function welcomeIsVisible(){const screen=$('#welcomeScreen');return Boolean(screen&&!screen.classList.contains('hidden'))}
-function refreshWelcomeIfVisible(){if(welcomeIsVisible())renderWelcomeScreen()}
-function welcomeCloudReady(){return welcomeDaysReady&&welcomeProfileReady}
-function showSyncedDailyWelcome(){if(!cloud||welcomeCloudReady()){clearTimeout(welcomeReadyTimer);welcomeReadyTimer=null;showDailyWelcome();return}clearTimeout(welcomeReadyTimer);welcomeReadyTimer=setTimeout(()=>{showDailyWelcome();refreshWelcomeIfVisible()},4500)}
 function welcomeBrief(){
-  const k=todayKey(),now=new Date(),hour=now.getHours();
-  const appointmentEntries=appointmentEntriesForDate(k);
-  const followUps=scheduledFollowUpsForDate(k);
-  const appointmentCount=appointmentEntries.length;
-  const followUpCount=followUps.length;
+  const k=todayKey(),now=new Date(),hour=now.getHours(),appointments=appointmentEntriesForDate(k).length,followUps=scheduledFollowUpsForDate(k).length;
+  if(!isWorkDayKey(k))return{
+    priorityTitle:'Use the quiet day well',priorityText:'There are no prospecting targets scheduled. Use the space to sharpen the pipeline and prepare the next workday.',
+    riskTitle:'Drifting into reactive work',riskText:'Without a defined outcome, admin can consume the day without creating future business.',
+    winTitle:'Choose tomorrow’s three best opportunities',winText:'Review the pipeline and identify the three people most likely to create an appointment or decision next.'
+  };
 
-  const appointments=appointmentEntries.map(({appointment:a,sourceDate})=>({
-    time:appointmentTimeLabel(a,sourceDate),
-    client:a.contactName||a.name||'Client',
-    address:a.address||'',
-    type:appointmentType(a)
-  }));
+  let priority;
+  if(appointments>=3)priority={title:'Protect an appointment-led day',text:`You have ${appointments} appointments. The day is won by preparing properly, creating clear next steps and using the gaps between them deliberately.`};
+  else if(appointments>0)priority={title:'Convert today, build tomorrow',text:`You have ${appointments} appointment${appointments===1?'':'s'}. Give them full attention, then use the remaining capacity to create the next opportunity.`};
+  else priority={title:'Make this a pipeline creation day',text:'With no appointments controlling the calendar, today’s value comes from creating conversations that become next week’s meetings.'};
 
-  let momentumTitle,momentumText;
-  if(!isWorkDayKey(k)){
-    momentumTitle='Make tomorrow easier to win.';
-    momentumText='Use the space today to sharpen the pipeline, confirm the right conversations and begin the next workday with direction.';
-  }else if(appointmentCount===0&&followUpCount===0){
-    momentumTitle='Today is open. Create the momentum.';
-    momentumText='There are no appointments or scheduled follow-ups holding the day together yet. The opportunity is to create the next one.';
-  }else if(appointmentCount===0&&followUpCount>0){
-    momentumTitle='Turn warm pipeline into booked time.';
-    momentumText=`You have ${followUpCount} active follow-up${followUpCount===1?'':'s'} and no appointments booked today. Move the strongest conversation forward first.`;
-  }else if(appointmentCount>0&&followUpCount===0){
-    momentumTitle=appointmentCount>=3?'Protect the diary. Create the next opening.':'Convert today, then build tomorrow.';
-    momentumText=appointmentCount>=3?'Your calendar already has momentum. Give each appointment a clear outcome and use the gaps between them deliberately.':'You have meaningful face-to-face opportunity today. Prepare well, leave each meeting with a next step, then create the next appointment.';
-  }else{
-    momentumTitle='Convert the diary and move the pipeline.';
-    momentumText=`You have ${appointmentCount} appointment${appointmentCount===1?'':'s'} and ${followUpCount} follow-up${followUpCount===1?'':'s'}. Handle the committed opportunities first, then use the remaining space to create what comes next.`;
-  }
+  const wk=weekSummary(new Date()),ordered=weekKeys(new Date()),todayIndex=Math.max(0,ordered.indexOf(k)),elapsed=Math.max(1,todayIndex+1);
+  const expected={calls:targets.calls*elapsed,connects:targets.connects*elapsed,data:targets.data*elapsed,knock:targets.weeklyKnock*(elapsed/Math.max(1,ordered.length))};
+  const actual={calls:wk.calls,connects:wk.connects,data:wk.data,knock:Math.floor(wk.knock/60)};
+  const labels={calls:'calls',connects:'quality connects',data:'new data',knock:'knocking minutes'};
+  const deficits=Object.keys(expected).map(key=>({key,gap:Math.max(0,Math.round(expected[key]-actual[key])),ratio:expected[key]?actual[key]/expected[key]:1})).sort((a,b)=>b.gap-a.gap||a.ratio-b.ratio);
+  const weakest=deficits[0];
+  let risk;
+  if(followUps>=3)risk={title:'Warm opportunities are waiting',text:`There are ${followUps} follow-ups due. Leaving them too long risks turning active interest into a colder conversation.`};
+  else if(weakest&&weakest.gap>0)risk={title:`${labels[weakest.key][0].toUpperCase()+labels[weakest.key].slice(1)} are carrying the most pressure`,text:`You are ${weakest.gap} ${labels[weakest.key]} behind the pace required by this point in the week. That is the gap most likely to compound.`};
+  else risk={title:'Activity is on pace — quality is the risk',text:'The numbers are holding. The danger now is rushing conversations instead of creating a clear next step from each one.'};
 
-  if(hour>=17&&appointmentCount===0){
-    momentumTitle='Finish with tomorrow already in motion.';
-    momentumText='Use the final part of the day to create one clear next step, then set tomorrow up before you close out.';
-  }
+  let win;
+  if(followUps>0)win={title:`Close the loop on ${followUps} follow-up${followUps===1?'':'s'}`,text:'Handle the warmest opportunities first, record the outcome and leave each conversation with a defined next action.'};
+  else if(appointments>0)win={title:'Prepare the next decision before the first appointment',text:'Review the motivation, likely objection and exact next step you want before the appointment begins.'};
+  else if(hour<10)win={title:'Create 10 genuine conversations before 10am',text:'Do not chase the call count first. Focus on enough quality conversations to uncover one appointment opportunity.'};
+  else if(hour<14)win={title:'Create one appointment before lunch',text:'Work the strongest part of the database until one conversation produces a clear appointment or next step.'};
+  else win={title:'Create one meaningful outcome in the next hour',text:'Choose the activity with the strongest pipeline impact and stay with it until it produces a conversation, appointment or decision.'};
 
-  return{appointments,appointmentCount,followUpCount,momentumTitle,momentumText};
+  return{priorityTitle:priority.title,priorityText:priority.text,riskTitle:risk.title,riskText:risk.text,winTitle:win.title,winText:win.text};
 }
 function renderWelcomeScreen(){
   const screen=$('#welcomeScreen');if(!screen)return;
   const now=new Date(),brief=welcomeBrief();
   $('#welcomeName').textContent=firstAgentName();
-  $('#welcomeGreeting').childNodes[0].nodeValue=`${welcomeGreetingFor(now)}, `;
+  $('#welcomeGreeting').childNodes[0].nodeValue=`${welcomeGreetingFor(now)},`;
   $('#welcomeDate').textContent=now.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long'});
-  $('#welcomeAppointmentCount').textContent=brief.appointmentCount
-    ?`You’ve got ${brief.appointmentCount} appointment${brief.appointmentCount===1?'':'s'} today.`
-    :'You’ve got no appointments today.';
-  $('#welcomeFollowupCount').textContent=brief.followUpCount
-    ?`You’ve got ${brief.followUpCount} pipeline follow-up${brief.followUpCount===1?'':'s'} today.`
-    :'You’ve got no pipeline follow-ups today.';
-  $('#welcomeMomentumTitle').textContent=brief.momentumTitle;
-  $('#welcomeMomentumText').textContent=brief.momentumText;
-  const timeline=$('#welcomeTimeline');
-  timeline.innerHTML=brief.appointments.length?brief.appointments.map((a,index)=>{
-    const detail=[a.type&&a.type!=='—'?a.type:'',a.address].filter(Boolean).join(' · ');
-    return `<article class="welcome-timeline-item"><div class="welcome-time">${escapeHtml(a.time)}</div><div class="welcome-timeline-marker" aria-hidden="true"><span></span></div><div class="welcome-appointment-copy"><strong>${escapeHtml(a.client)}</strong><p>${detail?`${escapeHtml(detail)} · `:''}${escapeHtml(a.time)}</p></div></article>`;
-  }).join(''):'';
+  $('#welcomePriorityTitle').textContent=brief.priorityTitle;$('#welcomePriorityText').textContent=brief.priorityText;
+  $('#welcomeRiskTitle').textContent=brief.riskTitle;$('#welcomeRiskText').textContent=brief.riskText;
+  $('#welcomeWinTitle').textContent=brief.winTitle;$('#welcomeWinText').textContent=brief.winText;
 }
 function showDailyWelcome(){
   const screen=$('#welcomeScreen');if(!screen||welcomeSeenToday())return;
@@ -650,6 +629,17 @@ function timelineStatus(item,index,items,viewDate,focusItemId=''){
   const end=Math.min(item.minutes+(item.duration||60),next);
   return nowMinutes>=end?'complete':'upcoming';
 }
+function timelineTimeBlockIndex(items,viewDate){
+  if(viewDate!==todayKey()||!items.length)return-1;
+  const now=new Date(),nowMinutes=now.getHours()*60+now.getMinutes();
+  let active=-1;
+  items.forEach((item,index)=>{
+    const next=items[index+1]?.minutes??1440;
+    const end=Math.min(item.minutes+(item.duration||60),next);
+    if(nowMinutes>=item.minutes&&nowMinutes<end)active=index;
+  });
+  return active;
+}
 function timelineFocusId(items,kind){
   return items.find(item=>item.kind===kind)?.id||'';
 }
@@ -778,11 +768,13 @@ function renderTimeline(){
   $('#timelineCurrentTitle').textContent=priority.title;
   $('#timelineCurrentMeta').textContent=coachSentenceCase(priority.meta);
   $('#timelineSummary').textContent=`${items.filter(i=>i.kind==='appointment').length} appointment${items.filter(i=>i.kind==='appointment').length===1?'':'s'} · ${completion(selectedDate)}% complete`;
+  const activeTimeBlock=timelineTimeBlockIndex(items,selectedDate);
   $('#dailyTimeline').innerHTML=items.length?items.map((item,index)=>{
     const status=timelineStatus(item,index,items,selectedDate,priority.focusItemId);
+    const timeActive=index===activeTimeBlock?' time-active':'';
     const marker=status==='complete'?'✓':status==='current'?'●':'○';
     const call=(item.kind==='followup'||item.kind==='appointment')&&item.dial?`<a class="timeline-call" href="tel:${escapeHtml(item.dial)}">Call</a>`:'';
-    return `<article class="timeline-item ${status} ${item.kind}"><time>${escapeHtml(timelineTimeLabel(item.minutes))}</time><span class="timeline-marker">${marker}</span><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.meta)}</small>${call}</div></article>`;
+    return `<article class="timeline-item ${status} ${item.kind}${timeActive}"><time>${escapeHtml(timelineTimeLabel(item.minutes))}</time><span class="timeline-marker">${marker}</span><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.meta)}</small>${call}</div></article>`;
   }).join(''):'<div class="empty">Nothing scheduled for this date.</div>';
 }
 
@@ -1465,7 +1457,7 @@ function renderDayViews(){renderToday();renderTimeline();renderAppointments();re
 function renderAll(){renderDayViews();renderProspecting()}
 
 async function startCloud(user){
-  unsubDays?.();unsubProfile?.();unsubLeaderboard?.();currentUser=user;uid=user.uid;cloud=true;welcomeDaysReady=false;welcomeProfileReady=false;clearTimeout(welcomeReadyTimer);welcomeReadyTimer=null;loadLocal(uid);await finaliseExpiredTimers();
+  unsubDays?.();unsubProfile?.();unsubLeaderboard?.();currentUser=user;uid=user.uid;cloud=true;loadLocal(uid);await finaliseExpiredTimers();
   syncHasError=false;pendingSyncOperations=0;setSync('','Connecting');clearTimeout(syncTimer);syncTimer=setTimeout(()=>{if($('#syncBadge').dataset.label==='Connecting')refreshSyncStatus()},3500);
   unsubDays=onSnapshot(collection(db,'users',uid,'days'),{includeMetadataChanges:true},snap=>{
     let dataChanged=false;
@@ -1478,16 +1470,15 @@ async function startCloud(user){
       if(!useLocal&&incoming.clientUpdatedAt>=local.clientUpdatedAt)dirtyDayKeys.delete(ch.doc.id);
     });
     if(dataChanged){saveLocal();renderDayViews();ensureTick()}else saveDirtyDays();
-    welcomeDaysReady=true;refreshWelcomeIfVisible();if(welcomeCloudReady())showSyncedDailyWelcome();
     clearTimeout(syncTimer);if(!snap.metadata.hasPendingWrites&&!snap.metadata.fromCache)syncHasError=false;refreshSyncStatus();
   },err=>{console.error(err);syncHasError=true;refreshSyncStatus();toast('Firestore access failed. Check rules and login.');showAuthMessage(err.message)});
-  unsubProfile=onSnapshot(doc(db,'users',uid),snap=>{if(snap.exists()){const profile=snap.data();let changed=false;if(profile.targets&&JSON.stringify({...DEFAULTS,...profile.targets})!==JSON.stringify(targets)){targets={...DEFAULTS,...profile.targets};changed=true}if(Array.isArray(profile.workDays)&&profile.workDays.length&&JSON.stringify(normaliseWorkDays(profile.workDays))!==JSON.stringify(workDays)){workDays=normaliseWorkDays(profile.workDays);changed=true}if(profile.name&&profile.name!==agentName){agentName=profile.name;changed=true}if(changed){saveLocal();renderAll();scheduleLeaderboardPublish()}}welcomeProfileReady=true;refreshWelcomeIfVisible();if(welcomeCloudReady())showSyncedDailyWelcome()},err=>{welcomeProfileReady=true;console.error(err);showSyncedDailyWelcome()});
+  unsubProfile=onSnapshot(doc(db,'users',uid),snap=>{if(snap.exists()){const profile=snap.data();let changed=false;if(profile.targets&&JSON.stringify({...DEFAULTS,...profile.targets})!==JSON.stringify(targets)){targets={...DEFAULTS,...profile.targets};changed=true}if(Array.isArray(profile.workDays)&&profile.workDays.length&&JSON.stringify(normaliseWorkDays(profile.workDays))!==JSON.stringify(workDays)){workDays=normaliseWorkDays(profile.workDays);changed=true}if(profile.name&&profile.name!==agentName){agentName=profile.name;changed=true}if(changed){saveLocal();renderAll();scheduleLeaderboardPublish()}}},err=>console.error(err));
   unsubProspecting=onSnapshot(doc(db,'users',uid,'prospecting','state'),{includeMetadataChanges:true},snap=>{if(snap.exists()){const data=snap.data(),nextProspects=normaliseProspects(data.prospects),nextInteractions=normaliseProspectInteractions(data.interactions),nextSignature=prospectingSignature(nextProspects,nextInteractions);if(!snap.metadata.hasPendingWrites)lastProspectingSignature=nextSignature;if(nextSignature!==prospectingSignature()){prospects=nextProspects;prospectInteractions=nextInteractions;saveLocal();renderProspecting()}}},err=>{console.error('Prospecting sync failed',err);toast('Prospecting data is saved locally. Cloud sync needs attention.')});
   unsubLeaderboard=onSnapshot(collection(db,'leaderboard'),{includeMetadataChanges:true},snap=>{const next=snap.docs.map(d=>({uid:d.id,...d.data()}));if(JSON.stringify(next)!==JSON.stringify(leaderboardEntries)){leaderboardEntries=next;renderLeaderboard()}const own=next.find(entry=>entry.uid===uid);if(own)lastLeaderboardSignature=leaderboardSignature(own)},err=>{console.error('Leaderboard read failed',err);$('#leaderboardStatus').textContent='SYNC ERROR'});
-  refreshSyncStatus();showApp({deferWelcome:true});showSyncedDailyWelcome();scheduleLeaderboardPublish();
+  refreshSyncStatus();showApp();scheduleLeaderboardPublish();
 }
 
-function showApp({deferWelcome=false}={}){$('#authGate').classList.add('hidden');$('#app').classList.remove('hidden');$('#appointmentDatePicker').value=appointmentDate;restoreProspectingSessionState();renderAll();ensureTick();if(!deferWelcome)showDailyWelcome()}
+function showApp(){$('#authGate').classList.add('hidden');$('#app').classList.remove('hidden');$('#appointmentDatePicker').value=appointmentDate;restoreProspectingSessionState();renderAll();ensureTick();showDailyWelcome()}
 let viewportFrame=0;
 function updateAppViewport(){
   cancelAnimationFrame(viewportFrame);
@@ -1508,7 +1499,7 @@ function bindViewport(){
   window.addEventListener('orientationchange',()=>setTimeout(updateAppViewport,180),{passive:true});
   window.visualViewport?.addEventListener('resize',updateAppViewport,{passive:true});
   window.visualViewport?.addEventListener('scroll',updateAppViewport,{passive:true});
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden){updateAppViewport();finaliseExpiredTimers().then(()=>{renderAll();refreshWelcomeIfVisible()});if(auth?.currentUser)auth.currentUser.reload().catch(()=>{})}});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){updateAppViewport();finaliseExpiredTimers().then(()=>renderAll())}});
 }
 async function init(){bindViewport();loadLocal('local');await finaliseExpiredTimers();if(!configured()){showAuthMessage('Firebase is not configured. You can still use device-only mode.');return}try{const fb=initializeApp(firebaseConfig);auth=getAuth(fb);await setPersistence(auth,browserLocalPersistence);db=initializeFirestore(fb,{experimentalAutoDetectLongPolling:true,localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});onAuthStateChanged(auth,u=>{if(u){startCloud(u)}else{clearActiveSession();$('#app').classList.add('hidden');$('#authGate').classList.remove('hidden')}})}catch(err){console.error(err);showAuthMessage(err.message)}}
 function showAuthMessage(msg){$('#authMessage').textContent=msg}
