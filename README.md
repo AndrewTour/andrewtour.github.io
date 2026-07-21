@@ -1,18 +1,16 @@
-# AGNT V80 — Design System Sprint 4
+# AGNT V81 — Approved Leaderboard Restored
 
-Built directly on AGNT V79.
+Built on AGNT V80 Design System Sprint 4.
 
-## Changed
-- Standardised typography hierarchy, line-height and supporting-text weight.
-- Applied a restrained 8 / 16 / 24 spacing rhythm to existing sections and cards.
-- Improved reading flow in dense timeline, appointment and leaderboard areas.
-- Preserved Sprint 1 press states, Sprint 2 navigation transitions and Sprint 3 progress motion.
+## Change
+- Restored the approved V75 leaderboard performance-strip presentation.
+- Rows show rank, agent, overall score, overall progress, Calls, Connects, Data and Knock progress.
+- Completed metrics show a tick.
+- Preserved the Sprint 1–4 interaction, navigation, progress, typography and spacing polish.
 
 ## Unchanged
-- All JavaScript application logic.
-- Firebase configuration, authentication, Firestore paths, UID separation, local cache and sync.
-- Targets, scoring, leaderboard calculations and completion rules.
-- Navigation structure, layouts, content and features.
+- Firebase configuration, authentication, Firestore paths and rules.
+- UID separation, local cache and sync workflow.
+- Leaderboard calculations, Day/Week logic and all other app functionality.
 
-## Firebase
 No Firebase changes are required.

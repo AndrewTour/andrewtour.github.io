@@ -3907,3 +3907,63 @@ a.button:focus-visible,
 @media (max-width:390px){
   :root{--space-2:14px;--space-3:22px}
 }
+
+
+/* V81 — Restore approved V75 leaderboard performance strips */
+.leaderboard-performance-row{
+  display:block;
+  padding:11px 12px 10px;
+  border:1px solid #e7eaf0;
+  border-radius:18px;
+  background:rgba(255,255,255,.92);
+  box-shadow:0 6px 16px rgba(24,31,46,.045);
+}
+.leaderboard-performance-row.me{
+  border-color:rgba(11,99,243,.18);
+  background:linear-gradient(180deg,rgba(244,248,255,.98),rgba(255,255,255,.96));
+}
+.leaderboard-performance-row.leader:not(.me){background:linear-gradient(180deg,#fffdf7,#fff)}
+.leaderboard-performance-head{
+  display:grid;
+  grid-template-columns:28px minmax(0,1fr) auto;
+  align-items:center;
+  gap:9px;
+}
+.leaderboard-performance-head .rank{
+  display:grid;
+  place-items:center;
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  background:#f0f3f7;
+  color:#5f6876;
+  font-size:.62rem;
+  font-weight:900;
+}
+.leaderboard-performance-row.leader .leaderboard-performance-head .rank{background:#171a21;color:#fff}
+.leaderboard-performance-head .agent{min-width:0;display:flex;align-items:baseline;gap:6px}
+.leaderboard-performance-head .agent strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.82rem;color:#171a21}
+.leaderboard-performance-head .agent small{font-size:.48rem;font-weight:850;text-transform:uppercase;letter-spacing:.08em;color:#0b63f3}
+.leaderboard-performance-head>em{display:flex;flex-direction:column;align-items:flex-end;color:#0b63f3;font-size:.92rem;font-style:normal;font-weight:900;line-height:1}
+.leaderboard-performance-head>em small{margin-top:3px;color:#9aa2af;font-size:.4rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+.leaderboard-overall-progress{display:block;height:4px;margin:8px 0 9px 37px;border-radius:999px;background:#edf0f4;overflow:hidden}
+.leaderboard-overall-progress>b{display:block;height:100%;border-radius:inherit;background:#0b63f3}
+.leaderboard-performance-row.leader:not(.me) .leaderboard-overall-progress>b{background:#171a21}
+.leaderboard-performance-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-left:37px}
+.leaderboard-performance-metric{display:grid;grid-template-columns:1fr;min-width:0}
+.leaderboard-performance-metric small{color:#8d95a3;font-size:.43rem;font-weight:800;letter-spacing:.04em}
+.leaderboard-performance-metric strong{margin-top:2px;color:#303744;font-size:.62rem;line-height:1.15;font-weight:850;white-space:nowrap}
+.leaderboard-performance-metric i{height:3px;margin-top:5px;border-radius:999px;background:#edf0f4;overflow:hidden}
+.leaderboard-performance-metric i b{display:block;height:100%;border-radius:inherit;background:#9dbcf7}
+.leaderboard-performance-metric.complete strong{color:#0b63f3}
+.leaderboard-performance-metric.complete i b{background:#0b63f3}
+.leaderboard-performance-metric.unavailable strong{color:#a5acb7}
+@media(max-width:380px){
+  .leaderboard-performance-row{padding:9px 10px 8px}
+  .leaderboard-performance-head{grid-template-columns:25px minmax(0,1fr) auto;gap:7px}
+  .leaderboard-performance-head .rank{width:25px;height:25px}
+  .leaderboard-performance-head .agent strong{font-size:.74rem}
+  .leaderboard-overall-progress,.leaderboard-performance-metrics{margin-left:32px}
+  .leaderboard-performance-metrics{gap:5px}
+  .leaderboard-performance-metric strong{font-size:.56rem}
+}
