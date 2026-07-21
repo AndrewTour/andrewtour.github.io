@@ -4082,3 +4082,15 @@ body.appointment-editing{overflow:hidden}
     transform:translate(-50%,-50%);
   }
 }
+
+/* V89 — keep the focused appointment editor isolated from the Appointments screen */
+#appointmentsView.appointment-edit-mode{
+  animation:none!important;
+  transform:none!important;
+  overflow:visible!important;
+}
+#appointmentsView.appointment-edit-mode::before{
+  background:#f7f8fb;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}

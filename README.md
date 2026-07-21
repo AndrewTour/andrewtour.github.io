@@ -1,8 +1,6 @@
-# AGNT V88 — Focused Appointment Editor
+# AGNT V89 — Isolated Appointment Editor
 
-- Appointment-card editing now opens in a focused full-screen overlay on iPhone.
-- The editor displays an Editing Appointment title and only the existing booking fields and actions.
-- Appointment history destinations, lists and surrounding Appointments UI remain behind the overlay and are not shown during editing.
-- Closing or saving returns the user to the same appointment list mode and scroll position.
-- Existing appointment save logic and app-wide render refresh remain intact, so edits continue to update all appointment-driven views.
-- No Firebase, authentication, Firestore path, UID separation, data-shape, local cache, scoring, navigation or sync changes.
+- Keeps the V88 appointment editor and all editing behaviour unchanged.
+- Restores the surrounding Appointments screen to its prior visual state by fully isolating the editor while it is open.
+- Prevents the page header, appointment destinations, reminders and lists from showing through behind the editor.
+- No appointment data, save, Firebase, authentication, Firestore, UID, cache, sync, scoring, navigation or unrelated UI changes.

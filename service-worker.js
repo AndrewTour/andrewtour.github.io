@@ -1,5 +1,5 @@
-const CACHE='agnt-v88-focused-appointment-editor';
-const ASSETS=['./','./index.html','./styles.css?v=88.0','./app.js?v=88.0','./firebase-config.js','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
+const CACHE='agnt-v89-isolated-appointment-editor';
+const ASSETS=['./','./index.html','./styles.css?v=89.0','./app.js?v=89.0','./firebase-config.js','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{
