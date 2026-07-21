@@ -1032,8 +1032,7 @@ function appointmentCardMarkup(entry,{dailyLog=false,history=false}={}){
   const loggedMeta=dailyLog&&a.scheduledDate&&a.scheduledDate!==sourceDate?`<small class="appointment-log-scheduled">Scheduled for ${escapeHtml(shortAppointmentDate(scheduled))} at ${time}</small>`:`<small class="appointment-booked-for">${escapeHtml(shortAppointmentDate(scheduled))} at ${time}</small>`;
   const bookedMeta=history&&booked?`<small class="appointment-created-meta">Booked ${escapeHtml(booked)}</small>`:'';
   const dueMeta=history&&a.followUpDate?`<small class="appointment-followup-timestamp ${a.followUpDate<todayKey()?'overdue':''}">Follow-up due ${escapeHtml(shortAppointmentDate(a.followUpDate))}</small>`:'';
-  return `<article class="appointment-card appointment-card-premium appointment-followup-card ${lifecycle}">
-    <button class="appointment-edit" data-edit-appointment="${escapeHtml(a.id)}" data-source-date="${escapeHtml(sourceDate)}" aria-label="Edit appointment" title="Edit appointment">Edit</button>
+  return `<article class="appointment-card appointment-card-premium appointment-followup-card ${lifecycle}" data-appointment-card-edit="${escapeHtml(a.id)}" data-source-date="${escapeHtml(sourceDate)}" role="button" tabindex="0" aria-label="Edit ${type} appointment at ${address}">
     <button class="appointment-delete" data-delete-appointment="${escapeHtml(a.id)}" data-source-date="${escapeHtml(sourceDate)}" aria-label="Delete appointment" title="Delete appointment">×</button>
     <div class="appointment-card-copy"><div class="appointment-card-top"><span class="appointment-type-badge">${type}</span><span class="appointment-status-badge ${lifecycle}">${escapeHtml(statusText)}</span></div><strong>${address}</strong><small>${contact}${phone?` · ${phone}`:''}</small>${loggedMeta}${bookedMeta}${dueMeta}${note}</div>
     <div class="appointment-followup-actions">${actions}</div>
@@ -1680,9 +1679,16 @@ $('#appointmentsView').onclick=e=>{
   const follow=e.target.closest('[data-set-followup]');if(follow){setAppointmentFollowUp(follow.dataset.setFollowup,follow.dataset.sourceDate);return;}
   const marked=e.target.closest('[data-mark-followedup]');if(marked){markAppointmentFollowedUp(marked.dataset.markFollowedup,marked.dataset.sourceDate);return;}
   const outcome=e.target.closest('[data-update-outcome]');if(outcome){updateAppointmentOutcome(outcome.dataset.updateOutcome,outcome.dataset.sourceDate);return;}
-  const edit=e.target.closest('[data-edit-appointment]');if(edit){beginEditAppointment(edit.dataset.editAppointment,edit.dataset.sourceDate||appointmentDate);return}
-  const b=e.target.closest('[data-delete-appointment]');if(b&&confirm('Delete this appointment?\n\nThis will permanently remove the appointment and any associated follow-up.'))deleteAppointment(b.dataset.deleteAppointment,b.dataset.sourceDate||appointmentDate)
+  const b=e.target.closest('[data-delete-appointment]');if(b){if(confirm('Delete this appointment?\n\nThis will permanently remove the appointment and any associated follow-up.'))deleteAppointment(b.dataset.deleteAppointment,b.dataset.sourceDate||appointmentDate);return;}
+  if(e.target.closest('button, a, input, select, textarea, label'))return;
+  const card=e.target.closest('[data-appointment-card-edit]');if(card)beginEditAppointment(card.dataset.appointmentCardEdit,card.dataset.sourceDate||appointmentDate);
 };
+$('#appointmentsView').addEventListener('keydown',e=>{
+  if(e.key!=='Enter'&&e.key!==' ')return;
+  const card=e.target.closest('[data-appointment-card-edit]');
+  if(!card||e.target!==card)return;
+  e.preventDefault();beginEditAppointment(card.dataset.appointmentCardEdit,card.dataset.sourceDate||appointmentDate);
+});
 
 
 $('#prospectSearch').oninput=()=>renderProspecting();$('#pipelineSort')&&($('#pipelineSort').onchange=e=>{pipelineSort=e.target.value;renderSellerPipeline()});

@@ -1,6 +1,7 @@
-# AGNT V86 — Day Review on Today
+# AGNT V87 — Clickable Appointment Cards
 
-- Removed the Day in Review manual card from Home and restored the prior Home layout.
-- Added the unchanged Day in Review manual card after the Today timeline.
-- Preserved the existing visibility rules, morning snapshot, automatic 6:00pm prompt and once-per-workday behaviour.
-- No Firebase, authentication, Firestore path, UID separation, data-shape, local cache, scoring or sync changes.
+- Removed the standalone Edit button from appointment cards.
+- Made the full appointment card open the existing appointment edit UI.
+- Preserved all existing appointment actions, including call, calendar, follow-up, outcome and delete controls.
+- Appointment saves continue to use the existing shared record and renderAll refresh, so edits appear across Home, Today, Appointments, follow-ups, reviews and other appointment-driven views.
+- No Firebase, authentication, Firestore path, UID separation, data-shape, local cache, scoring, navigation or sync changes.
