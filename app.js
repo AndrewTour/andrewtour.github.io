@@ -1032,26 +1032,21 @@ function weeklyLeaderboardRows(){
   return leaderboardEntries.map(entry=>{const w=entry.weekHistory?.[wk];return w?{uid:entry.uid,name:entry.name,email:entry.email,...w}:null}).filter(Boolean).sort(sortLeaderboardRows);
 }
 function metricLabel(key){return({calls:'Calls',connects:'Connects',data:'Data',knocking:'Knocking'})[key]||'Calls'}
-function leaderboardMetricItem(value,target,label,suffix=''){
-  if(value==null)return `<span class="leaderboard-performance-metric unavailable"><small>${label}</small><strong>—</strong><i><b style="width:0%"></b></i></span>`;
-  const safeValue=Math.max(0,Math.round(Number(value)||0)),safeTarget=Math.max(0,Number(target)||0),metricPct=safeTarget?Math.max(0,Math.min(100,Math.round(safeValue/safeTarget*100))):0;
-  const complete=safeTarget>0&&safeValue>=safeTarget;
-  return `<span class="leaderboard-performance-metric ${complete?'complete':''}" role="img" aria-label="${label}: ${safeValue}${suffix}, ${metricPct}% complete"><small>${label}</small><strong>${complete?'✓ ':''}${safeValue}${suffix}</strong><i><b style="width:${metricPct}%"></b></i></span>`;
+function metricRing(value,target,label){
+  if(value==null)return `<span class="leaderboard-metric-ring unavailable" style="--metric-score:0"><i><strong>—</strong></i></span>`;
+  const safeValue=Math.max(0,Math.round(Number(value)||0)),safeTarget=Number(target)||0,p=safeTarget?Math.max(0,Math.min(100,Math.round(safeValue/safeTarget*100))):0;
+  return `<span class="leaderboard-metric-ring" style="--metric-score:${p}" role="img" aria-label="${label}: ${safeValue}, ${p}% complete"><i><strong>${safeValue}</strong></i></span>`;
 }
 function leaderboardRowHtml(r,i,weekly=false){
-  const t=r.targets||{},score=Math.max(0,Math.min(100,r.score||0)),name=escapeHtml(r.name||r.email?.split('@')[0]||'Agent');
-  return `<article class="leaderboard-row leaderboard-performance-row ${r.uid===uid?'me':''} ${i===0?'leader':''}">
-    <div class="leaderboard-performance-head">
+  const t=r.targets||{},score=Math.max(0,Math.min(100,r.score||0));
+  return `<article class="leaderboard-row leaderboard-row-expanded ${r.uid===uid?'me':''}">
+    <div class="leaderboard-row-summary">
       <b class="rank">${i+1}</b>
-      <div class="agent"><strong>${name}</strong>${r.uid===uid?'<small>You</small>':i===0?'<small>Leading</small>':''}</div>
+      <div class="agent"><strong>${escapeHtml(r.name||r.email?.split('@')[0]||'Agent')}</strong>${r.uid===uid?'<small>You</small>':''}</div>
       <em>${score}%<small>${weekly?'Week':'Day'}</small></em>
     </div>
-    <i class="leaderboard-overall-progress" aria-hidden="true"><b style="width:${score}%"></b></i>
-    <div class="leaderboard-performance-metrics">
-      ${leaderboardMetricItem(r.calls,t.calls,'Calls')}
-      ${leaderboardMetricItem(r.connects,t.connects,'Connects')}
-      ${leaderboardMetricItem(r.data,t.data,'Data')}
-      ${leaderboardMetricItem(r.knockMinutes,t.knock,'Knock','m')}
+    <div class="leaderboard-ring-metrics">
+      ${metricRing(r.calls,t.calls,'Calls')}${metricRing(r.connects,t.connects,'Connects')}${metricRing(r.data,t.data,'Data')}${metricRing(r.knockMinutes,t.knock,'Knocks')}
     </div>
   </article>`;
 }

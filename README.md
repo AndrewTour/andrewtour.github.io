@@ -18,3 +18,9 @@ Incremental update from V69. Pipeline-only UI and seller timeframe logic refinem
 - Added shared period controls, conversion, pipeline, follow-up, appointment, database-quality and priority-direction cards.
 - Added action links into existing pages without duplicating records or workflows.
 - No Firebase configuration, Firestore path or rules changes.
+
+
+## V76 Motion & Polish Pass
+- Visual-only motion and interaction refinement.
+- No functionality, Firebase, data model, calculations, navigation, or content changes.
+- Includes reduced-motion accessibility support.

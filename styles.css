@@ -3367,63 +3367,188 @@ html,body{max-width:100%;overflow-x:hidden;overscroll-behavior-x:none}
   }
 }
 
-/* V75 leaderboard statistics refinement — presentation only. */
-.leaderboard-metric-head{display:none!important}
-.leaderboard-unified-list{display:grid;align-content:start;gap:8px}
-.leaderboard-performance-row{
-  display:block;
-  padding:11px 12px 10px;
-  border:1px solid #e7eaf0;
-  border-radius:18px;
-  background:rgba(255,255,255,.92);
-  box-shadow:0 6px 16px rgba(24,31,46,.045);
+/* V76 — motion and polish pass. Visual treatment only; no application logic changes. */
+:root{
+  --motion-fast:140ms;
+  --motion-base:240ms;
+  --motion-slow:360ms;
+  --motion-ease:cubic-bezier(.22,.72,.26,1);
+  --motion-spring:cubic-bezier(.2,.9,.25,1.15);
 }
-.leaderboard-performance-row.me{
-  border-color:rgba(11,99,243,.18);
-  background:linear-gradient(180deg,rgba(244,248,255,.98),rgba(255,255,255,.96));
+
+/* Cleaner tactile feedback across existing controls. */
+button:not(:disabled),
+.file-btn,
+[role="button"]{
+  transition:
+    transform var(--motion-fast) var(--motion-ease),
+    box-shadow var(--motion-base) var(--motion-ease),
+    background-color var(--motion-base) var(--motion-ease),
+    border-color var(--motion-base) var(--motion-ease),
+    color var(--motion-base) var(--motion-ease),
+    opacity var(--motion-base) var(--motion-ease);
+  transform-origin:center;
 }
-.leaderboard-performance-row.leader:not(.me){background:linear-gradient(180deg,#fffdf7,#fff)}
-.leaderboard-performance-head{
-  display:grid;
-  grid-template-columns:28px minmax(0,1fr) auto;
-  align-items:center;
-  gap:9px;
+button:not(:disabled):active,
+.file-btn:active,
+[role="button"]:active{
+  transform:scale(.975);
 }
-.leaderboard-performance-head .rank{
-  display:grid;
-  place-items:center;
-  width:28px;
-  height:28px;
-  border-radius:50%;
-  background:#f0f3f7;
-  color:#5f6876;
-  font-size:.62rem;
-  font-weight:900;
+.icon-btn:active,
+.topbar-nav-icon:active,
+.year-head button:active,
+.modal-head button:active{
+  transform:scale(.92);
 }
-.leaderboard-performance-row.leader .leaderboard-performance-head .rank{background:#171a21;color:#fff}
-.leaderboard-performance-head .agent{min-width:0;display:flex;align-items:baseline;gap:6px}
-.leaderboard-performance-head .agent strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.82rem;color:#171a21}
-.leaderboard-performance-head .agent small{font-size:.48rem;font-weight:850;text-transform:uppercase;letter-spacing:.08em;color:#0b63f3}
-.leaderboard-performance-head>em{display:flex;flex-direction:column;align-items:flex-end;color:#0b63f3;font-size:.92rem;font-style:normal;font-weight:900;line-height:1}
-.leaderboard-performance-head>em small{margin-top:3px;color:#9aa2af;font-size:.4rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
-.leaderboard-overall-progress{display:block;height:4px;margin:8px 0 9px 37px;border-radius:999px;background:#edf0f4;overflow:hidden}
-.leaderboard-overall-progress>b{display:block;height:100%;border-radius:inherit;background:#0b63f3}
-.leaderboard-performance-row.leader:not(.me) .leaderboard-overall-progress>b{background:#171a21}
-.leaderboard-performance-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-left:37px}
-.leaderboard-performance-metric{display:grid;grid-template-columns:1fr;min-width:0}
-.leaderboard-performance-metric small{color:#8d95a3;font-size:.43rem;font-weight:800;letter-spacing:.04em}
-.leaderboard-performance-metric strong{margin-top:2px;color:#303744;font-size:.62rem;line-height:1.15;font-weight:850;white-space:nowrap}
-.leaderboard-performance-metric i{height:3px;margin-top:5px;border-radius:999px;background:#edf0f4;overflow:hidden}
-.leaderboard-performance-metric i b{display:block;height:100%;border-radius:inherit;background:#9dbcf7}
-.leaderboard-performance-metric.complete strong{color:#0b63f3}
-.leaderboard-performance-metric.complete i b{background:#0b63f3}
-.leaderboard-performance-metric.unavailable strong{color:#a5acb7}
-@media(max-width:380px){
-  .leaderboard-performance-row{padding:9px 10px 8px}
-  .leaderboard-performance-head{grid-template-columns:25px minmax(0,1fr) auto;gap:7px}
-  .leaderboard-performance-head .rank{width:25px;height:25px}
-  .leaderboard-performance-head .agent strong{font-size:.74rem}
-  .leaderboard-overall-progress,.leaderboard-performance-metrics{margin-left:32px}
-  .leaderboard-performance-metrics{gap:5px}
-  .leaderboard-performance-metric strong{font-size:.56rem}
+
+/* Page changes feel connected without changing routing or visibility logic. */
+.view.active,
+.insights-page.active,
+.prospect-view.active{
+  animation:agnt-view-enter var(--motion-base) var(--motion-ease) both;
+}
+@keyframes agnt-view-enter{
+  from{opacity:0;transform:translateY(7px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* Existing surfaces retain their layout, with more cohesive depth and interaction. */
+.glass,
+.appointment-card,
+.appointment-destination-card,
+.pipeline-summary-card,
+.scorecard-metric,
+.leaderboard-row,
+.week-day,
+.month,
+.mini-month{
+  transition:
+    transform var(--motion-base) var(--motion-ease),
+    box-shadow var(--motion-slow) var(--motion-ease),
+    border-color var(--motion-base) var(--motion-ease),
+    background-color var(--motion-base) var(--motion-ease),
+    opacity var(--motion-base) var(--motion-ease);
+}
+button.glass:active,
+.appointment-destination-card:active,
+.appointment-card:active,
+.week-day:active,
+.month:active,
+.mini-month:active{
+  transform:scale(.985);
+}
+
+/* Numeric and progress changes update smoothly instead of jumping. */
+.metric strong,
+.metric-percent,
+.score strong,
+.scorecard-score strong,
+.leaderboard-row strong,
+.pipeline-summary-card strong,
+.personal-best-grid strong{
+  font-variant-numeric:tabular-nums;
+}
+.metric-percent,
+.metric strong i,
+.score strong,
+.scorecard-score strong,
+.leaderboard-row .agent-score,
+.pipeline-summary-card strong{
+  transition:color var(--motion-base) var(--motion-ease),transform var(--motion-fast) var(--motion-ease);
+}
+.metric.complete,
+.week-day.complete{
+  animation:agnt-complete-settle var(--motion-slow) var(--motion-spring) both;
+}
+@keyframes agnt-complete-settle{
+  0%{transform:scale(1)}
+  45%{transform:scale(1.012)}
+  100%{transform:scale(1)}
+}
+
+/* All existing fill indicators animate from their current calculated state. */
+.metric-ring::before,
+.metric-ring::after,
+.score-ring::before,
+.leaderboard-progress-fill,
+.leaderboard-metric-fill,
+.scorecard-progress-fill,
+.progress-fill,
+.month-bars i,
+.pipeline-bar-fill{
+  transition:
+    width var(--motion-slow) var(--motion-ease),
+    height var(--motion-slow) var(--motion-ease),
+    transform var(--motion-slow) var(--motion-ease),
+    stroke-dashoffset var(--motion-slow) var(--motion-ease),
+    background-color var(--motion-base) var(--motion-ease);
+}
+
+/* Navigation state changes feel deliberate while preserving exact sizing. */
+.tabbar button.active,
+.insights-switch button.active,
+.leaderboard-period button.active,
+.prospect-tabs button.active{
+  animation:agnt-nav-select var(--motion-base) var(--motion-ease) both;
+}
+@keyframes agnt-nav-select{
+  from{opacity:.72;transform:scale(.97)}
+  to{opacity:1;transform:scale(1)}
+}
+
+/* Timeline polish: preserve geometry, soften state changes. */
+.timeline-item,
+.timeline-item time,
+.timeline-marker,
+.timeline-item>div>strong,
+.timeline-item>div>small{
+  transition:
+    color var(--motion-base) var(--motion-ease),
+    background-color var(--motion-base) var(--motion-ease),
+    border-color var(--motion-base) var(--motion-ease),
+    box-shadow var(--motion-base) var(--motion-ease),
+    opacity var(--motion-base) var(--motion-ease),
+    transform var(--motion-base) var(--motion-ease);
+}
+.timeline-item.current .timeline-marker,
+.timeline-item.time-active .timeline-marker{
+  animation:agnt-timeline-active var(--motion-slow) var(--motion-spring) both;
+}
+@keyframes agnt-timeline-active{
+  from{transform:scale(.72);opacity:.55}
+  to{transform:scale(1);opacity:1}
+}
+
+/* Modals and transient feedback. */
+.modal.open .calendar-shell{
+  animation:agnt-modal-enter var(--motion-base) var(--motion-ease) both;
+}
+@keyframes agnt-modal-enter{
+  from{opacity:0;transform:translateY(10px) scale(.985)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+.toast{
+  transition:
+    opacity var(--motion-base) var(--motion-ease),
+    transform var(--motion-base) var(--motion-ease);
+}
+
+/* Slightly calmer supporting type without changing content or layout. */
+.metric-copy>small,
+.appointment-card small,
+.timeline-item>div>small,
+.scorecard-insight-summary,
+.prospect-insight-summary,
+.empty{
+  line-height:1.42;
+}
+
+/* Accessibility: remove non-essential movement when requested by iOS. */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    scroll-behavior:auto!important;
+    transition-duration:.01ms!important;
+  }
 }
