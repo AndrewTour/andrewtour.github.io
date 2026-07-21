@@ -1,26 +1,18 @@
-# AGNT V70 — Pipeline Logic & UI Refinement
+# AGNT V80 — Design System Sprint 4
 
-Incremental update from V69. Pipeline-only UI and seller timeframe logic refinement. No Firebase configuration, Firestore path, rule, authentication, UID separation, sync architecture, or unrelated UI changes.
+Built directly on AGNT V79.
 
+## Changed
+- Standardised typography hierarchy, line-height and supporting-text weight.
+- Applied a restrained 8 / 16 / 24 spacing rhythm to existing sections and cards.
+- Improved reading flow in dense timeline, appointment and leaderboard areas.
+- Preserved Sprint 1 press states, Sprint 2 navigation transitions and Sprint 3 progress motion.
 
-## V71 — Beta Feedback Refinement
-- Focus subheading typography aligned to Metrics.
-- Navigation reordered: Home, Today, Prospector, Appointments, Leaderboard, Settings.
-- Existing Today icon moved to Home; Today now uses a calendar/check icon.
-- Existing appointments can be edited in place without changing their underlying record ID or follow-up state.
-- Weekly calculations are anchored to Monday–Sunday calendar weeks.
-- Door-knocking rollover resets at each Monday boundary and continues only within that calendar week.
-- No Firebase schema or rules changes required.
+## Unchanged
+- All JavaScript application logic.
+- Firebase configuration, authentication, Firestore paths, UID separation, local cache and sync.
+- Targets, scoring, leaderboard calculations and completion rules.
+- Navigation structure, layouts, content and features.
 
-
-## V72 — Prospecting Intelligence
-- Built the Prospector Insights tab from existing contact, interaction, pipeline, follow-up and appointment data.
-- Added shared period controls, conversion, pipeline, follow-up, appointment, database-quality and priority-direction cards.
-- Added action links into existing pages without duplicating records or workflows.
-- No Firebase configuration, Firestore path or rules changes.
-
-
-## V76 Motion & Polish Pass
-- Visual-only motion and interaction refinement.
-- No functionality, Firebase, data model, calculations, navigation, or content changes.
-- Includes reduced-motion accessibility support.
+## Firebase
+No Firebase changes are required.

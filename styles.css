@@ -3552,3 +3552,358 @@ button.glass:active,
     transition-duration:.01ms!important;
   }
 }
+
+/* V77 — Design System Sprint 1: Buttons & Press States.
+   Interaction feedback only. No layout, content or application logic changes. */
+:root{
+  --press-scale-primary:.972;
+  --press-scale-compact:.94;
+  --press-scale-surface:.985;
+  --press-duration-down:90ms;
+  --press-duration-up:220ms;
+  --press-ease-down:cubic-bezier(.2,.65,.3,1);
+  --press-ease-up:cubic-bezier(.2,.9,.25,1.08);
+}
+
+/* Universal tactile response for native controls. */
+button:not(:disabled),
+.file-btn,
+[role="button"],
+a.button,
+.btn{
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+  transform:translateZ(0) scale(1);
+  will-change:transform;
+  transition:
+    transform var(--press-duration-up) var(--press-ease-up),
+    box-shadow 180ms var(--motion-ease),
+    background-color 180ms var(--motion-ease),
+    border-color 180ms var(--motion-ease),
+    color 180ms var(--motion-ease),
+    opacity 180ms var(--motion-ease),
+    filter 180ms var(--motion-ease);
+}
+button:not(:disabled):active,
+.file-btn:active,
+[role="button"]:active,
+a.button:active,
+.btn:active{
+  transform:translateZ(0) scale(var(--press-scale-primary));
+  transition-duration:var(--press-duration-down);
+  transition-timing-function:var(--press-ease-down);
+  filter:brightness(.985);
+}
+
+/* Compact icon controls compress more clearly without moving position. */
+.icon-btn:active,
+.topbar-nav-icon:active,
+.year-head button:active,
+.modal-head button:active,
+.tabbar button:active,
+.insights-switch button:active,
+.leaderboard-period button:active,
+.prospect-tabs button:active{
+  transform:translateZ(0) scale(var(--press-scale-compact));
+}
+
+/* Tappable cards feel physical, while non-interactive cards remain still. */
+.appointment-card,
+.appointment-destination-card,
+.week-day,
+.month,
+.mini-month,
+button.glass{
+  -webkit-tap-highlight-color:transparent;
+  transform:translateZ(0) scale(1);
+  will-change:transform;
+  transition:
+    transform var(--press-duration-up) var(--press-ease-up),
+    box-shadow 180ms var(--motion-ease),
+    border-color 180ms var(--motion-ease),
+    background-color 180ms var(--motion-ease),
+    opacity 180ms var(--motion-ease);
+}
+.appointment-card:active,
+.appointment-destination-card:active,
+.week-day:active,
+.month:active,
+.mini-month:active,
+button.glass:active{
+  transform:translateZ(0) scale(var(--press-scale-surface));
+  transition-duration:var(--press-duration-down);
+  transition-timing-function:var(--press-ease-down);
+  box-shadow:0 2px 8px rgba(15,23,42,.06);
+}
+
+/* Disabled controls stay visually stable and never imply interactivity. */
+button:disabled,
+[aria-disabled="true"]{
+  transform:none!important;
+  filter:none!important;
+  cursor:default;
+}
+
+/* Keyboard focus remains clear without affecting touch presentation. */
+button:focus-visible,
+.file-btn:focus-visible,
+[role="button"]:focus-visible,
+a.button:focus-visible,
+.btn:focus-visible{
+  outline:3px solid rgba(48,113,255,.24);
+  outline-offset:2px;
+}
+
+/* Reduce Motion keeps state changes immediate and removes compression. */
+@media (prefers-reduced-motion:reduce){
+  button:not(:disabled):active,
+  .file-btn:active,
+  [role="button"]:active,
+  a.button:active,
+  .btn:active,
+  .appointment-card:active,
+  .appointment-destination-card:active,
+  .week-day:active,
+  .month:active,
+  .mini-month:active,
+  button.glass:active{
+    transform:none!important;
+    filter:none!important;
+  }
+}
+
+/* V78 — Design System Sprint 2: Navigation & Page Transitions.
+   Presentation only. Existing destinations, view state and application behaviour are unchanged. */
+:root{
+  --nav-transition:240ms;
+  --nav-ease:cubic-bezier(.2,.82,.22,1);
+}
+
+/* A clearer but still restrained page arrival. */
+.view.active{
+  animation:agnt-sprint2-view-in var(--nav-transition) var(--nav-ease) both;
+  transform-origin:50% 18%;
+}
+@keyframes agnt-sprint2-view-in{
+  0%{opacity:0;transform:translate3d(0,10px,0) scale(.995)}
+  62%{opacity:1}
+  100%{opacity:1;transform:translate3d(0,0,0) scale(1)}
+}
+
+/* Bottom navigation now behaves as one coherent selection control. */
+.tabbar button{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  transition:
+    transform var(--press-duration-up) var(--press-ease-up),
+    color 180ms var(--nav-ease),
+    background-color 220ms var(--nav-ease),
+    box-shadow 220ms var(--nav-ease);
+}
+.tabbar button::before{
+  content:"";
+  position:absolute;
+  inset:3px;
+  z-index:-1;
+  border-radius:17px;
+  background:#f1f3f6;
+  opacity:0;
+  transform:scale(.84);
+  transition:opacity 180ms var(--nav-ease),transform 240ms var(--nav-ease);
+}
+.tabbar button.active{background:transparent;color:#111318;box-shadow:none}
+.tabbar button.active::before{opacity:1;transform:scale(1)}
+.tabbar .tab-icon,
+.tabbar button span{
+  transition:transform 240ms var(--nav-ease),opacity 180ms var(--nav-ease),color 180ms var(--nav-ease);
+}
+.tabbar button:not(.active) .tab-icon{transform:translateY(1px) scale(.96);opacity:.74}
+.tabbar button.active .tab-icon{transform:translateY(-1px) scale(1.04);opacity:1}
+.tabbar button:not(.active) span{opacity:.72}
+.tabbar button.active span{transform:translateY(1px);opacity:1}
+
+/* Top copy settles with the page, making screen changes easier to perceive. */
+#viewTitle,
+#viewSubtitle,
+.date-line{
+  transition:opacity 180ms var(--nav-ease),transform 220ms var(--nav-ease);
+}
+
+@media (prefers-reduced-motion:reduce){
+  .view.active{animation:none!important}
+  .tabbar button::before,
+  .tabbar .tab-icon,
+  .tabbar button span,
+  #viewTitle,
+  #viewSubtitle,
+  .date-line{transition:none!important;transform:none!important}
+}
+
+/* V79 — Design System Sprint 3: Progress Components.
+   Presentation only. Existing values, targets, calculations and completion logic are unchanged. */
+@property --actual{
+  syntax:'<number>';
+  inherits:true;
+  initial-value:0;
+}
+@property --pace{
+  syntax:'<number>';
+  inherits:true;
+  initial-value:0;
+}
+:root{
+  --progress-duration:420ms;
+  --progress-ease:cubic-bezier(.2,.82,.22,1);
+}
+
+/* Linear progress components share one calm movement language. */
+.bar i,
+.leaderboard-mini-progress span,
+.leaderboard-agent-progress span,
+.leaderboard-metric-bar span,
+.month-bars i{
+  transition:
+    width var(--progress-duration) var(--progress-ease),
+    height var(--progress-duration) var(--progress-ease),
+    transform var(--progress-duration) var(--progress-ease),
+    background-color 220ms var(--progress-ease),
+    opacity 220ms var(--progress-ease);
+  transform-origin:left center;
+  will-change:width,height,transform;
+}
+
+/* Rings now interpolate their existing actual and pace values instead of snapping. */
+.metric-percent.metric-ring{
+  transition:
+    --actual var(--progress-duration) var(--progress-ease),
+    --pace var(--progress-duration) var(--progress-ease),
+    transform 220ms var(--progress-ease),
+    box-shadow 220ms var(--progress-ease),
+    color 180ms var(--progress-ease);
+}
+
+/* Completion is acknowledged once through a restrained settle, not a celebration. */
+.metric.complete .metric-percent.metric-ring,
+.metric-percent.metric-ring.complete{
+  animation:agnt-progress-complete 360ms var(--progress-ease) both;
+}
+@keyframes agnt-progress-complete{
+  0%{transform:scale(.96)}
+  58%{transform:scale(1.045)}
+  100%{transform:scale(1)}
+}
+
+/* Completed metric edge and values settle together. */
+.metric.complete::before{
+  animation:agnt-progress-edge-in 300ms var(--progress-ease) both;
+  transform-origin:center bottom;
+}
+.metric.complete strong,
+.metric.complete .metric-percent{
+  transition:color 180ms var(--progress-ease),transform 220ms var(--progress-ease);
+}
+@keyframes agnt-progress-edge-in{
+  from{transform:scaleY(.18);opacity:.25}
+  to{transform:scaleY(1);opacity:1}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .bar i,
+  .leaderboard-mini-progress span,
+  .leaderboard-agent-progress span,
+  .leaderboard-metric-bar span,
+  .month-bars i,
+  .metric-percent.metric-ring,
+  .metric.complete strong,
+  .metric.complete .metric-percent{
+    transition:none!important;
+  }
+  .metric.complete .metric-percent.metric-ring,
+  .metric-percent.metric-ring.complete,
+  .metric.complete::before{
+    animation:none!important;
+  }
+}
+
+/* V80 — Design System Sprint 4: Typography & Spacing.
+   Presentation only. Existing structure, content, behaviour and calculations are unchanged. */
+:root{
+  --space-1:8px;
+  --space-2:16px;
+  --space-3:24px;
+  --type-tight:1.12;
+  --type-copy:1.42;
+}
+
+/* Clearer hierarchy without changing content or component dimensions. */
+#viewTitle,
+.view-head h2,
+.settings h2,
+.year-head strong,
+.monday-review>strong{
+  line-height:var(--type-tight);
+  letter-spacing:-.025em;
+}
+
+#viewSubtitle,
+.date-line,
+.view-head>span,
+.section-label>small,
+.timeline-overview small,
+.timeline-item small,
+.leaderboard-note,
+.appointment-card small,
+.empty{
+  line-height:var(--type-copy);
+  font-weight:500;
+}
+
+.section-label>span,
+.timeline-overview-label,
+.leaderboard-hero-copy>span,
+.leaderboard-kpis span,
+.leaderboard-head span{
+  line-height:1.2;
+  letter-spacing:.12em;
+}
+
+/* Apply one consistent 8 / 16 / 24 spacing rhythm to existing groups. */
+.view-head{margin-bottom:var(--space-2)}
+.section-label{margin-bottom:var(--space-1)}
+.card,
+.timeline-overview,
+.leaderboard-dashboard,
+.leaderboard-unified-card,
+.appointment-form{margin-bottom:var(--space-2)}
+
+.appointments-list,
+.timeline-item>div,
+.improvements-list,
+.leaderboard-unified-list{
+  row-gap:var(--space-1);
+}
+
+/* Improve reading flow inside dense cards while preserving their layout. */
+.timeline-overview{gap:var(--space-1)}
+.timeline-item{padding-top:var(--space-2);padding-bottom:var(--space-2)}
+.timeline-item strong{line-height:1.3}
+.leaderboard-head{margin-bottom:var(--space-2)}
+.leaderboard-note{margin-top:var(--space-2)}
+.appointment-card small{margin-top:var(--space-1)}
+
+/* Supporting copy is quieter; key values remain visually dominant. */
+#viewSubtitle,
+.date-line,
+.timeline-item small,
+.timeline-item time,
+.leaderboard-note,
+.leaderboard-position small,
+.appointment-card small,
+.empty{
+  color:#8d95a2;
+}
+
+@media (max-width:390px){
+  :root{--space-2:14px;--space-3:22px}
+}
