@@ -4094,3 +4094,18 @@ body.appointment-editing{overflow:hidden}
   backdrop-filter:none;
   -webkit-backdrop-filter:none;
 }
+
+
+/* V90 — appointment booking page cleanup and embedded follow-up metric */
+.appointment-card-reminder-metric{
+  display:block;
+  margin-top:7px;
+  color:#d79416!important;
+  font-size:.72rem!important;
+  font-weight:850!important;
+  line-height:1.25;
+}
+.appointment-card-reminder-metric.hidden{display:none!important}
+#appointmentsView.appointment-edit-mode>.view-head,
+#appointmentsView.appointment-edit-mode .appointment-destination-grid,
+#appointmentsView.appointment-edit-mode .appointment-daily-log{display:none!important}

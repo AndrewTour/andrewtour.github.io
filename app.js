@@ -1058,7 +1058,10 @@ function renderAppointments(){
   if($('#pastAppointmentSummary'))$('#pastAppointmentSummary').textContent=`${past.length} past appointment${past.length===1?'':'s'} · follow-ups and outcomes`;
   if($('#upcomingAppointmentSummary'))$('#upcomingAppointmentSummary').textContent=`${upcoming.length} upcoming appointment${upcoming.length===1?'':'s'} · schedule and calls`;
   const reminder=appointmentReminderText();
-  for(const id of ['#appointmentReminder','#appointmentHistoryReminder']){const el=$(id);if(el){el.textContent=reminder;el.classList.toggle('hidden',!reminder);}}
+  const pastReminderMetric=$('#pastAppointmentReminderMetric');
+  if(pastReminderMetric){pastReminderMetric.textContent=reminder;pastReminderMetric.classList.toggle('hidden',!reminder);}
+  const historyReminder=$('#appointmentHistoryReminder');
+  if(historyReminder){historyReminder.textContent=reminder;historyReminder.classList.toggle('hidden',!reminder);}
   if(appointmentHistoryMode&&$('#appointmentHistoryList')){
     const history=appointmentHistoryEntries(appointmentHistoryMode);
     $('#appointmentHistoryList').innerHTML=history.length?history.map(entry=>appointmentCardMarkup(entry,{history:true})).join(''):emptyStateMarkup(getEmptyState('appointments-history',{mode:appointmentHistoryMode}));
