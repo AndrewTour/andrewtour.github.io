@@ -1,5 +1,5 @@
-const CACHE='agnt-v92-1-ofi-optional-contact';
-const ASSETS=['./','./index.html','./styles.css?v=92.1','./app.js?v=92.1','./firebase-config.js','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
+const CACHE='agnt-v93-phase-1-contacts';
+const ASSETS=['./','./index.html','./styles.css?v=93','./app.js?v=93','./firebase-config.js','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{

@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=92.1">
+<link rel="stylesheet" href="styles.css?v=93">
 <title>AGNT</title>
 </head>
 <body>
@@ -306,7 +306,7 @@
       <div class="prospecting-toolbar glass">
         <div class="prospecting-search-wrap">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
-          <input id="prospectSearch" type="search" placeholder="Search anything" autocomplete="off">
+          <input id="prospectSearch" type="search" placeholder="Search name, street, suburb, phone etc." autocomplete="off">
         </div>
         <button id="addProspectButton" class="prospecting-add" type="button" aria-label="Add prospect">+</button>
       </div>
@@ -329,7 +329,6 @@
         </div>
         <section id="prospectorContactsPanel" class="prospecting-section prospector-contacts-panel glass hidden">
           <div class="prospecting-section-head contacts-head"><div><span>CONTACTS</span><h3>Your database</h3><small id="prospectContactCount">0 contacts · Sorted A–Z</small></div><div class="contacts-head-actions"><label class="prospect-import-button">Import CSV<input id="prospectCsvImport" type="file" accept=".csv,text/csv"></label><button id="toggleProspectBulk" class="text-btn manage-contacts-btn" type="button">Manage Contacts</button></div></div>
-          <div class="contacts-search-hint">Search name, street, suburb, phone, email, tags or stage.</div>
           <div class="prospect-bulk-bar"><span id="prospectSelectedCount">0 selected</span><button id="selectAllProspects" class="text-btn" type="button">Select All</button><button id="deleteSelectedProspects" class="danger-btn" type="button" disabled>Delete</button></div>
           <div id="prospectContactList" class="prospect-list contacts-list"></div>
         </section>
@@ -514,6 +513,6 @@
 </div>
 
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=92.1"></script>
+<script type="module" src="app.js?v=93"></script>
 </body>
 </html>
