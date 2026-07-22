@@ -4190,3 +4190,44 @@ body.appointment-editing{overflow:hidden}
 #prospectLogForm textarea::placeholder{
   font-weight:400;
 }
+
+/* AGNT V95.1 — Prospector Log Contact follow-up sizing correction only. */
+#prospectLogForm .prospect-form-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+  width:100%;
+  max-width:100%;
+  overflow:hidden;
+}
+#prospectLogForm .prospect-form-grid>label{
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  overflow:hidden;
+}
+#prospectLogForm .prospect-form-grid select,
+#prospectLogForm .prospect-form-grid input[type="date"]{
+  display:block;
+  inline-size:100%;
+  width:100%;
+  min-inline-size:0;
+  min-width:0;
+  max-inline-size:100%;
+  max-width:100%;
+  block-size:44px;
+  height:44px;
+  min-height:44px;
+  padding:12px;
+  border-radius:12px;
+  box-sizing:border-box;
+  line-height:18px;
+}
+#prospectLogForm .prospect-form-grid input[type="date"]::-webkit-date-and-time-value{
+  min-width:0;
+  text-align:left;
+}
+#prospectLogForm .prospect-form-grid input[type="date"]::-webkit-calendar-picker-indicator{
+  flex:0 0 auto;
+  margin:0;
+  padding:0;
+}
