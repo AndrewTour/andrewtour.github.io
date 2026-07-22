@@ -111,7 +111,7 @@ function dayReviewSeenKey(k=todayKey()){return `${storagePrefix(uid)}day-review-
 function readDayPlan(k=todayKey()){try{return safeJsonParse(localStorage.getItem(dayPlanStorageKey(k))||'null',null)}catch{return null}}
 function captureDayPlan(k=todayKey()){
   if(readDayPlan(k))return;
-  const appointments=appointmentEntriesForDate(k).map(({appointment:a,sourceDate})=>({id:a.id||calendarExportId(a,sourceDate),sourceDate,name:a.contactName||a.name||'Appointment',type:appointmentType(a),address:a.address||''}));
+  const appointments=performanceAppointmentEntriesForDate(k).map(({appointment:a,sourceDate})=>({id:a.id||calendarExportId(a,sourceDate),sourceDate,name:a.contactName||a.name||'Appointment',type:appointmentType(a),address:a.address||''}));
   const followUps=allFollowUpsForDate(k).map(item=>({id:item.id||item.prospect?.id||item.appointment?.id||'',name:item.name||item.prospect?.name||item.appointment?.contactName||item.appointment?.name||'Follow-up'}));
   const plan={date:k,capturedAt:Date.now(),targets:{calls:targets.calls,connects:targets.connects,data:targets.data,knock:rollingKnockTarget(k)},appointments,followUps};
   try{localStorage.setItem(dayPlanStorageKey(k),JSON.stringify(plan))}catch{}
@@ -125,21 +125,23 @@ function welcomeAppointmentDetail(a){
   const type=appointmentType(a),address=a.address||'Address not recorded',time=appointmentTimeLabel(a,todayKey());
   return `${type} · ${address} · ${time}`;
 }
-function welcomeMomentumCopy(appointments,followUps){
+function welcomeMomentumCopy(appointments,followUps,ofis=[]){
   if(appointments.length){return{title:'Convert today, then build tomorrow.',text:'You have meaningful face-to-face opportunity today. Prepare well, leave each meeting with a next step, then create the next appointment.'}}
+  if(ofis.length){return{title:'Your inspection schedule is set.',text:'Prepare each property, know the buyer story and use every inspection to create the next conversation.'}}
   if(followUps.length){return{title:'Turn warm conversations into clear next steps.',text:'Work the strongest follow-ups first, record the outcome and keep building tomorrow’s pipeline.'}}
   return{title:'Create the conversations that shape tomorrow.',text:'Your calendar is open. Use the space for focused prospecting and finish the day with a stronger pipeline than you started with.'};
 }
 function renderWelcomeScreen(){
   const screen=$('#welcomeScreen');if(!screen)return;
-  const now=new Date(),k=todayKey(),appointments=appointmentEntriesForDate(k),followUps=allFollowUpsForDate(k),momentum=welcomeMomentumCopy(appointments,followUps);
+  const now=new Date(),k=todayKey(),schedule=appointmentEntriesForDate(k),appointments=schedule.filter(({appointment})=>!isOfiAppointment(appointment)),ofis=schedule.filter(({appointment})=>isOfiAppointment(appointment)),followUps=allFollowUpsForDate(k),momentum=welcomeMomentumCopy(appointments,followUps,ofis);
   $('#welcomeName').textContent=firstWelcomeName();
   $('#welcomeGreetingText').textContent=welcomeGreetingFor(now);
   $('#welcomeDate').textContent=now.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long'});
   const appointmentSummary=$('#welcomeAppointmentSummary'),appointmentList=$('#welcomeAppointmentList');
-  appointmentSummary.textContent=appointments.length?`You’ve got ${appointments.length} appointment${appointments.length===1?'':'s'} today.`:'You’ve got no appointments today.';
-  appointmentList.innerHTML=appointments.map(({appointment:a,sourceDate})=>`<article class="welcome-appointment"><time>${escapeHtml(appointmentTimeLabel(a,sourceDate))}</time><span class="welcome-appointment-dot" aria-hidden="true"></span><div><strong>${escapeHtml(a.contactName||a.name||'Appointment')}</strong><small>${escapeHtml(welcomeAppointmentDetail(a))}</small></div></article>`).join('');
-  appointmentList.classList.toggle('hidden',!appointments.length);
+  const scheduleParts=[];if(appointments.length)scheduleParts.push(`${appointments.length} appointment${appointments.length===1?'':'s'}`);if(ofis.length)scheduleParts.push(`${ofis.length} OFI${ofis.length===1?'':'s'}`);
+  appointmentSummary.textContent=scheduleParts.length?`You’ve got ${scheduleParts.join(' and ')} today.`:'You’ve got no appointments or OFIs today.';
+  appointmentList.innerHTML=schedule.map(({appointment:a,sourceDate})=>`<article class="welcome-appointment"><time>${escapeHtml(appointmentTimeLabel(a,sourceDate))}</time><span class="welcome-appointment-dot" aria-hidden="true"></span><div><strong>${escapeHtml(isOfiAppointment(a)?(a.address||'Open for Inspection'):(a.contactName||a.name||'Appointment'))}</strong><small>${escapeHtml(welcomeAppointmentDetail(a))}</small></div></article>`).join('');
+  appointmentList.classList.toggle('hidden',!schedule.length);
   $('#welcomePipelineText').textContent=followUps.length?`You’ve got ${followUps.length} pipeline follow-up${followUps.length===1?'':'s'} today.`:'You’ve got no pipeline follow-ups today.';
   $('#welcomeMomentumTitle').textContent=momentum.title;$('#welcomeMomentumText').textContent=momentum.text;
 }
@@ -155,7 +157,7 @@ function dismissDailyWelcome(){
 }
 function currentDayPlan(k=todayKey()){
   const saved=readDayPlan(k);if(saved)return saved;
-  const appointments=appointmentEntriesForDate(k).map(({appointment:a,sourceDate})=>({id:a.id||calendarExportId(a,sourceDate),sourceDate,name:a.contactName||a.name||'Appointment',type:appointmentType(a),address:a.address||''}));
+  const appointments=performanceAppointmentEntriesForDate(k).map(({appointment:a,sourceDate})=>({id:a.id||calendarExportId(a,sourceDate),sourceDate,name:a.contactName||a.name||'Appointment',type:appointmentType(a),address:a.address||''}));
   const followUps=allFollowUpsForDate(k).map(item=>({id:item.id||item.prospect?.id||item.appointment?.id||'',name:item.name||item.prospect?.name||item.appointment?.contactName||item.appointment?.name||'Follow-up'}));
   return{date:k,targets:{calls:targets.calls,connects:targets.connects,data:targets.data,knock:rollingKnockTarget(k)},appointments,followUps};
 }
@@ -419,11 +421,11 @@ function activeViewId(){return document.querySelector('.view.active')?.id||'toda
 function pageHeaderState(id=activeViewId()){
   if(id==='todayView')return{title:welcomeMessage(),subtitle:''};
   if(id==='scheduleView'){
-    const count=timelineItemsForDate(selectedDate).filter(item=>item.kind==='appointment').length;
+    const scheduleItems=timelineItemsForDate(selectedDate),count=scheduleItems.filter(item=>item.kind==='appointment').length,ofiCount=scheduleItems.filter(item=>item.kind==='ofi').length,parts=[];if(count)parts.push(`${count} appointment${count===1?'':'s'}`);if(ofiCount)parts.push(`${ofiCount} OFI${ofiCount===1?'':'s'}`);const scheduleText=parts.join(' and ');
     if(selectedDate<todayKey())return{title:'Your Schedule',subtitle:'Review how the day unfolded.'};
-    if(selectedDate>todayKey())return{title:'Your Schedule',subtitle:count?`${count} appointment${count===1?'':'s'} shape this day.`:'Plan ahead before the day fills.'};
+    if(selectedDate>todayKey())return{title:'Your Schedule',subtitle:scheduleText?`${scheduleText} shape this day.`:'Plan ahead before the day fills.'};
     if(!isWorkDayKey(selectedDate))return{title:'Your Schedule',subtitle:'No workday schedule is set.'};
-    return{title:'Your Schedule',subtitle:count?`${count} appointment${count===1?'':'s'} shape today.`:'Your day is clear — protect the prospecting blocks.'};
+    return{title:'Your Schedule',subtitle:scheduleText?`${scheduleText} shape today.`:'Your day is clear — protect the prospecting blocks.'};
   }
   if(id==='appointmentsView'){
     if(appointmentHistoryMode==='past')return{title:'Appointments',subtitle:'Review appointments and follow-ups.'};
@@ -583,8 +585,10 @@ function renderDayTrend(){
 }
 function renderWeekDays(){if(!$('#weekDays'))return;$('#weekDays').innerHTML=weekKeys().map(k=>{const p=completion(k),d=parseKey(k);return `<button class="week-day ${k===selectedDate?'selected':''} ${p>=100?'complete':''}" data-date="${k}"><b>${workDayName(d.getDay()).slice(0,3).toUpperCase()}</b><small>${d.getDate()} · ${p}%</small></button>`}).join('')}
 
-function normaliseAppointmentType(value){const raw=String(value||'').trim().toLowerCase();if(raw==='bap'||raw==='buyer appointment')return'BAP';if(raw==='map'||raw==='appraisal'||raw==='market appraisal')return'MAP';if(raw==='lap'||raw==='listing appointment')return'LAP';if(raw==='pu'||raw==='price update')return'PU';return String(value||'').trim().toUpperCase()}
+function normaliseAppointmentType(value){const raw=String(value||'').trim().toLowerCase();if(raw==='bap'||raw==='buyer appointment')return'BAP';if(raw==='map'||raw==='appraisal'||raw==='market appraisal')return'MAP';if(raw==='lap'||raw==='listing appointment')return'LAP';if(raw==='ofi'||raw==='open for inspection'||raw==='open home')return'OFI';if(raw==='pu'||raw==='price update')return'PU';return String(value||'').trim().toUpperCase()}
 function appointmentType(a){return normaliseAppointmentType(a.type||(Array.isArray(a.types)?a.types[0]:''))||'—'}
+function isOfiAppointment(a){return appointmentType(a)==='OFI'}
+function performanceAppointmentEntriesForDate(viewDate){return appointmentEntriesForDate(viewDate).filter(({appointment})=>!isOfiAppointment(appointment))}
 function appointmentScheduledDate(a,sourceDate=''){return a.scheduledDate||a.date||sourceDate}
 function appointmentCreatedDate(a,sourceDate=''){
   const raw=Number(a.at||a.createdAt||0);
@@ -670,7 +674,7 @@ function timelineTimeLabel(minutes){
   return new Date(2000,0,1,h,m).toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'});
 }
 function scheduledFollowUpsForDate(viewDate){
-  return allAppointmentEntries().filter(({appointment:a,sourceDate})=>a.followUpDate===viewDate&&appointmentLifecycle(a,sourceDate)==='follow-up');
+  return allAppointmentEntries().filter(({appointment:a,sourceDate})=>!isOfiAppointment(a)&&a.followUpDate===viewDate&&appointmentLifecycle(a,sourceDate)==='follow-up');
 }
 function prospectFollowUpsForDate(viewDate){
   return prospects.filter(p=>{
@@ -720,14 +724,14 @@ function timelineItemsForDate(viewDate){
     if(scheduled!==viewDate)return;
     const rawPhone=String(a.contactNumber||a.phone||'').trim(),dial=rawPhone.replace(/[^+\d]/g,'');
     items.push({
-      id:`appointment-${calendarExportId(a,sourceDate)}`,
+      id:`${isOfiAppointment(a)?'ofi':'appointment'}-${calendarExportId(a,sourceDate)}`,
       minutes:timelineMinutes(a.time),
       title:`${appointmentType(a)} · ${a.address||'Address not recorded'}`,
-      meta:`${a.contactName||a.name||'Contact not recorded'}${rawPhone?` · ${rawPhone}`:''}`,
-      kind:'appointment',duration:60,dial
+      meta:`${isOfiAppointment(a)?'Open for Inspection':(a.contactName||a.name||'Contact not recorded')}${rawPhone?` · ${rawPhone}`:''}`,
+      kind:isOfiAppointment(a)?'ofi':'appointment',duration:60,dial
     });
   });
-  const order={followup:0,appointment:1,focus:2,knock:3,check:4,wrap:5};
+  const order={followup:0,appointment:1,ofi:1,focus:2,knock:3,check:4,wrap:5};
   return items.sort((a,b)=>a.minutes-b.minutes||(order[a.kind]??9)-(order[b.kind]??9)||a.title.localeCompare(b.title));
 }
 function timelineStatus(item,index,items,viewDate,focusItemId=''){
@@ -802,8 +806,8 @@ function coachingEngine(viewDate=selectedDate,items=timelineItemsForDate(viewDat
   if(viewDate>todayKey())return{title:'Plan your day',meta:items[0]?`First block starts ${timelineTimeLabel(items[0].minutes)}`:'No scheduled items',focusItemId:items[0]?.id||''};
 
   const now=new Date(),nowMinutes=now.getHours()*60+now.getMinutes(),state=coachingMetricState(viewDate);
-  const currentAppointment=items.find(item=>item.kind==='appointment'&&nowMinutes>=item.minutes&&nowMinutes<item.minutes+(item.duration||60));
-  const nextAppointment=items.find(item=>item.kind==='appointment'&&item.minutes>nowMinutes);
+  const currentAppointment=items.find(item=>(item.kind==='appointment'||item.kind==='ofi')&&nowMinutes>=item.minutes&&nowMinutes<item.minutes+(item.duration||60));
+  const nextAppointment=items.find(item=>(item.kind==='appointment'||item.kind==='ofi')&&item.minutes>nowMinutes);
   const minutesToAppointment=nextAppointment?nextAppointment.minutes-nowMinutes:Infinity;
   const todayFollowUps=allFollowUpsForDate(viewDate);
   const prospectingId=timelineFocusId(items,'focus'),knockingId=timelineFocusId(items,'knock'),progressId=timelineFocusId(items,'check'),wrapId=timelineFocusId(items,'wrap');
@@ -880,13 +884,13 @@ function renderTimeline(){
   $('#timelineDateLabel').textContent=fmtDate(selectedDate);
   $('#timelineCurrentTitle').textContent=priority.title;
   $('#timelineCurrentMeta').textContent=coachSentenceCase(priority.meta);
-  $('#timelineSummary').textContent=`${items.filter(i=>i.kind==='appointment').length} appointment${items.filter(i=>i.kind==='appointment').length===1?'':'s'} · ${completion(selectedDate)}% complete`;
+  const appointmentCount=items.filter(i=>i.kind==='appointment').length,ofiCount=items.filter(i=>i.kind==='ofi').length,scheduleSummary=[];if(appointmentCount)scheduleSummary.push(`${appointmentCount} appointment${appointmentCount===1?'':'s'}`);if(ofiCount)scheduleSummary.push(`${ofiCount} OFI${ofiCount===1?'':'s'}`);$('#timelineSummary').textContent=`${scheduleSummary.length?scheduleSummary.join(' · '):'No appointments or OFIs'} · ${completion(selectedDate)}% complete`;
   const activeTimeBlock=timelineTimeBlockIndex(items,selectedDate);
   $('#dailyTimeline').innerHTML=items.length?items.map((item,index)=>{
     const status=timelineStatus(item,index,items,selectedDate,priority.focusItemId);
     const timeActive=index===activeTimeBlock?' time-active':'';
     const marker=status==='complete'?'✓':status==='current'?'●':'○';
-    const call=(item.kind==='followup'||item.kind==='appointment')&&item.dial?`<a class="timeline-call" href="tel:${escapeHtml(item.dial)}">Call</a>`:'';
+    const call=(item.kind==='followup'||item.kind==='appointment'||item.kind==='ofi')&&item.dial?`<a class="timeline-call" href="tel:${escapeHtml(item.dial)}">Call</a>`:'';
     return `<article class="timeline-item ${status} ${item.kind}${timeActive}"><time>${escapeHtml(timelineTimeLabel(item.minutes))}</time><span class="timeline-marker">${marker}</span><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.meta)}</small>${call}</div></article>`;
   }).join(''):'<div class="empty"><strong>Schedule clear</strong><small>Appointments and follow-ups for this date will appear here.</small></div>';
 }
@@ -899,6 +903,7 @@ function allAppointmentEntries(){
 }
 function appointmentLifecycle(a,sourceDate=''){
   const ts=appointmentTimestamp(a,sourceDate),now=Date.now();
+  if(isOfiAppointment(a))return ts&&ts>now?'upcoming':'completed';
   if(a.status==='completed'||a.followedUpAt||['Price Update Booked','Listing Appointment Booked','Signed','Listed','Not Proceeding','Missed'].includes(a.outcome))return'completed';
   if(ts&&ts>now)return'upcoming';
   return'follow-up';
@@ -912,7 +917,7 @@ function followUpDueLabel(a){
   if(a.followUpDate<today){const diff=Math.max(1,Math.round((parseKey(today)-parseKey(a.followUpDate))/86400000));return`${diff} day${diff===1?'':'s'} overdue`;}
   return`Due ${shortAppointmentDate(a.followUpDate)}`;
 }
-function dueFollowUps(){return allAppointmentEntries().filter(({appointment:a,sourceDate})=>appointmentLifecycle(a,sourceDate)==='follow-up'&&(!a.followUpDate||a.followUpDate<=todayKey()));}
+function dueFollowUps(){return allAppointmentEntries().filter(({appointment:a,sourceDate})=>!isOfiAppointment(a)&&appointmentLifecycle(a,sourceDate)==='follow-up'&&(!a.followUpDate||a.followUpDate<=todayKey()));}
 async function updateAppointmentRecord(id,sourceDate,changes){
   const d=dayData(sourceDate),index=d.appointments.findIndex(a=>String(a.id)===String(id));
   if(index<0)return toast('Appointment could not be found');
@@ -1022,12 +1027,12 @@ function appointmentCardMarkup(entry,{dailyLog=false,history=false}={}){
     const added=appointmentAddedToCalendar(a,sourceDate),calendarLabel=added?'Added to Calendar':'Add to Calendar';
     actions=`${callAction}<button class="appointment-secondary-action appointment-calendar-action ${added?'is-added':''}" data-calendar-appointment="${escapeHtml(calendarExportId(a,sourceDate))}" data-source-date="${escapeHtml(sourceDate)}">${added?'✓ ':''}${calendarLabel}</button>`;
   }else if(history&&appointmentHistoryMode==='past'){
-    const followAction=lifecycle==='completed'?'':a.followUpDate?`<button class="appointment-secondary-action" data-mark-followedup="${a.id}" data-source-date="${sourceDate}">Mark Followed Up</button>`:`<button class="appointment-secondary-action" data-set-followup="${a.id}" data-source-date="${sourceDate}">Set Follow-Up</button>`;
+    const followAction=isOfiAppointment(a)?'':lifecycle==='completed'?'':a.followUpDate?`<button class="appointment-secondary-action" data-mark-followedup="${a.id}" data-source-date="${sourceDate}">Mark Followed Up</button>`:`<button class="appointment-secondary-action" data-set-followup="${a.id}" data-source-date="${sourceDate}">Set Follow-Up</button>`;
     const outcomeLabel=escapeHtml(appointmentOutcomeLabel(a.outcome)||'Update Outcome');
     const outcomeClass=appointmentOutcomeClass(a.outcome);
-    actions=`${callAction}${followAction}<button class="appointment-secondary-action appointment-outcome-action ${a.outcome?'has-outcome':''} ${outcomeClass}" data-update-outcome="${a.id}" data-source-date="${sourceDate}">${outcomeLabel}</button>`;
+    actions=`${callAction}${followAction}${isOfiAppointment(a)?'':`<button class="appointment-secondary-action appointment-outcome-action ${a.outcome?'has-outcome':''} ${outcomeClass}" data-update-outcome="${a.id}" data-source-date="${sourceDate}">${outcomeLabel}</button>`};
   }else{
-    actions=lifecycle==='upcoming'?`${callAction}<button class="appointment-secondary-action" data-set-followup="${a.id}" data-source-date="${sourceDate}">Set Follow-Up</button>`:`${callAction}${lifecycle==='follow-up'?`<button class="appointment-secondary-action" data-mark-followedup="${a.id}" data-source-date="${sourceDate}">Mark Followed Up</button>`:''}<button class="appointment-secondary-action" data-update-outcome="${a.id}" data-source-date="${sourceDate}">${escapeHtml(appointmentOutcomeLabel(a.outcome)||'Update Outcome')}</button>`;
+    if(isOfiAppointment(a)){const added=appointmentAddedToCalendar(a,sourceDate),calendarLabel=added?'Added to Calendar':'Add to Calendar';actions=`${callAction}<button class="appointment-secondary-action appointment-calendar-action ${added?'is-added':''}" data-calendar-appointment="${escapeHtml(calendarExportId(a,sourceDate))}" data-source-date="${escapeHtml(sourceDate)}">${added?'✓ ':''}${calendarLabel}</button>`;}else actions=lifecycle==='upcoming'?`${callAction}<button class="appointment-secondary-action" data-set-followup="${a.id}" data-source-date="${sourceDate}">Set Follow-Up</button>`:`${callAction}${lifecycle==='follow-up'?`<button class="appointment-secondary-action" data-mark-followedup="${a.id}" data-source-date="${sourceDate}">Mark Followed Up</button>`:''}<button class="appointment-secondary-action" data-update-outcome="${a.id}" data-source-date="${sourceDate}">${escapeHtml(appointmentOutcomeLabel(a.outcome)||'Update Outcome')}</button>`;
   }
   const booked=appointmentBookedLabel(a,sourceDate);
   const loggedMeta=dailyLog&&a.scheduledDate&&a.scheduledDate!==sourceDate?`<small class="appointment-log-scheduled">Scheduled for ${escapeHtml(shortAppointmentDate(scheduled))} at ${time}</small>`:`<small class="appointment-booked-for">${escapeHtml(shortAppointmentDate(scheduled))} at ${time}</small>`;
@@ -1475,7 +1480,7 @@ function prospectInsightRange(period=prospectInsightPeriod){
   else if(period==='four'){start.setDate(start.getDate()-21)}
   return{startKey:dateKey(start),endKey:dateKey(end),label:period==='last'?'Last week':period==='four'?'Last 4 weeks':'This week'};
 }
-function appointmentEntriesInRange(startKey,endKey){return allAppointmentEntries().filter(({appointment:a,sourceDate})=>{const d=appointmentScheduledDate(a,sourceDate);return d>=startKey&&d<=endKey})}
+function appointmentEntriesInRange(startKey,endKey){return allAppointmentEntries().filter(({appointment:a,sourceDate})=>{const d=appointmentScheduledDate(a,sourceDate);return !isOfiAppointment(a)&&d>=startKey&&d<=endKey})}
 function prospectInteractionsInRange(startKey,endKey){return prospectInteractions.filter(x=>x.date>=startKey&&x.date<=endKey)}
 function insightMetric(label,value,meta=''){return `<article><span>${escapeHtml(label)}</span><strong>${escapeHtml(String(value))}</strong>${meta?`<small>${escapeHtml(meta)}</small>`:''}</article>`}
 function renderProspectorInsights(){
