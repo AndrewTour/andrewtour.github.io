@@ -1,13 +1,11 @@
-# AGNT V92 — OFI Schedule Support
+# AGNT V91 — Booking / Editor Header Separation
 
-Built from AGNT V91.
+Incremental update built from V90.
 
 ## Changed
-- Replaced the PU booking option with OFI (Open for Inspection).
-- OFIs appear in the welcome screen, Today timeline and appointment schedule views.
-- OFIs are excluded from appointment performance metrics, day-review appointment totals, scoring and appointment follow-up/outcome logic.
+- Removed the APPOINTMENTS, Editing Appointment and close controls from the normal new-appointment booking form.
+- Kept those controls visible only inside the isolated editor when an existing appointment is being edited.
+- Preserved the embedded yellow follow-up metric in the Past Appointments card.
 
 ## Unchanged
-Firebase configuration, authentication, Firestore paths and rules, UID separation, local cache, sync, navigation, scoring targets and all unrelated UI remain unchanged.
-
-No Firebase changes are required.
+Firebase, authentication, Firestore paths and rules, UID separation, local cache, sync, appointment data and save logic, navigation, scoring and unrelated UI.
