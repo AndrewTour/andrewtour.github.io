@@ -598,7 +598,7 @@ function appointmentCreatedDate(a,sourceDate=''){
   return a.createdDate||a.logDate||sourceDate;
 }
 function appointmentTimestamp(a,sourceDate=''){if(Number.isFinite(Number(a.scheduledAt)))return Number(a.scheduledAt);const scheduledDate=appointmentScheduledDate(a,sourceDate);if(scheduledDate&&a.time){const t=new Date(`${scheduledDate}T${a.time}`);if(!Number.isNaN(t.getTime()))return t.getTime()}return Number(a.at)||0}
-function appointmentTimeLabel(a,sourceDate=''){const ts=appointmentTimestamp(a,sourceDate);if(!ts)return a.time||'Time not set';return new Date(ts).toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true}).replace(/\s/g,'').toUpperCase()}
+function appointmentTimeLabel(a,sourceDate=''){const ts=appointmentTimestamp(a,sourceDate);if(!ts)return a.time||'Time not set';return new Date(ts).toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true}).replace(/\s/g,'').toLowerCase()}
 function shortAppointmentDate(k){return k?parseKey(k).toLocaleDateString('en-AU',{day:'numeric',month:'long'}):'Date not set'}
 function escapeHtml(value){return String(value??'').replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]))}
 function calendarExportStorageKey(){return `${storagePrefix(uid)}calendar-exports`}
@@ -673,7 +673,7 @@ function timelineMinutes(value){
 }
 function timelineTimeLabel(minutes){
   const total=((minutes%1440)+1440)%1440,h=Math.floor(total/60),m=total%60;
-  return new Date(2000,0,1,h,m).toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'});
+  return new Date(2000,0,1,h,m).toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true}).replace(/\s/g,'').toLowerCase();
 }
 function scheduledFollowUpsForDate(viewDate){
   return allAppointmentEntries().filter(({appointment:a,sourceDate})=>!isOfiAppointment(a)&&a.followUpDate===viewDate&&appointmentLifecycle(a,sourceDate)==='follow-up');
@@ -693,13 +693,14 @@ function allFollowUpsForDate(viewDate){
   return [...scheduledFollowUpsForDate(viewDate),...prospectFollowUpsForDate(viewDate)];
 }
 function timelineItemsForDate(viewDate){
-  const items=[
+  const isSaturday=parseKey(viewDate).getDay()===6;
+  const items=isSaturday?[]:[
     {id:'prospecting',minutes:9*60,title:'Prospecting',meta:'Calls, connects and data',kind:'focus',duration:5*60},
     {id:'knocking',minutes:14*60,title:'Door Knock Focus',meta:`${rollingKnockTarget(viewDate)} minute target`,kind:'knock',duration:120},
     {id:'progress',minutes:16*60,title:'Daily Progress Check',meta:'Review remaining targets',kind:'check',duration:30},
     {id:'wrap',minutes:18*60,title:'Wrap Up',meta:'Review today and prepare tomorrow',kind:'wrap',duration:60}
   ];
-  scheduledFollowUpsForDate(viewDate).forEach(({appointment:a,sourceDate},index)=>{
+  if(!isSaturday)scheduledFollowUpsForDate(viewDate).forEach(({appointment:a,sourceDate},index)=>{
     const rawPhone=String(a.contactNumber||a.phone||'').trim(),dial=rawPhone.replace(/[^+\d]/g,'');
     items.push({
       id:`followup-${calendarExportId(a,sourceDate)}`,
@@ -710,7 +711,7 @@ function timelineItemsForDate(viewDate){
     });
   });
   const appointmentFollowUpCount=scheduledFollowUpsForDate(viewDate).length;
-  prospectFollowUpsForDate(viewDate).forEach((p,index)=>{
+  if(!isSaturday)prospectFollowUpsForDate(viewDate).forEach((p,index)=>{
     const rawPhone=String(primaryProspectPhone(p)||'').trim(),dial=rawPhone.replace(/[^+\d]/g,'');
     const overdue=viewDate===todayKey()&&p.nextFollowUp<viewDate;
     items.push({
@@ -886,7 +887,7 @@ function renderTimeline(){
     const timeActive=index===activeTimeBlock?' time-active':'';
     const marker=status==='complete'?'✓':status==='current'?'●':'○';
     const call=(item.kind==='followup'||item.kind==='appointment')&&item.dial?`<a class="timeline-call" href="tel:${escapeHtml(item.dial)}">Call</a>`:'';
-    if(item.kind==='ofi'){const a=item.appointment;const start=timelineTimeLabel(item.minutes),end=timelineTimeLabel(item.minutes+appointmentDurationMinutes(a));const auction=appointmentHasAuction(a)?`<div class="timeline-ofi-auction"><span>AUCTION</span><strong>${escapeHtml(timelineTimeLabel(appointmentAuctionMinutes(a)))}</strong><small>Auction commences</small></div>`:'';return `<article class="timeline-item ${status} ofi${timeActive}"><time>${escapeHtml(start)}</time><span class="timeline-marker">${marker}</span><div class="timeline-ofi-card"><div class="timeline-ofi-open"><span>OPEN FOR INSPECTION</span><strong>${escapeHtml(a.address||'Address not recorded')}</strong><small>${escapeHtml(start)}–${escapeHtml(end)} · ${appointmentDurationMinutes(a)} minutes</small></div>${auction}</div></article>`;}
+    if(item.kind==='ofi'){const a=item.appointment;const start=timelineTimeLabel(item.minutes),end=timelineTimeLabel(item.minutes+appointmentDurationMinutes(a));const auction=appointmentHasAuction(a)?` · Auction ${escapeHtml(timelineTimeLabel(appointmentAuctionMinutes(a)))}`:'';return `<article class="timeline-item ${status} ofi${timeActive}"><time>${escapeHtml(start)}</time><span class="timeline-marker">${marker}</span><div><strong>OFI · ${escapeHtml(a.address||'Address not recorded')}</strong><small>${escapeHtml(start)}–${escapeHtml(end)} · ${appointmentDurationMinutes(a)} minutes${auction}</small></div></article>`;}
     return `<article class="timeline-item ${status} ${item.kind}${timeActive}"><time>${escapeHtml(timelineTimeLabel(item.minutes))}</time><span class="timeline-marker">${marker}</span><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.meta)}</small>${call}</div></article>`;
   }).join(''):'<div class="empty"><strong>Schedule clear</strong><small>Appointments and follow-ups for this date will appear here.</small></div>';
 }
@@ -982,7 +983,7 @@ function appointmentOutcomeClass(outcome=''){
 
 function appointmentBookedLabel(a,sourceDate=''){
   const raw=Number(a.at||a.createdAt||0);
-  if(raw){const d=new Date(raw);if(!Number.isNaN(d.getTime()))return`${shortAppointmentDate(dateKey(d))} at ${d.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true}).replace(/\s/g,'').toUpperCase()}`;}
+  if(raw){const d=new Date(raw);if(!Number.isNaN(d.getTime()))return`${shortAppointmentDate(dateKey(d))} at ${d.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true}).replace(/\s/g,'').toLowerCase()}`;}
   const created=a.createdDate||a.logDate||sourceDate;
   return created?shortAppointmentDate(parseKey(created)):'';
 }

@@ -4295,3 +4295,26 @@ body.appointment-editing{overflow:hidden}
     font-size:.7rem;
   }
 }
+
+/* AGNT V95.3 — Saturday inspection timeline and standard OFI card presentation. */
+.timeline-item.ofi{
+  margin:0;
+  padding:var(--space-2) 0;
+  border-radius:0;
+  background:transparent;
+}
+.timeline-item.ofi .timeline-marker{
+  color:inherit;
+  background:inherit;
+}
+.timeline-item.ofi.current{
+  margin:3px -7px;
+  padding:13px 7px;
+  border-radius:16px;
+  background:rgba(48,113,255,.07);
+}
+.timeline-item.ofi.current .timeline-marker{
+  color:#fff;
+  background:var(--blue);
+}
+.timeline-item.ofi.current>div>strong{color:var(--blue)}
