@@ -4231,3 +4231,67 @@ body.appointment-editing{overflow:hidden}
   margin:0;
   padding:0;
 }
+
+/* AGNT V95.2 — reuse the proven Appointments two-column control pattern on Prospector Log Contact only. */
+#prospectLogForm .prospect-form-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  column-gap:12px;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  overflow:visible;
+  align-items:end;
+}
+#prospectLogForm .prospect-form-grid > label{
+  display:grid;
+  grid-template-rows:auto 50px;
+  gap:6px;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  overflow:hidden;
+}
+#prospectLogForm .prospect-form-grid select,
+#prospectLogForm .prospect-form-grid input[type="date"]{
+  display:block;
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  height:50px;
+  min-height:50px;
+  margin:0;
+  padding:0 12px;
+  border:1px solid var(--phase1-border);
+  border-radius:20px;
+  box-sizing:border-box;
+  background:#fff;
+  color:#17191f;
+  font:inherit;
+  font-size:.76rem;
+  line-height:50px;
+  overflow:hidden;
+  -webkit-appearance:none;
+  appearance:none;
+}
+#prospectLogForm .prospect-form-grid input[type="date"]{
+  text-align:center;
+}
+#prospectLogForm .prospect-form-grid input[type="date"]::-webkit-date-and-time-value{
+  min-width:0;
+  width:100%;
+  text-align:center;
+}
+@media(max-width:390px){
+  #prospectLogForm .prospect-form-grid{column-gap:10px}
+  #prospectLogForm .prospect-form-grid > label{grid-template-rows:auto 48px}
+  #prospectLogForm .prospect-form-grid select,
+  #prospectLogForm .prospect-form-grid input[type="date"]{
+    height:48px;
+    min-height:48px;
+    line-height:48px;
+    padding-inline:8px;
+    border-radius:19px;
+    font-size:.7rem;
+  }
+}
