@@ -4161,3 +4161,32 @@ body.appointment-editing{overflow:hidden}
   pointer-events:none;
 }
 .timeline-item:not(:last-child)::after{display:none}
+
+/* AGNT V93.1 — confirmed Prospector and Today corrections only. */
+.prospect-session-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+#prospectLogForm .prospect-detail-nav button:last-child{
+  text-align:right;
+}
+#prospectLogForm .prospect-form-grid>label{
+  min-width:0;
+}
+#prospectLogForm .prospect-form-grid select,
+#prospectLogForm .prospect-form-grid input[type="date"]{
+  display:block;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  height:44px;
+  min-height:44px;
+  padding:12px;
+  box-sizing:border-box;
+  overflow:hidden;
+}
+#prospectLogForm textarea,
+#prospectLogForm textarea::placeholder{
+  font-weight:400;
+}
