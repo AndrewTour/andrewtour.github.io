@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=91.0">
+<link rel="stylesheet" href="styles.css?v=92.0">
 <title>AGNT</title>
 </head>
 <body>
@@ -192,8 +192,12 @@
           <label><input type="radio" name="appointmentType" value="BAP"><span>BAP</span></label>
           <label><input type="radio" name="appointmentType" value="MAP"><span>MAP</span></label>
           <label><input type="radio" name="appointmentType" value="LAP"><span>LAP</span></label>
-          <label><input type="radio" name="appointmentType" value="PU"><span>PU</span></label>
+          <label><input type="radio" name="appointmentType" value="OFI"><span>OFI</span></label>
         </fieldset>
+        <div id="ofiOptions" class="ofi-options hidden">
+          <div class="ofi-duration-summary"><span>OPEN FOR INSPECTION</span><strong id="ofiDurationText">30 minute booking</strong><small id="ofiSchedulePreview">Select a time to preview the booking.</small></div>
+          <label class="auction-toggle"><input id="appointmentAuction" type="checkbox"><span><b>Auction</b><small>OFI changes to 15 minutes and the auction starts immediately after.</small></span><i aria-hidden="true"></i></label>
+        </div>
         <div id="appointmentFormError" class="form-error hidden" role="alert"></div>
         <button id="appointmentSubmitButton" class="primary" type="submit">Book appointment</button>
       </form>
@@ -510,6 +514,6 @@
 </div>
 
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=91.0"></script>
+<script type="module" src="app.js?v=92.0"></script>
 </body>
 </html>

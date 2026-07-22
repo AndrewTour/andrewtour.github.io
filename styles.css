@@ -4113,3 +4113,18 @@ body.appointment-editing{overflow:hidden}
 
 /* V91 — editor header is rendered only for an active appointment edit */
 #appointmentEditHeader[hidden]{display:none!important}
+
+
+/* V92 — OFI schedule-only bookings and linked auction presentation. */
+.appointment-types{grid-template-columns:repeat(4,1fr)}
+.ofi-options{display:grid;gap:10px;margin-top:11px}
+.ofi-duration-summary{padding:13px 14px;border-radius:17px;background:rgba(48,113,255,.07);border:1px solid rgba(48,113,255,.14)}
+.ofi-duration-summary span,.appointment-ofi-schedule span,.timeline-ofi-card span{display:block;font-size:.53rem;letter-spacing:.1em;font-weight:850;color:var(--blue)}
+.ofi-duration-summary strong{display:block;margin-top:4px;font-size:.82rem}.ofi-duration-summary small{display:block;margin-top:4px;color:var(--muted);font-size:.62rem}
+.auction-toggle{display:grid!important;grid-template-columns:1fr auto;align-items:center;gap:12px;padding:13px 14px;border-radius:17px;background:rgba(255,174,35,.09);border:1px solid rgba(226,146,12,.18);cursor:pointer}
+.auction-toggle>input{position:absolute;opacity:0;pointer-events:none}.auction-toggle span{display:grid;gap:3px}.auction-toggle b{color:var(--ink);font-size:.78rem}.auction-toggle small{color:var(--muted);font-size:.61rem;line-height:1.35}
+.auction-toggle i{width:42px;height:25px;border-radius:99px;background:rgba(120,126,138,.26);position:relative;transition:.18s ease}.auction-toggle i::after{content:'';position:absolute;width:19px;height:19px;left:3px;top:3px;border-radius:50%;background:#fff;box-shadow:0 2px 7px rgba(0,0,0,.16);transition:.18s ease}.auction-toggle input:checked~i{background:#e69411}.auction-toggle input:checked~i::after{transform:translateX(17px)}
+.appointment-ofi-schedule{display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px;padding:10px;border-radius:15px;background:#f4f7fc;border:1px solid #e6ebf3}.appointment-ofi-schedule.has-auction{grid-template-columns:1fr 1fr}.appointment-ofi-schedule>div+div{border-left:1px solid #e3e7ee;padding-left:10px}.appointment-ofi-schedule>div+div span{color:#c97900}.appointment-ofi-schedule strong{font-size:.75rem!important;margin-top:3px}.appointment-ofi-schedule small{font-size:.56rem!important;margin-top:2px!important}
+.timeline-item.ofi{margin:4px -7px;padding:11px 7px;border-radius:18px;background:rgba(48,113,255,.045)}.timeline-item.ofi .timeline-marker{color:#fff;background:var(--blue)}
+.timeline-ofi-card{display:grid!important;grid-template-columns:1fr;gap:0!important;overflow:hidden;border-radius:16px;border:1px solid rgba(48,113,255,.14);background:#fff;box-shadow:0 7px 18px rgba(27,42,71,.06)}.timeline-ofi-card>div{padding:11px 12px}.timeline-ofi-card strong{display:block;margin-top:4px;color:var(--ink)!important;font-size:.76rem}.timeline-ofi-card small{display:block;margin-top:4px}.timeline-ofi-auction{border-top:1px solid rgba(226,146,12,.16);background:rgba(255,174,35,.09)}.timeline-ofi-auction span{color:#c97900}.timeline-ofi-auction strong{font-size:.9rem;color:#a86400!important}
+@media(max-width:380px){.appointment-types{gap:5px}.appointment-types label{padding-inline:3px}.appointment-ofi-schedule.has-auction{grid-template-columns:1fr}.appointment-ofi-schedule>div+div{border-left:0;border-top:1px solid #e3e7ee;padding-left:0;padding-top:8px}}
