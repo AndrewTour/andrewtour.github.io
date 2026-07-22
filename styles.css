@@ -4329,3 +4329,8 @@ body.appointment-editing{overflow:hidden}
   font-weight:800;
   line-height:1.25;
 }
+
+
+/* AGNT V95.5 — archived contacts bulk controls. */
+.prospect-bulk-bar .primary{width:auto;margin:0;border-radius:10px;padding:7px 10px;font-size:11px;line-height:1.2}
+.prospect-bulk-bar .primary:disabled{opacity:.35}

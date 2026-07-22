@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=95.4">
+<link rel="stylesheet" href="styles.css?v=95.6">
 <title>AGNT</title>
 </head>
 <body>
@@ -328,8 +328,8 @@
         </section>
         </div>
         <section id="prospectorContactsPanel" class="prospecting-section prospector-contacts-panel glass hidden">
-          <div class="prospecting-section-head contacts-head"><div><span>CONTACTS</span><h3>Your database</h3><small id="prospectContactCount">0 contacts · Sorted A–Z</small></div><div class="contacts-head-actions"><label class="prospect-import-button">Import CSV<input id="prospectCsvImport" type="file" accept=".csv,text/csv"></label><button id="toggleProspectBulk" class="text-btn manage-contacts-btn" type="button">Manage Contacts</button></div></div>
-          <div class="prospect-bulk-bar"><span id="prospectSelectedCount">0 selected</span><button id="selectAllProspects" class="text-btn" type="button">Select All</button><button id="deleteSelectedProspects" class="danger-btn" type="button" disabled>Delete</button></div>
+          <div class="prospecting-section-head contacts-head"><div><span id="prospectContactsEyebrow">CONTACTS</span><h3 id="prospectContactsHeading">Your database</h3><small id="prospectContactCount">0 contacts · Sorted A–Z</small></div><div class="contacts-head-actions"><label class="prospect-import-button">Import CSV<input id="prospectCsvImport" type="file" accept=".csv,text/csv"></label><button id="toggleProspectBulk" class="text-btn manage-contacts-btn" type="button">Manage Contacts</button><button id="toggleArchivedContacts" class="text-btn manage-contacts-btn" type="button">Archived</button></div></div>
+          <div class="prospect-bulk-bar"><span id="prospectSelectedCount">0 selected</span><button id="selectAllProspects" class="text-btn" type="button">Select All</button><button id="restoreSelectedProspects" class="primary hidden" type="button" disabled>Restore</button><button id="deleteSelectedProspects" class="danger-btn" type="button" disabled>Delete</button></div>
           <div id="prospectContactList" class="prospect-list contacts-list"></div>
         </section>
         <section id="prospectorPipelinePanel" class="prospector-pipeline-panel hidden">
@@ -513,6 +513,6 @@
 </div>
 
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=95.4"></script>
+<script type="module" src="app.js?v=95.6"></script>
 </body>
 </html>
