@@ -4318,3 +4318,14 @@ body.appointment-editing{overflow:hidden}
   background:var(--blue);
 }
 .timeline-item.ofi.current>div>strong{color:var(--blue)}
+
+
+/* AGNT V95.4 — clearer linked auction timing within Saturday OFI cards. */
+.timeline-ofi-auction-time{
+  display:block;
+  margin-top:5px;
+  color:var(--blue);
+  font-size:.68rem;
+  font-weight:800;
+  line-height:1.25;
+}
