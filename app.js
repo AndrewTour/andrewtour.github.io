@@ -707,7 +707,7 @@ function timelineItemsForDate(viewDate){
       minutes:8*60+(index*5),
       title:`Follow-Up · ${appointmentType(a)} · ${a.address||'Address not recorded'}`,
       meta:`${a.contactName||a.name||'Contact not recorded'}${rawPhone?` · ${rawPhone}`:''}`,
-      kind:'followup',duration:30,dial
+      kind:'followup',duration:30,dial,appointment:a,sourceDate,followUpType:'appointment'
     });
   });
   const appointmentFollowUpCount=scheduledFollowUpsForDate(viewDate).length;
@@ -719,7 +719,7 @@ function timelineItemsForDate(viewDate){
       minutes:8*60+((appointmentFollowUpCount+index)*5),
       title:`Follow-Up · ${p.name||'Contact not recorded'}`,
       meta:`${overdue?'Overdue · ':''}${formatProspectAddress(p.address||p.company,p.suburb)||p.stage||'Contact follow-up'}${rawPhone?` · ${rawPhone}`:''}`,
-      kind:'followup',duration:30,dial
+      kind:'followup',duration:30,dial,prospectId:p.id,followUpType:'prospect',completed:prospectInteractions.some(x=>x.prospectId===p.id&&x.type==='Call'&&x.date===viewDate)
     });
   });
   appointmentEntriesForDate(viewDate).forEach(({appointment:a,sourceDate})=>{
@@ -738,6 +738,11 @@ function timelineItemsForDate(viewDate){
   return items.sort((a,b)=>a.minutes-b.minutes||(order[a.kind]??9)-(order[b.kind]??9)||a.title.localeCompare(b.title));
 }
 function timelineStatus(item,index,items,viewDate,focusItemId=''){
+  if(item.kind==='followup'){
+    if(item.completed)return'complete';
+    if(focusItemId&&item.id===focusItemId)return'current';
+    return'upcoming';
+  }
   if(viewDate<todayKey())return'complete';
   if(viewDate>todayKey())return'upcoming';
   const now=new Date(),nowMinutes=now.getHours()*60+now.getMinutes();
@@ -886,9 +891,12 @@ function renderTimeline(){
     const status=timelineStatus(item,index,items,selectedDate,priority.focusItemId);
     const timeActive=index===activeTimeBlock?' time-active':'';
     const marker=status==='complete'?'✓':status==='current'?'●':'○';
-    const call=(item.kind==='followup'||item.kind==='appointment')&&item.dial?`<a class="timeline-call" href="tel:${escapeHtml(item.dial)}">Call</a>`:'';
-    if(item.kind==='ofi'){const a=item.appointment;const start=timelineTimeLabel(item.minutes),end=timelineTimeLabel(item.minutes+appointmentDurationMinutes(a));const auction=appointmentHasAuction(a)?`<b class="timeline-ofi-auction-time">Auction ${escapeHtml(timelineTimeLabel(appointmentAuctionMinutes(a)))}</b>`:'';return `<article class="timeline-item ${status} ofi${timeActive}"><time>${escapeHtml(start)}</time><span class="timeline-marker">${marker}</span><div><strong>OFI · ${escapeHtml(a.address||'Address not recorded')}</strong><small>${escapeHtml(start)}–${escapeHtml(end)} · ${appointmentDurationMinutes(a)} minutes</small>${auction}</div></article>`;}
-    return `<article class="timeline-item ${status} ${item.kind}${timeActive}"><time>${escapeHtml(timelineTimeLabel(item.minutes))}</time><span class="timeline-marker">${marker}</span><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.meta)}</small>${call}</div></article>`;
+    const followUpAttrs=item.followUpType==='prospect'?`data-followup-prospect="${escapeHtml(item.prospectId)}"`:item.followUpType==='appointment'?`data-followup-appointment="${escapeHtml(calendarExportId(item.appointment,item.sourceDate))}" data-source-date="${escapeHtml(item.sourceDate)}"`:'';
+    const markerHtml=item.kind==='followup'?`<button class="timeline-marker timeline-followup-check" type="button" ${followUpAttrs} aria-label="${status==='complete'?'Follow-up completed':'Log follow-up outcome'}">${marker}</button>`:`<span class="timeline-marker">${marker}</span>`;
+    const callAttrs=item.kind==='followup'&&item.followUpType==='prospect'?`data-prospect-call="${escapeHtml(item.prospectId)}"`:item.kind==='followup'&&item.followUpType==='appointment'?`data-appointment-followup-call="${escapeHtml(calendarExportId(item.appointment,item.sourceDate))}" data-source-date="${escapeHtml(item.sourceDate)}"`:'';
+    const call=(item.kind==='followup'||item.kind==='appointment')&&item.dial?`<a class="timeline-call" href="tel:${escapeHtml(item.dial)}" ${callAttrs}>Call</a>`:'';
+    if(item.kind==='ofi'){const a=item.appointment;const start=timelineTimeLabel(item.minutes),end=timelineTimeLabel(item.minutes+appointmentDurationMinutes(a));const auction=appointmentHasAuction(a)?`<b class="timeline-ofi-auction-time">Auction ${escapeHtml(timelineTimeLabel(appointmentAuctionMinutes(a)))}</b>`:'';return `<article class="timeline-item ${status} ofi${timeActive}"><time>${escapeHtml(start)}</time>${markerHtml}<div><strong>OFI · ${escapeHtml(a.address||'Address not recorded')}</strong><small>${escapeHtml(start)}–${escapeHtml(end)} · ${appointmentDurationMinutes(a)} minutes</small>${auction}</div></article>`;}
+    return `<article class="timeline-item ${status} ${item.kind}${timeActive}"><time>${escapeHtml(timelineTimeLabel(item.minutes))}</time>${markerHtml}<div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.meta)}</small>${call}</div></article>`;
   }).join(''):'<div class="empty"><strong>Schedule clear</strong><small>Appointments and follow-ups for this date will appear here.</small></div>';
 }
 
@@ -1418,6 +1426,10 @@ const PROSPECT_CALL_RETURN_KEY='agnt-prospect-call-return';
 function rememberProspectCallReturn(id,fromSession=false){if(!id)return;try{sessionStorage.setItem(PROSPECT_CALL_RETURN_KEY,JSON.stringify({id,fromSession:Boolean(fromSession),at:Date.now()}))}catch(err){console.warn('Call return state could not be saved',err)}}
 function resumeProspectCallReturn(){let pending=null;try{pending=JSON.parse(sessionStorage.getItem(PROSPECT_CALL_RETURN_KEY)||'null')}catch(err){console.warn('Call return state could not be read',err)}if(!pending?.id)return;const age=Date.now()-(Number(pending.at)||0);if(age<350)return;if(age>10*60*1000){try{sessionStorage.removeItem(PROSPECT_CALL_RETURN_KEY)}catch{}return}if(!prospectById(pending.id)){try{sessionStorage.removeItem(PROSPECT_CALL_RETURN_KEY)}catch{}return}try{sessionStorage.removeItem(PROSPECT_CALL_RETURN_KEY)}catch{}switchView('prospectingView');openProspectLog(pending.id,Boolean(pending.fromSession))}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(resumeProspectCallReturn,80)});window.addEventListener('pageshow',()=>setTimeout(resumeProspectCallReturn,80));window.addEventListener('focus',()=>setTimeout(resumeProspectCallReturn,80));
+const APPOINTMENT_FOLLOWUP_CALL_RETURN_KEY='agnt-appointment-followup-call-return';
+function rememberAppointmentFollowUpCallReturn(id,sourceDate){if(!id)return;try{sessionStorage.setItem(APPOINTMENT_FOLLOWUP_CALL_RETURN_KEY,JSON.stringify({id,sourceDate,at:Date.now()}))}catch(err){console.warn('Appointment call return state could not be saved',err)}}
+function resumeAppointmentFollowUpCallReturn(){let pending=null;try{pending=JSON.parse(sessionStorage.getItem(APPOINTMENT_FOLLOWUP_CALL_RETURN_KEY)||'null')}catch(err){console.warn('Appointment call return state could not be read',err)}if(!pending?.id)return;const age=Date.now()-(Number(pending.at)||0);if(age<350)return;if(age>10*60*1000){try{sessionStorage.removeItem(APPOINTMENT_FOLLOWUP_CALL_RETURN_KEY)}catch{}return}const entry=allAppointmentEntries().find(({appointment:a,sourceDate:s})=>calendarExportId(a,s)===pending.id&&s===pending.sourceDate);if(!entry){try{sessionStorage.removeItem(APPOINTMENT_FOLLOWUP_CALL_RETURN_KEY)}catch{}return}try{sessionStorage.removeItem(APPOINTMENT_FOLLOWUP_CALL_RETURN_KEY)}catch{}switchView('scheduleView');updateAppointmentOutcome(pending.id,pending.sourceDate)}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(resumeAppointmentFollowUpCallReturn,100)});window.addEventListener('pageshow',()=>setTimeout(resumeAppointmentFollowUpCallReturn,100));window.addEventListener('focus',()=>setTimeout(resumeAppointmentFollowUpCallReturn,100));
 function normalisedPhoneDigits(value=''){return String(value||'').replace(/\D/g,'').replace(/^61(?=4\d{8}$)/,'0')}
 function appointmentMatchesProspect(a,p){
   if(a.prospectId&&String(a.prospectId)===String(p.id))return true;
@@ -1686,6 +1698,11 @@ $('#localMode').onclick=()=>{clearActiveSession();uid='local';loadLocal('local')
 $$('[data-action]').forEach(b=>b.onclick=()=>changeMetric(b.dataset.metric,b.dataset.action==='plus'?1:-1));
 $('#timerButton').onclick=toggleTimer;$('#openTodayTimeline').onclick=()=>switchView('scheduleView');$('#resetKnock').onclick=resetKnock;$('#previousDay').onclick=()=>shiftHeaderDate(-1);$('#nextDay').onclick=()=>shiftHeaderDate(1);$('#settingsShortcut').onclick=()=>switchView('settingsView');$('#homeShortcut').onclick=()=>switchView('todayView');$('#backToday').onclick=()=>{selectedDate=todayKey();appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()};
 $('.tabbar').onclick=e=>{const b=e.target.closest('button[data-view]');if(b)switchView(b.dataset.view)};
+$('#dailyTimeline').onclick=e=>{
+  const prospectCheck=e.target.closest('[data-followup-prospect]');if(prospectCheck){switchView('prospectingView');openProspectLog(prospectCheck.dataset.followupProspect,false);return}
+  const appointmentCheck=e.target.closest('[data-followup-appointment]');if(appointmentCheck){updateAppointmentOutcome(appointmentCheck.dataset.followupAppointment,appointmentCheck.dataset.sourceDate);return}
+  const appointmentCall=e.target.closest('[data-appointment-followup-call]');if(appointmentCall){rememberAppointmentFollowUpCallReturn(appointmentCall.dataset.appointmentFollowupCall,appointmentCall.dataset.sourceDate);return}
+};
 $('.insights-switch').onclick=e=>{const b=e.target.closest('button[data-insights-page]');if(b)switchInsightsPage(b.dataset.insightsPage)};
 document.querySelector('.leaderboard-mode-tabs').onclick=e=>{const b=e.target.closest('[data-leaderboard-mode]');if(!b)return;leaderboardMode=b.dataset.leaderboardMode==='week'?'week':'day';renderUnifiedLeaderboard()};
 $('#dayPrev').onclick=()=>{leaderboardDayOffset--;renderUnifiedLeaderboard()};

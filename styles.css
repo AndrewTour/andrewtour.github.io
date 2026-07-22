@@ -4337,3 +4337,10 @@ body.appointment-editing{overflow:hidden}
 
 /* AGNT V95.7 — archived contacts back navigation. */
 .archived-contacts-back{width:auto;margin:0 0 8px;padding:4px 0;font-size:15px;font-weight:700;color:#0a84ff}
+
+/* V95.8 — action-based timeline follow-ups */
+.timeline-followup-check{appearance:none;-webkit-appearance:none;padding:0;border:1.5px solid currentColor;background:var(--surface,rgba(255,255,255,.72));font:inherit;cursor:pointer}
+.timeline-item.followup.upcoming .timeline-followup-check{color:var(--muted,#98a2b3)}
+.timeline-item.followup.current .timeline-followup-check{color:var(--blue,#1677ff);background:rgba(22,119,255,.08)}
+.timeline-item.followup.complete .timeline-followup-check{color:var(--green,#24b47e);background:rgba(36,180,126,.1)}
+.timeline-item.followup.complete .timeline-call{pointer-events:auto;opacity:1}
