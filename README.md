@@ -13,3 +13,11 @@ Firebase, authentication, Firestore paths and rules, UID separation, local cache
 ## V95.9
 - Follow-up controls now use a single empty circle until an outcome is saved.
 - Time-based timeline items remain active until the next timed item begins.
+
+
+## V95.10 — Copy Case Standardisation
+
+- Applied title case to interface titles, headings, and action buttons.
+- Applied sentence case to labels, helper text, placeholders, confirmations, and longer interface copy.
+- Preserved user-entered notes and stored content exactly as entered.
+- No layout, sizing, viewport, styling, Firebase, sync, or functionality changes.
