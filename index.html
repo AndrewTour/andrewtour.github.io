@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=95.10">
+<link rel="stylesheet" href="styles.css?v=95.9">
 <title>AGNT</title>
 </head>
 <body>
@@ -46,12 +46,12 @@
       </section>
 
       <section class="welcome-simple-section welcome-pipeline-section">
-        <span>Pipeline</span>
+        <span>PIPELINE</span>
         <p id="welcomePipelineText">You’ve got no pipeline follow-ups today.</p>
       </section>
 
       <section class="welcome-simple-section welcome-momentum-section">
-        <span>Momentum</span>
+        <span>MOMENTUM</span>
         <h2 id="welcomeMomentumTitle">Create the conversations that shape tomorrow.</h2>
         <p id="welcomeMomentumText">Your calendar is open. Use the space for focused prospecting and finish the day with a stronger pipeline than you started with.</p>
       </section>
@@ -66,12 +66,12 @@
 
 <div id="dayReviewOverlay" class="day-review-overlay hidden" aria-hidden="true">
   <section class="day-review-card" role="dialog" aria-modal="true" aria-labelledby="dayReviewTitle">
-    <div class="day-review-head"><span>Day in Review</span><strong id="dayReviewScore">0%</strong></div>
+    <div class="day-review-head"><span>DAY IN REVIEW</span><strong id="dayReviewScore">0%</strong></div>
     <h2 id="dayReviewTitle">Day reviewed. Tomorrow is clearer.</h2>
     <p>The plan you started with, measured against what you completed.</p>
     <div id="dayReviewMetrics" class="day-review-metrics"></div>
     <div id="dayReviewPlan" class="day-review-plan"></div>
-    <section class="day-review-coach"><span>Tomorrow's Focus</span><p id="dayReviewCoach"></p></section>
+    <section class="day-review-coach"><span>TOMORROW'S FOCUS</span><p id="dayReviewCoach"></p></section>
     <button id="closeDayReview" class="primary day-review-close" type="button">Finish My Day</button>
   </section>
 </div>
@@ -95,7 +95,7 @@
       </div>
     </div>
     <div class="top-actions">
-      <span id="lockBadge" class="lock-badge hidden">Locked</span><button id="backToday" class="back-today hidden" type="button">Today</button>
+      <span id="lockBadge" class="lock-badge hidden">LOCKED</span><button id="backToday" class="back-today hidden" type="button">Today</button>
       <div id="todaySyncSlot" class="today-sync-slot" aria-label="Sync status"></div>
       <div id="dateNavActions" class="date-nav-actions hidden" aria-label="Change day">
         <button id="previousDay" class="icon-btn topbar-nav-icon" type="button" aria-label="Previous day"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6.5 9 12l5.5 5.5"/></svg></button>
@@ -111,22 +111,22 @@
       <section class="score-week glass">
         <div class="score-overview">
           <div class="score-copy">
-            <span id="welcomeMessage">Daily Completion</span>
+            <span id="welcomeMessage">DAILY COMPLETION</span>
             <strong id="dailyScore">0%</strong>
             <small id="momentumWhisper" class="momentum-whisper">Building today’s momentum…</small>
           </div>
           <div class="trend-wrap">
-            <span>Day-on-Day</span>
+            <span>DAY-ON-DAY</span>
             <svg id="dayTrend" class="day-trend" viewBox="0 0 180 62" role="img" aria-label="Recent daily completion trend"></svg>
           </div>
         </div>
         <div class="bar"><i id="scoreBar"></i></div>
         <div class="leaderboard-position">
-          <div><span>Leaderboard Position</span><small id="leaderboardPositionMeta">Waiting for today’s rankings</small></div>
+          <div><span>LEADERBOARD POSITION</span><small id="leaderboardPositionMeta">Waiting for today’s rankings</small></div>
           <strong id="leaderboardPosition">—</strong>
         </div>
         <button id="openTodayTimeline" class="now-card" type="button" aria-label="Open today timeline">
-          <span class="now-card-label">Focus</span>
+          <span class="now-card-label">FOCUS</span>
           <span class="now-card-copy"><strong id="nowCardTitle">Loading today…</strong><small id="nowCardMeta">Your next priority will appear here</small></span>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
         </button>
@@ -134,19 +134,19 @@
 
       <section class="metrics glass">
         <article class="metric" data-metric="calls">
-          <div class="metric-copy"><span>Calls</span><small id="callsTargetText">50 remaining</small><em id="callsPace">Start at 9:00am</em><strong><i id="callsValue">0</i><small id="callsTargetLabel">/50</small></strong></div>
+          <div class="metric-copy"><span>CALLS</span><small id="callsTargetText">50 remaining</small><em id="callsPace">Start at 9:00am</em><strong><i id="callsValue">0</i><small id="callsTargetLabel">/50</small></strong></div>
           <div class="actions"><button data-action="minus" data-metric="calls">−</button><div id="callsPercent" class="metric-percent">0%</div><button data-action="plus" data-metric="calls">+</button></div>
         </article>
         <article class="metric" data-metric="connects">
-          <div class="metric-copy"><span>Connects</span><small id="connectsTargetText">25 remaining</small><em id="connectsPace">Start at 9:00am</em><strong><i id="connectsValue">0</i><small id="connectsTargetLabel">/25</small></strong></div>
+          <div class="metric-copy"><span>CONNECTS</span><small id="connectsTargetText">25 remaining</small><em id="connectsPace">Start at 9:00am</em><strong><i id="connectsValue">0</i><small id="connectsTargetLabel">/25</small></strong></div>
           <div class="actions"><button data-action="minus" data-metric="connects">−</button><div id="connectsPercent" class="metric-percent">0%</div><button data-action="plus" data-metric="connects">+</button></div>
         </article>
         <article class="metric" data-metric="data">
-          <div class="metric-copy"><span>Data</span><small id="dataTargetText">10 remaining</small><em id="dataPace">Start at 9:00am</em><strong><i id="dataValue">0</i><small id="dataTargetLabel">/10</small></strong></div>
+          <div class="metric-copy"><span>DATA</span><small id="dataTargetText">10 remaining</small><em id="dataPace">Start at 9:00am</em><strong><i id="dataValue">0</i><small id="dataTargetLabel">/10</small></strong></div>
           <div class="actions"><button data-action="minus" data-metric="data">−</button><div id="dataPercent" class="metric-percent">0%</div><button data-action="plus" data-metric="data">+</button></div>
         </article>
         <article class="metric knock">
-          <div class="metric-copy"><span>Knocking</span><small id="knockTargetText">60 min remaining today</small><em id="knockRemaining">Start at 9:00am</em><strong id="knockValue">00:00</strong></div>
+          <div class="metric-copy"><span>KNOCKING</span><small id="knockTargetText">60 min remaining today</small><em id="knockRemaining">Start at 9:00am</em><strong id="knockValue">00:00</strong></div>
           <div class="actions knock-actions"><div id="knockPercent" class="metric-percent metric-ring" role="img" aria-label="Knocking: 0% complete, expected pace 0%, target 60 minutes">0%</div><button id="timerButton" class="timer" type="button" aria-label="Start knocking timer"><svg class="timer-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 6.5 17 12l-8.5 5.5Z"/></svg></button><button id="resetKnock" class="reset" aria-label="Reset today’s knocking">↶</button></div>
         </article>
       </section>
@@ -154,16 +154,16 @@
 
     <section id="scheduleView" class="view today-timeline-view">
       <div class="view-head timeline-view-head">
-        <div><span>Today</span><h2 id="timelineDateLabel"></h2></div>
+        <div><span>TODAY</span><h2 id="timelineDateLabel"></h2></div>
         <small id="timelineSummary">Your day at a glance</small>
       </div>
       <section class="timeline-overview glass">
-        <span class="timeline-overview-label">Smart Coach</span>
+        <span class="timeline-overview-label">SMART COACH</span>
         <strong id="timelineCurrentTitle">Loading today…</strong>
         <small id="timelineCurrentMeta">Your schedule will appear below.</small>
       </section>
       <section id="dailyTimeline" class="daily-timeline glass" aria-live="polite"></section>
-      <button id="openDayReview" class="open-day-review hidden" type="button"><span>Day in Review</span><strong>Review today and prepare tomorrow</strong><b aria-hidden="true">›</b></button>
+      <button id="openDayReview" class="open-day-review hidden" type="button"><span>DAY IN REVIEW</span><strong>Review today and prepare tomorrow</strong><b aria-hidden="true">›</b></button>
     </section>
 
     <section id="appointmentsView" class="view">
@@ -173,14 +173,14 @@
       <div id="appointmentMainContent">
         <div class="appointment-destination-grid" aria-label="Appointment history">
           <button class="appointment-destination-card glass" type="button" data-open-appointment-history="past">
-            <span>Appointment History</span><strong>Past Appointments</strong><small id="pastAppointmentSummary">View completed appointments and follow-ups</small><small id="pastAppointmentReminderMetric" class="appointment-card-reminder-metric hidden" role="status"></small><b aria-hidden="true">›</b>
+            <span>APPOINTMENT HISTORY</span><strong>Past Appointments</strong><small id="pastAppointmentSummary">View completed appointments and follow-ups</small><small id="pastAppointmentReminderMetric" class="appointment-card-reminder-metric hidden" role="status"></small><b aria-hidden="true">›</b>
           </button>
           <button class="appointment-destination-card glass" type="button" data-open-appointment-history="upcoming">
-            <span>Schedule</span><strong>Upcoming Appointments</strong><small id="upcomingAppointmentSummary">View scheduled appointments</small><b aria-hidden="true">›</b>
+            <span>SCHEDULE</span><strong>Upcoming Appointments</strong><small id="upcomingAppointmentSummary">View scheduled appointments</small><b aria-hidden="true">›</b>
           </button>
         </div>
       <div id="appointmentLock" class="appointment-lock hidden">Past dates are locked and read-only.</div><form id="appointmentForm" class="appointment-form glass" novalidate>
-        <div id="appointmentEditHeader" class="appointment-edit-header" hidden><div><span>Appointments</span><h2>Editing Appointment</h2></div><button id="closeAppointmentEditor" type="button" aria-label="Close appointment editor">×</button></div>
+        <div id="appointmentEditHeader" class="appointment-edit-header" hidden><div><span>APPOINTMENTS</span><h2>Editing Appointment</h2></div><button id="closeAppointmentEditor" type="button" aria-label="Close appointment editor">×</button></div>
         <label>Contact name<input id="appointmentContactName" type="text" placeholder="Contact name" autocomplete="name" autocapitalize="words" required></label>
         <label>Contact number<input id="appointmentContactNumber" type="tel" placeholder="04xx xxx xxx" autocomplete="tel" inputmode="tel" required></label>
         <label>Property address<input id="appointmentAddress" type="text" placeholder="14 Calla Grove, Pendle Hill" autocomplete="street-address" required></label>
@@ -195,21 +195,21 @@
           <label><input type="radio" name="appointmentType" value="OFI"><span>OFI</span></label>
         </fieldset>
         <div id="ofiOptions" class="ofi-options hidden">
-          <div class="ofi-duration-summary"><span>Open for Inspection</span><strong id="ofiDurationText">30 minute booking</strong><small id="ofiSchedulePreview">Select a time to preview the booking.</small></div>
+          <div class="ofi-duration-summary"><span>OPEN FOR INSPECTION</span><strong id="ofiDurationText">30 minute booking</strong><small id="ofiSchedulePreview">Select a time to preview the booking.</small></div>
           <label class="auction-toggle"><input id="appointmentAuction" type="checkbox"><span><b>Auction</b><small>OFI changes to 15 minutes and the auction starts immediately after.</small></span><i aria-hidden="true"></i></label>
         </div>
         <div id="appointmentFormError" class="form-error hidden" role="alert"></div>
-        <button id="appointmentSubmitButton" class="primary" type="submit">Book Appointment</button>
+        <button id="appointmentSubmitButton" class="primary" type="submit">Book appointment</button>
       </form>
       <section class="appointment-daily-log" aria-label="Appointments logged for selected day">
-        <div class="appointment-log-heading"><span>Appointment Log</span><small id="appointmentLogDate"></small></div>
+        <div class="appointment-log-heading"><span>APPOINTMENT LOG</span><small id="appointmentLogDate"></small></div>
         <div id="appointmentsList" class="appointments-list"></div>
       </section>
       </div>
       <section id="appointmentHistoryScreen" class="appointment-history-screen hidden" aria-live="polite">
         <div class="appointment-history-head">
           <button id="closeAppointmentHistory" type="button" aria-label="Back to appointments">‹</button>
-          <div><span>Appointments</span><h2 id="appointmentHistoryTitle">Past Appointments</h2></div>
+          <div><span>APPOINTMENTS</span><h2 id="appointmentHistoryTitle">Past Appointments</h2></div>
         </div>
         <div id="appointmentHistoryReminder" class="appointment-reminder glass hidden" role="status"></div>
         <div id="appointmentHistoryList" class="appointments-list"></div>
@@ -225,7 +225,7 @@
         <section class="scorecard-hero glass">
           <div class="scorecard-head">
             <button id="scorecardPrev" type="button" aria-label="Previous week">‹</button>
-            <div><span>Weekly Scorecard</span><h2 id="scorecardWeekLabel">This week</h2></div>
+            <div><span>WEEKLY SCORECARD</span><h2 id="scorecardWeekLabel">This week</h2></div>
             <button id="scorecardNext" type="button" aria-label="Next week">›</button>
           </div>
           <div class="scorecard-score"><strong id="scorecardScore">0%</strong><div><span id="scorecardGrade">—</span><small id="scorecardStatus">Your weekly position will appear here.</small></div></div>
@@ -237,25 +237,25 @@
           <button class="scorecard-metric" type="button" disabled><span>Door Knock</span><strong id="scorecardKnock">0 / 0 min</strong><small id="scorecardKnockPct">0%</small></button>
         </section>
         <section class="scorecard-focus glass">
-          <div><span>Weekly Review</span><strong id="scorecardStrongest">Strongest: —</strong><small id="scorecardWeakest">Focus: —</small></div>
+          <div><span>WEEKLY REVIEW</span><strong id="scorecardStrongest">Strongest: —</strong><small id="scorecardWeakest">Focus: —</small></div>
           <p id="scorecardProjection">Your weekly projection will appear once activity is logged.</p>
         </section>
         <section class="scorecard-trends glass">
-          <div class="section-label"><span>What Changed?</span><small>Compared with last week</small></div>
+          <div class="section-label"><span>WHAT CHANGED?</span><small>Compared with last week</small></div>
           <div id="scorecardTrendGrid" class="scorecard-trend-grid"></div>
           <p id="scorecardTrendSummary" class="scorecard-insight-summary"></p>
         </section>
         <section class="scorecard-productivity glass">
-          <div class="section-label"><span>Productivity Insights</span><small>Patterns from your saved activity</small></div>
+          <div class="section-label"><span>PRODUCTIVITY INSIGHTS</span><small>Patterns from your saved activity</small></div>
           <div class="scorecard-productivity-grid">
             <article><span>Best Prospecting Hour</span><strong id="insightBestHour">—</strong><small id="insightBestHourMeta">Not enough activity yet</small></article>
             <article><span>Strongest Day</span><strong id="insightBestDay">—</strong><small id="insightBestDayMeta">Not enough activity yet</small></article>
             <article><span>Average Connect Rate</span><strong id="insightConnectRate">0%</strong><small>Across saved workdays</small></article>
-            <article><span>Average Knock Start</span><strong id="insightKnockStart">—</strong><small>Compared with the 2:00 pm target</small></article>
+            <article><span>Average Knock Start</span><strong id="insightKnockStart">—</strong><small>Compared with the 2:00PM target</small></article>
           </div>
         </section>
         <section class="scorecard-recommendations glass">
-          <div class="section-label"><span>Recommendations</span><small>Most useful patterns to act on</small></div>
+          <div class="section-label"><span>RECOMMENDATIONS</span><small>Most useful patterns to act on</small></div>
           <div id="scorecardRecommendations" class="scorecard-recommendation-list"></div>
         </section>
       </div>
@@ -263,7 +263,7 @@
         <section class="leaderboard-dashboard glass" aria-label="Leaderboard overview">
           <div class="leaderboard-dashboard-main">
             <div class="leaderboard-ring" id="leaderboardRing" style="--score:0"><strong id="leaderboardHeroScore">0%</strong><span>Today</span></div>
-            <div class="leaderboard-hero-copy"><span>Team Position</span><strong id="leaderboardHeroRank">—</strong><small id="leaderboardHeroMessage">Waiting for today’s rankings</small></div>
+            <div class="leaderboard-hero-copy"><span>TEAM POSITION</span><strong id="leaderboardHeroRank">—</strong><small id="leaderboardHeroMessage">Waiting for today’s rankings</small></div>
           </div>
           <div class="leaderboard-kpis">
             <article><span>Agents</span><strong id="leaderboardAgentCount">0</strong></article>
@@ -277,9 +277,9 @@
             <button id="leaderboardWeekTab" type="button" role="tab" aria-selected="false" data-leaderboard-mode="week">Week</button>
           </div>
           <div class="leaderboard-head leaderboard-unified-head">
-            <div><span id="leaderboardPeriodLabel">Daily Leaderboard</span><h2 id="leaderboardDate"></h2></div>
+            <div><span id="leaderboardPeriodLabel">DAILY LEADERBOARD</span><h2 id="leaderboardDate"></h2></div>
             <div class="leaderboard-head-actions">
-              <div id="leaderboardStatus" class="leaderboard-live">Live</div>
+              <div id="leaderboardStatus" class="leaderboard-live">LIVE</div>
               <div id="dayHistoryControls" class="week-history-controls leaderboard-period-controls">
                 <button id="dayPrev" type="button" aria-label="Previous day">‹</button><button id="dayToday" type="button">Today</button><button id="dayNext" type="button" aria-label="Next day">›</button>
               </div>
@@ -314,33 +314,33 @@
       <div id="prospectingDashboard" class="prospecting-dashboard">
         <div id="prospectorTodayPanel" class="prospector-panel">
         <section class="prospecting-hero glass">
-          <div><span>Today'S Pipeline</span><strong id="prospectingDueCount">0</strong><small id="prospectingDueLabel">follow-ups ready</small></div>
+          <div><span>TODAY'S PIPELINE</span><strong id="prospectingDueCount">0</strong><small id="prospectingDueLabel">follow-ups ready</small></div>
           <button id="startProspectingSession" class="primary" type="button">Start Session</button>
         </section>
         <section class="prospecting-stats" aria-label="Prospecting overview">
-          <button class="prospecting-stat glass" data-prospect-filter="overdue"><span>Overdue</span><strong id="prospectingOverdue">0</strong></button>
-          <button class="prospecting-stat glass" data-prospect-filter="today"><span>DUE Today</span><strong id="prospectingToday">0</strong></button>
-          <button class="prospecting-stat glass" data-prospect-filter="hot"><span>Hot</span><strong id="prospectingHot">0</strong></button>
+          <button class="prospecting-stat glass" data-prospect-filter="overdue"><span>OVERDUE</span><strong id="prospectingOverdue">0</strong></button>
+          <button class="prospecting-stat glass" data-prospect-filter="today"><span>DUE TODAY</span><strong id="prospectingToday">0</strong></button>
+          <button class="prospecting-stat glass" data-prospect-filter="hot"><span>HOT</span><strong id="prospectingHot">0</strong></button>
         </section>
         <section class="prospecting-section glass">
-          <div class="prospecting-section-head"><div><span>Priority Queue</span><h3>Who needs you next</h3></div><button id="clearProspectFilter" class="text-btn" type="button">View All</button></div>
+          <div class="prospecting-section-head"><div><span>PRIORITY QUEUE</span><h3>Who needs you next</h3></div><button id="clearProspectFilter" class="text-btn" type="button">View all</button></div>
           <div id="prospectQueue" class="prospect-list"></div>
         </section>
         </div>
         <section id="prospectorContactsPanel" class="prospecting-section prospector-contacts-panel glass hidden">
           <button id="backFromArchivedContacts" class="text-btn archived-contacts-back hidden" type="button">‹ Back</button>
-          <div class="prospecting-section-head contacts-head"><div><span id="prospectContactsEyebrow">Contacts</span><h3 id="prospectContactsHeading">Your database</h3><small id="prospectContactCount">0 contacts · Sorted A–Z</small></div><div class="contacts-head-actions"><label class="prospect-import-button">Import CSV<input id="prospectCsvImport" type="file" accept=".csv,text/csv"></label><button id="toggleProspectBulk" class="text-btn manage-contacts-btn" type="button">Manage Contacts</button><button id="toggleArchivedContacts" class="text-btn manage-contacts-btn" type="button">Archived</button></div></div>
+          <div class="prospecting-section-head contacts-head"><div><span id="prospectContactsEyebrow">CONTACTS</span><h3 id="prospectContactsHeading">Your database</h3><small id="prospectContactCount">0 contacts · Sorted A–Z</small></div><div class="contacts-head-actions"><label class="prospect-import-button">Import CSV<input id="prospectCsvImport" type="file" accept=".csv,text/csv"></label><button id="toggleProspectBulk" class="text-btn manage-contacts-btn" type="button">Manage Contacts</button><button id="toggleArchivedContacts" class="text-btn manage-contacts-btn" type="button">Archived</button></div></div>
           <div class="prospect-bulk-bar"><span id="prospectSelectedCount">0 selected</span><button id="selectAllProspects" class="text-btn" type="button">Select All</button><button id="restoreSelectedProspects" class="primary hidden" type="button" disabled>Restore</button><button id="deleteSelectedProspects" class="danger-btn" type="button" disabled>Delete</button></div>
           <div id="prospectContactList" class="prospect-list contacts-list"></div>
         </section>
         <section id="prospectorPipelinePanel" class="prospector-pipeline-panel hidden">
           <section class="pipeline-overview glass">
-            <div class="pipeline-overview-head"><div><span>SELLER Pipeline</span><h3>Future business, clearly organised</h3><small id="pipelineTotalMeta">0 active sellers across your pipeline</small></div><strong id="pipelineTotal">0</strong></div>
+            <div class="pipeline-overview-head"><div><span>SELLER PIPELINE</span><h3>Future business, clearly organised</h3><small id="pipelineTotalMeta">0 active sellers across your pipeline</small></div><strong id="pipelineTotal">0</strong></div>
             <div class="pipeline-summary-grid" aria-label="Seller pipeline summary">
-              <article class="pipeline-summary-card"><span>Now</span><strong id="pipelineCount0">0</strong></article>
-              <article class="pipeline-summary-card"><span>1–3 Months</span><strong id="pipelineCount1">0</strong></article>
-              <article class="pipeline-summary-card"><span>6–12 Months</span><strong id="pipelineCount2">0</strong></article>
-              <article class="pipeline-summary-card"><span>12 Months+</span><strong id="pipelineCount3">0</strong></article>
+              <article class="pipeline-summary-card"><span>NOW</span><strong id="pipelineCount0">0</strong></article>
+              <article class="pipeline-summary-card"><span>1–3 MONTHS</span><strong id="pipelineCount1">0</strong></article>
+              <article class="pipeline-summary-card"><span>6–12 MONTHS</span><strong id="pipelineCount2">0</strong></article>
+              <article class="pipeline-summary-card"><span>12 MONTHS+</span><strong id="pipelineCount3">0</strong></article>
             </div>
           </section>
           <div class="pipeline-controls glass">
@@ -359,40 +359,40 @@
             <button type="button" data-prospect-insight-period="four">4 Weeks</button>
           </div>
           <section class="prospect-intelligence-hero glass">
-            <div><span>Prospecting Health</span><h3 id="prospectHealthTitle">Building</h3><p id="prospectHealthSummary">Your prospecting intelligence will appear as activity is recorded.</p></div>
+            <div><span>PROSPECTING HEALTH</span><h3 id="prospectHealthTitle">Building</h3><p id="prospectHealthSummary">Your prospecting intelligence will appear as activity is recorded.</p></div>
             <strong id="prospectHealthScore">—</strong>
           </section>
           <section class="prospect-intelligence-card glass">
-            <div class="section-label"><span>Conversion Flow</span><small>Where activity becomes opportunity</small></div>
+            <div class="section-label"><span>CONVERSION FLOW</span><small>Where activity becomes opportunity</small></div>
             <div id="prospectConversionGrid" class="prospect-insight-grid prospect-conversion-grid"></div>
             <p id="prospectConversionSummary" class="prospect-insight-summary"></p>
           </section>
           <section class="prospect-intelligence-card glass">
-            <div class="section-label"><span>Pipeline QUALITY</span><small>Composition, urgency and movement</small></div>
+            <div class="section-label"><span>PIPELINE QUALITY</span><small>Composition, urgency and movement</small></div>
             <div id="prospectPipelineInsightGrid" class="prospect-insight-grid"></div>
             <p id="prospectPipelineSummary" class="prospect-insight-summary"></p>
             <button class="prospect-insight-link" type="button" data-insight-open="pipeline">Open Pipeline</button>
           </section>
           <section class="prospect-intelligence-card glass">
-            <div class="section-label"><span>Follow-Up Discipline</span><small>Protect the opportunities already created</small></div>
+            <div class="section-label"><span>FOLLOW-UP DISCIPLINE</span><small>Protect the opportunities already created</small></div>
             <div id="prospectFollowupInsightGrid" class="prospect-insight-grid"></div>
             <p id="prospectFollowupSummary" class="prospect-insight-summary"></p>
-            <button class="prospect-insight-link" type="button" data-insight-open="today">Open Follow-Ups</button>
+            <button class="prospect-insight-link" type="button" data-insight-open="today">Open Follow-ups</button>
           </section>
           <section class="prospect-intelligence-card glass">
-            <div class="section-label"><span>Appointment Performance</span><small>What your prospecting is producing</small></div>
+            <div class="section-label"><span>APPOINTMENT PERFORMANCE</span><small>What your prospecting is producing</small></div>
             <div id="prospectAppointmentInsightGrid" class="prospect-insight-grid"></div>
             <p id="prospectAppointmentSummary" class="prospect-insight-summary"></p>
             <button class="prospect-insight-link" type="button" data-insight-open="appointments">Open Appointments</button>
           </section>
           <section class="prospect-intelligence-card glass">
-            <div class="section-label"><span>DataBASE QUALITY</span><small>Small gaps that weaken future follow-through</small></div>
+            <div class="section-label"><span>DATABASE QUALITY</span><small>Small gaps that weaken future follow-through</small></div>
             <div id="prospectQualityInsightGrid" class="prospect-insight-grid"></div>
             <p id="prospectQualitySummary" class="prospect-insight-summary"></p>
             <button class="prospect-insight-link" type="button" data-insight-open="contacts">Review Contacts</button>
           </section>
           <section class="prospect-weekly-focus glass">
-            <span>Priority Direction</span><h3 id="prospectWeeklyFocusTitle">Build meaningful activity</h3><p id="prospectWeeklyFocusText">Log prospecting activity to unlock a focused recommendation.</p>
+            <span>PRIORITY DIRECTION</span><h3 id="prospectWeeklyFocusTitle">Build meaningful activity</h3><p id="prospectWeeklyFocusText">Log prospecting activity to unlock a focused recommendation.</p>
           </section>
         </section>
       </div>
@@ -431,17 +431,17 @@
           </div>
         </fieldset>
         <fieldset class="calendar-preference-settings">
-          <legend>Calendar preference</legend>
+          <legend>Calendar Preference</legend>
           <p>Calendar</p>
           <div class="calendar-preference-options">
             <label><input type="radio" name="calendarPreference" value="apple"><span>Apple Calendar</span></label>
             <label><input type="radio" name="calendarPreference" value="outlook"><span>Outlook Calendar</span></label>
           </div>
         </fieldset>
-        <button id="saveSettings" class="primary">Save Settings</button>
-        <button id="exportData" class="secondary">Export Backup</button>
-        <label class="file-btn secondary">Import Backup<input id="importData" type="file" accept="application/json"></label>
-        <button id="signOut" class="danger">Sign Out</button>
+        <button id="saveSettings" class="primary">Save settings</button>
+        <button id="exportData" class="secondary">Export backup</button>
+        <label class="file-btn secondary">Import backup<input id="importData" type="file" accept="application/json"></label>
+        <button id="signOut" class="danger">Sign out</button>
         <p id="modeNote"></p>
       </div>
     </section>
@@ -486,11 +486,11 @@
   <div class="action-sheet glass" role="dialog" aria-modal="true" aria-labelledby="followUpModalTitle">
     <div class="action-sheet-handle"></div>
     <div class="action-sheet-head">
-      <div><small>Follow-Up</small><h2 id="followUpModalTitle">Choose Follow-Up Date</h2></div>
+      <div><small>FOLLOW-UP</small><h2 id="followUpModalTitle">Choose Follow-Up Date</h2></div>
       <button type="button" class="action-sheet-close" data-close-followup aria-label="Close">×</button>
     </div>
     <p>Select the date you want this appointment to return for follow-up.</p>
-    <label class="native-date-field"><span>Follow-up date</span><input id="followUpDateInput" type="date"></label>
+    <label class="native-date-field"><span>Follow-Up Date</span><input id="followUpDateInput" type="date"></label>
     <div class="action-sheet-actions"><button type="button" class="secondary" data-close-followup>Cancel</button><button type="button" class="primary" id="saveFollowUpDate">Save Follow-Up</button></div>
   </div>
 </div>
@@ -499,7 +499,7 @@
   <div class="action-sheet glass outcome-sheet" role="dialog" aria-modal="true" aria-labelledby="outcomeModalTitle">
     <div class="action-sheet-handle"></div>
     <div class="action-sheet-head">
-      <div><small>Appointment</small><h2 id="outcomeModalTitle">Update Outcome</h2></div>
+      <div><small>APPOINTMENT</small><h2 id="outcomeModalTitle">Update Outcome</h2></div>
       <button type="button" class="action-sheet-close" data-close-outcome aria-label="Close">×</button>
     </div>
     <div class="outcome-options" id="outcomeOptions">
@@ -508,12 +508,12 @@
       <button type="button" class="outcome-option outcome-amber" data-outcome="Not Proceeding"><span>Not Proceeding</span><i>Close Appointment</i></button>
       <button type="button" class="outcome-option outcome-red" data-outcome="Missed"><span>Missed</span><i>Listed With Another Agent</i></button>
     </div>
-    <label class="outcome-note-field"><span>Optional note</span><textarea id="outcomeNoteInput" rows="3" placeholder="Add a short follow-up note"></textarea></label>
+    <label class="outcome-note-field"><span>Optional Note</span><textarea id="outcomeNoteInput" rows="3" placeholder="Add a short follow-up note"></textarea></label>
     <div class="action-sheet-actions"><button type="button" class="secondary" data-close-outcome>Cancel</button><button type="button" class="primary" id="saveAppointmentOutcome" disabled>Save Outcome</button></div>
   </div>
 </div>
 
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=95.10"></script>
+<script type="module" src="app.js?v=95.9"></script>
 </body>
 </html>
