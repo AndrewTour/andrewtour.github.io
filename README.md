@@ -9,3 +9,7 @@ Incremental update built from V90.
 
 ## Unchanged
 Firebase, authentication, Firestore paths and rules, UID separation, local cache, sync, appointment data and save logic, navigation, scoring and unrelated UI.
+
+## V95.9
+- Follow-up controls now use a single empty circle until an outcome is saved.
+- Time-based timeline items remain active until the next timed item begins.

@@ -746,9 +746,10 @@ function timelineStatus(item,index,items,viewDate,focusItemId=''){
   if(viewDate<todayKey())return'complete';
   if(viewDate>todayKey())return'upcoming';
   const now=new Date(),nowMinutes=now.getHours()*60+now.getMinutes();
-  if(nowMinutes>=item.minutes)return'complete';
-  if(focusItemId&&item.id===focusItemId)return'current';
-  return'upcoming';
+  if(nowMinutes<item.minutes)return'upcoming';
+  const nextTimedItem=items.find((candidate,candidateIndex)=>candidateIndex>index&&candidate.kind!=='followup'&&candidate.minutes>item.minutes);
+  if(nextTimedItem&&nowMinutes>=nextTimedItem.minutes)return'complete';
+  return'current';
 }
 function timelineTimeBlockIndex(items,viewDate){
   if(viewDate!==todayKey()||!items.length)return-1;
@@ -890,7 +891,7 @@ function renderTimeline(){
   $('#dailyTimeline').innerHTML=items.length?items.map((item,index)=>{
     const status=timelineStatus(item,index,items,selectedDate,priority.focusItemId);
     const timeActive=index===activeTimeBlock?' time-active':'';
-    const marker=status==='complete'?'✓':status==='current'?'●':'○';
+    const marker=item.kind==='followup'?(status==='complete'?'✓':''):(status==='complete'?'✓':status==='current'?'●':'○');
     const followUpAttrs=item.followUpType==='prospect'?`data-followup-prospect="${escapeHtml(item.prospectId)}"`:item.followUpType==='appointment'?`data-followup-appointment="${escapeHtml(calendarExportId(item.appointment,item.sourceDate))}" data-source-date="${escapeHtml(item.sourceDate)}"`:'';
     const markerHtml=item.kind==='followup'?`<button class="timeline-marker timeline-followup-check" type="button" ${followUpAttrs} aria-label="${status==='complete'?'Follow-up completed':'Log follow-up outcome'}">${marker}</button>`:`<span class="timeline-marker">${marker}</span>`;
     const callAttrs=item.kind==='followup'&&item.followUpType==='prospect'?`data-prospect-call="${escapeHtml(item.prospectId)}"`:item.kind==='followup'&&item.followUpType==='appointment'?`data-appointment-followup-call="${escapeHtml(calendarExportId(item.appointment,item.sourceDate))}" data-source-date="${escapeHtml(item.sourceDate)}"`:'';

@@ -1,5 +1,5 @@
-const CACHE='agnt-v95-8-action-followups';
-const ASSETS=['./','./index.html','./styles.css?v=95.8','./app.js?v=95.8','./firebase-config.js','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
+const CACHE='agnt-v95-9-timeline-status';
+const ASSETS=['./','./index.html','./styles.css?v=95.9','./app.js?v=95.9','./firebase-config.js','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{
