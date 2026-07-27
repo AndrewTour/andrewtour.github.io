@@ -13,3 +13,8 @@ Firebase, authentication, Firestore paths and rules, UID separation, local cache
 ## V95.9
 - Follow-up controls now use a single empty circle until an outcome is saved.
 - Time-based timeline items remain active until the next timed item begins.
+
+## V103.1.1
+- Active prospecting session UI remains on Today while Contacts, Pipeline and Insights stay usable.
+- Session progress uses lowercase ‘of’.
+- Contacts with any logged event in the previous 21 days are excluded from session rotation.
