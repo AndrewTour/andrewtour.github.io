@@ -4347,3 +4347,22 @@ body.appointment-editing{overflow:hidden}
 
 /* V105: preserve lowercase session progress wording */
 .prospect-session-head span{text-transform:none!important}
+
+
+/* V106 — appointment contact search and session booking hand-off only. */
+.appointment-contact-picker{position:relative}
+.appointment-contact-input{position:relative}
+.appointment-contact-suggestions{position:absolute;z-index:40;top:calc(100% + 6px);left:0;right:0;display:grid;gap:0;padding:6px;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 16px 38px rgba(22,28,45,.16);max-height:260px;overflow:auto}
+.appointment-contact-suggestions.hidden{display:none}
+.appointment-contact-suggestions button{display:grid;gap:3px;width:100%;padding:11px 10px;text-align:left;border:0;border-bottom:1px solid rgba(17,19,24,.07);background:transparent;color:var(--ink);border-radius:10px}
+.appointment-contact-suggestions button:last-child{border-bottom:0}
+.appointment-contact-suggestions button:active{background:#f0f4fb}
+.appointment-contact-suggestions strong{font-size:.82rem}
+.appointment-contact-suggestions small{color:var(--muted);font-size:.67rem;line-height:1.35}
+.appointment-prospect-flow{display:flex;align-items:center;gap:11px;padding:11px 12px;margin-bottom:12px;border:1px solid rgba(11,99,243,.18);border-radius:16px;background:rgba(11,99,243,.06)}
+.appointment-prospect-flow.hidden{display:none}
+.appointment-prospect-flow>button{width:34px;height:34px;flex:0 0 34px;border:0;border-radius:50%;background:#fff;color:var(--blue);font-size:1.35rem;box-shadow:0 2px 8px rgba(22,28,45,.08)}
+.appointment-prospect-flow div{display:grid;gap:2px;min-width:0}
+.appointment-prospect-flow span{color:var(--blue);font-size:.58rem;font-weight:850;letter-spacing:.08em}
+.appointment-prospect-flow strong{font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.appointment-prospect-flow small{color:var(--muted);font-size:.64rem}

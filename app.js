@@ -16,6 +16,8 @@ let pendingSyncOperations=0, syncHasError=false, lastLeaderboardSignature='', la
 let pendingProspectingPayload=null, pendingProspectingSignature='', prospectingWriteInFlight=false, prospectingSaveWaiters=[];
 let editingAppointment=null;
 let appointmentEditReturnState=null;
+let appointmentLinkedProspectId='';
+let pendingProspectAppointmentFlow=null;
 const daySaveChains=new Map();
 let dirtyDayKeys=new Set();
 const appointmentSubmitLocks=new Set();
@@ -1061,6 +1063,7 @@ function updateOfiFormState(){
   if($('#ofiSchedulePreview')){if(!time)$('#ofiSchedulePreview').textContent='Select a time to preview the booking.';else{const start=timelineMinutes(time);$('#ofiSchedulePreview').textContent=auction?`${timelineTimeLabel(start)}–${timelineTimeLabel(start+15)} OFI · ${timelineTimeLabel(start+15)} auction`:`${timelineTimeLabel(start)}–${timelineTimeLabel(start+30)} OFI`;}}
 }
 function renderAppointments(){
+  renderProspectAppointmentFlowHeader();
   const picker=$('#appointmentDatePicker');
   const editing=Boolean(editingAppointment);
   $('#appointmentsView')?.classList.toggle('appointment-edit-mode',editing);
@@ -1094,7 +1097,67 @@ function renderAppointments(){
   if(activeViewId()==='appointmentsView')updateTopbar('appointmentsView');
 }
 
-async function addAppointment({contactName,contactNumber,address,date,time,type,auction=false}){
+function appointmentContactMatches(query){
+  const q=cleanText(query,120).toLowerCase();
+  if(!q)return prospects.filter(p=>!p.archived).slice(0,6);
+  return prospects.filter(p=>!p.archived&&[p.name,p.address,p.suburb,primaryProspectPhone(p)].some(value=>String(value||'').toLowerCase().includes(q))).slice(0,6);
+}
+function hideAppointmentContactSuggestions(){const list=$('#appointmentContactSuggestions');if(list){list.classList.add('hidden');list.innerHTML=''}}
+function renderAppointmentContactSuggestions(){
+  const input=$('#appointmentContactName'),list=$('#appointmentContactSuggestions');if(!input||!list||editingAppointment)return;
+  const matches=appointmentContactMatches(input.value);
+  if(!matches.length){hideAppointmentContactSuggestions();return}
+  list.innerHTML=matches.map(p=>`<button type="button" data-appointment-contact="${escapeHtml(p.id)}"><strong>${escapeHtml(p.name)}</strong><small>${escapeHtml(formatProspectAddress(p.address||p.company,p.suburb)||'No property address')}${primaryProspectPhone(p)?` · ${escapeHtml(primaryProspectPhone(p))}`:''}</small></button>`).join('');
+  list.classList.remove('hidden');
+}
+function selectAppointmentContact(id){
+  const p=prospectById(id);if(!p)return;
+  appointmentLinkedProspectId=p.id;
+  $('#appointmentContactName').value=p.name||'';
+  $('#appointmentContactNumber').value=primaryProspectPhone(p)||'';
+  $('#appointmentAddress').value=formatProspectAddress(p.address||p.company,p.suburb)||p.address||'';
+  hideAppointmentContactSuggestions();
+}
+function resetAppointmentContactLink(){appointmentLinkedProspectId='';hideAppointmentContactSuggestions()}
+function renderProspectAppointmentFlowHeader(){
+  const header=$('#appointmentProspectFlowHeader');if(!header)return;
+  header.classList.toggle('hidden',!pendingProspectAppointmentFlow);
+  const name=$('#appointmentProspectFlowName');if(name)name.textContent=pendingProspectAppointmentFlow?.contactName||'';
+}
+function openAppointmentBookingFromProspect(flow){
+  const p=prospectById(flow.prospectId);if(!p)return toast('Contact could not be found');
+  pendingProspectAppointmentFlow={...flow,contactName:p.name,contactNumber:primaryProspectPhone(p)||'',address:formatProspectAddress(p.address||p.company,p.suburb)||p.address||''};
+  editingAppointment=null;appointmentEditReturnState=null;appointmentHistoryMode=null;appointmentDate=todayKey();appointmentLinkedProspectId=p.id;
+  const form=$('#appointmentForm');form?.reset();
+  $('#appointmentContactName').value=p.name||'';$('#appointmentContactNumber').value=primaryProspectPhone(p)||'';$('#appointmentAddress').value=pendingProspectAppointmentFlow.address;
+  $('#appointmentDatePicker').value=appointmentDate;$('#appointmentTime').value='12:00';$('#appointmentAuction').checked=false;
+  updateOfiFormState();switchView('appointmentsView');renderProspectAppointmentFlowHeader();
+  requestAnimationFrame(()=>$('#appointmentDatePicker')?.focus({preventScroll:true}));
+}
+function cancelProspectAppointmentFlow(){
+  const flow=pendingProspectAppointmentFlow;pendingProspectAppointmentFlow=null;appointmentLinkedProspectId='';
+  $('#appointmentForm')?.reset();$('#appointmentDatePicker').value=appointmentDate;$('#appointmentTime').value='12:00';hideAppointmentContactSuggestions();renderProspectAppointmentFlowHeader();
+  switchView('prospectingView');
+  if(flow?.fromSession&&prospectSessionActive)showProspectingSession();else if(flow?.prospectId)renderProspectDetail(flow.prospectId);
+}
+async function completePendingProspectAppointmentFlow(){
+  const flow=pendingProspectAppointmentFlow;if(!flow)return;
+  const p=prospectById(flow.prospectId);if(!p){pendingProspectAppointmentFlow=null;return}
+  const outcome='Appointment booked',interactionId=flow.interactionId||prospectId(),next=flow.nextFollowUp||'',temperature=flow.temperature||'Cold',sellingTimeframe=flow.sellingTimeframe||p.sellingTimeframe||'',temperatureManual=Boolean(flow.temperatureManual),motivation=Number(flow.motivation)||p.motivation;
+  prospectInteractions.push({id:interactionId,prospectId:p.id,date:todayKey(),at:Date.now(),type:'Call',outcome,note:flow.note||'',nextFollowUp:validDateKey(next)?next:'',metricsApplied:false});
+  if(p.sellingTimeframe!==sellingTimeframe)prospectInteractions.push({id:prospectId(),prospectId:p.id,date:todayKey(),at:Date.now()+1,type:'Pipeline',outcome:'Selling timeframe updated',note:`Selling timeframe changed from ${p.sellingTimeframe||'Not set'} to ${sellingTimeframe||'Not currently selling'}.`,nextFollowUp:''});
+  prospects=prospects.map(x=>x.id===p.id?normaliseProspect({...x,temperature,motivation,temperatureManual,sellingTimeframe,lastContact:todayKey(),nextFollowUp:validDateKey(next)?next:'',stage:'Appointment Booked',updatedAt:Date.now()}):x);
+  const delta=prospectOutcomeMetricDelta(outcome);
+  try{await applyProspectingOutcomeMetrics(outcome,interactionId)}catch(err){console.error('Prospector metric save failed',err);toast('Appointment saved. Metrics are pending sync.')}
+  prospectInteractions=prospectInteractions.map(x=>x.id===interactionId?{...x,metricsApplied:true}:x);
+  try{await saveProspecting({render:false})}catch(err){console.error('Prospecting log save failed',err);toast('The appointment is saved locally. Please check sync.')}
+  if(flow.fromSession&&prospectSessionActive){prospectSessionStats.calls+=delta.calls;prospectSessionStats.connects+=delta.connects;if(temperature==='Warm'||temperature==='Hot')prospectSessionStats.temperate++;prospectSessionStats.appointments++;prospectSessionIndex++;saveProspectingSessionState()}
+  pendingProspectAppointmentFlow=null;appointmentLinkedProspectId='';renderProspectAppointmentFlowHeader();
+  switchView('prospectingView');
+  if(flow.fromSession&&prospectSessionActive){toast('Appointment booked');showProspectingSession()}else{toast('Appointment booked');renderProspectDetail(p.id)}
+}
+
+async function addAppointment({contactName,contactNumber,address,date,time,type,auction=false,prospectId=''}){
   const createdDate=todayKey();
   if(!canEditDate(createdDate))return lockedToast();
   const signature=[createdDate,date,time,type,contactName.trim().toLowerCase(),address.trim().toLowerCase()].join('|');
@@ -1106,7 +1169,7 @@ async function addAppointment({contactName,contactNumber,address,date,time,type,
   const recentDuplicate=d.appointments.find(a=>[appointmentCreatedDate(a,createdDate),appointmentScheduledDate(a,createdDate),a.time,appointmentType(a),String(a.contactName||'').trim().toLowerCase(),String(a.address||'').trim().toLowerCase()].join('|')===signature&&Date.now()-(Number(a.at)||0)<15000);
   if(recentDuplicate){appointmentSubmitLocks.delete(signature);return recentDuplicate}
   let linkedProspect=null;if(normaliseAppointmentType(type)==='LAP')linkedProspect=await connectListingAppointmentToPipeline({contactName,contactNumber,address});
-  const appointment=normaliseAppointmentRecord({id:uuid(),contactName,contactNumber,address,date,time,type,auction:type==='OFI'&&auction,types:[type],prospectId:linkedProspect?.id||'',createdDate,logDate:createdDate,scheduledDate:date,scheduledAt,at:Date.now()},createdDate);
+  const appointment=normaliseAppointmentRecord({id:uuid(),contactName,contactNumber,address,date,time,type,auction:type==='OFI'&&auction,types:[type],prospectId:linkedProspect?.id||prospectId||'',createdDate,logDate:createdDate,scheduledDate:date,scheduledAt,at:Date.now()},createdDate);
   d.appointments.push(appointment);
   addEvent(d,'appointment',`${type} · ${contactName} · ${address} · booked for ${date} ${time}`);
   days[createdDate]=d;
@@ -1117,7 +1180,7 @@ function beginEditAppointment(id,sourceDate){
   const d=dayData(sourceDate),appointment=d.appointments.find(a=>String(a.id)===String(id));
   if(!appointment)return toast('Appointment could not be found');
   appointmentEditReturnState={date:appointmentDate,historyMode:appointmentHistoryMode,scrollY:window.scrollY};
-  editingAppointment={id:String(id),sourceDate};appointmentHistoryMode=null;setAppointmentHistoryScreen(null);
+  editingAppointment={id:String(id),sourceDate};appointmentLinkedProspectId=appointment.prospectId||'';pendingProspectAppointmentFlow=null;renderProspectAppointmentFlowHeader();appointmentHistoryMode=null;setAppointmentHistoryScreen(null);
   appointmentDate=appointmentCreatedDate(appointment,sourceDate)||todayKey();
   $('#appointmentContactName').value=appointment.contactName||'';$('#appointmentContactNumber').value=appointment.contactNumber||'';$('#appointmentAddress').value=appointment.address||'';$('#appointmentDatePicker').value=appointmentScheduledDate(appointment,sourceDate);$('#appointmentTime').value=appointment.time||'12:00';
   const type=appointmentType(appointment);$$('[name=appointmentType]').forEach(el=>el.checked=el.value===type);$('#appointmentAuction').checked=appointmentHasAuction(appointment);updateOfiFormState();
@@ -1126,7 +1189,7 @@ function beginEditAppointment(id,sourceDate){
 function closeAppointmentEditor(){
   if(!editingAppointment)return;
   const returnState=appointmentEditReturnState;
-  editingAppointment=null;appointmentEditReturnState=null;
+  editingAppointment=null;appointmentEditReturnState=null;appointmentLinkedProspectId='';
   $('#appointmentForm')?.reset();
   $('#appointmentFormError')?.classList.add('hidden');
   if(returnState){appointmentDate=returnState.date;appointmentHistoryMode=returnState.historyMode;}
@@ -1717,9 +1780,25 @@ $('#weekLast').onclick=()=>{leaderboardWeekOffset=-1;renderUnifiedLeaderboard()}
 $('#scorecardPrev').onclick=()=>{scorecardWeekOffset--;renderScorecard()};$('#scorecardNext').onclick=()=>{if(scorecardWeekOffset<0)scorecardWeekOffset++;renderScorecard()};
 $('#appointmentDatePicker').onchange=()=>{};
 $('.appointment-types').onchange=updateOfiFormState;$('#appointmentTime').addEventListener('input',updateOfiFormState);$('#appointmentAuction').addEventListener('change',updateOfiFormState);
+$('#appointmentContactName').addEventListener('input',e=>{const selected=appointmentLinkedProspectId?prospectById(appointmentLinkedProspectId):null;if(selected&&e.target.value.trim()!==selected.name)appointmentLinkedProspectId='';renderAppointmentContactSuggestions()});$('#appointmentContactName').addEventListener('focus',renderAppointmentContactSuggestions);$('#appointmentContactSuggestions').addEventListener('pointerdown',e=>{const b=e.target.closest('[data-appointment-contact]');if(!b)return;e.preventDefault();selectAppointmentContact(b.dataset.appointmentContact)});$('#cancelProspectAppointmentFlow').onclick=cancelProspectAppointmentFlow;document.addEventListener('pointerdown',e=>{if(!e.target.closest('.appointment-contact-picker'))hideAppointmentContactSuggestions()});
 document.querySelector('.appointment-destination-grid').onclick=e=>{const b=e.target.closest('[data-open-appointment-history]');if(!b)return;setAppointmentHistoryScreen(b.dataset.openAppointmentHistory)};
 $('#closeAppointmentHistory').onclick=()=>setAppointmentHistoryScreen(null);
-$('#appointmentForm').onsubmit=async e=>{e.preventDefault();const viewedDate=appointmentDate,returnState=appointmentEditReturnState;const contactName=$('#appointmentContactName').value.trim(),contactNumber=$('#appointmentContactNumber').value.trim(),address=$('#appointmentAddress').value.trim(),date=$('#appointmentDatePicker').value,time=$('#appointmentTime').value,type=$('.appointment-types input:checked')?.value||'',auction=type==='OFI'&&$('#appointmentAuction').checked,error=$('#appointmentFormError');const missing=[];if(type!=='OFI'&&!contactName)missing.push('contact name');if(type!=='OFI'&&!contactNumber)missing.push('contact number');if(!address)missing.push('property address');if(!date)missing.push('booking date');if(!time)missing.push('booking time');if(!type)missing.push('appointment type');if(missing.length){error.textContent=`Add ${missing.join(', ')}`;error.classList.remove('hidden');return}error.textContent='';error.classList.add('hidden');const wasEditing=Boolean(editingAppointment);const appointment=wasEditing?await editAppointment({contactName,contactNumber,address,date,time,type,auction}):await addAppointment({contactName,contactNumber,address,date,time,type,auction});if(appointment&&!wasEditing&&confirm(`Add to ${calendarPreference==='apple'?'Apple':'Outlook'} Calendar?`))exportAppointmentToCalendar(appointment,appointment.createdDate);if(appointment){e.target.reset();editingAppointment=null;appointmentEditReturnState=null;if(wasEditing&&returnState){appointmentDate=returnState.date;appointmentHistoryMode=returnState.historyMode;$('#appointmentMainContent')?.classList.toggle('hidden',Boolean(appointmentHistoryMode));$('#appointmentHistoryScreen')?.classList.toggle('hidden',!appointmentHistoryMode);}else{appointmentDate=viewedDate;}$('#appointmentDatePicker').value=appointmentDate;$('#appointmentTime').value='12:00';$('#appointmentAuction').checked=false;updateOfiFormState();renderAppointments();updateTopbar('appointmentsView');if(wasEditing)requestAnimationFrame(()=>window.scrollTo({top:returnState?.scrollY||0,behavior:'instant'}));}};
+$('#appointmentForm').onsubmit=async e=>{
+  e.preventDefault();
+  const viewedDate=appointmentDate,returnState=appointmentEditReturnState;
+  const contactName=$('#appointmentContactName').value.trim(),contactNumber=$('#appointmentContactNumber').value.trim(),address=$('#appointmentAddress').value.trim(),date=$('#appointmentDatePicker').value,time=$('#appointmentTime').value,type=$('.appointment-types input:checked')?.value||'',auction=type==='OFI'&&$('#appointmentAuction').checked,error=$('#appointmentFormError');
+  const missing=[];if(type!=='OFI'&&!contactName)missing.push('contact name');if(type!=='OFI'&&!contactNumber)missing.push('contact number');if(!address)missing.push('property address');if(!date)missing.push('booking date');if(!time)missing.push('booking time');if(!type)missing.push('appointment type');
+  if(missing.length){error.textContent=`Add ${missing.join(', ')}`;error.classList.remove('hidden');return}
+  error.textContent='';error.classList.add('hidden');
+  const wasEditing=Boolean(editingAppointment),wasProspectFlow=Boolean(pendingProspectAppointmentFlow);
+  const appointment=wasEditing?await editAppointment({contactName,contactNumber,address,date,time,type,auction}):await addAppointment({contactName,contactNumber,address,date,time,type,auction,prospectId:appointmentLinkedProspectId});
+  if(appointment&&!wasEditing&&confirm(`Add to ${calendarPreference==='apple'?'Apple':'Outlook'} Calendar?`))exportAppointmentToCalendar(appointment,appointment.createdDate);
+  if(!appointment)return;
+  if(wasProspectFlow){await completePendingProspectAppointmentFlow();e.target.reset();$('#appointmentDatePicker').value=appointmentDate;$('#appointmentTime').value='12:00';$('#appointmentAuction').checked=false;updateOfiFormState();return}
+  e.target.reset();editingAppointment=null;appointmentEditReturnState=null;appointmentLinkedProspectId='';hideAppointmentContactSuggestions();
+  if(wasEditing&&returnState){appointmentDate=returnState.date;appointmentHistoryMode=returnState.historyMode;$('#appointmentMainContent')?.classList.toggle('hidden',Boolean(appointmentHistoryMode));$('#appointmentHistoryScreen')?.classList.toggle('hidden',!appointmentHistoryMode);}else{appointmentDate=viewedDate;}
+  $('#appointmentDatePicker').value=appointmentDate;$('#appointmentTime').value='12:00';$('#appointmentAuction').checked=false;updateOfiFormState();renderAppointments();updateTopbar('appointmentsView');if(wasEditing)requestAnimationFrame(()=>window.scrollTo({top:returnState?.scrollY||0,behavior:'instant'}));
+};
 $('#closeAppointmentEditor').onclick=closeAppointmentEditor;
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&editingAppointment)closeAppointmentEditor();});
 $('#saveFollowUpDate').onclick=saveAppointmentFollowUp;
@@ -1796,7 +1875,7 @@ $('#prospectingView').addEventListener('change',e=>{
 });
 $('#prospectingView').onsubmit=async e=>{
   if(e.target.id==='prospectEditor'){e.preventDefault();const f=new FormData(e.target),existing=prospectById(activeProspectId);await upsertProspect({name:f.get('name'),phone:f.get('phone'),email:f.get('email'),address:f.get('address'),source:f.get('source'),stage:f.get('stage'),temperature:f.get('temperature'),motivation:f.get('motivation'),temperatureManual:e.target.dataset.temperatureManual==='1'||Boolean(existing?.temperatureManual),motivationManual:e.target.dataset.motivationManual==='1'||Boolean(existing?.motivationManual),tags:f.get('tags'),sellingTimeframe:f.get('sellingTimeframe'),nextFollowUp:f.get('nextFollowUp'),notes:f.get('notes'),archived:Boolean(existing?.archived),archivedAt:existing?.archivedAt||0},activeProspectId||'');toast(activeProspectId?'Contact saved':'Contact added');return}
-  if(e.target.id==='prospectLogForm'){e.preventDefault();const form=e.target,submit=form.querySelector('button[type=submit]');if(submit?.disabled)return;if(submit){submit.disabled=true;submit.textContent='Saving…'}const f=new FormData(form),p=prospectById(activeProspectId),next=f.get('nextFollowUp'),outcome=cleanText(f.get('outcome'),80),fromSession=form.dataset.fromSession==='1',interactionId=prospectId(),temperature=cleanText(f.get('temperature'),20)||'Cold',timeframeChoice=cleanText(f.get('sellingTimeframe'),40),archiveRequested=outcome==='Archive',sellingTimeframe=timeframeChoice==='Not currently selling'?'':SELLING_TIMEFRAMES.includes(timeframeChoice)?timeframeChoice:p?.sellingTimeframe||'',temperatureManual=form.dataset.temperatureManual==='1'||Boolean(p?.temperatureManual),defaults=pipelineDefaultsForTimeframe(sellingTimeframe),motivation=p?.motivationManual?p.motivation:defaults.motivation;if(!p){toast('Contact could not be found');if(submit)submit.disabled=false;return}prospectInteractions.push({id:interactionId,prospectId:p.id,date:todayKey(),at:Date.now(),type:'Call',outcome,note:cleanText(f.get('note'),2000),nextFollowUp:validDateKey(next)?next:'',metricsApplied:false});if(!archiveRequested&&p.sellingTimeframe!==sellingTimeframe)prospectInteractions.push({id:prospectId(),prospectId:p.id,date:todayKey(),at:Date.now()+1,type:'Pipeline',outcome:'Selling timeframe updated',note:`Selling timeframe changed from ${p.sellingTimeframe||'Not set'} to ${sellingTimeframe||'Not currently selling'}.`,nextFollowUp:''});if(archiveRequested)prospectInteractions.push({id:prospectId(),prospectId:p.id,date:todayKey(),at:Date.now()+2,type:'Archive',outcome:'Contact archived',note:'Moved from active contacts to Archived.',nextFollowUp:''});prospects=prospects.map(x=>x.id===p.id?normaliseProspect({...x,temperature:temperatureManual?temperature:defaults.temperature,motivation,temperatureManual,sellingTimeframe,lastContact:todayKey(),nextFollowUp:validDateKey(next)?next:'',archived:archiveRequested||x.archived,archivedAt:archiveRequested?Date.now():x.archivedAt,stage:outcome==='Appointment booked'?'Appointment Booked':outcome==='Appraisal opportunity'?'Appraisal Opportunity':x.stage,updatedAt:Date.now()}):x);
+  if(e.target.id==='prospectLogForm'){e.preventDefault();const form=e.target,submit=form.querySelector('button[type=submit]');if(submit?.disabled)return;if(submit){submit.disabled=true;submit.textContent='Saving…'}const f=new FormData(form),p=prospectById(activeProspectId),next=f.get('nextFollowUp'),outcome=cleanText(f.get('outcome'),80),fromSession=form.dataset.fromSession==='1',interactionId=prospectId(),temperature=cleanText(f.get('temperature'),20)||'Cold',timeframeChoice=cleanText(f.get('sellingTimeframe'),40),archiveRequested=outcome==='Archive',sellingTimeframe=timeframeChoice==='Not currently selling'?'':SELLING_TIMEFRAMES.includes(timeframeChoice)?timeframeChoice:p?.sellingTimeframe||'',temperatureManual=form.dataset.temperatureManual==='1'||Boolean(p?.temperatureManual),defaults=pipelineDefaultsForTimeframe(sellingTimeframe),motivation=p?.motivationManual?p.motivation:defaults.motivation;if(!p){toast('Contact could not be found');if(submit)submit.disabled=false;return}if(outcome==='Appointment booked'){openAppointmentBookingFromProspect({prospectId:p.id,fromSession,interactionId,temperature,sellingTimeframe,temperatureManual,motivation,nextFollowUp:validDateKey(next)?next:'',note:cleanText(f.get('note'),2000)});return}prospectInteractions.push({id:interactionId,prospectId:p.id,date:todayKey(),at:Date.now(),type:'Call',outcome,note:cleanText(f.get('note'),2000),nextFollowUp:validDateKey(next)?next:'',metricsApplied:false});if(!archiveRequested&&p.sellingTimeframe!==sellingTimeframe)prospectInteractions.push({id:prospectId(),prospectId:p.id,date:todayKey(),at:Date.now()+1,type:'Pipeline',outcome:'Selling timeframe updated',note:`Selling timeframe changed from ${p.sellingTimeframe||'Not set'} to ${sellingTimeframe||'Not currently selling'}.`,nextFollowUp:''});if(archiveRequested)prospectInteractions.push({id:prospectId(),prospectId:p.id,date:todayKey(),at:Date.now()+2,type:'Archive',outcome:'Contact archived',note:'Moved from active contacts to Archived.',nextFollowUp:''});prospects=prospects.map(x=>x.id===p.id?normaliseProspect({...x,temperature:temperatureManual?temperature:defaults.temperature,motivation,temperatureManual,sellingTimeframe,lastContact:todayKey(),nextFollowUp:validDateKey(next)?next:'',archived:archiveRequested||x.archived,archivedAt:archiveRequested?Date.now():x.archivedAt,stage:outcome==='Appointment booked'?'Appointment Booked':outcome==='Appraisal opportunity'?'Appraisal Opportunity':x.stage,updatedAt:Date.now()}):x);
     const delta=prospectOutcomeMetricDelta(outcome);
     try{await applyProspectingOutcomeMetrics(outcome,interactionId)}catch(err){console.error('Prospector metric save failed',err);toast('Log saved. Metrics are pending sync.')}
     prospectInteractions=prospectInteractions.map(x=>x.id===interactionId?{...x,metricsApplied:true}:x);

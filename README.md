@@ -24,3 +24,12 @@ Firebase, authentication, Firestore paths and rules, UID separation, local cache
 - Applies the 21-day interaction exclusion before selecting the daily 50.
 - Dashboard remaining count reduces from the same queue as session outcomes are logged.
 - Preserves lowercase “of” in the session progress counter.
+
+
+## V106 — Appointment contact search and session hand-off
+- Appointment contact name searches existing AGNT contacts and can prefill name, number and address.
+- Selected appointments retain the linked prospect ID when available.
+- Session outcome ‘Appointment booked’ opens the appointment form prefilled for that contact.
+- The prospecting outcome is only saved after the appointment booking is successfully completed.
+- Cancelling the booking returns safely to the active prospecting session.
+- No Firebase paths, rules, authentication, sync, daily queue or unrelated UI were changed.
