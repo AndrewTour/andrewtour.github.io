@@ -18,3 +18,9 @@ Firebase, authentication, Firestore paths and rules, UID separation, local cache
 - Active prospecting session UI remains on Today while Contacts, Pipeline and Insights stay usable.
 - Session progress uses lowercase ‘of’.
 - Contacts with any logged event in the previous 21 days are excluded from session rotation.
+
+## V105
+- Uses one fresh, shared 50-contact daily prospecting queue for both the Today dashboard and session.
+- Applies the 21-day interaction exclusion before selecting the daily 50.
+- Dashboard remaining count reduces from the same queue as session outcomes are logged.
+- Preserves lowercase “of” in the session progress counter.
