@@ -33,3 +33,10 @@ Firebase, authentication, Firestore paths and rules, UID separation, local cache
 - The prospecting outcome is only saved after the appointment booking is successfully completed.
 - Cancelling the booking returns safely to the active prospecting session.
 - No Firebase paths, rules, authentication, sync, daily queue or unrelated UI were changed.
+
+## V107 — Appointment history and session workflow refinement
+
+- OFI appointments are excluded from Past Appointments while remaining available everywhere else they already appear.
+- The appointment contact dropdown now uses native momentum scrolling and selects contacts only on a genuine tap.
+- Session-created appointments now save and advance to the next client before the optional calendar hand-off, so returning from Calendar resumes the active session immediately.
+- Firebase, authentication, Firestore paths/rules, UID separation, daily queue, 21-day exclusion and unrelated UI remain unchanged.

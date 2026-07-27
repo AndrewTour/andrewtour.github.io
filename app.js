@@ -1001,6 +1001,7 @@ function appointmentBookedLabel(a,sourceDate=''){
 function appointmentHistoryEntries(mode){
   const now=Date.now();
   return allAppointmentEntries().filter(({appointment:a,sourceDate})=>{
+    if(mode==='past'&&isOfiAppointment(a))return false;
     const scheduledAt=appointmentTimestamp(a,sourceDate);
     if(!scheduledAt)return mode==='past';
     return mode==='past'?scheduledAt<=now:scheduledAt>now;
@@ -1099,8 +1100,8 @@ function renderAppointments(){
 
 function appointmentContactMatches(query){
   const q=cleanText(query,120).toLowerCase();
-  if(!q)return prospects.filter(p=>!p.archived).slice(0,6);
-  return prospects.filter(p=>!p.archived&&[p.name,p.address,p.suburb,primaryProspectPhone(p)].some(value=>String(value||'').toLowerCase().includes(q))).slice(0,6);
+  if(!q)return prospects.filter(p=>!p.archived).slice(0,20);
+  return prospects.filter(p=>!p.archived&&[p.name,p.address,p.suburb,primaryProspectPhone(p)].some(value=>String(value||'').toLowerCase().includes(q))).slice(0,20);
 }
 function hideAppointmentContactSuggestions(){const list=$('#appointmentContactSuggestions');if(list){list.classList.add('hidden');list.innerHTML=''}}
 function renderAppointmentContactSuggestions(){
@@ -1780,7 +1781,7 @@ $('#weekLast').onclick=()=>{leaderboardWeekOffset=-1;renderUnifiedLeaderboard()}
 $('#scorecardPrev').onclick=()=>{scorecardWeekOffset--;renderScorecard()};$('#scorecardNext').onclick=()=>{if(scorecardWeekOffset<0)scorecardWeekOffset++;renderScorecard()};
 $('#appointmentDatePicker').onchange=()=>{};
 $('.appointment-types').onchange=updateOfiFormState;$('#appointmentTime').addEventListener('input',updateOfiFormState);$('#appointmentAuction').addEventListener('change',updateOfiFormState);
-$('#appointmentContactName').addEventListener('input',e=>{const selected=appointmentLinkedProspectId?prospectById(appointmentLinkedProspectId):null;if(selected&&e.target.value.trim()!==selected.name)appointmentLinkedProspectId='';renderAppointmentContactSuggestions()});$('#appointmentContactName').addEventListener('focus',renderAppointmentContactSuggestions);$('#appointmentContactSuggestions').addEventListener('pointerdown',e=>{const b=e.target.closest('[data-appointment-contact]');if(!b)return;e.preventDefault();selectAppointmentContact(b.dataset.appointmentContact)});$('#cancelProspectAppointmentFlow').onclick=cancelProspectAppointmentFlow;document.addEventListener('pointerdown',e=>{if(!e.target.closest('.appointment-contact-picker'))hideAppointmentContactSuggestions()});
+$('#appointmentContactName').addEventListener('input',e=>{const selected=appointmentLinkedProspectId?prospectById(appointmentLinkedProspectId):null;if(selected&&e.target.value.trim()!==selected.name)appointmentLinkedProspectId='';renderAppointmentContactSuggestions()});$('#appointmentContactName').addEventListener('focus',renderAppointmentContactSuggestions);$('#appointmentContactSuggestions').addEventListener('click',e=>{const b=e.target.closest('[data-appointment-contact]');if(!b)return;selectAppointmentContact(b.dataset.appointmentContact)});$('#cancelProspectAppointmentFlow').onclick=cancelProspectAppointmentFlow;document.addEventListener('pointerdown',e=>{if(!e.target.closest('.appointment-contact-picker'))hideAppointmentContactSuggestions()});
 document.querySelector('.appointment-destination-grid').onclick=e=>{const b=e.target.closest('[data-open-appointment-history]');if(!b)return;setAppointmentHistoryScreen(b.dataset.openAppointmentHistory)};
 $('#closeAppointmentHistory').onclick=()=>setAppointmentHistoryScreen(null);
 $('#appointmentForm').onsubmit=async e=>{
@@ -1792,9 +1793,14 @@ $('#appointmentForm').onsubmit=async e=>{
   error.textContent='';error.classList.add('hidden');
   const wasEditing=Boolean(editingAppointment),wasProspectFlow=Boolean(pendingProspectAppointmentFlow);
   const appointment=wasEditing?await editAppointment({contactName,contactNumber,address,date,time,type,auction}):await addAppointment({contactName,contactNumber,address,date,time,type,auction,prospectId:appointmentLinkedProspectId});
-  if(appointment&&!wasEditing&&confirm(`Add to ${calendarPreference==='apple'?'Apple':'Outlook'} Calendar?`))exportAppointmentToCalendar(appointment,appointment.createdDate);
   if(!appointment)return;
-  if(wasProspectFlow){await completePendingProspectAppointmentFlow();e.target.reset();$('#appointmentDatePicker').value=appointmentDate;$('#appointmentTime').value='12:00';$('#appointmentAuction').checked=false;updateOfiFormState();return}
+  if(wasProspectFlow){
+    await completePendingProspectAppointmentFlow();
+    e.target.reset();$('#appointmentDatePicker').value=appointmentDate;$('#appointmentTime').value='12:00';$('#appointmentAuction').checked=false;updateOfiFormState();
+    if(confirm(`Add to ${calendarPreference==='apple'?'Apple':'Outlook'} Calendar?`))exportAppointmentToCalendar(appointment,appointment.createdDate);
+    return
+  }
+  if(!wasEditing&&confirm(`Add to ${calendarPreference==='apple'?'Apple':'Outlook'} Calendar?`))exportAppointmentToCalendar(appointment,appointment.createdDate);
   e.target.reset();editingAppointment=null;appointmentEditReturnState=null;appointmentLinkedProspectId='';hideAppointmentContactSuggestions();
   if(wasEditing&&returnState){appointmentDate=returnState.date;appointmentHistoryMode=returnState.historyMode;$('#appointmentMainContent')?.classList.toggle('hidden',Boolean(appointmentHistoryMode));$('#appointmentHistoryScreen')?.classList.toggle('hidden',!appointmentHistoryMode);}else{appointmentDate=viewedDate;}
   $('#appointmentDatePicker').value=appointmentDate;$('#appointmentTime').value='12:00';$('#appointmentAuction').checked=false;updateOfiFormState();renderAppointments();updateTopbar('appointmentsView');if(wasEditing)requestAnimationFrame(()=>window.scrollTo({top:returnState?.scrollY||0,behavior:'instant'}));
