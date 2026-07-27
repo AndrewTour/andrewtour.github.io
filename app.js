@@ -191,7 +191,7 @@ function closeDayReview(){const overlay=$('#dayReviewOverlay');if(!overlay)retur
 function maybeShowDayReview(){const now=new Date();if(now.getHours()<18||!welcomeSeenToday()||dayReviewSeen())return;showDayReview({automatic:true})}
 function leaderboardPayload(){
   const k=todayKey(),d=dayData(k),knockMinutes=Math.floor(liveKnockSeconds(d)/60),knockTarget=rollingKnockTarget(k);
-  return{uid,name:displayAgentName(),email:currentUser?.email||'',date:k,activeToday:isWorkDayKey(k),workDays:[...workDays],calls:d.calls,connects:d.connects,data:d.data,knockMinutes,score:completion(k),targets:{calls:targets.calls,connects:targets.connects,data:targets.data,knock:knockTarget},dailyHistory:recentDailyHistory(),weekHistory:recentWeekHistory(),clientUpdatedAt:Date.now(),updatedAt:serverTimestamp()}
+  return{uid,name:displayAgentName(),email:currentUser?.email||'',date:k,activeToday:isWorkDayKey(k),workDays:[...workDays],calls:d.calls,connects:d.connects,data:d.data,knockMinutes,score:completion(k),targets:{calls:targets.calls,connects:targets.connects,data:targets.data,knock:knockTarget},appointments:appointmentCountsForDate(k),dailyHistory:recentDailyHistory(),weekHistory:recentWeekHistory(),clientUpdatedAt:Date.now(),updatedAt:serverTimestamp()}
 }
 function leaderboardSignature(payload){const clean={...payload};delete clean.clientUpdatedAt;delete clean.updatedAt;return JSON.stringify(clean)}
 function scheduleLeaderboardPublish(){if(!cloud||!db||!uid)return;clearTimeout(leaderboardPublishTimer);leaderboardPublishTimer=setTimeout(publishLeaderboard,180)}
@@ -215,9 +215,25 @@ async function saveDay(k,{quiet=false}={}){
 async function saveTargets(){saveLocal();if(!cloud)return;beginSyncOperation();try{await setDoc(doc(db,'users',uid),{targets,workDays:[...workDays],name:displayAgentName(),email:currentUser?.email||'',updatedAt:serverTimestamp()},{merge:true});scheduleLeaderboardPublish();endSyncOperation()}catch(err){console.error(err);endSyncOperation({error:true});toast('Targets saved locally. Cloud sync failed.')}}
 function addEvent(d,type,label,delta=0){d.events.push({id:uuid(),type,label,delta,at:Date.now()});d.events=d.events.slice(-500)}
 
+function emptyLeaderboardAppointmentCounts(value=0){return{MAP:value,LAP:value,BAP:value}}
+function appointmentCountsBetween(startKey,endKey){
+  const counts=emptyLeaderboardAppointmentCounts();
+  Object.entries(days).forEach(([sourceDate,raw])=>(raw?.appointments||[]).forEach(appointment=>{
+    const bookedDate=appointmentCreatedDate(appointment,sourceDate),type=appointmentType(appointment);
+    if(bookedDate>=startKey&&bookedDate<=endKey&&Object.prototype.hasOwnProperty.call(counts,type))counts[type]++;
+  }));
+  return counts;
+}
+function appointmentCountsForDate(k){return appointmentCountsBetween(k,k)}
+function appointmentCountsForWeek(baseDate){const start=mondayOf(baseDate),end=new Date(start);end.setDate(start.getDate()+6);return appointmentCountsBetween(dateKey(start),dateKey(end))}
+function normaliseLeaderboardAppointmentCounts(value){
+  if(!value||typeof value!=='object')return emptyLeaderboardAppointmentCounts(null);
+  const count=raw=>raw==null?null:Number.isFinite(Number(raw))?Math.max(0,Math.round(Number(raw))):null;
+  return{MAP:count(value.MAP),LAP:count(value.LAP),BAP:count(value.BAP)};
+}
 function dailyLeaderboardRecord(k){
   const d=dayData(k),knockMinutes=Math.floor(liveKnockSeconds(d)/60),knockTarget=rollingKnockTarget(k);
-  return{calls:d.calls,connects:d.connects,data:d.data,knockMinutes,score:completion(k),targets:{calls:targets.calls,connects:targets.connects,data:targets.data,knock:knockTarget}};
+  return{calls:d.calls,connects:d.connects,data:d.data,knockMinutes,score:completion(k),targets:{calls:targets.calls,connects:targets.connects,data:targets.data,knock:knockTarget},appointments:appointmentCountsForDate(k)};
 }
 function recentDailyHistory(count=21){
   const history={},d=new Date();
@@ -399,7 +415,7 @@ function weekSummaryFor(baseDate){
     knocking:pct(summary.knock/60,targets.weeklyKnock)
   };
   const weakest=Object.entries(metricPcts).sort((a,b)=>a[1]-b[1])[0];
-  return{weekKey:weekKeyFromDate(baseDate),weekStart:dateKey(mondayOf(baseDate)),workDays:[...workDays],calls:summary.calls,connects:summary.connects,data:summary.data,knockMinutes:Math.floor(summary.knock/60),score:summary.score,targets:{calls:targets.calls*count,connects:targets.connects*count,data:targets.data*count,knock:targets.weeklyKnock},metricPcts,weakestMetric:weakest?.[0]||'calls',weakestPct:weakest?.[1]||0};
+  return{weekKey:weekKeyFromDate(baseDate),weekStart:dateKey(mondayOf(baseDate)),workDays:[...workDays],calls:summary.calls,connects:summary.connects,data:summary.data,knockMinutes:Math.floor(summary.knock/60),score:summary.score,targets:{calls:targets.calls*count,connects:targets.connects*count,data:targets.data*count,knock:targets.weeklyKnock},appointments:appointmentCountsForWeek(baseDate),metricPcts,weakestMetric:weakest?.[0]||'calls',weakestPct:weakest?.[1]||0};
 }
 function recentWeekHistory(){
   const history={};
@@ -1238,26 +1254,35 @@ function selectedLeaderboardWeekDate(){return weekDateFromOffset(leaderboardWeek
 function selectedLeaderboardWeekKey(){return weekKeyFromDate(selectedLeaderboardWeekDate())}
 function formatWeekRange(base){const start=mondayOf(base),end=new Date(start);end.setDate(start.getDate()+6);return `${start.toLocaleDateString('en-AU',{day:'numeric',month:'short'})}–${end.toLocaleDateString('en-AU',{day:'numeric',month:'short'})}`}
 function normaliseDailyLeaderboardEntry(entry,key){
-  if(key===todayKey()&&entry.date===key)return{uid:entry.uid,name:entry.name,email:entry.email,calls:entry.calls||0,connects:entry.connects||0,data:entry.data||0,knockMinutes:entry.knockMinutes||0,score:entry.score||0,targets:entry.targets||{}};
+  if(key===todayKey()&&entry.date===key)return{uid:entry.uid,name:entry.name,email:entry.email,calls:entry.calls||0,connects:entry.connects||0,data:entry.data||0,knockMinutes:entry.knockMinutes||0,score:entry.score||0,targets:entry.targets||{},appointments:normaliseLeaderboardAppointmentCounts(entry.appointments)};
   const saved=entry.dailyHistory?.[key];
   if(saved==null)return null;
-  if(typeof saved==='number')return{uid:entry.uid,name:entry.name,email:entry.email,calls:null,connects:null,data:null,knockMinutes:null,score:saved,targets:{}};
-  return{uid:entry.uid,name:entry.name,email:entry.email,calls:saved.calls??null,connects:saved.connects??null,data:saved.data??null,knockMinutes:saved.knockMinutes??null,score:saved.score||0,targets:saved.targets||{}};
+  if(typeof saved==='number')return{uid:entry.uid,name:entry.name,email:entry.email,calls:null,connects:null,data:null,knockMinutes:null,score:saved,targets:{},appointments:emptyLeaderboardAppointmentCounts(null)};
+  return{uid:entry.uid,name:entry.name,email:entry.email,calls:saved.calls??null,connects:saved.connects??null,data:saved.data??null,knockMinutes:saved.knockMinutes??null,score:saved.score||0,targets:saved.targets||{},appointments:normaliseLeaderboardAppointmentCounts(saved.appointments)};
 }
 function dailyLeaderboardRows(){const key=selectedLeaderboardDayKey();return leaderboardEntries.map(entry=>normaliseDailyLeaderboardEntry(entry,key)).filter(Boolean).sort(sortLeaderboardRows)}
 function weeklyLeaderboardRows(){
   const wk=selectedLeaderboardWeekKey();
-  return leaderboardEntries.map(entry=>{const w=entry.weekHistory?.[wk];return w?{uid:entry.uid,name:entry.name,email:entry.email,...w}:null}).filter(Boolean).sort(sortLeaderboardRows);
+  return leaderboardEntries.map(entry=>{const w=entry.weekHistory?.[wk];return w?{uid:entry.uid,name:entry.name,email:entry.email,...w,appointments:normaliseLeaderboardAppointmentCounts(w.appointments)}:null}).filter(Boolean).sort(sortLeaderboardRows);
+}
+function currentWeekLeaderboardRows(){
+  const wk=weekKeyFromDate(new Date());
+  return leaderboardEntries.map(entry=>{const w=entry.weekHistory?.[wk];return w?{uid:entry.uid,name:entry.name,email:entry.email,...w,appointments:normaliseLeaderboardAppointmentCounts(w.appointments)}:null}).filter(Boolean).sort(sortLeaderboardRows);
 }
 function metricLabel(key){return({calls:'Calls',connects:'Connects',data:'Data',knocking:'Knocking'})[key]||'Calls'}
 function leaderboardMetricItem(value,target,label,suffix=''){
-  if(value==null)return `<span class="leaderboard-performance-metric unavailable"><small>${label}</small><strong>—</strong><i><b style="width:0%"></b></i></span>`;
+  if(value==null)return `<span class="leaderboard-performance-metric unavailable" role="img" aria-label="${label}: unavailable"><strong>—</strong><i><b style="width:0%"></b></i></span>`;
   const safeValue=Math.max(0,Math.round(Number(value)||0)),safeTarget=Math.max(0,Number(target)||0),metricPct=safeTarget?Math.max(0,Math.min(100,Math.round(safeValue/safeTarget*100))):0;
   const complete=safeTarget>0&&safeValue>=safeTarget;
-  return `<span class="leaderboard-performance-metric ${complete?'complete':''}" role="img" aria-label="${label}: ${safeValue}${suffix}, ${metricPct}% complete"><small>${label}</small><strong>${complete?'✓ ':''}${safeValue}${suffix}</strong><i><b style="width:${metricPct}%"></b></i></span>`;
+  return `<span class="leaderboard-performance-metric ${complete?'complete':''}" role="img" aria-label="${label}: ${safeValue}${suffix}, ${metricPct}% complete"><strong>${safeValue}${suffix}</strong><i><b style="width:${metricPct}%"></b></i></span>`;
+}
+function leaderboardAppointmentItem(value,label){
+  if(value==null)return `<span class="leaderboard-performance-metric leaderboard-appointment-metric unavailable" role="img" aria-label="${label} appointments: unavailable"><strong>—</strong></span>`;
+  const safeValue=Math.max(0,Math.round(Number(value)||0));
+  return `<span class="leaderboard-performance-metric leaderboard-appointment-metric" role="img" aria-label="${label} appointments booked: ${safeValue}"><strong>${safeValue}</strong></span>`;
 }
 function leaderboardRowHtml(r,i,weekly=false){
-  const t=r.targets||{},score=Math.max(0,Math.min(100,r.score||0)),name=escapeHtml(r.name||r.email?.split('@')[0]||'Agent');
+  const t=r.targets||{},appointments=normaliseLeaderboardAppointmentCounts(r.appointments),score=Math.max(0,Math.min(100,r.score||0)),name=escapeHtml(r.name||r.email?.split('@')[0]||'Agent');
   return `<article class="leaderboard-row leaderboard-performance-row ${r.uid===uid?'me':''} ${i===0?'leader':''}">
     <div class="leaderboard-performance-head">
       <b class="rank">${i+1}</b>
@@ -1270,6 +1295,9 @@ function leaderboardRowHtml(r,i,weekly=false){
       ${leaderboardMetricItem(r.connects,t.connects,'Connects')}
       ${leaderboardMetricItem(r.data,t.data,'Data')}
       ${leaderboardMetricItem(r.knockMinutes,t.knock,'Knock','m')}
+      ${leaderboardAppointmentItem(appointments.MAP,'MAP')}
+      ${leaderboardAppointmentItem(appointments.LAP,'LAP')}
+      ${leaderboardAppointmentItem(appointments.BAP,'BAP')}
     </div>
   </article>`;
 }
@@ -1325,15 +1353,18 @@ function renderMondayReview(){
   $('#mondayReviewText').textContent=`Strongest: ${metricLabel(strongest[0])} ${strongest[1]}% · Improve: ${metricLabel(weakest[0])} ${weakest[1]}%`;
 }
 function renderLeaderboard(){
-  const date=todayKey(),rows=sortedTodayLeaderboard();
+  const date=todayKey(),rows=sortedTodayLeaderboard(),weeklyRows=currentWeekLeaderboardRows();
   $('#leaderboardStatus').textContent=cloud?'LIVE':'DEVICE ONLY';
-  const meIndex=rows.findIndex(r=>r.uid===uid),me=meIndex>=0?rows[meIndex]:null,myScore=me?.score??completion(date),leaderScore=rows[0]?.score||0,gap=rows.length?Math.max(0,leaderScore-myScore):0;
-  if($('#leaderboardRing'))$('#leaderboardRing').style.setProperty('--score',Math.max(0,Math.min(100,myScore)));
-  if($('#leaderboardHeroScore'))$('#leaderboardHeroScore').textContent=`${myScore}%`;
-  if($('#leaderboardHeroRank'))$('#leaderboardHeroRank').textContent=meIndex>=0?`#${meIndex+1}`:'—';
-  if($('#leaderboardHeroMessage'))$('#leaderboardHeroMessage').textContent=meIndex===0?'You are leading today':meIndex>0?`${gap}% to the lead`:'Waiting for your first update';
-  if($('#leaderboardAgentCount'))$('#leaderboardAgentCount').textContent=rows.length;
+  const meIndex=rows.findIndex(r=>r.uid===uid),me=meIndex>=0?rows[meIndex]:null,myScore=me?.score??completion(date),dailyLeader=rows[0]||null,weeklyLeader=weeklyRows[0]||null,leaderScore=dailyLeader?.score||0,gap=rows.length?Math.max(0,leaderScore-myScore):0;
+  const dailyLeaderName=dailyLeader?.name||dailyLeader?.email?.split('@')[0]||'—',weeklyLeaderName=weeklyLeader?.name||weeklyLeader?.email?.split('@')[0]||'—';
+  if($('#leaderboardRing'))$('#leaderboardRing').style.setProperty('--score',Math.max(0,Math.min(100,leaderScore)));
   if($('#leaderboardTopScore'))$('#leaderboardTopScore').textContent=`${leaderScore}%`;
+  if($('#leaderboardDailyLeaderName'))$('#leaderboardDailyLeaderName').textContent=dailyLeaderName;
+  if($('#leaderboardDailyLeaderMeta'))$('#leaderboardDailyLeaderMeta').textContent=dailyLeader?'Setting today’s pace':'Waiting for today’s activity';
+  if($('#leaderboardWeeklyLeaderName'))$('#leaderboardWeeklyLeaderName').textContent=weeklyLeaderName;
+  if($('#leaderboardWeeklyLeaderScore'))$('#leaderboardWeeklyLeaderScore').textContent=weeklyLeader?`${weeklyLeader.score||0}% this week`:'Waiting for weekly activity';
+  if($('#leaderboardHeroRank'))$('#leaderboardHeroRank').textContent=meIndex>=0?`#${meIndex+1}`:'—';
+  if($('#leaderboardAgentCount'))$('#leaderboardAgentCount').textContent=rows.length;
   if($('#leaderboardGap'))$('#leaderboardGap').textContent=rows.length?(gap?`${gap}%`:'Leading'):'—';
   renderUnifiedLeaderboard();renderLeaderboardPosition();
   if(activeViewId()==='insightsView')updateTopbar('insightsView');

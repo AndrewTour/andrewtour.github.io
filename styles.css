@@ -4366,3 +4366,206 @@ body.appointment-editing{overflow:hidden}
 .appointment-prospect-flow span{color:var(--blue);font-size:.58rem;font-weight:850;letter-spacing:.08em}
 .appointment-prospect-flow strong{font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .appointment-prospect-flow small{color:var(--muted);font-size:.64rem}
+
+/* AGNT V108 — compact daily/weekly leader summary and appointment-aware leaderboard rows. */
+#leaderboardInsights .leaderboard-dashboard{
+  flex:0 0 auto;
+  margin-bottom:8px;
+  padding:12px 14px 10px;
+  border-radius:22px;
+}
+.leaderboard-leaders{
+  display:grid;
+  grid-template-columns:minmax(0,1.42fr) minmax(104px,.78fr);
+  align-items:center;
+  gap:12px;
+  min-width:0;
+}
+.leaderboard-daily-leader{
+  display:flex;
+  align-items:center;
+  gap:11px;
+  min-width:0;
+}
+.leaderboard-daily-leader .leaderboard-ring{
+  width:62px;
+  height:62px;
+  flex:0 0 62px;
+}
+.leaderboard-daily-leader .leaderboard-ring::after{inset:6px}
+.leaderboard-daily-leader .leaderboard-ring strong{font-size:1.02rem;transform:translateY(-6px)}
+.leaderboard-daily-leader .leaderboard-ring span{font-size:.46rem;transform:translateY(11px)}
+.leaderboard-daily-leader .leaderboard-hero-copy{min-width:0}
+.leaderboard-daily-leader .leaderboard-hero-copy>span,
+.leaderboard-weekly-leader>span{
+  display:block;
+  color:#89919f;
+  font-size:.48rem;
+  line-height:1.15;
+  font-weight:900;
+  letter-spacing:.12em;
+}
+.leaderboard-daily-leader .leaderboard-hero-copy>strong{
+  margin-top:4px;
+  overflow:hidden;
+  color:#111318;
+  font-size:1.02rem;
+  line-height:1.05;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.leaderboard-daily-leader .leaderboard-hero-copy>small{
+  margin-top:4px;
+  overflow:hidden;
+  color:#0b63f3;
+  font-size:.58rem;
+  line-height:1.2;
+  font-weight:750;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.leaderboard-weekly-leader{
+  min-width:0;
+  padding-left:12px;
+  border-left:1px solid #e7eaf0;
+}
+.leaderboard-weekly-leader>strong{
+  display:block;
+  margin-top:5px;
+  overflow:hidden;
+  color:#111318;
+  font-size:.78rem;
+  line-height:1.15;
+  font-weight:900;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.leaderboard-weekly-leader>small{
+  display:block;
+  margin-top:4px;
+  color:#0b63f3;
+  font-size:.57rem;
+  line-height:1.2;
+  font-weight:800;
+}
+.leaderboard-summary-line{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:0;
+  margin-top:9px;
+  padding-top:8px;
+  border-top:1px solid #edf0f4;
+}
+.leaderboard-summary-line>div{
+  display:flex;
+  align-items:baseline;
+  justify-content:center;
+  gap:5px;
+  min-width:0;
+  padding:0 6px;
+  border-left:1px solid #edf0f4;
+}
+.leaderboard-summary-line>div:first-child{border-left:0}
+.leaderboard-summary-line span{
+  overflow:hidden;
+  color:#8b93a1;
+  font-size:.45rem;
+  line-height:1;
+  font-weight:800;
+  text-overflow:ellipsis;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+.leaderboard-summary-line strong{
+  color:#111318;
+  font-size:.7rem;
+  line-height:1;
+  font-weight:900;
+  white-space:nowrap;
+}
+#leaderboardInsights .leaderboard-unified-card{
+  min-height:0;
+  margin-bottom:0;
+}
+.leaderboard-metric-head{
+  grid-template-columns:repeat(7,minmax(0,1fr));
+  gap:4px;
+  padding:0 1px 4px 37px;
+  overflow:hidden;
+  font-size:.42rem;
+  letter-spacing:.025em;
+}
+.leaderboard-performance-metrics{
+  grid-template-columns:repeat(7,minmax(0,1fr));
+  gap:5px;
+  margin-left:37px;
+  min-width:0;
+  overflow:hidden;
+}
+.leaderboard-performance-metric{
+  min-width:0;
+  overflow:hidden;
+  text-align:center;
+}
+.leaderboard-performance-metric strong{
+  display:block;
+  width:100%;
+  margin-top:0;
+  overflow:hidden;
+  font-size:.56rem;
+  line-height:1.1;
+  text-overflow:clip;
+  white-space:nowrap;
+}
+.leaderboard-performance-metric i{
+  width:100%;
+  height:3px;
+  margin-top:4px;
+}
+.leaderboard-appointment-metric{
+  display:grid;
+  place-items:center;
+  align-content:start;
+}
+.leaderboard-appointment-metric strong{
+  color:#111318;
+  font-size:.66rem;
+}
+.leaderboard-appointment-metric i{display:none}
+.leaderboard-performance-row{
+  overflow:hidden;
+}
+.leaderboard-overall-progress{margin-bottom:8px}
+@media(max-width:390px){
+  #leaderboardInsights .leaderboard-dashboard{padding:10px 11px 9px}
+  .leaderboard-leaders{grid-template-columns:minmax(0,1.45fr) minmax(92px,.72fr);gap:9px}
+  .leaderboard-daily-leader{gap:8px}
+  .leaderboard-daily-leader .leaderboard-ring{width:56px;height:56px;flex-basis:56px}
+  .leaderboard-daily-leader .leaderboard-hero-copy>strong{font-size:.9rem}
+  .leaderboard-daily-leader .leaderboard-hero-copy>small{font-size:.52rem}
+  .leaderboard-weekly-leader{padding-left:9px}
+  .leaderboard-weekly-leader>strong{font-size:.7rem}
+  .leaderboard-weekly-leader>small{font-size:.52rem}
+  .leaderboard-summary-line>div{gap:4px;padding:0 3px}
+  .leaderboard-summary-line span{font-size:.4rem}
+  .leaderboard-summary-line strong{font-size:.64rem}
+  .leaderboard-metric-head{gap:2px;padding-left:32px;font-size:.37rem}
+  .leaderboard-performance-metrics{gap:3px;margin-left:32px}
+  .leaderboard-performance-metric strong{font-size:.51rem}
+  .leaderboard-appointment-metric strong{font-size:.61rem}
+}
+@media(max-width:350px){
+  .leaderboard-leaders{grid-template-columns:minmax(0,1.5fr) minmax(82px,.68fr)}
+  .leaderboard-daily-leader .leaderboard-ring{width:50px;height:50px;flex-basis:50px}
+  .leaderboard-daily-leader .leaderboard-ring strong{font-size:.9rem}
+  .leaderboard-daily-leader .leaderboard-hero-copy>strong{font-size:.82rem}
+  .leaderboard-summary-line span{font-size:.36rem}
+  .leaderboard-metric-head{padding-left:31px;font-size:.34rem}
+  .leaderboard-performance-metrics{gap:2px;margin-left:31px}
+  .leaderboard-performance-metric strong{font-size:.47rem}
+  .leaderboard-appointment-metric strong{font-size:.57rem}
+}
+.leaderboard-metric-head{padding-right:12px;padding-left:49px}
+.leaderboard-metric-head span{min-width:0;overflow:hidden;text-overflow:clip;white-space:nowrap}
+@media(max-width:390px){.leaderboard-metric-head{padding-right:10px;padding-left:42px}}
+@media(max-width:350px){.leaderboard-metric-head{padding-left:41px}}

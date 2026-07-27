@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=107">
+<link rel="stylesheet" href="styles.css?v=108">
 <title>AGNT</title>
 </head>
 <body>
@@ -262,14 +262,19 @@
       </div>
       <div id="leaderboardInsights" class="insights-page active">
         <section class="leaderboard-dashboard glass" aria-label="Leaderboard overview">
-          <div class="leaderboard-dashboard-main">
-            <div class="leaderboard-ring" id="leaderboardRing" style="--score:0"><strong id="leaderboardHeroScore">0%</strong><span>Today</span></div>
-            <div class="leaderboard-hero-copy"><span>TEAM POSITION</span><strong id="leaderboardHeroRank">—</strong><small id="leaderboardHeroMessage">Waiting for today’s rankings</small></div>
+          <div class="leaderboard-leaders">
+            <div class="leaderboard-daily-leader">
+              <div class="leaderboard-ring" id="leaderboardRing" style="--score:0"><strong id="leaderboardTopScore">0%</strong><span>Today</span></div>
+              <div class="leaderboard-hero-copy"><span>DAILY LEADER</span><strong id="leaderboardDailyLeaderName">—</strong><small id="leaderboardDailyLeaderMeta">Waiting for today’s activity</small></div>
+            </div>
+            <div class="leaderboard-weekly-leader">
+              <span>WEEKLY LEADER</span><strong id="leaderboardWeeklyLeaderName">—</strong><small id="leaderboardWeeklyLeaderScore">0%</small>
+            </div>
           </div>
-          <div class="leaderboard-kpis">
-            <article><span>Agents</span><strong id="leaderboardAgentCount">0</strong></article>
-            <article><span>Leader</span><strong id="leaderboardTopScore">0%</strong></article>
-            <article><span>Gap</span><strong id="leaderboardGap">—</strong></article>
+          <div class="leaderboard-summary-line" aria-label="Current leaderboard summary">
+            <div><span>Your position</span><strong id="leaderboardHeroRank">—</strong></div>
+            <div><span>Gap</span><strong id="leaderboardGap">—</strong></div>
+            <div><span>Agents logged</span><strong id="leaderboardAgentCount">0</strong></div>
           </div>
         </section>
         <section class="leaderboard-card leaderboard-unified-card glass">
@@ -289,7 +294,7 @@
               </div>
             </div>
           </div>
-          <div class="leaderboard-metric-head" aria-hidden="true"><span>Calls</span><span>Connects</span><span>Data</span><span>Knock</span></div>
+          <div class="leaderboard-metric-head" aria-hidden="true"><span>Calls</span><span>Conn.</span><span>Data</span><span>Knock</span><span>MAP</span><span>LAP</span><span>BAP</span></div>
           <div id="leaderboardList" class="leaderboard-list leaderboard-unified-list"><div class="empty">Waiting for team data…</div></div>
           <p id="leaderboardNote" class="leaderboard-note">Ranked by daily overall completion percentage.</p>
         </section>
@@ -515,6 +520,6 @@
 </div>
 
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=107"></script>
+<script type="module" src="app.js?v=108"></script>
 </body>
 </html>
