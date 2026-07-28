@@ -192,7 +192,7 @@ function closeDayReview(){const overlay=$('#dayReviewOverlay');if(!overlay)retur
 function maybeShowDayReview(){const now=new Date();if(now.getHours()<18||!welcomeSeenToday()||dayReviewSeen())return;showDayReview({automatic:true})}
 function leaderboardPayload(){
   const k=todayKey(),d=dayData(k),knockMinutes=Math.floor(liveKnockSeconds(d)/60),knockTarget=rollingKnockTarget(k);
-  return{uid,name:displayAgentName(),email:currentUser?.email||'',date:k,activeToday:isWorkDayKey(k),workDays:[...workDays],calls:d.calls,connects:d.connects,data:d.data,knockMinutes,score:completion(k),targets:{calls:targets.calls,connects:targets.connects,data:targets.data,knock:knockTarget},appointments:appointmentCountsForDate(k),dailyHistory:recentDailyHistory(),weekHistory:recentWeekHistory(),clientUpdatedAt:Date.now(),updatedAt:serverTimestamp()}
+  return{uid,name:displayAgentName(),email:currentUser?.email||'',date:k,activeToday:isWorkDayKey(k),workDays:[...workDays],calls:d.calls,connects:d.connects,data:d.data,knockMinutes,score:completion(k),targets:{calls:targets.calls,connects:targets.connects,data:targets.data,knock:knockTarget},appointments:appointmentCountsForDate(k),appointmentDetails:leaderboardAppointmentDetailsForDate(k),dailyHistory:recentDailyHistory(),weekHistory:recentWeekHistory(),clientUpdatedAt:Date.now(),updatedAt:serverTimestamp()}
 }
 function leaderboardSignature(payload){const clean={...payload};delete clean.clientUpdatedAt;delete clean.updatedAt;return JSON.stringify(clean)}
 function scheduleLeaderboardPublish(){if(!cloud||!db||!uid)return;clearTimeout(leaderboardPublishTimer);leaderboardPublishTimer=setTimeout(publishLeaderboard,180)}
@@ -227,6 +227,21 @@ function appointmentCountsBetween(startKey,endKey){
 }
 function appointmentCountsForDate(k){return appointmentCountsBetween(k,k)}
 function appointmentCountsForWeek(baseDate){const start=mondayOf(baseDate),end=new Date(start);end.setDate(start.getDate()+6);return appointmentCountsBetween(dateKey(start),dateKey(end))}
+function leaderboardAppointmentDetailsBetween(startKey,endKey){
+  const details=[];
+  Object.entries(days).forEach(([sourceDate,raw])=>(raw?.appointments||[]).forEach(appointment=>{
+    const bookedDate=appointmentCreatedDate(appointment,sourceDate),type=appointmentType(appointment);
+    if(bookedDate<startKey||bookedDate>endKey||!['MAP','LAP','BAP'].includes(type))return;
+    details.push({type,bookedDate,scheduledDate:appointmentScheduledDate(appointment,sourceDate),time:appointment.time||'',contactName:appointment.contactName||appointment.name||'',address:appointment.address||''});
+  }));
+  return details.sort((a,b)=>String(a.scheduledDate||'').localeCompare(String(b.scheduledDate||''))||String(a.time||'').localeCompare(String(b.time||''))||String(a.contactName||'').localeCompare(String(b.contactName||'')));
+}
+function leaderboardAppointmentDetailsForDate(k){return leaderboardAppointmentDetailsBetween(k,k)}
+function leaderboardAppointmentDetailsForWeek(baseDate){const start=mondayOf(baseDate),end=new Date(start);end.setDate(start.getDate()+6);return leaderboardAppointmentDetailsBetween(dateKey(start),dateKey(end))}
+function normaliseLeaderboardAppointmentDetails(value){
+  if(!Array.isArray(value))return null;
+  return value.map(item=>({type:normaliseAppointmentType(item?.type),bookedDate:validDateKey(item?.bookedDate)?item.bookedDate:'',scheduledDate:validDateKey(item?.scheduledDate)?item.scheduledDate:'',time:String(item?.time||''),contactName:String(item?.contactName||''),address:String(item?.address||'')})).filter(item=>['MAP','LAP','BAP'].includes(item.type));
+}
 function normaliseLeaderboardAppointmentCounts(value){
   if(!value||typeof value!=='object')return emptyLeaderboardAppointmentCounts(null);
   const count=raw=>raw==null?null:Number.isFinite(Number(raw))?Math.max(0,Math.round(Number(raw))):null;
@@ -234,7 +249,7 @@ function normaliseLeaderboardAppointmentCounts(value){
 }
 function dailyLeaderboardRecord(k){
   const d=dayData(k),knockMinutes=Math.floor(liveKnockSeconds(d)/60),knockTarget=rollingKnockTarget(k);
-  return{calls:d.calls,connects:d.connects,data:d.data,knockMinutes,score:completion(k),targets:{calls:targets.calls,connects:targets.connects,data:targets.data,knock:knockTarget},appointments:appointmentCountsForDate(k)};
+  return{calls:d.calls,connects:d.connects,data:d.data,knockMinutes,score:completion(k),targets:{calls:targets.calls,connects:targets.connects,data:targets.data,knock:knockTarget},appointments:appointmentCountsForDate(k),appointmentDetails:leaderboardAppointmentDetailsForDate(k)};
 }
 function recentDailyHistory(count=21){
   const history={},d=new Date();
@@ -416,7 +431,7 @@ function weekSummaryFor(baseDate){
     knocking:pct(summary.knock/60,targets.weeklyKnock)
   };
   const weakest=Object.entries(metricPcts).sort((a,b)=>a[1]-b[1])[0];
-  return{weekKey:weekKeyFromDate(baseDate),weekStart:dateKey(mondayOf(baseDate)),workDays:[...workDays],calls:summary.calls,connects:summary.connects,data:summary.data,knockMinutes:Math.floor(summary.knock/60),score:summary.score,targets:{calls:targets.calls*count,connects:targets.connects*count,data:targets.data*count,knock:targets.weeklyKnock},appointments:appointmentCountsForWeek(baseDate),metricPcts,weakestMetric:weakest?.[0]||'calls',weakestPct:weakest?.[1]||0};
+  return{weekKey:weekKeyFromDate(baseDate),weekStart:dateKey(mondayOf(baseDate)),workDays:[...workDays],calls:summary.calls,connects:summary.connects,data:summary.data,knockMinutes:Math.floor(summary.knock/60),score:summary.score,targets:{calls:targets.calls*count,connects:targets.connects*count,data:targets.data*count,knock:targets.weeklyKnock},appointments:appointmentCountsForWeek(baseDate),appointmentDetails:leaderboardAppointmentDetailsForWeek(baseDate),metricPcts,weakestMetric:weakest?.[0]||'calls',weakestPct:weakest?.[1]||0};
 }
 function recentWeekHistory(){
   const history={};
@@ -1256,20 +1271,20 @@ function selectedLeaderboardWeekDate(){return weekDateFromOffset(leaderboardWeek
 function selectedLeaderboardWeekKey(){return weekKeyFromDate(selectedLeaderboardWeekDate())}
 function formatWeekRange(base){const start=mondayOf(base),end=new Date(start);end.setDate(start.getDate()+6);return `${start.toLocaleDateString('en-AU',{day:'numeric',month:'short'})}–${end.toLocaleDateString('en-AU',{day:'numeric',month:'short'})}`}
 function normaliseDailyLeaderboardEntry(entry,key){
-  if(key===todayKey()&&entry.date===key)return{uid:entry.uid,name:entry.name,email:entry.email,calls:entry.calls||0,connects:entry.connects||0,data:entry.data||0,knockMinutes:entry.knockMinutes||0,score:entry.score||0,targets:entry.targets||{},appointments:normaliseLeaderboardAppointmentCounts(entry.appointments)};
+  if(key===todayKey()&&entry.date===key)return{uid:entry.uid,name:entry.name,email:entry.email,calls:entry.calls||0,connects:entry.connects||0,data:entry.data||0,knockMinutes:entry.knockMinutes||0,score:entry.score||0,targets:entry.targets||{},appointments:normaliseLeaderboardAppointmentCounts(entry.appointments),appointmentDetails:normaliseLeaderboardAppointmentDetails(entry.appointmentDetails)};
   const saved=entry.dailyHistory?.[key];
   if(saved==null)return null;
-  if(typeof saved==='number')return{uid:entry.uid,name:entry.name,email:entry.email,calls:null,connects:null,data:null,knockMinutes:null,score:saved,targets:{},appointments:emptyLeaderboardAppointmentCounts(null)};
-  return{uid:entry.uid,name:entry.name,email:entry.email,calls:saved.calls??null,connects:saved.connects??null,data:saved.data??null,knockMinutes:saved.knockMinutes??null,score:saved.score||0,targets:saved.targets||{},appointments:normaliseLeaderboardAppointmentCounts(saved.appointments)};
+  if(typeof saved==='number')return{uid:entry.uid,name:entry.name,email:entry.email,calls:null,connects:null,data:null,knockMinutes:null,score:saved,targets:{},appointments:emptyLeaderboardAppointmentCounts(null),appointmentDetails:null};
+  return{uid:entry.uid,name:entry.name,email:entry.email,calls:saved.calls??null,connects:saved.connects??null,data:saved.data??null,knockMinutes:saved.knockMinutes??null,score:saved.score||0,targets:saved.targets||{},appointments:normaliseLeaderboardAppointmentCounts(saved.appointments),appointmentDetails:normaliseLeaderboardAppointmentDetails(saved.appointmentDetails)};
 }
 function dailyLeaderboardRows(){const key=selectedLeaderboardDayKey();return leaderboardEntries.map(entry=>normaliseDailyLeaderboardEntry(entry,key)).filter(Boolean).sort(sortLeaderboardRows)}
 function weeklyLeaderboardRows(){
   const wk=selectedLeaderboardWeekKey();
-  return leaderboardEntries.map(entry=>{const w=entry.weekHistory?.[wk];return w?{uid:entry.uid,name:entry.name,email:entry.email,...w,appointments:normaliseLeaderboardAppointmentCounts(w.appointments)}:null}).filter(Boolean).sort(sortLeaderboardRows);
+  return leaderboardEntries.map(entry=>{const w=entry.weekHistory?.[wk];return w?{uid:entry.uid,name:entry.name,email:entry.email,...w,appointments:normaliseLeaderboardAppointmentCounts(w.appointments),appointmentDetails:normaliseLeaderboardAppointmentDetails(w.appointmentDetails)}:null}).filter(Boolean).sort(sortLeaderboardRows);
 }
 function currentWeekLeaderboardRows(){
   const wk=weekKeyFromDate(new Date());
-  return leaderboardEntries.map(entry=>{const w=entry.weekHistory?.[wk];return w?{uid:entry.uid,name:entry.name,email:entry.email,...w,appointments:normaliseLeaderboardAppointmentCounts(w.appointments)}:null}).filter(Boolean).sort(sortLeaderboardRows);
+  return leaderboardEntries.map(entry=>{const w=entry.weekHistory?.[wk];return w?{uid:entry.uid,name:entry.name,email:entry.email,...w,appointments:normaliseLeaderboardAppointmentCounts(w.appointments),appointmentDetails:normaliseLeaderboardAppointmentDetails(w.appointmentDetails)}:null}).filter(Boolean).sort(sortLeaderboardRows);
 }
 function metricLabel(key){return({calls:'Calls',connects:'Connects',data:'Data',knocking:'Knocking'})[key]||'Calls'}
 function leaderboardMetricItem(value,target,label,suffix=''){
@@ -1288,7 +1303,7 @@ function leaderboardRowHtml(r,i,weekly=false){
   return `<article class="leaderboard-row leaderboard-performance-row ${r.uid===uid?'me':''} ${i===0?'leader':''}">
     <div class="leaderboard-performance-head">
       <b class="rank">${i+1}</b>
-      <div class="agent"><strong>${name}</strong>${r.uid===uid?'<small>You</small>':i===0?'<small>Leading</small>':''}</div>
+      <div class="agent"><button class="leaderboard-agent-button" type="button" data-agent-summary="${escapeHtml(r.uid||'')}" aria-label="View ${name} appointment summary">${name}</button>${r.uid===uid?'<small>You</small>':i===0?'<small>Leading</small>':''}</div>
       <em>${score}%<small>${weekly?'Week':'Day'}</small></em>
     </div>
     <i class="leaderboard-overall-progress" aria-hidden="true"><b style="width:${score}%"></b></i>
@@ -1302,6 +1317,23 @@ function leaderboardRowHtml(r,i,weekly=false){
       ${leaderboardAppointmentItem(appointments.BAP,'BAP')}
     </div>
   </article>`;
+}
+function leaderboardAppointmentPeriodLabel(){return leaderboardMode==='week'?`Week ${formatWeekRange(selectedLeaderboardWeekDate())}`:fmtDate(selectedLeaderboardDayKey())}
+function leaderboardAppointmentDateTime(item){
+  const date=item.scheduledDate?parseKey(item.scheduledDate).toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'}):'Date not set';
+  const time=item.time?appointmentTimeLabel({scheduledDate:item.scheduledDate,time:item.time},item.scheduledDate):'Time not set';
+  return `${date} · ${time}`;
+}
+function showLeaderboardAgentSummary(agentUid){
+  const rows=leaderboardMode==='week'?weeklyLeaderboardRows():dailyLeaderboardRows(),row=rows.find(item=>String(item.uid)===String(agentUid));
+  if(!row)return;
+  document.querySelector('.leaderboard-agent-summary-overlay')?.remove();
+  const name=escapeHtml(row.name||row.email?.split('@')[0]||'Agent'),details=normaliseLeaderboardAppointmentDetails(row.appointmentDetails),counts=normaliseLeaderboardAppointmentCounts(row.appointments),knownTotal=['MAP','LAP','BAP'].reduce((sum,type)=>sum+(Number(counts[type])||0),0);
+  const cards=details?.length?details.map(item=>`<article class="leaderboard-agent-appointment"><span>${escapeHtml(item.type)}</span><div><strong>${escapeHtml(item.contactName||'Client not recorded')}</strong><small>${escapeHtml(item.address||'Address not recorded')}</small><time>${escapeHtml(leaderboardAppointmentDateTime(item))}</time></div></article>`).join(''):details===null&&knownTotal?`<div class="leaderboard-agent-summary-empty"><strong>${knownTotal} appointment${knownTotal===1?'':'s'} booked</strong><p>Details will appear after this agent receives the latest app update.</p></div>`:`<div class="leaderboard-agent-summary-empty"><strong>No appointments booked</strong><p>There are no MAP, LAP or BAP appointments recorded for this period.</p></div>`;
+  const overlay=document.createElement('div');overlay.className='leaderboard-agent-summary-overlay';overlay.innerHTML=`<section class="leaderboard-agent-summary glass" role="dialog" aria-modal="true" aria-label="${name} appointment summary"><header><div><span>AGENT SUMMARY</span><h2>${name}</h2><p>${escapeHtml(leaderboardAppointmentPeriodLabel())}</p></div><button type="button" data-close-agent-summary aria-label="Close agent summary">×</button></header><div class="leaderboard-agent-summary-kpis"><div><strong>${counts.MAP??'—'}</strong><span>MAP</span></div><div><strong>${counts.LAP??'—'}</strong><span>LAP</span></div><div><strong>${counts.BAP??'—'}</strong><span>BAP</span></div></div><div class="leaderboard-agent-appointments">${cards}</div><button class="primary" type="button" data-close-agent-summary>Done</button></section>`;
+  document.body.append(overlay);document.body.classList.add('leaderboard-agent-summary-open');
+  const close=()=>{overlay.remove();document.body.classList.remove('leaderboard-agent-summary-open')};
+  overlay.querySelectorAll('[data-close-agent-summary]').forEach(button=>button.onclick=close);overlay.onclick=e=>{if(e.target===overlay)close()};
 }
 function renderUnifiedLeaderboard(){
   const isWeek=leaderboardMode==='week',rows=isWeek?weeklyLeaderboardRows():dailyLeaderboardRows();
@@ -1900,6 +1932,7 @@ $('#dailyTimeline').onclick=e=>{
   const appointmentCall=e.target.closest('[data-appointment-followup-call]');if(appointmentCall){rememberAppointmentFollowUpCallReturn(appointmentCall.dataset.appointmentFollowupCall,appointmentCall.dataset.sourceDate);return}
 };
 $('.insights-switch').onclick=e=>{const b=e.target.closest('button[data-insights-page]');if(b)switchInsightsPage(b.dataset.insightsPage)};
+$('#leaderboardList').onclick=e=>{const button=e.target.closest('[data-agent-summary]');if(button)showLeaderboardAgentSummary(button.dataset.agentSummary)};
 document.querySelector('.leaderboard-mode-tabs').onclick=e=>{const b=e.target.closest('[data-leaderboard-mode]');if(!b)return;leaderboardMode=b.dataset.leaderboardMode==='week'?'week':'day';renderUnifiedLeaderboard()};
 $('#dayPrev').onclick=()=>{leaderboardDayOffset--;renderUnifiedLeaderboard()};
 $('#dayNext').onclick=()=>{if(leaderboardDayOffset<0)leaderboardDayOffset++;renderUnifiedLeaderboard()};
