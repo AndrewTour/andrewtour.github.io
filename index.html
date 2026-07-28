@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=108">
+<link rel="stylesheet" href="styles.css?v=109">
 <title>AGNT</title>
 </head>
 <body>
@@ -164,6 +164,27 @@
       </section>
       <section id="dailyTimeline" class="daily-timeline glass" aria-live="polite"></section>
       <button id="openDayReview" class="open-day-review hidden" type="button"><span>DAY IN REVIEW</span><strong>Review today and prepare tomorrow</strong><b aria-hidden="true">›</b></button>
+    </section>
+
+    <section id="knockingSession" class="knocking-session hidden" aria-live="polite" aria-label="Doorknocking session">
+      <div class="knocking-session-shell">
+        <header class="knocking-session-head">
+          <button id="endKnockingSession" type="button">End Session</button>
+          <div><span>DOORKNOCKING SESSION</span><strong id="knockingSessionTimer">00:00</strong></div>
+          <button id="pauseKnockingSession" type="button" aria-label="Pause knocking timer">Pause</button>
+        </header>
+        <section class="knocking-session-card glass">
+          <div class="knocking-session-grid" aria-label="Session tallies">
+            <button type="button" data-knock-tally="knocks"><span>KNOCKS</span><strong id="knockSessionKnocks">0</strong><small>+ Add knock</small></button>
+            <button type="button" data-knock-tally="clients"><span>CLIENTS</span><strong id="knockSessionClients">0</strong><small>+ Add client</small></button>
+            <button type="button" data-knock-capture="data"><span>DATA</span><strong id="knockSessionData">0</strong><small>Capture details</small></button>
+            <button type="button" data-knock-capture="MAP"><span>MAP</span><strong id="knockSessionMap">0</strong><small>Book appraisal</small></button>
+            <button type="button" data-knock-capture="LAP"><span>LAP</span><strong id="knockSessionLap">0</strong><small>Book listing</small></button>
+          </div>
+          <p class="knocking-session-hint">Tap a result as it happens. Data, MAP and LAP open client capture.</p>
+        </section>
+      </div>
+      <div id="knockingCaptureOverlay" class="knocking-capture-overlay hidden" aria-live="polite"></div>
     </section>
 
     <section id="appointmentsView" class="view">
@@ -520,6 +541,6 @@
 </div>
 
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=108"></script>
+<script type="module" src="app.js?v=109"></script>
 </body>
 </html>
