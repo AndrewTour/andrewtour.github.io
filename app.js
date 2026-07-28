@@ -10,7 +10,7 @@ const CALL_PLAN=[[9,'Active Buyer Calls','Hot buyers, offers, contracts and seco
 const DEFAULTS={calls:50,connects:25,data:10,weeklyKnock:240};
 const SELLING_TIMEFRAMES=['Now','1–3 months','6–12 months','12 months+'];
 let targets={...DEFAULTS}, days={}, prospects=[], prospectInteractions=[], prospectFilter='priority', prospectSection='today', prospectContactsMode='active', pipelineTemperature='All', pipelineSort='followup', prospectBulkMode=false, selectedProspectIds=new Set(), activeProspectId=null, prospectSessionIds=[], prospectSessionIndex=0, prospectSessionActive=false, prospectSessionStats={calls:0,connects:0,temperate:0,appointments:0}, selectedDate=dateKey(new Date()), appointmentDate=selectedDate, appointmentHistoryMode=null, agentName='', calendarPreference='outlook', leaderboardEntries=[], leaderboardMode='day', leaderboardDayOffset=0, leaderboardWeekOffset=0, scorecardWeekOffset=0, prospectInsightPeriod='week';
-let knockingSessionActive=false,knockingSessionStats={knocks:0,clients:0,data:0,MAP:0,LAP:0},knockingCaptureType='';
+let knockingSessionActive=false,knockingSessionVisible=false,knockingSessionStats={knocks:0,clients:0,data:0,MAP:0,LAP:0},knockingCaptureType='';
 let year=new Date().getFullYear(), monthCursor=new Date(), uid='local', currentUser=null, cloud=false, db=null, auth=null;
 let unsubDays=null, unsubProfile=null, unsubLeaderboard=null, unsubProspecting=null, timerTick=null, syncTimer=null, leaderboardPublishTimer=null, prospectingSaveTimer=null;
 let pendingSyncOperations=0, syncHasError=false, lastLeaderboardSignature='', lastProspectingSignature='';
@@ -1724,11 +1724,11 @@ function endProspectingSession(){
 function knockingSessionStorageKey(){return `agnt-knocking-session-${currentUser?.uid||'device'}`}
 function saveKnockingSessionState(){try{localStorage.setItem(knockingSessionStorageKey(),JSON.stringify({active:knockingSessionActive,stats:knockingSessionStats,updatedAt:Date.now()}))}catch(err){console.warn('Knocking session state could not be saved',err)}}
 function clearKnockingSessionState(){try{localStorage.removeItem(knockingSessionStorageKey())}catch(err){console.warn('Knocking session state could not be cleared',err)}}
-function restoreKnockingSessionState(){try{const raw=JSON.parse(localStorage.getItem(knockingSessionStorageKey())||'null');if(!raw?.active)return;knockingSessionStats={knocks:Number(raw.stats?.knocks)||0,clients:Number(raw.stats?.clients)||0,data:Number(raw.stats?.data)||0,MAP:Number(raw.stats?.MAP)||0,LAP:Number(raw.stats?.LAP)||0};knockingSessionActive=Boolean(dayData(todayKey()).timerStartedAt)}catch(err){console.warn('Knocking session state could not be restored',err);clearKnockingSessionState()}}
+function restoreKnockingSessionState(){try{const raw=JSON.parse(localStorage.getItem(knockingSessionStorageKey())||'null');if(!raw?.active)return;knockingSessionStats={knocks:Number(raw.stats?.knocks)||0,clients:Number(raw.stats?.clients)||0,data:Number(raw.stats?.data)||0,MAP:Number(raw.stats?.MAP)||0,LAP:Number(raw.stats?.LAP)||0};knockingSessionActive=true;knockingSessionVisible=Boolean(dayData(todayKey()).timerStartedAt)}catch(err){console.warn('Knocking session state could not be restored',err);clearKnockingSessionState()}}
 function renderKnockingSession(){
   const session=$('#knockingSession');if(!session)return;
-  session.classList.toggle('hidden',!knockingSessionActive);
-  if(!knockingSessionActive)return;
+  session.classList.toggle('hidden',!knockingSessionActive||!knockingSessionVisible);
+  if(!knockingSessionActive||!knockingSessionVisible)return;
   const d=dayData(todayKey()),running=Boolean(d.timerStartedAt);
   $('#knockingSessionTimer').textContent=fmtTimer(liveKnockSeconds(d));
   $('#pauseKnockingSession').textContent=running?'Pause':'Resume';
@@ -1740,7 +1740,7 @@ function renderKnockingSession(){
   $('#knockSessionLap').textContent=knockingSessionStats.LAP;
 }
 function openKnockingSession(){
-  knockingSessionActive=true;saveKnockingSessionState();renderKnockingSession();
+  knockingSessionActive=true;knockingSessionVisible=true;saveKnockingSessionState();renderKnockingSession();
 }
 async function startKnockingSession(){
   if(!canEditDate(selectedDate))return lockedToast();
@@ -1783,8 +1783,8 @@ async function endKnockingSession(){
   if(!knockingSessionActive)return;
   const stats={...knockingSessionStats},d=dayData(todayKey());
   if(d.timerStartedAt)await toggleTimer();
-  knockingSessionActive=false;knockingSessionStats={knocks:0,clients:0,data:0,MAP:0,LAP:0};clearKnockingSessionState();closeKnockingCapture();renderKnockingSession();
-  const overlay=document.createElement('div');overlay.className='prospect-session-review-overlay';overlay.innerHTML=`<section class="prospect-session-review glass" role="dialog" aria-modal="true" aria-label="Session review"><span class="eyebrow">SESSION REVIEW</span><h2>Strong work.</h2><p>Here’s what you completed.</p><div class="prospect-session-review-grid knocking-review-grid"><div><strong>${stats.knocks}</strong><span>Knocks</span></div><div><strong>${stats.clients}</strong><span>Clients</span></div><div><strong>${stats.data}</strong><span>Data</span></div><div><strong>${stats.MAP}</strong><span>MAP</span></div><div><strong>${stats.LAP}</strong><span>LAP</span></div></div><button class="primary" type="button" data-close-session-review>Done</button></section>`;document.body.append(overlay);overlay.querySelector('[data-close-session-review]').onclick=()=>overlay.remove();
+  knockingSessionActive=false;knockingSessionVisible=false;knockingSessionStats={knocks:0,clients:0,data:0,MAP:0,LAP:0};clearKnockingSessionState();closeKnockingCapture();renderKnockingSession();
+  const overlay=document.createElement('div');overlay.className='prospect-session-review-overlay';overlay.innerHTML=`<section class="prospect-session-review glass" role="dialog" aria-modal="true" aria-label="Session review"><span class="eyebrow">SESSION REVIEW</span><h2>Strong work.</h2><p>Here’s what you completed.</p><div class="prospect-session-review-grid knocking-review-grid"><div><strong>${stats.knocks}</strong><span>Knocks</span></div><div><strong>${stats.clients}</strong><span>Connects</span></div><div><strong>${stats.data}</strong><span>Data</span></div><div><strong>${stats.MAP}</strong><span>MAP</span></div><div><strong>${stats.LAP}</strong><span>LAP</span></div></div><button class="primary" type="button" data-close-session-review>Done</button></section>`;document.body.append(overlay);overlay.querySelector('[data-close-session-review]').onclick=()=>overlay.remove();
 }
 
 function parseCsv(text){const rows=[];let row=[],cell='',quoted=false;for(let i=0;i<text.length;i++){const c=text[i],n=text[i+1];if(c==='"'&&quoted&&n==='"'){cell+='"';i++;continue}if(c==='"'){quoted=!quoted;continue}if(c===','&&!quoted){row.push(cell);cell='';continue}if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&n==='\n')i++;row.push(cell);if(row.some(x=>x.trim()))rows.push(row);row=[];cell='';continue}cell+=c}row.push(cell);if(row.some(x=>x.trim()))rows.push(row);return rows}
@@ -1864,7 +1864,7 @@ $('#localMode').onclick=()=>{clearActiveSession();uid='local';loadLocal('local')
 $$('[data-action]').forEach(b=>b.onclick=()=>changeMetric(b.dataset.metric,b.dataset.action==='plus'?1:-1));
 $('#timerButton').onclick=()=>dayData(selectedDate).timerStartedAt?toggleTimer():startKnockingSession();
 $('#endKnockingSession').onclick=endKnockingSession;
-$('#pauseKnockingSession').onclick=async()=>{await toggleTimer();renderKnockingSession()};
+$('#pauseKnockingSession').onclick=async()=>{const d=dayData(todayKey());if(d.timerStartedAt)await toggleTimer();knockingSessionVisible=false;closeKnockingCapture();saveKnockingSessionState();renderKnockingSession();switchView('todayView')};
 $('#knockingSession').addEventListener('click',async e=>{const tally=e.target.closest('[data-knock-tally]');if(tally){const type=tally.dataset.knockTally;knockingSessionStats[type]++;if(type==='clients')await changeMetric('connects',1);saveKnockingSessionState();renderKnockingSession();haptic();return}const capture=e.target.closest('[data-knock-capture]');if(capture){openKnockingCapture(capture.dataset.knockCapture);return}if(e.target.closest('[data-close-knock-capture]'))closeKnockingCapture()});
 $('#knockingSession').addEventListener('submit',async e=>{if(e.target.id!=='knockingCaptureForm')return;e.preventDefault();await submitKnockingCapture(e.target)});
 $('#openTodayTimeline').onclick=()=>switchView('scheduleView');$('#resetKnock').onclick=resetKnock;$('#previousDay').onclick=()=>shiftHeaderDate(-1);$('#nextDay').onclick=()=>shiftHeaderDate(1);$('#settingsShortcut').onclick=()=>switchView('settingsView');$('#homeShortcut').onclick=()=>switchView('todayView');$('#backToday').onclick=()=>{selectedDate=todayKey();appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()};
