@@ -10,7 +10,7 @@ const CALL_PLAN=[[9,'Active Buyer Calls','Hot buyers, offers, contracts and seco
 const DEFAULTS={calls:50,connects:25,data:10,weeklyKnock:240};
 const SELLING_TIMEFRAMES=['Now','1–3 months','6–12 months','12 months+'];
 let targets={...DEFAULTS}, days={}, prospects=[], prospectInteractions=[], prospectFilter='priority', prospectSection='today', prospectContactsMode='active', pipelineTemperature='All', pipelineSort='followup', prospectBulkMode=false, selectedProspectIds=new Set(), activeProspectId=null, prospectSessionIds=[], prospectSessionIndex=0, prospectSessionActive=false, prospectSessionStats={calls:0,connects:0,temperate:0,appointments:0}, selectedDate=dateKey(new Date()), appointmentDate=selectedDate, appointmentHistoryMode=null, agentName='', calendarPreference='outlook', leaderboardEntries=[], leaderboardMode='day', leaderboardDayOffset=0, leaderboardWeekOffset=0, scorecardWeekOffset=0, prospectInsightPeriod='week';
-let knockingSessionActive=false,knockingSessionVisible=false,knockingSessionStats={knocks:0,clients:0,data:0,MAP:0,LAP:0},knockingCaptureType='';
+let knockingSessionActive=false,knockingSessionVisible=false,knockingSessionStats={knocks:0,clients:0,data:0,MAP:0,LAP:0},knockingSessionLog=[],knockingSessionStartSeconds=0,knockingCaptureType='',knockingEditingLogId='';
 let year=new Date().getFullYear(), monthCursor=new Date(), uid='local', currentUser=null, cloud=false, db=null, auth=null;
 let unsubDays=null, unsubProfile=null, unsubLeaderboard=null, unsubProspecting=null, timerTick=null, syncTimer=null, leaderboardPublishTimer=null, prospectingSaveTimer=null;
 let pendingSyncOperations=0, syncHasError=false, lastLeaderboardSignature='', lastProspectingSignature='';
@@ -572,7 +572,8 @@ function renderToday(){
     ? '<svg class="timer-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="7.5" y="6" width="3.25" height="12" rx="1"/><rect x="13.25" y="6" width="3.25" height="12" rx="1"/></svg>'
     : '<svg class="timer-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 6.5 17 12l-8.5 5.5Z"/></svg>';
   timerButton.setAttribute('aria-label',past?'Knocking timer locked':(!scheduled?'Knocking timer unavailable today':(timerRunning?'Pause knocking timer':'Start knocking timer')));
-  timerButton.title=past?'Locked':(!scheduled?'Off day':(timerRunning?'Pause':'Start'));
+  timerButton.title=past?'Locked':(!scheduled?'Off day':(timerRunning?'Pause':(knockingSessionActive?'Resume Session':'Start')));
+  if(!timerRunning&&knockingSessionActive)timerButton.setAttribute('aria-label','Resume knocking session');
   timerButton.classList.toggle('running',timerRunning);
   $$('[data-action], #timerButton, #resetKnock').forEach(el=>{el.disabled=locked;el.setAttribute('aria-disabled',String(locked))});
   renderDayTrend();
@@ -1722,9 +1723,14 @@ function endProspectingSession(){
 
 
 function knockingSessionStorageKey(){return `agnt-knocking-session-${currentUser?.uid||'device'}`}
-function saveKnockingSessionState(){try{localStorage.setItem(knockingSessionStorageKey(),JSON.stringify({active:knockingSessionActive,stats:knockingSessionStats,updatedAt:Date.now()}))}catch(err){console.warn('Knocking session state could not be saved',err)}}
+function normaliseKnockingLogEntry(entry={}){return{id:String(entry.id||uuid()),type:['data','MAP','LAP'].includes(entry.type)?entry.type:'data',name:cleanText(entry.name,120),phone:cleanText(entry.phone,50),address:cleanText(entry.address,240),date:String(entry.date||''),time:String(entry.time||''),prospectId:String(entry.prospectId||''),appointmentId:String(entry.appointmentId||''),createdDate:String(entry.createdDate||todayKey()),at:Number(entry.at)||Date.now()}}
+function saveKnockingSessionState(){try{localStorage.setItem(knockingSessionStorageKey(),JSON.stringify({active:knockingSessionActive,stats:knockingSessionStats,log:knockingSessionLog,startSeconds:knockingSessionStartSeconds,updatedAt:Date.now()}))}catch(err){console.warn('Knocking session state could not be saved',err)}}
 function clearKnockingSessionState(){try{localStorage.removeItem(knockingSessionStorageKey())}catch(err){console.warn('Knocking session state could not be cleared',err)}}
-function restoreKnockingSessionState(){try{const raw=JSON.parse(localStorage.getItem(knockingSessionStorageKey())||'null');if(!raw?.active)return;knockingSessionStats={knocks:Number(raw.stats?.knocks)||0,clients:Number(raw.stats?.clients)||0,data:Number(raw.stats?.data)||0,MAP:Number(raw.stats?.MAP)||0,LAP:Number(raw.stats?.LAP)||0};knockingSessionActive=true;knockingSessionVisible=Boolean(dayData(todayKey()).timerStartedAt)}catch(err){console.warn('Knocking session state could not be restored',err);clearKnockingSessionState()}}
+function restoreKnockingSessionState(){try{const raw=JSON.parse(localStorage.getItem(knockingSessionStorageKey())||'null');if(!raw?.active)return;knockingSessionStats={knocks:Number(raw.stats?.knocks)||0,clients:Number(raw.stats?.clients)||0,data:Number(raw.stats?.data)||0,MAP:Number(raw.stats?.MAP)||0,LAP:Number(raw.stats?.LAP)||0};knockingSessionLog=Array.isArray(raw.log)?raw.log.map(normaliseKnockingLogEntry):[];knockingSessionStartSeconds=Math.max(0,Number(raw.startSeconds)||0);knockingSessionActive=true;knockingSessionVisible=Boolean(dayData(todayKey()).timerStartedAt)}catch(err){console.warn('Knocking session state could not be restored',err);clearKnockingSessionState()}}
+function knockingRates(stats=knockingSessionStats){const knocks=Math.max(0,Number(stats.knocks)||0),connects=Math.max(0,Number(stats.clients)||0),data=Math.max(0,Number(stats.data)||0),appointments=Math.max(0,(Number(stats.MAP)||0)+(Number(stats.LAP)||0));return{connect:knocks?Math.round(connects/knocks*100):0,data:connects?Math.round(data/connects*100):0,appointment:connects?Math.round(appointments/connects*100):0}}
+function knockingRatesMarkup(stats){const r=knockingRates(stats);return `<div><strong>${r.connect}%</strong><span>Connect rate</span></div><div><strong>${r.data}%</strong><span>Data rate</span></div><div><strong>${r.appointment}%</strong><span>Appointment rate</span></div>`}
+function knockingLogMeta(entry){const appointment=entry.type==='MAP'||entry.type==='LAP';return [entry.address,entry.phone,appointment&&entry.date?`${fmtDate(entry.date)}${entry.time?` · ${timelineTimeLabel(timelineMinutes(entry.time))}`:''}`:''].filter(Boolean).join(' · ')}
+function renderKnockingSessionLog(){const host=$('#knockingSessionLog');if(!host)return;if(!knockingSessionLog.length){host.innerHTML='<div class="knocking-log-empty">No data or appointments captured yet.</div>';return}host.innerHTML=[...knockingSessionLog].reverse().map(entry=>`<article class="knocking-log-item"><div><span>${escapeHtml(entry.type)}</span><strong>${escapeHtml(entry.name||'Unnamed contact')}</strong><small>${escapeHtml(knockingLogMeta(entry)||'Details captured')}</small></div><div class="knocking-log-actions"><button type="button" data-edit-knock-log="${escapeHtml(entry.id)}">Edit</button><button type="button" data-delete-knock-log="${escapeHtml(entry.id)}">Delete</button></div></article>`).join('')}
 function renderKnockingSession(){
   const session=$('#knockingSession');if(!session)return;
   session.classList.toggle('hidden',!knockingSessionActive||!knockingSessionVisible);
@@ -1738,53 +1744,60 @@ function renderKnockingSession(){
   $('#knockSessionData').textContent=knockingSessionStats.data;
   $('#knockSessionMap').textContent=knockingSessionStats.MAP;
   $('#knockSessionLap').textContent=knockingSessionStats.LAP;
+  $('#knockingSessionRates').innerHTML=knockingRatesMarkup(knockingSessionStats);
+  renderKnockingSessionLog();
 }
-function openKnockingSession(){
-  knockingSessionActive=true;knockingSessionVisible=true;saveKnockingSessionState();renderKnockingSession();
-}
+function openKnockingSession(){if(!knockingSessionActive)knockingSessionStartSeconds=liveKnockSeconds(dayData(todayKey()));knockingSessionActive=true;knockingSessionVisible=true;saveKnockingSessionState();renderKnockingSession()}
 async function startKnockingSession(){
   if(!canEditDate(selectedDate))return lockedToast();
   if(selectedDate!==todayKey())return toast('Doorknocking sessions are available for today only');
-  const d=dayData(selectedDate);
-  if(!d.timerStartedAt)await toggleTimer();
-  openKnockingSession();
+  const d=dayData(selectedDate);if(!d.timerStartedAt)await toggleTimer();openKnockingSession();
 }
-function knockingCaptureMarkup(type){
-  const isAppointment=type==='MAP'||type==='LAP',title=isAppointment?`Book ${type}`:'Capture Data';
-  return `<section class="knocking-capture-card glass" role="dialog" aria-modal="true" aria-label="${title}"><div class="knocking-capture-head"><div><span>DOORKNOCKING</span><h2>${title}</h2></div><button type="button" data-close-knock-capture aria-label="Close">×</button></div><form id="knockingCaptureForm"><label>Client name<input name="name" type="text" autocomplete="name" autocapitalize="words" required></label><label>Phone number<input name="phone" type="tel" autocomplete="tel" inputmode="tel" required></label><label>Property address<input name="address" type="text" autocomplete="street-address" required></label>${isAppointment?`<div class="knocking-capture-schedule"><label>Booking date<input name="date" type="date" value="${todayKey()}" required></label><label>Booking time<input name="time" type="time" value="12:00" required></label></div>`:''}<div class="form-error hidden" data-knock-capture-error role="alert"></div><button class="primary" type="submit">${isAppointment?`Book ${type}`:'Add to Contacts'}</button></form></section>`;
+function knockingCaptureMarkup(type,entry=null){
+  const isAppointment=type==='MAP'||type==='LAP',title=isAppointment?`${entry?'Edit':'Book'} ${type}`:`${entry?'Edit':'Capture'} Data`;
+  return `<section class="knocking-capture-card glass" role="dialog" aria-modal="true" aria-label="${title}"><div class="knocking-capture-head"><div><span>DOORKNOCKING</span><h2>${title}</h2></div><button type="button" data-close-knock-capture aria-label="Close">×</button></div><form id="knockingCaptureForm"><label>Client name<input name="name" type="text" autocomplete="name" autocapitalize="words" value="${escapeHtml(entry?.name||'')}" required></label><label>Phone number<input name="phone" type="tel" autocomplete="tel" inputmode="tel" value="${escapeHtml(entry?.phone||'')}" required></label><label>Property address<input name="address" type="text" autocomplete="street-address" value="${escapeHtml(entry?.address||'')}" required></label>${isAppointment?`<div class="knocking-capture-schedule"><label>Booking date<input name="date" type="date" value="${escapeHtml(entry?.date||todayKey())}" required></label><label>Booking time<input name="time" type="time" value="${escapeHtml(entry?.time||'12:00')}" required></label></div>`:''}<div class="form-error hidden" data-knock-capture-error role="alert"></div><button class="primary" type="submit">${entry?'Save Changes':isAppointment?`Book ${type}`:'Add to Contacts'}</button></form></section>`;
 }
-function openKnockingCapture(type){knockingCaptureType=type;const overlay=$('#knockingCaptureOverlay');overlay.innerHTML=knockingCaptureMarkup(type);overlay.classList.remove('hidden');requestAnimationFrame(()=>overlay.querySelector('input')?.focus({preventScroll:true}))}
-function closeKnockingCapture(){knockingCaptureType='';const overlay=$('#knockingCaptureOverlay');if(overlay){overlay.classList.add('hidden');overlay.innerHTML=''}}
+function openKnockingCapture(type,entry=null){knockingCaptureType=type;knockingEditingLogId=entry?.id||'';const overlay=$('#knockingCaptureOverlay');overlay.innerHTML=knockingCaptureMarkup(type,entry);overlay.classList.remove('hidden');requestAnimationFrame(()=>overlay.querySelector('input')?.focus({preventScroll:true}))}
+function closeKnockingCapture(){knockingCaptureType='';knockingEditingLogId='';const overlay=$('#knockingCaptureOverlay');if(overlay){overlay.classList.add('hidden');overlay.innerHTML=''}}
 function findKnockingProspect(name,phone,address){return findProspectForAppointment({contactName:name,contactNumber:phone,address})}
-async function addKnockingContact({name,phone,address,source}){
-  let p=findKnockingProspect(name,phone,address);
-  if(p)return p;
-  p=normaliseProspect({id:prospectId(),name,phone,address,source,stage:'Nurture',temperature:'Cold',createdAt:Date.now(),updatedAt:Date.now()});
-  prospects.unshift(p);prospects=normaliseProspects(prospects);await saveProspecting({render:false});return p;
+async function addKnockingContact({name,phone,address,source}){let p=findKnockingProspect(name,phone,address);if(p)return p;p=normaliseProspect({id:prospectId(),name,phone,address,source,stage:'Nurture',temperature:'Cold',createdAt:Date.now(),updatedAt:Date.now()});prospects.unshift(p);prospects=normaliseProspects(prospects);await saveProspecting({render:false});return p}
+async function updateKnockingLogEntry(entry,values){
+  const p=prospects.find(x=>String(x.id)===String(entry.prospectId));if(p){p.name=values.name;p.phone=values.phone;p.address=values.address;p.updatedAt=Date.now();await saveProspecting({render:false})}
+  if(entry.appointmentId){const d=dayData(entry.createdDate),a=d.appointments.find(x=>String(x.id)===String(entry.appointmentId));if(a){a.contactName=values.name;a.contactNumber=values.phone;a.address=values.address;a.date=values.date;a.scheduledDate=values.date;a.time=values.time;a.scheduledAt=new Date(`${values.date}T${values.time}`).getTime();days[entry.createdDate]=d;await saveDay(entry.createdDate)}}
+  Object.assign(entry,values);saveKnockingSessionState();closeKnockingCapture();renderKnockingSession();toast('Session entry updated')
 }
 async function submitKnockingCapture(form){
   const f=new FormData(form),name=cleanText(f.get('name'),120),phone=cleanText(f.get('phone'),50),address=cleanText(f.get('address'),240),error=form.querySelector('[data-knock-capture-error]');
   if(!name||!phone||!address){error.textContent='Add the client name, phone number and property address.';error.classList.remove('hidden');return}
   const submit=form.querySelector('button[type=submit]');submit.disabled=true;submit.textContent='Saving…';
   try{
-    const type=knockingCaptureType,p=await addKnockingContact({name,phone,address,source:type==='data'?'Doorknocking data':`Doorknocking ${type}`});
-    if(type==='data'){
-      await changeMetric('data',1);knockingSessionStats.data++;
-    }else{
-      const date=String(f.get('date')||''),time=String(f.get('time')||'');
-      const appointment=await addAppointment({contactName:name,contactNumber:phone,address,date,time,type,prospectId:p.id});
-      if(!appointment){submit.disabled=false;submit.textContent=`Book ${type}`;return}
-      knockingSessionStats[type]++;
-    }
+    const type=knockingCaptureType,date=String(f.get('date')||''),time=String(f.get('time')||'');
+    if(knockingEditingLogId){const entry=knockingSessionLog.find(x=>x.id===knockingEditingLogId);if(!entry)throw new Error('Session entry not found');await updateKnockingLogEntry(entry,{name,phone,address,date,time});return}
+    const p=await addKnockingContact({name,phone,address,source:type==='data'?'Doorknocking data':`Doorknocking ${type}`});let appointment=null;
+    if(type==='data'){await changeMetric('data',1);knockingSessionStats.data++}else{appointment=await addAppointment({contactName:name,contactNumber:phone,address,date,time,type,prospectId:p.id});if(!appointment){submit.disabled=false;submit.textContent=`Book ${type}`;return}knockingSessionStats[type]++}
+    knockingSessionLog.push(normaliseKnockingLogEntry({type,name,phone,address,date,time,prospectId:p.id,appointmentId:appointment?.id||'',createdDate:todayKey(),at:Date.now()}));
     saveKnockingSessionState();closeKnockingCapture();renderKnockingSession();haptic();toast(type==='data'?'Contact added and data logged':`${type} booked`);
-  }catch(err){console.error('Doorknocking capture failed',err);error.textContent='Could not save this result. Please try again.';error.classList.remove('hidden');submit.disabled=false;submit.textContent=knockingCaptureType==='data'?'Add to Contacts':`Book ${knockingCaptureType}`}
+  }catch(err){console.error('Doorknocking capture failed',err);error.textContent='Could not save this result. Please try again.';error.classList.remove('hidden');submit.disabled=false;submit.textContent=knockingEditingLogId?'Save Changes':knockingCaptureType==='data'?'Add to Contacts':`Book ${knockingCaptureType}`}
 }
+async function deleteKnockingLogEntry(id){
+  const index=knockingSessionLog.findIndex(x=>x.id===id);if(index<0)return;const entry=knockingSessionLog[index];if(!confirm(`Delete this ${entry.type} session entry?`))return;
+  if(entry.type==='data'){await changeMetric('data',-1);knockingSessionStats.data=Math.max(0,knockingSessionStats.data-1)}else{const d=dayData(entry.createdDate),before=d.appointments.length;d.appointments=d.appointments.filter(a=>String(a.id)!==String(entry.appointmentId));if(d.appointments.length!==before){days[entry.createdDate]=d;await saveDay(entry.createdDate)}knockingSessionStats[entry.type]=Math.max(0,knockingSessionStats[entry.type]-1)}
+  knockingSessionLog.splice(index,1);saveKnockingSessionState();renderKnockingSession();toast('Session entry deleted')
+}
+function completedKnockingSessions(){return Object.entries(days).flatMap(([date,d])=>(Array.isArray(d.knockingSessions)?d.knockingSessions:[]).map(session=>({...session,date:session.date||date}))).sort((a,b)=>(Number(b.endedAt)||0)-(Number(a.endedAt)||0))}
+function renderKnockingHistory(){
+  const view=$('#knockingHistoryView');if(!view)return;const sessions=completedKnockingSessions(),totals=sessions.reduce((acc,s)=>{Object.keys(acc).forEach(k=>acc[k]+=Number(s.stats?.[k])||0);return acc},{knocks:0,clients:0,data:0,MAP:0,LAP:0}),duration=sessions.reduce((sum,s)=>sum+(Number(s.durationSeconds)||0),0);
+  $('#knockingHistorySummary').innerHTML=`<div><span>ALL-TIME KNOCKING</span><strong>${fmtTimer(duration)}</strong><small>${sessions.length} completed session${sessions.length===1?'':'s'}</small></div><div class="knocking-history-totals"><b>${totals.knocks}<small>Knocks</small></b><b>${totals.clients}<small>Connects</small></b><b>${totals.data}<small>Data</small></b><b>${totals.MAP+totals.LAP}<small>Appts</small></b></div>`;
+  const list=$('#knockingHistoryList');if(!sessions.length){list.innerHTML='<div class="knocking-history-empty">Completed sessions will appear here.</div>';return}list.innerHTML=sessions.map((s,i)=>`<details class="knocking-history-item" ${i===0?'open':''}><summary><div><span>${escapeHtml(fmtDate(s.date))}</span><strong>${fmtTimer(Number(s.durationSeconds)||0)}</strong></div><div><b>${Number(s.stats?.knocks)||0} knocks</b><small>${Number(s.stats?.clients)||0} connects · ${Number(s.stats?.data)||0} data · ${(Number(s.stats?.MAP)||0)+(Number(s.stats?.LAP)||0)} appts</small></div></summary><div class="knocking-history-rates">${knockingRatesMarkup(s.stats||{})}</div><div class="knocking-history-log">${(s.log||[]).length?(s.log||[]).map(entry=>`<article><span>${escapeHtml(entry.type)}</span><strong>${escapeHtml(entry.name||'Unnamed contact')}</strong><small>${escapeHtml(knockingLogMeta(entry)||'Details captured')}</small></article>`).join(''):'<small>No client details captured in this session.</small>'}</div></details>`).join('')
+}
+function openKnockingHistory(){renderKnockingHistory();$('#knockingHistoryView').classList.remove('hidden')}
+function closeKnockingHistory(){$('#knockingHistoryView').classList.add('hidden')}
 async function endKnockingSession(){
-  if(!knockingSessionActive)return;
-  const stats={...knockingSessionStats},d=dayData(todayKey());
+  if(!knockingSessionActive)return;const stats={...knockingSessionStats},log=knockingSessionLog.map(normaliseKnockingLogEntry),d=dayData(todayKey()),durationSeconds=Math.max(0,liveKnockSeconds(d)-knockingSessionStartSeconds);
   if(d.timerStartedAt)await toggleTimer();
-  knockingSessionActive=false;knockingSessionVisible=false;knockingSessionStats={knocks:0,clients:0,data:0,MAP:0,LAP:0};clearKnockingSessionState();closeKnockingCapture();renderKnockingSession();
-  const overlay=document.createElement('div');overlay.className='prospect-session-review-overlay';overlay.innerHTML=`<section class="prospect-session-review glass" role="dialog" aria-modal="true" aria-label="Session review"><span class="eyebrow">SESSION REVIEW</span><h2>Strong work.</h2><p>Here’s what you completed.</p><div class="prospect-session-review-grid knocking-review-grid"><div><strong>${stats.knocks}</strong><span>Knocks</span></div><div><strong>${stats.clients}</strong><span>Connects</span></div><div><strong>${stats.data}</strong><span>Data</span></div><div><strong>${stats.MAP}</strong><span>MAP</span></div><div><strong>${stats.LAP}</strong><span>LAP</span></div></div><button class="primary" type="button" data-close-session-review>Done</button></section>`;document.body.append(overlay);overlay.querySelector('[data-close-session-review]').onclick=()=>overlay.remove();
+  d.knockingSessions=Array.isArray(d.knockingSessions)?d.knockingSessions:[];d.knockingSessions.push({id:uuid(),date:todayKey(),startedAt:Date.now()-durationSeconds*1000,endedAt:Date.now(),durationSeconds,stats,log});d.knockingSessions=d.knockingSessions.slice(-100);days[todayKey()]=d;await saveDay(todayKey());
+  knockingSessionActive=false;knockingSessionVisible=false;knockingSessionStats={knocks:0,clients:0,data:0,MAP:0,LAP:0};knockingSessionLog=[];knockingSessionStartSeconds=0;clearKnockingSessionState();closeKnockingCapture();renderKnockingSession();
+  const rates=knockingRates(stats),overlay=document.createElement('div');overlay.className='prospect-session-review-overlay';overlay.innerHTML=`<section class="prospect-session-review glass" role="dialog" aria-modal="true" aria-label="Session review"><span class="eyebrow">SESSION REVIEW</span><h2>Strong work.</h2><p>Here’s what you completed.</p><div class="prospect-session-review-grid knocking-review-grid"><div><strong>${stats.knocks}</strong><span>Knocks</span></div><div><strong>${stats.clients}</strong><span>Connects</span></div><div><strong>${stats.data}</strong><span>Data</span></div><div><strong>${stats.MAP}</strong><span>MAP</span></div><div><strong>${stats.LAP}</strong><span>LAP</span></div></div><div class="knocking-review-rates"><div><strong>${rates.connect}%</strong><span>Connect rate</span></div><div><strong>${rates.data}%</strong><span>Data rate</span></div><div><strong>${rates.appointment}%</strong><span>Appointment rate</span></div></div><button class="primary" type="button" data-close-session-review>Done</button></section>`;document.body.append(overlay);overlay.querySelector('[data-close-session-review]').onclick=()=>overlay.remove();
 }
 
 function parseCsv(text){const rows=[];let row=[],cell='',quoted=false;for(let i=0;i<text.length;i++){const c=text[i],n=text[i+1];if(c==='"'&&quoted&&n==='"'){cell+='"';i++;continue}if(c==='"'){quoted=!quoted;continue}if(c===','&&!quoted){row.push(cell);cell='';continue}if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&n==='\n')i++;row.push(cell);if(row.some(x=>x.trim()))rows.push(row);row=[];cell='';continue}cell+=c}row.push(cell);if(row.some(x=>x.trim()))rows.push(row);return rows}
@@ -1865,9 +1878,9 @@ $$('[data-action]').forEach(b=>b.onclick=()=>changeMetric(b.dataset.metric,b.dat
 $('#timerButton').onclick=()=>dayData(selectedDate).timerStartedAt?toggleTimer():startKnockingSession();
 $('#endKnockingSession').onclick=endKnockingSession;
 $('#pauseKnockingSession').onclick=async()=>{const d=dayData(todayKey());if(d.timerStartedAt)await toggleTimer();knockingSessionVisible=false;closeKnockingCapture();saveKnockingSessionState();renderKnockingSession();switchView('todayView')};
-$('#knockingSession').addEventListener('click',async e=>{const tally=e.target.closest('[data-knock-tally]');if(tally){const type=tally.dataset.knockTally;knockingSessionStats[type]++;if(type==='clients')await changeMetric('connects',1);saveKnockingSessionState();renderKnockingSession();haptic();return}const capture=e.target.closest('[data-knock-capture]');if(capture){openKnockingCapture(capture.dataset.knockCapture);return}if(e.target.closest('[data-close-knock-capture]'))closeKnockingCapture()});
+$('#knockingSession').addEventListener('click',async e=>{const adjust=e.target.closest('[data-knock-adjust]');if(adjust){const type=adjust.dataset.knockAdjust,delta=Number(adjust.dataset.delta)||0,next=Math.max(0,(Number(knockingSessionStats[type])||0)+delta),actual=next-knockingSessionStats[type];if(!actual)return;knockingSessionStats[type]=next;if(type==='clients')await changeMetric('connects',actual);saveKnockingSessionState();renderKnockingSession();haptic();return}const edit=e.target.closest('[data-edit-knock-log]');if(edit){const entry=knockingSessionLog.find(x=>x.id===edit.dataset.editKnockLog);if(entry)openKnockingCapture(entry.type,entry);return}const remove=e.target.closest('[data-delete-knock-log]');if(remove){await deleteKnockingLogEntry(remove.dataset.deleteKnockLog);return}const capture=e.target.closest('[data-knock-capture]');if(capture){openKnockingCapture(capture.dataset.knockCapture);return}if(e.target.closest('[data-close-knock-capture]'))closeKnockingCapture()});
 $('#knockingSession').addEventListener('submit',async e=>{if(e.target.id!=='knockingCaptureForm')return;e.preventDefault();await submitKnockingCapture(e.target)});
-$('#openTodayTimeline').onclick=()=>switchView('scheduleView');$('#resetKnock').onclick=resetKnock;$('#previousDay').onclick=()=>shiftHeaderDate(-1);$('#nextDay').onclick=()=>shiftHeaderDate(1);$('#settingsShortcut').onclick=()=>switchView('settingsView');$('#homeShortcut').onclick=()=>switchView('todayView');$('#backToday').onclick=()=>{selectedDate=todayKey();appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()};
+$('#openTodayTimeline').onclick=()=>switchView('scheduleView');$('#resetKnock').onclick=resetKnock;$('#knockingMetricCard').onclick=e=>{if(e.target.closest('button'))return;openKnockingHistory()};$('#knockingMetricCard').onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.closest('button')){e.preventDefault();openKnockingHistory()}};$('#closeKnockingHistory').onclick=closeKnockingHistory;$('#previousDay').onclick=()=>shiftHeaderDate(-1);$('#nextDay').onclick=()=>shiftHeaderDate(1);$('#settingsShortcut').onclick=()=>switchView('settingsView');$('#homeShortcut').onclick=()=>switchView('todayView');$('#backToday').onclick=()=>{selectedDate=todayKey();appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()};
 $('.tabbar').onclick=e=>{const b=e.target.closest('button[data-view]');if(b)switchView(b.dataset.view)};
 $('#dailyTimeline').onclick=e=>{
   const prospectCheck=e.target.closest('[data-followup-prospect]');if(prospectCheck){switchView('prospectingView');openProspectLog(prospectCheck.dataset.followupProspect,false);return}
