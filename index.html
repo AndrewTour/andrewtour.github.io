@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=112">
+<link rel="stylesheet" href="styles.css?v=111">
 <title>AGNT</title>
 </head>
 <body>
@@ -145,7 +145,7 @@
           <div class="metric-copy"><span>DATA</span><small id="dataTargetText">10 remaining</small><em id="dataPace">Start at 9:00am</em><strong><i id="dataValue">0</i><small id="dataTargetLabel">/10</small></strong></div>
           <div class="actions"><button data-action="minus" data-metric="data">−</button><div id="dataPercent" class="metric-percent">0%</div><button data-action="plus" data-metric="data">+</button></div>
         </article>
-        <article class="metric knock">
+        <article id="knockingMetricCard" class="metric knock" role="button" tabindex="0" aria-label="Open knocking progress and session history">
           <div class="metric-copy"><span>KNOCKING</span><small id="knockTargetText">60 min remaining today</small><em id="knockRemaining">Start at 9:00am</em><strong id="knockValue">00:00</strong></div>
           <div class="actions knock-actions"><div id="knockPercent" class="metric-percent metric-ring" role="img" aria-label="Knocking: 0% complete, expected pace 0%, target 60 minutes">0%</div><button id="timerButton" class="timer" type="button" aria-label="Start knocking timer"><svg class="timer-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 6.5 17 12l-8.5 5.5Z"/></svg></button><button id="resetKnock" class="reset" aria-label="Reset today’s knocking">↶</button></div>
         </article>
@@ -175,16 +175,27 @@
         </header>
         <section class="knocking-session-card glass">
           <div class="knocking-session-grid" aria-label="Session tallies">
-            <button type="button" data-knock-tally="knocks"><span>KNOCKS</span><strong id="knockSessionKnocks">0</strong><small>+ Add knock</small></button>
-            <button type="button" data-knock-tally="clients"><span>CONNECTS</span><strong id="knockSessionClients">0</strong><small>+ Add connect</small></button>
+            <div class="knocking-tally-card"><span>KNOCKS</span><strong id="knockSessionKnocks">0</strong><div class="knocking-tally-actions"><button type="button" data-knock-adjust="knocks" data-delta="-1" aria-label="Remove knock">−</button><button type="button" data-knock-adjust="knocks" data-delta="1">+ Add knock</button></div></div>
+            <div class="knocking-tally-card"><span>CONNECTS</span><strong id="knockSessionClients">0</strong><div class="knocking-tally-actions"><button type="button" data-knock-adjust="clients" data-delta="-1" aria-label="Remove connect">−</button><button type="button" data-knock-adjust="clients" data-delta="1">+ Add connect</button></div></div>
             <button type="button" data-knock-capture="data"><span>DATA</span><strong id="knockSessionData">0</strong><small>Capture details</small></button>
             <button type="button" data-knock-capture="MAP"><span>MAP</span><strong id="knockSessionMap">0</strong><small>Book appraisal</small></button>
             <button type="button" data-knock-capture="LAP"><span>LAP</span><strong id="knockSessionLap">0</strong><small>Book listing</small></button>
           </div>
+          <div id="knockingSessionRates" class="knocking-session-rates" aria-label="Session conversion rates"></div>
+          <section class="knocking-session-log-section"><div class="knocking-session-log-head"><span>SESSION LOG</span><small>Data and appointments captured this session</small></div><div id="knockingSessionLog" class="knocking-session-log"></div></section>
           <p class="knocking-session-hint">Tap a result as it happens. Data, MAP and LAP open client capture.</p>
         </section>
       </div>
       <div id="knockingCaptureOverlay" class="knocking-capture-overlay hidden" aria-live="polite"></div>
+    </section>
+
+
+    <section id="knockingHistoryView" class="knocking-history-view hidden" aria-live="polite" aria-label="Knocking progress and session history">
+      <div class="knocking-history-shell">
+        <header class="knocking-history-head"><button id="closeKnockingHistory" type="button" aria-label="Return home">‹</button><div><span>KNOCKING</span><strong>Progress & Sessions</strong></div></header>
+        <section id="knockingHistorySummary" class="knocking-history-summary glass"></section>
+        <section class="knocking-history-list-wrap glass"><div class="knocking-history-list-head"><span>SESSION HISTORY</span><small>Your completed doorknocking sessions</small></div><div id="knockingHistoryList" class="knocking-history-list"></div></section>
+      </div>
     </section>
 
     <section id="appointmentsView" class="view">
@@ -541,6 +552,6 @@
 </div>
 
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=112"></script>
+<script type="module" src="app.js?v=111"></script>
 </body>
 </html>
