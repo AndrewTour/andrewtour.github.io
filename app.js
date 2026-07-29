@@ -6,6 +6,7 @@ import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const DEFAULT_WORK_DAYS=[1,2,4,5];
 let workDays=[...DEFAULT_WORK_DAYS];
+let offDayReviewDismissedThisSession=false;
 const CALL_PLAN=[[9,'Active Buyer Calls','Hot buyers, offers, contracts and second inspections'],[10,'Past OFI Calls','Recent attendees, missed callbacks and buyer feedback'],[11,'Pipeline Calls','Current sellers, warm leads and next-step conversations'],[12,'Past Appraisals','Owners with a likely 3–12 month move'],[13,'Database Reconnects','Long-term owners and dormant contacts'],[14,'Just Listed & Coming Soon','Buyers, neighbours and local owner awareness'],[15,'Just Sold Calls','Result calls and nearby owner follow-up'],[16,'Priority Follow-Up','Offers, appointments and tomorrow’s pipeline']];
 const DEFAULTS={calls:50,connects:25,data:10,weeklyKnock:240};
 const SELLING_TIMEFRAMES=['Now','1–3 months','6–12 months','12 months+'];
@@ -158,6 +159,46 @@ function dismissDailyWelcome(){
   try{localStorage.setItem(welcomeStorageKey(),'1')}catch{}
   screen.classList.add('is-leaving');screen.setAttribute('aria-hidden','true');setTimeout(()=>screen.classList.add('hidden'),320);
 }
+function offDayWeekDates(base=new Date()){
+  const start=mondayOf(base);return Array.from({length:7},(_,index)=>{const d=new Date(start);d.setDate(start.getDate()+index);return d});
+}
+function offDayMetricSummary(base=new Date()){
+  const today=todayKey(),dates=offDayWeekDates(base),elapsed=dates.filter(d=>workDays.includes(d.getDay())&&dateKey(d)<=today),keys=elapsed.map(dateKey);
+  let calls=0,connects=0,data=0,knockMinutes=0,knockTarget=0,totalCompletion=0;
+  keys.forEach(k=>{const d=dayData(k);calls+=d.calls;connects+=d.connects;data+=d.data;knockMinutes+=Math.floor(liveKnockSeconds(d)/60);knockTarget+=rollingKnockTarget(k);totalCompletion+=completion(k)});
+  const count=keys.length,callsTarget=targets.calls*count,connectsTarget=targets.connects*count,dataTarget=targets.data*count;
+  const score=count?Math.round((pct(calls,callsTarget)+pct(connects,connectsTarget)+pct(data,dataTarget)+pct(knockMinutes,Math.max(1,knockTarget)))/4):0;
+  return{dates,keys,count,calls,connects,data,knockMinutes,callsTarget,connectsTarget,dataTarget,knockTarget,score,average:count?Math.round(totalCompletion/count):0};
+}
+function offDayReviewSummaryText(summary){
+  if(!summary.count)return 'Your first scheduled day is still ahead. Use this page to review appointments already booked for the week.';
+  const metrics=[['Calls',summary.calls,summary.callsTarget],['Connects',summary.connects,summary.connectsTarget],['Data',summary.data,summary.dataTarget],['Knocking',summary.knockMinutes,summary.knockTarget]],strongest=metrics.slice().sort((a,b)=>pct(b[1],b[2])-pct(a[1],a[2]))[0],weakest=metrics.slice().sort((a,b)=>pct(a[1],a[2])-pct(b[1],b[2]))[0];
+  if(summary.score>=100)return `All week-to-date activity targets are complete. ${strongest[0]} is leading your performance.`;
+  if(summary.score>=80)return `A strong week so far. ${strongest[0]} is leading, with ${weakest[0].toLowerCase()} the clearest opportunity.`;
+  if(summary.score>=50)return `The week is moving. ${strongest[0]} is your strongest metric and ${weakest[0].toLowerCase()} needs the most attention.`;
+  return `There is room to lift the week. Start with ${weakest[0].toLowerCase()} when the next scheduled day begins.`;
+}
+function offDayAppointmentMeta(item){
+  const date=validDateKey(item.scheduledDate)?parseKey(item.scheduledDate):null,dateText=date?date.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'short'}):'Date not recorded',timeText=item.time?timelineTimeLabel(timelineMinutes(item.time)):'Time not recorded';
+  return `${dateText} · ${timeText}`;
+}
+function renderOffDayReview(){
+  const screen=$('#offDayReviewScreen');if(!screen)return;const now=new Date(),summary=offDayMetricSummary(now),weekStart=summary.dates[0],weekEnd=summary.dates[6],details=leaderboardAppointmentDetailsForWeek(now),counts=appointmentCountsForWeek(now);
+  $('#offDayReviewRange').textContent=`${weekStart.toLocaleDateString('en-AU',{day:'numeric',month:'short'})} — ${weekEnd.toLocaleDateString('en-AU',{day:'numeric',month:'short'})}`;
+  $('#offDayReviewScore').textContent=`${summary.score}%`;$('#offDayReviewSummary').textContent=offDayReviewSummaryText(summary);
+  const metrics=[['Calls',summary.calls,summary.callsTarget,''],['Connects',summary.connects,summary.connectsTarget,''],['Data',summary.data,summary.dataTarget,''],['Knocking',summary.knockMinutes,summary.knockTarget,' min']];
+  $('#offDayMetricGrid').innerHTML=metrics.map(([label,value,target,suffix])=>`<article><span>${escapeHtml(label)}</span><strong>${value}${suffix}</strong><small>of ${target}${suffix}</small><i><b style="width:${pct(value,Math.max(1,target))}%"></b></i></article>`).join('');
+  const today=todayKey();$('#offDayDayList').innerHTML=summary.dates.map(date=>{const k=dateKey(date),scheduled=workDays.includes(date.getDay()),future=k>today,p=scheduled&&!future?completion(k):0,status=!scheduled?'Rest day':future?'Upcoming':p>=100?'Complete':p?`${p}% complete`:'No activity logged';return `<article class="${!scheduled?'rest':future?'upcoming':p>=100?'complete':''}"><div><span>${date.toLocaleDateString('en-AU',{weekday:'long'})}</span><small>${date.toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</small></div><strong>${escapeHtml(status)}</strong></article>`}).join('');
+  $('#offDayAppointmentCounts').innerHTML=['MAP','LAP','BAP'].map(type=>`<span><strong>${counts[type]||0}</strong>${type}</span>`).join('');
+  $('#offDayAppointmentList').innerHTML=details.length?details.map(item=>`<article><span class="offday-appointment-type">${escapeHtml(item.type)}</span><div><strong>${escapeHtml(item.contactName||item.address||'Appointment')}</strong><small>${escapeHtml(item.address||'Address not recorded')}</small><em>${escapeHtml(offDayAppointmentMeta(item))}</em></div></article>`).join(''):`<div class="offday-empty"><strong>No appointments booked</strong><span>MAP, LAP and BAP appointments booked during this week will appear here.</span></div>`;
+}
+function showOffDayReview(){
+  const screen=$('#offDayReviewScreen');if(!screen||offDayReviewDismissedThisSession||isWorkDayKey(todayKey()))return false;renderOffDayReview();screen.classList.remove('hidden','is-leaving');screen.setAttribute('aria-hidden','false');return true;
+}
+function dismissOffDayReview(){
+  const screen=$('#offDayReviewScreen');if(!screen)return;offDayReviewDismissedThisSession=true;screen.classList.add('is-leaving');screen.setAttribute('aria-hidden','true');setTimeout(()=>screen.classList.add('hidden'),320);
+}
+function showLaunchExperience(){if(!showOffDayReview())showDailyWelcome()}
 function currentDayPlan(k=todayKey()){
   const saved=readDayPlan(k);if(saved)return saved;
   const appointments=appointmentEntriesForDate(k).map(({appointment:a,sourceDate})=>({id:a.id||calendarExportId(a,sourceDate),sourceDate,name:a.contactName||a.name||'Appointment',type:appointmentType(a),address:a.address||''}));
@@ -1942,7 +1983,7 @@ async function startCloud(user){
   refreshSyncStatus();showApp();scheduleLeaderboardPublish();
 }
 
-function showApp(){$('#authGate').classList.add('hidden');$('#app').classList.remove('hidden');$('#appointmentDatePicker').value=appointmentDate;restoreProspectingSessionState();restoreKnockingSessionState();renderKnockingSession();renderAll();ensureTick();showDailyWelcome()}
+function showApp(){$('#authGate').classList.add('hidden');$('#app').classList.remove('hidden');$('#appointmentDatePicker').value=appointmentDate;restoreProspectingSessionState();restoreKnockingSessionState();renderKnockingSession();renderAll();ensureTick();showLaunchExperience()}
 let viewportFrame=0;
 function updateAppViewport(){
   cancelAnimationFrame(viewportFrame);
@@ -1986,6 +2027,7 @@ function openCalendar(){$('#calendarModal').classList.add('open');renderCalendar
 $('#authForm').addEventListener('submit',async e=>{e.preventDefault();showAuthMessage('');try{await signInWithEmailAndPassword(auth,$('#email').value,$('#password').value)}catch(err){showAuthMessage(err.message)}});
 $('#createAccount').onclick=async()=>{try{await createUserWithEmailAndPassword(auth,$('#email').value,$('#password').value)}catch(err){showAuthMessage(err.message)}};
 $('#startDayButton').onclick=dismissDailyWelcome;
+$('#openAgntButton').onclick=dismissOffDayReview;
 $('#localMode').onclick=()=>{clearActiveSession();uid='local';loadLocal('local');setSync('offline','This device');showApp()};
 $$('[data-action]').forEach(b=>b.onclick=()=>changeMetric(b.dataset.metric,b.dataset.action==='plus'?1:-1));
 $('#timerButton').onclick=()=>dayData(selectedDate).timerStartedAt?toggleTimer():startKnockingSession();

@@ -4747,3 +4747,37 @@ body.appointment-editing{overflow:hidden}
 .leaderboard-agent-summary-empty p{margin:6px 0 0;color:#8992a1;font-size:.72rem;line-height:1.35}
 .leaderboard-agent-summary>.primary{flex:0 0 auto;margin-top:16px}
 @media(max-width:390px){.leaderboard-agent-summary-overlay{padding:10px}.leaderboard-agent-summary{padding:19px;border-radius:26px}}
+
+
+/* AGNT V114.4 — off-day weekly review launch layer. */
+.offday-review-screen{position:fixed;inset:0;z-index:101;overflow:hidden;background:#f7f8fb;padding:max(18px,env(safe-area-inset-top)) 22px max(18px,env(safe-area-inset-bottom));transition:opacity .32s ease,visibility .32s ease}
+.offday-review-screen.hidden{display:none}.offday-review-screen.is-leaving{opacity:0;visibility:hidden}
+.offday-review-shell{position:relative;width:min(100%,520px);height:100%;margin:0 auto;display:flex;flex-direction:column;min-height:0}
+.offday-review-top{display:flex;align-items:center;justify-content:space-between;gap:18px;flex:0 0 auto}
+.offday-review-heading{padding:27px 4px 18px;flex:0 0 auto}
+.offday-review-heading>span,.offday-review-section-head span,.offday-review-score span{display:block;font-size:.65rem;line-height:1.2;font-weight:900;letter-spacing:.19em;color:#8791a3}
+.offday-review-heading h1{margin:7px 0 6px;font-size:2.55rem;line-height:.98;font-weight:850;letter-spacing:-.055em;color:#11141a}
+.offday-review-heading p{margin:0;max-width:340px;font-size:.86rem;line-height:1.42;color:#8c96a8;font-weight:550}
+.offday-review-scroll{min-height:0;overflow-y:auto;padding:0 1px 90px;scrollbar-width:none;-webkit-overflow-scrolling:touch}.offday-review-scroll::-webkit-scrollbar{display:none}
+.offday-review-score{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:22px;padding:21px;border-radius:25px;background:#fff;border:1px solid rgba(38,45,58,.055);box-shadow:0 12px 35px rgba(32,39,52,.055)}
+.offday-review-score strong{display:block;margin-top:3px;font-size:2.65rem;line-height:.95;font-weight:850;letter-spacing:-.07em;color:#11141a}
+.offday-review-score p{margin:0;font-size:.78rem;line-height:1.46;color:#687386;font-weight:600}
+.offday-review-section{margin-top:15px;padding:19px;border-radius:25px;background:#fff;border:1px solid rgba(38,45,58,.055);box-shadow:0 12px 35px rgba(32,39,52,.045)}
+.offday-review-section-head{margin-bottom:14px}.offday-review-section-head h2{margin:4px 0 0;font-size:1.17rem;line-height:1.12;font-weight:820;letter-spacing:-.025em;color:#151820}
+.offday-metric-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.offday-metric-grid article{padding:14px;border-radius:18px;background:#f5f7fa;min-width:0}
+.offday-metric-grid span{display:block;font-size:.63rem;font-weight:850;letter-spacing:.12em;color:#8a94a5;text-transform:uppercase}
+.offday-metric-grid strong{display:inline-block;margin-top:7px;font-size:1.35rem;line-height:1;font-weight:850;letter-spacing:-.035em;color:#151820}
+.offday-metric-grid small{margin-left:4px;font-size:.68rem;color:#9099a8;font-weight:650}
+.offday-metric-grid i{display:block;height:4px;margin-top:11px;border-radius:999px;background:#e4e8ef;overflow:hidden}.offday-metric-grid i b{display:block;height:100%;max-width:100%;border-radius:inherit;background:#1b73e8}
+.offday-day-list{display:grid}.offday-day-list article{display:flex;align-items:center;justify-content:space-between;gap:15px;min-height:49px;border-top:1px solid rgba(44,50,61,.07)}.offday-day-list article:first-child{border-top:0}
+.offday-day-list div{display:flex;align-items:baseline;gap:7px}.offday-day-list span{font-size:.78rem;font-weight:780;color:#20242c}.offday-day-list small{font-size:.65rem;font-weight:650;color:#9aa2af}.offday-day-list strong{font-size:.7rem;font-weight:800;color:#5d687a;text-align:right}.offday-day-list article.complete strong{color:#23845d}.offday-day-list article.rest strong,.offday-day-list article.upcoming strong{color:#a0a7b2}
+.offday-appointment-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.offday-appointment-heading>div:first-child{min-width:0}
+.offday-appointment-counts{display:flex;gap:5px}.offday-appointment-counts span{min-width:37px;padding:8px 7px;border-radius:12px;background:#f3f5f8;text-align:center;font-size:.52rem;letter-spacing:.08em}.offday-appointment-counts strong{display:block;margin-bottom:2px;font-size:.9rem;line-height:1;font-weight:850;color:#171a21}
+.offday-appointment-list{display:grid}.offday-appointment-list article{display:grid;grid-template-columns:42px minmax(0,1fr);gap:11px;align-items:start;padding:13px 0;border-top:1px solid rgba(44,50,61,.07)}.offday-appointment-list article:first-child{border-top:0}
+.offday-appointment-type{display:grid;place-items:center;min-height:32px;border-radius:11px;background:#eaf2ff;color:#1767cb;font-size:.58rem;font-weight:900;letter-spacing:.07em}
+.offday-appointment-list div{min-width:0}.offday-appointment-list strong,.offday-appointment-list small,.offday-appointment-list em{display:block;overflow-wrap:anywhere}.offday-appointment-list strong{font-size:.8rem;line-height:1.25;font-weight:800;color:#191d24}.offday-appointment-list small{margin-top:3px;font-size:.66rem;line-height:1.34;color:#7f8999;font-weight:600}.offday-appointment-list em{margin-top:5px;font-size:.63rem;line-height:1.3;color:#3577c8;font-style:normal;font-weight:750}
+.offday-empty{padding:24px 12px;text-align:center;border-radius:18px;background:#f5f7fa}.offday-empty strong,.offday-empty span{display:block}.offday-empty strong{font-size:.85rem;color:#20242c}.offday-empty span{margin-top:6px;font-size:.68rem;line-height:1.4;color:#929baa}
+.offday-open-agnt{position:absolute;left:0;right:0;bottom:0;margin:0;z-index:2}
+@media(max-height:760px){.offday-review-heading{padding:20px 4px 14px}.offday-review-heading h1{font-size:2.2rem}.offday-review-score{padding:17px}.offday-review-section{padding:16px}.offday-review-scroll{padding-bottom:76px}}
+@media(prefers-reduced-motion:reduce){.offday-review-screen{transition:none}}

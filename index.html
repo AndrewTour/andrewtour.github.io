@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=114.3-agent-summary">
+<link rel="stylesheet" href="styles.css?v=114.4-offday-review">
 <title>AGNT</title>
 </head>
 <body>
@@ -59,6 +59,54 @@
 
     <button id="startDayButton" class="welcome-start" type="button">
       <span>Start My Day</span>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+    </button>
+  </section>
+</div>
+
+<div id="offDayReviewScreen" class="offday-review-screen hidden" aria-hidden="true">
+  <section class="offday-review-shell" aria-labelledby="offDayReviewTitle">
+    <div class="offday-review-top">
+      <span class="welcome-brand">AGNT<span aria-hidden="true">.</span></span>
+      <span id="offDayReviewRange" class="welcome-date"></span>
+    </div>
+
+    <div class="offday-review-heading">
+      <span>WEEKLY REVIEW</span>
+      <h1 id="offDayReviewTitle">Your week, clearly.</h1>
+      <p id="offDayReviewIntro">A complete view of your activity, performance and appointments.</p>
+    </div>
+
+    <div class="offday-review-scroll">
+      <section class="offday-review-score" aria-label="Weekly performance">
+        <div>
+          <span>WEEK TO DATE</span>
+          <strong id="offDayReviewScore">0%</strong>
+        </div>
+        <p id="offDayReviewSummary">Your weekly review is ready.</p>
+      </section>
+
+      <section class="offday-review-section" aria-labelledby="offDayMetricsTitle">
+        <div class="offday-review-section-head"><span>PERFORMANCE</span><h2 id="offDayMetricsTitle">Core metrics</h2></div>
+        <div id="offDayMetricGrid" class="offday-metric-grid"></div>
+      </section>
+
+      <section class="offday-review-section" aria-labelledby="offDayDaysTitle">
+        <div class="offday-review-section-head"><span>MONDAY — SUNDAY</span><h2 id="offDayDaysTitle">Daily performance</h2></div>
+        <div id="offDayDayList" class="offday-day-list"></div>
+      </section>
+
+      <section class="offday-review-section" aria-labelledby="offDayAppointmentsTitle">
+        <div class="offday-review-section-head offday-appointment-heading">
+          <div><span>APPOINTMENTS BOOKED</span><h2 id="offDayAppointmentsTitle">This week</h2></div>
+          <div id="offDayAppointmentCounts" class="offday-appointment-counts"></div>
+        </div>
+        <div id="offDayAppointmentList" class="offday-appointment-list"></div>
+      </section>
+    </div>
+
+    <button id="openAgntButton" class="welcome-start offday-open-agnt" type="button">
+      <span>Open AGNT</span>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
     </button>
   </section>
@@ -569,6 +617,6 @@
 </div>
 
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=114.3-agent-summary"></script>
+<script type="module" src="app.js?v=114.4-offday-review"></script>
 </body>
 </html>
