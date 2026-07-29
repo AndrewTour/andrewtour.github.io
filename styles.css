@@ -4666,3 +4666,34 @@ body.appointment-editing{overflow:hidden}
 .day-log-empty{height:100%;display:grid;place-content:center;gap:6px;text-align:center;padding:26px}.day-log-empty strong{font-size:.82rem;color:#252a37}.day-log-empty small{max-width:270px;font-size:.66rem;line-height:1.45;color:#858c9c}
 @keyframes day-log-pulse{50%{box-shadow:0 0 0 6px rgba(7,154,103,.1)}}
 @media(max-height:720px){.today-page-tabs button{min-height:28px}.day-log-summary{padding:9px 8px}.day-log-card{padding-top:12px}.day-log-item{min-height:52px}}
+
+/* V114.1 — restore the Today timeline's original framed, naturally scrolling layout. */
+#scheduleView.today-timeline-view.active{
+  display:block;
+  height:100%;
+  min-height:0;
+  overflow-y:auto;
+  padding-bottom:12px;
+}
+#scheduleView .today-page-tabs{
+  position:sticky;
+  top:0;
+  z-index:8;
+  margin-bottom:10px;
+  -webkit-backdrop-filter:blur(18px) saturate(1.15);
+  backdrop-filter:blur(18px) saturate(1.15);
+}
+#scheduleView .today-page-panel.active{display:block}
+#scheduleView .today-overview-panel{min-height:auto}
+#scheduleView .today-overview-panel>.view-head,
+#scheduleView .today-overview-panel>.timeline-overview,
+#scheduleView .today-overview-panel>.daily-timeline{margin-bottom:10px}
+#scheduleView .today-overview-panel>.daily-timeline{
+  height:auto;
+  min-height:0;
+  overflow:hidden;
+}
+#scheduleView .today-overview-panel>.open-day-review{margin-top:0}
+#scheduleView .today-log-panel{min-height:auto;overflow:visible}
+#scheduleView .today-log-panel>.day-log-summary{margin-bottom:10px}
+#scheduleView .today-log-panel>.day-log-card{min-height:420px}
