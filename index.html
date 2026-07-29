@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=114.5-offday-review-refined">
+<link rel="stylesheet" href="styles.css?v=119.1-today-insights">
 <title>AGNT</title>
 </head>
 <body>
@@ -202,7 +202,8 @@
 
     <section id="scheduleView" class="view today-timeline-view">
       <nav class="today-page-tabs" aria-label="Today page sections">
-        <button class="active" type="button" data-today-page="overview" aria-selected="true">Timeline</button>
+        <button class="active" type="button" data-today-page="overview" aria-selected="true">Today</button>
+        <button type="button" data-today-page="insights" aria-selected="false">Insights</button>
         <button type="button" data-today-page="log" aria-selected="false">Log</button>
       </nav>
       <div id="todayOverviewPanel" class="today-page-panel today-overview-panel active">
@@ -217,6 +218,70 @@
         </section>
         <section id="dailyTimeline" class="daily-timeline glass" aria-live="polite"></section>
         <button id="openDayReview" class="open-day-review hidden" type="button"><span>DAY IN REVIEW</span><strong>Review today and prepare tomorrow</strong><b aria-hidden="true">›</b></button>
+      </div>
+      <div id="todayInsightsPanel" class="today-page-panel today-insights-panel" aria-hidden="true">
+        <div id="personalInsights" class="insights-page active">
+
+        <section class="scorecard-hero glass">
+          <div class="scorecard-head">
+            <button id="scorecardPrev" type="button" aria-label="Previous week">‹</button>
+            <div><span>WEEKLY SCORECARD</span><h2 id="scorecardWeekLabel">This week</h2></div>
+            <button id="scorecardNext" type="button" aria-label="Next week">›</button>
+          </div>
+          <div class="scorecard-score"><strong id="scorecardScore">0%</strong><div><span id="scorecardGrade">—</span><small id="scorecardStatus">Your weekly position will appear here.</small></div></div>
+        </section>
+        <section class="scorecard-metrics glass" aria-label="Weekly performance metrics">
+          <button class="scorecard-metric" type="button" disabled><span>Calls</span><strong id="scorecardCalls">0 / 0</strong><small id="scorecardCallsPct">0%</small></button>
+          <button class="scorecard-metric" type="button" disabled><span>Connects</span><strong id="scorecardConnects">0 / 0</strong><small id="scorecardConnectsPct">0%</small></button>
+          <button class="scorecard-metric" type="button" disabled><span>Data</span><strong id="scorecardData">0 / 0</strong><small id="scorecardDataPct">0%</small></button>
+          <button class="scorecard-metric" type="button" disabled><span>Door Knock</span><strong id="scorecardKnock">0 / 0 min</strong><small id="scorecardKnockPct">0%</small></button>
+        </section>
+        <section class="scorecard-focus glass">
+          <div><span>WEEKLY REVIEW</span><strong id="scorecardStrongest">Strongest: —</strong><small id="scorecardWeakest">Focus: —</small></div>
+          <p id="scorecardProjection">Your weekly projection will appear once activity is logged.</p>
+        </section>
+        <section class="scorecard-trends glass">
+          <div class="section-label"><span>WHAT CHANGED?</span><small>Compared with last week</small></div>
+          <div id="scorecardTrendGrid" class="scorecard-trend-grid"></div>
+          <p id="scorecardTrendSummary" class="scorecard-insight-summary"></p>
+        </section>
+        <section class="scorecard-productivity glass">
+          <div class="section-label"><span>PRODUCTIVITY INSIGHTS</span><small>Patterns from your saved activity</small></div>
+          <div class="scorecard-productivity-grid">
+            <article><span>Best Prospecting Hour</span><strong id="insightBestHour">—</strong><small id="insightBestHourMeta">Not enough activity yet</small></article>
+            <article><span>Strongest Day</span><strong id="insightBestDay">—</strong><small id="insightBestDayMeta">Not enough activity yet</small></article>
+            <article><span>Average Connect Rate</span><strong id="insightConnectRate">0%</strong><small>Across saved workdays</small></article>
+            <article><span>Average Knock Start</span><strong id="insightKnockStart">—</strong><small>Compared with the 2:00PM target</small></article>
+          </div>
+        </section>
+        <section class="scorecard-momentum glass">
+          <div class="section-label"><span>MOMENTUM</span><small>Your consistency at a glance</small></div>
+          <div class="scorecard-momentum-grid">
+            <article><span>Current streak</span><strong id="insightCurrentStreak">0 days</strong></article>
+            <article><span>Best streak</span><strong id="insightBestStreak">0 days</strong></article>
+            <article><span>Average completion</span><strong id="insightAverageCompletion">0%</strong></article>
+            <article><span>Consistency</span><strong id="insightConsistency">0%</strong></article>
+          </div>
+        </section>
+        <section class="scorecard-personal-bests glass">
+          <div class="section-label"><span>PERSONAL BESTS</span><small>Your strongest recorded performances</small></div>
+          <div class="scorecard-best-grid">
+            <article><span>Highest completion</span><strong id="insightBestCompletion">0%</strong><small id="insightBestCompletionDate">No completed days yet</small></article>
+            <article><span>Most calls</span><strong id="insightMostCalls">0</strong><small id="insightMostCallsDate">No activity recorded yet</small></article>
+            <article><span>Most connects</span><strong id="insightMostConnects">0</strong><small id="insightMostConnectsDate">No activity recorded yet</small></article>
+            <article><span>Longest knocking</span><strong id="insightLongestKnock">0 min</strong><small id="insightLongestKnockDate">No activity recorded yet</small></article>
+            <article class="wide"><span>Best appointment day</span><strong id="insightBestAppointmentDay">0 appointments</strong><small id="insightBestAppointmentDate">No appointments recorded yet</small></article>
+          </div>
+        </section>
+        <section class="scorecard-recommendations glass">
+          <div class="section-label"><span>COACHING</span><small>One action with the biggest potential impact</small></div>
+          <div id="scorecardRecommendations" class="scorecard-recommendation-list"></div>
+        </section>
+        <section class="scorecard-achievements glass">
+          <div class="section-label"><span>ACHIEVEMENTS</span><small>Milestones built from your saved activity</small></div>
+          <div id="scorecardAchievements" class="scorecard-achievement-grid"></div>
+        </section>
+        </div>
       </div>
       <div id="todayLogPanel" class="today-page-panel today-log-panel" aria-hidden="true">
         <section class="day-log-summary glass" aria-label="Daily log summary">
@@ -314,49 +379,7 @@
       </section>
     </section>
 
-    <section id="insightsView" class="view">
-      <div class="insights-switch glass" role="tablist" aria-label="Leaderboard pages">
-        <button class="active" type="button" data-insights-page="leaderboardInsights">Leaderboard</button>
-        <button type="button" data-insights-page="personalInsights">Scorecard</button>
-      </div>
-      <div id="personalInsights" class="insights-page">
-        <section class="scorecard-hero glass">
-          <div class="scorecard-head">
-            <button id="scorecardPrev" type="button" aria-label="Previous week">‹</button>
-            <div><span>WEEKLY SCORECARD</span><h2 id="scorecardWeekLabel">This week</h2></div>
-            <button id="scorecardNext" type="button" aria-label="Next week">›</button>
-          </div>
-          <div class="scorecard-score"><strong id="scorecardScore">0%</strong><div><span id="scorecardGrade">—</span><small id="scorecardStatus">Your weekly position will appear here.</small></div></div>
-        </section>
-        <section class="scorecard-metrics glass" aria-label="Weekly performance metrics">
-          <button class="scorecard-metric" type="button" disabled><span>Calls</span><strong id="scorecardCalls">0 / 0</strong><small id="scorecardCallsPct">0%</small></button>
-          <button class="scorecard-metric" type="button" disabled><span>Connects</span><strong id="scorecardConnects">0 / 0</strong><small id="scorecardConnectsPct">0%</small></button>
-          <button class="scorecard-metric" type="button" disabled><span>Data</span><strong id="scorecardData">0 / 0</strong><small id="scorecardDataPct">0%</small></button>
-          <button class="scorecard-metric" type="button" disabled><span>Door Knock</span><strong id="scorecardKnock">0 / 0 min</strong><small id="scorecardKnockPct">0%</small></button>
-        </section>
-        <section class="scorecard-focus glass">
-          <div><span>WEEKLY REVIEW</span><strong id="scorecardStrongest">Strongest: —</strong><small id="scorecardWeakest">Focus: —</small></div>
-          <p id="scorecardProjection">Your weekly projection will appear once activity is logged.</p>
-        </section>
-        <section class="scorecard-trends glass">
-          <div class="section-label"><span>WHAT CHANGED?</span><small>Compared with last week</small></div>
-          <div id="scorecardTrendGrid" class="scorecard-trend-grid"></div>
-          <p id="scorecardTrendSummary" class="scorecard-insight-summary"></p>
-        </section>
-        <section class="scorecard-productivity glass">
-          <div class="section-label"><span>PRODUCTIVITY INSIGHTS</span><small>Patterns from your saved activity</small></div>
-          <div class="scorecard-productivity-grid">
-            <article><span>Best Prospecting Hour</span><strong id="insightBestHour">—</strong><small id="insightBestHourMeta">Not enough activity yet</small></article>
-            <article><span>Strongest Day</span><strong id="insightBestDay">—</strong><small id="insightBestDayMeta">Not enough activity yet</small></article>
-            <article><span>Average Connect Rate</span><strong id="insightConnectRate">0%</strong><small>Across saved workdays</small></article>
-            <article><span>Average Knock Start</span><strong id="insightKnockStart">—</strong><small>Compared with the 2:00PM target</small></article>
-          </div>
-        </section>
-        <section class="scorecard-recommendations glass">
-          <div class="section-label"><span>RECOMMENDATIONS</span><small>Most useful patterns to act on</small></div>
-          <div id="scorecardRecommendations" class="scorecard-recommendation-list"></div>
-        </section>
-      </div>
+    <section id="insightsView" class="view leaderboard-only-view">
       <div id="leaderboardInsights" class="insights-page active">
         <section class="leaderboard-dashboard glass" aria-label="Leaderboard overview">
           <div class="leaderboard-leaders">
@@ -617,6 +640,6 @@
 </div>
 
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=114.5-offday-review-refined"></script>
+<script type="module" src="app.js?v=119.1-today-insights"></script>
 </body>
 </html>

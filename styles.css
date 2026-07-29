@@ -4788,3 +4788,18 @@ body.appointment-editing{overflow:hidden}
 @media(prefers-reduced-motion:reduce){.offday-review-screen{transition:none}}
 
 /* AGNT V114.5 — off-day review order and compact Monday–Sunday strip. */
+
+/* AGNT v119.1 — Today workspace consolidation. */
+.today-insights-panel{padding-bottom:14px}
+.today-insights-panel .insights-page{display:block}
+.scorecard-momentum,.scorecard-personal-bests,.scorecard-achievements{border-radius:22px;padding:14px;margin-top:10px}
+.scorecard-momentum-grid,.scorecard-best-grid,.scorecard-achievement-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.scorecard-momentum-grid article,.scorecard-best-grid article,.scorecard-achievement-grid article{border-radius:16px;padding:12px;background:rgba(255,255,255,.055)}
+.scorecard-momentum-grid span,.scorecard-best-grid span,.scorecard-achievement-grid span{display:block;color:var(--muted);font-size:.65rem}
+.scorecard-momentum-grid strong,.scorecard-best-grid strong,.scorecard-achievement-grid strong{display:block;font-size:1rem;margin:6px 0 3px}
+.scorecard-best-grid small,.scorecard-achievement-grid small{font-size:.62rem;color:var(--muted);line-height:1.35}
+.scorecard-best-grid .wide{grid-column:1/-1}
+.scorecard-achievement-grid article.complete{background:rgba(52,199,89,.1)}
+.scorecard-achievement-grid article.complete strong{color:#21873d}
+.leaderboard-only-view #leaderboardInsights{display:block}
+@media(max-width:390px){.scorecard-momentum-grid,.scorecard-best-grid,.scorecard-achievement-grid{gap:7px}.scorecard-momentum-grid article,.scorecard-best-grid article,.scorecard-achievement-grid article{padding:10px}}

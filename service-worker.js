@@ -1,5 +1,5 @@
-const CACHE='agnt-v114-5-offday-review-refined';
-const ASSETS=['./','./index.html','./styles.css?v=114.5-offday-review-refined','./app.js?v=114.5-offday-review-refined','./firebase-config.js','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
+const CACHE='agnt-v119-1-today-insights';
+const ASSETS=['./','./index.html','./styles.css?v=119.1-today-insights','./app.js?v=119.1-today-insights','./firebase-config.js','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{

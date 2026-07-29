@@ -510,7 +510,7 @@ function pageHeaderState(id=activeViewId()){
     if(appointmentDate>todayKey())return{title:'Appointments',subtitle:entries.length?`${entries.length} appointment${entries.length===1?'':'s'} logged for this day.`:'No appointments booked for this day.'};
     return{title:'Appointments',subtitle:entries.length?`${entries.length} appointment${entries.length===1?'':'s'} logged today.`:'No appointments booked for today.'};
   }
-  if(id==='insightsView'&&document.querySelector('#leaderboardInsights.active')){
+  if(id==='insightsView'){
     const rows=leaderboardMode==='week'?weeklyLeaderboardRows():dailyLeaderboardRows();
     const meIndex=rows.findIndex(row=>row.uid===uid);
     if(!rows.length)return{title:'Leaderboard',subtitle:'Scores appear as the team begins logging.'};
@@ -625,12 +625,15 @@ function dayLogItems(k=selectedDate){
   const seen=new Set();return items.filter(item=>{const key=item.id||`${item.kind}|${item.title}|${item.detail}|${Math.round(item.at/60000)}`;if(seen.has(key))return false;seen.add(key);return true}).sort((a,b)=>a.at-b.at);
 }
 function setTodayPage(page='overview'){
-  todayPage=page==='log'?'log':'overview';
+  todayPage=['overview','insights','log'].includes(page)?page:'overview';
   document.querySelectorAll('[data-today-page]').forEach(button=>{const active=button.dataset.todayPage===todayPage;button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active))});
   $('#todayOverviewPanel')?.classList.toggle('active',todayPage==='overview');
+  $('#todayInsightsPanel')?.classList.toggle('active',todayPage==='insights');
   $('#todayLogPanel')?.classList.toggle('active',todayPage==='log');
   $('#todayOverviewPanel')?.setAttribute('aria-hidden',String(todayPage!=='overview'));
+  $('#todayInsightsPanel')?.setAttribute('aria-hidden',String(todayPage!=='insights'));
   $('#todayLogPanel')?.setAttribute('aria-hidden',String(todayPage!=='log'));
+  if(todayPage==='insights')renderScorecard();
   if(todayPage==='log')renderDayLog();
 }
 function renderDayLog(){
@@ -1467,15 +1470,19 @@ function leaderboardMomentum(entry){
   return{diff,label:diff>0?`▲ ${diff}%`:diff<0?`▼ ${Math.abs(diff)}%`:'• 0%',className:diff>0?'up':diff<0?'down':'flat'};
 }
 function personalBests(){
-  let bestDay={value:0,key:null},bestCalls={value:0,key:null},bestKnock={value:0,key:null};
+  let bestDay={value:0,key:null},bestCalls={value:0,key:null},bestConnects={value:0,key:null},bestKnock={value:0,key:null},bestAppointments={value:0,key:null};
   for(const [key,raw] of Object.entries(days)){
-    if(!isWorkDayKey(key))continue;
-    const d=dayData(key),score=completion(key),knock=Math.floor(liveKnockSeconds(d)/60);
-    if(score>bestDay.value){bestDay={value:score,key}};
-    if(d.calls>bestCalls.value){bestCalls={value:d.calls,key}};
-    if(knock>bestKnock.value){bestKnock={value:knock,key}};
+    const d=dayData(key),appointmentCount=(d.appointments||[]).filter(a=>['MAP','LAP','BAP'].includes(appointmentType(a))).length;
+    if(isWorkDayKey(key)){
+      const score=completion(key),knock=Math.floor(liveKnockSeconds(d)/60);
+      if(score>bestDay.value){bestDay={value:score,key}};
+      if(d.calls>bestCalls.value){bestCalls={value:d.calls,key}};
+      if(d.connects>bestConnects.value){bestConnects={value:d.connects,key}};
+      if(knock>bestKnock.value){bestKnock={value:knock,key}};
+    }
+    if(appointmentCount>bestAppointments.value){bestAppointments={value:appointmentCount,key}};
   }
-  return{bestDay,bestCalls,bestKnock};
+  return{bestDay,bestCalls,bestConnects,bestKnock,bestAppointments};
 }
 function renderPersonalBests(){
   if(!$('#bestDayScore'))return;
@@ -1566,6 +1573,22 @@ function productivityInsights(){
 }
 function formatHourRange(hour){hour=Number(hour);const a=new Date(2026,0,1,hour),b=new Date(2026,0,1,hour+1);return `${a.toLocaleTimeString('en-AU',{hour:'numeric',hour12:true}).replace(' ','')}–${b.toLocaleTimeString('en-AU',{hour:'numeric',hour12:true}).replace(' ','')}`}
 function formatMinutesTime(minutes){if(minutes==null)return '—';const h=Math.floor(minutes/60),m=minutes%60;return new Date(2026,0,1,h,m).toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true}).replace(' ','')}
+function insightMomentum(){
+  const records=Object.keys(days).filter(key=>isWorkDayKey(key)&&key<=todayKey()).sort().map(key=>({key,score:completion(key)}));
+  let best=0,run=0;for(const record of records){if(record.score>=100){run++;best=Math.max(best,run)}else run=0}
+  const average=records.length?Math.round(records.reduce((sum,record)=>sum+record.score,0)/records.length):0;
+  const consistency=records.length?Math.round(records.filter(record=>record.score>=90).length/records.length*100):0;
+  return{current:streak(),best,average,consistency};
+}
+function insightAchievements(){
+  const workKeys=Object.keys(days).filter(isWorkDayKey),totalCalls=workKeys.reduce((sum,key)=>sum+dayData(key).calls,0),totalAppointments=Object.entries(days).reduce((sum,[key,d])=>sum+(d.appointments||[]).filter(a=>['MAP','LAP','BAP'].includes(appointmentType(a))).length,0),momentum=insightMomentum(),records=scorecardWeekRecords(),bestWeek=records.length?Math.max(...records.map(record=>record.score)):0;
+  return[
+    {label:'1,000 Calls',value:totalCalls,target:1000},
+    {label:'10-Day 90% Streak',value:momentum.best,target:10},
+    {label:'25 Appointments',value:totalAppointments,target:25},
+    {label:'100% Weekly Score',value:bestWeek,target:100}
+  ];
+}
 function renderScorecard(){
   if(!$('#scorecardScore'))return;
   const base=scorecardWeekDate(),w=weekSummaryFor(base),prev=weekSummaryFor(previousWeekDate(base)),m=w.metricPcts||{},pm=prev.metricPcts||{};
@@ -1594,11 +1617,21 @@ function renderScorecard(){
   if(ins.bestHour)rec.push(`Your most productive prospecting hour is ${formatHourRange(ins.bestHour[0])}.`);
   if(ins.avgKnock!=null){const diff=ins.avgKnock-14*60;rec.push(diff>0?`Your average knock start is ${diff} minutes later than the 2:00PM target.`:`Your average knock start is on or ahead of the 2:00PM target.`)}
   if(weakest[1]<100)rec.push(`Improving ${metricLabel(weakest[0]).toLowerCase()} by ${100-weakest[1]}% would create the biggest lift in your weekly grade.`);
-  $('#scorecardRecommendations').innerHTML=(rec.slice(0,4).map(x=>`<article>${escapeHtml(x)}</article>`).join('')||'<div class="empty"><strong>Not enough activity yet</strong><small>Recommendations will appear as more activity is logged.</small></div>');
+  const coaching=rec[rec.length-1]||rec[0]||'Keep logging activity to unlock a focused recommendation.';
+  $('#scorecardRecommendations').innerHTML=`<article>${escapeHtml(coaching)}</article>`;
+  const momentum=insightMomentum(),bests=personalBests();
+  $('#insightCurrentStreak').textContent=`${momentum.current} day${momentum.current===1?'':'s'}`;
+  $('#insightBestStreak').textContent=`${momentum.best} day${momentum.best===1?'':'s'}`;
+  $('#insightAverageCompletion').textContent=`${momentum.average}%`;$('#insightConsistency').textContent=`${momentum.consistency}%`;
+  $('#insightBestCompletion').textContent=`${bests.bestDay.value}%`;$('#insightBestCompletionDate').textContent=bests.bestDay.key?fmtDate(bests.bestDay.key):'No completed days yet';
+  $('#insightMostCalls').textContent=bests.bestCalls.value;$('#insightMostCallsDate').textContent=bests.bestCalls.key?fmtDate(bests.bestCalls.key):'No activity recorded yet';
+  $('#insightMostConnects').textContent=bests.bestConnects.value;$('#insightMostConnectsDate').textContent=bests.bestConnects.key?fmtDate(bests.bestConnects.key):'No activity recorded yet';
+  $('#insightLongestKnock').textContent=`${bests.bestKnock.value} min`;$('#insightLongestKnockDate').textContent=bests.bestKnock.key?fmtDate(bests.bestKnock.key):'No activity recorded yet';
+  $('#insightBestAppointmentDay').textContent=`${bests.bestAppointments.value} appointment${bests.bestAppointments.value===1?'':'s'}`;$('#insightBestAppointmentDate').textContent=bests.bestAppointments.key?fmtDate(bests.bestAppointments.key):'No appointments recorded yet';
+  $('#scorecardAchievements').innerHTML=insightAchievements().map(item=>{const complete=item.value>=item.target,progress=Math.min(100,Math.round(item.value/item.target*100));return `<article class="${complete?'complete':''}"><span>${escapeHtml(item.label)}</span><strong>${complete?'Achieved':`${progress}%`}</strong><small>${Math.min(item.value,item.target)} / ${item.target}</small></article>`}).join('');
   $('#scorecardNext').disabled=scorecardWeekOffset>=0;
 }
 
-function switchInsightsPage(id){$$('.insights-switch button').forEach(b=>b.classList.toggle('active',b.dataset.insightsPage===id));$$('.insights-page').forEach(p=>p.classList.toggle('active',p.id===id));if(id==='leaderboardInsights')renderLeaderboard();else renderScorecard()}
 function renderInsights(){renderScorecard();renderLeaderboard()}
 function renderYearOverview(){const labels=['M','T','W','T','F','S','S'];const months=[];for(let m=0;m<12;m++){const first=new Date(year,m,1),pad=(first.getDay()+6)%7;let cells=`<div class="mini-weekdays">${labels.map(x=>`<b>${x}</b>`).join('')}</div><div class="mini-days">${'<i></i>'.repeat(pad)}`;for(let d=1;d<=new Date(year,m+1,0).getDate();d++){const dt=new Date(year,m,d),k=dateKey(dt),p=completion(k),off=!workDays.includes(dt.getDay());cells+=`<button class="mini-day ${levelClass(p)} ${off?'off':''} ${k===todayKey()?'today':''} ${k===selectedDate?'selected':''}" data-date="${k}" aria-label="${fmtDate(k)}, ${p}% complete">${d}</button>`}cells+='</div>';months.push(`<section class="mini-month"><h3>${new Date(year,m,1).toLocaleDateString('en-AU',{month:'short'})}</h3>${cells}</section>`)}$('#yearHeatmap').innerHTML=months.join('')}
 function levelClass(p){return p>=100?'l4':p>=67?'l3':p>=34?'l2':p>0?'l1':''}
@@ -2036,6 +2069,7 @@ $('#pauseKnockingSession').onclick=async()=>{const d=dayData(todayKey());if(d.ti
 $('#knockingSession').addEventListener('click',async e=>{const adjust=e.target.closest('[data-knock-adjust]');if(adjust){const type=adjust.dataset.knockAdjust,delta=Number(adjust.dataset.delta)||0,next=Math.max(0,(Number(knockingSessionStats[type])||0)+delta),actual=next-knockingSessionStats[type];if(!actual)return;knockingSessionStats[type]=next;if(type==='clients')await changeMetric('connects',actual);saveKnockingSessionState();renderKnockingSession();haptic();return}const edit=e.target.closest('[data-edit-knock-log]');if(edit){const found=findDailyKnockingLogEntry(edit.dataset.editKnockLog);if(found)openKnockingCapture(found.entry.type,found.entry);return}const remove=e.target.closest('[data-delete-knock-log]');if(remove){await deleteKnockingLogEntry(remove.dataset.deleteKnockLog);return}const capture=e.target.closest('[data-knock-capture]');if(capture){openKnockingCapture(capture.dataset.knockCapture);return}if(e.target.closest('[data-close-knock-capture]'))closeKnockingCapture()});
 $('#knockingSession').addEventListener('submit',async e=>{if(e.target.id!=='knockingCaptureForm')return;e.preventDefault();await submitKnockingCapture(e.target)});
 document.querySelector('.today-page-tabs')?.addEventListener('click',e=>{const button=e.target.closest('[data-today-page]');if(button)setTodayPage(button.dataset.todayPage)});
+let todaySwipeStartX=0,todaySwipeStartY=0;$('#scheduleView')?.addEventListener('touchstart',e=>{const touch=e.changedTouches?.[0];if(!touch)return;todaySwipeStartX=touch.clientX;todaySwipeStartY=touch.clientY},{passive:true});$('#scheduleView')?.addEventListener('touchend',e=>{const touch=e.changedTouches?.[0];if(!touch)return;const dx=touch.clientX-todaySwipeStartX,dy=touch.clientY-todaySwipeStartY;if(Math.abs(dx)<60||Math.abs(dx)<=Math.abs(dy)*1.25)return;const pages=['overview','insights','log'],index=pages.indexOf(todayPage),next=dx<0?Math.min(pages.length-1,index+1):Math.max(0,index-1);if(next!==index)setTodayPage(pages[next])},{passive:true});
 $('#openTodayTimeline').onclick=()=>switchView('scheduleView');$('#resetKnock').onclick=resetKnock;$('#knockingMetricCard').onclick=e=>{if(e.target.closest('button'))return;openKnockingHistory()};$('#knockingMetricCard').onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.closest('button')){e.preventDefault();openKnockingHistory()}};$('#closeKnockingHistory').onclick=closeKnockingHistory;$('#previousDay').onclick=()=>shiftHeaderDate(-1);$('#nextDay').onclick=()=>shiftHeaderDate(1);$('#settingsShortcut').onclick=()=>switchView('settingsView');$('#homeShortcut').onclick=()=>switchView('todayView');$('#backToday').onclick=()=>{selectedDate=todayKey();appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()};
 $('.tabbar').onclick=e=>{const b=e.target.closest('button[data-view]');if(b)switchView(b.dataset.view)};
 $('#dailyTimeline').onclick=e=>{
@@ -2043,7 +2077,6 @@ $('#dailyTimeline').onclick=e=>{
   const appointmentCheck=e.target.closest('[data-followup-appointment]');if(appointmentCheck){updateAppointmentOutcome(appointmentCheck.dataset.followupAppointment,appointmentCheck.dataset.sourceDate);return}
   const appointmentCall=e.target.closest('[data-appointment-followup-call]');if(appointmentCall){rememberAppointmentFollowUpCallReturn(appointmentCall.dataset.appointmentFollowupCall,appointmentCall.dataset.sourceDate);return}
 };
-$('.insights-switch').onclick=e=>{const b=e.target.closest('button[data-insights-page]');if(b)switchInsightsPage(b.dataset.insightsPage)};
 $('#leaderboardList').onclick=e=>{const row=e.target.closest('[data-agent-summary]');if(row)showLeaderboardAgentSummary(row.dataset.agentSummary)};
 $('#leaderboardList').onkeydown=e=>{if(e.key!=='Enter'&&e.key!==' ')return;const row=e.target.closest('[data-agent-summary]');if(!row)return;e.preventDefault();showLeaderboardAgentSummary(row.dataset.agentSummary)};
 document.querySelector('.leaderboard-mode-tabs').onclick=e=>{const b=e.target.closest('[data-leaderboard-mode]');if(!b)return;leaderboardMode=b.dataset.leaderboardMode==='week'?'week':'day';renderUnifiedLeaderboard()};
