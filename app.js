@@ -16,7 +16,7 @@ let unsubDays=null, unsubProfile=null, unsubLeaderboard=null, unsubProspecting=n
 let pendingSyncOperations=0, syncHasError=false, lastLeaderboardSignature='', lastProspectingSignature='';
 let pendingProspectingPayload=null, pendingProspectingSignature='', prospectingWriteInFlight=false, prospectingSaveWaiters=[];
 let editingAppointment=null;
-let todayTimelineExpanded=false;
+let todayPage='overview';
 let appointmentEditReturnState=null;
 let appointmentLinkedProspectId='';
 let pendingProspectAppointmentFlow=null;
@@ -521,6 +521,61 @@ function updateTopbar(id=activeViewId()){
   $('#settingsShortcut')?.classList.toggle('hidden',id!=='insightsView');
   $('#homeShortcut')?.classList.toggle('hidden',id!=='settingsView');
 }
+function dayLogTime(at){
+  const date=new Date(Number(at)||0);if(!Number.isFinite(date.getTime()))return'';
+  return date.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true}).replace(' ','');
+}
+function dayLogItems(k=selectedDate){
+  const d=dayData(k),items=[],completed=Array.isArray(d.knockingSessions)?d.knockingSessions:[];
+  completed.forEach(session=>{
+    const stats=session.stats||{},appointments=(Number(stats.MAP)||0)+(Number(stats.LAP)||0),startedAt=Number(session.startedAt)||0,endedAt=Number(session.endedAt)||0;
+    if(startedAt)items.push({id:`knock-start-${session.id||startedAt}`,at:startedAt,kind:'session',title:'Knocking session started',detail:'Door knocking underway'});
+    if(endedAt)items.push({id:`knock-end-${session.id||endedAt}`,at:endedAt,kind:'complete',title:'Knocking session finished',detail:`${Number(stats.knocks)||0} knocks · ${Number(stats.clients)||0} connects · ${Number(stats.data)||0} data${appointments?` · ${appointments} appointment${appointments===1?'':'s'}`:''}`});
+  });
+  const completedWindows=completed.map(session=>[Number(session.startedAt)||0,Number(session.endedAt)||0]);
+  (d.events||[]).forEach(event=>{
+    const label=String(event.label||''),lower=label.toLowerCase(),at=Number(event.at)||0;if(!at)return;
+    const insideCompleted=completedWindows.some(([start,end])=>start&&end&&at>=start-2000&&at<=end+2000);
+    if(event.type==='knock'&&lower.includes('paused'))items.push({id:event.id||`pause-${at}`,at,kind:'pause',title:'Knocking session paused',detail:'Session progress saved'});
+    else if(event.type==='knock'&&lower.includes('started')&&!insideCompleted)items.push({id:event.id||`start-${at}`,at,kind:'session',title:'Knocking session started',detail:'Door knocking underway'});
+  });
+  const createdContacts=prospects.filter(prospect=>dateKey(new Date(Number(prospect.createdAt)||0))===k);
+  createdContacts.forEach(prospect=>items.push({id:`contact-${prospect.id}`,at:Number(prospect.createdAt)||parseKey(k).setHours(9),kind:'contact',title:'Contact added',detail:prospect.name||formatProspectAddress(prospect.address||prospect.company,prospect.suburb)||'New contact'}));
+  const appointmentEntries=allAppointmentEntries().filter(({appointment:a,sourceDate})=>appointmentCreatedDate(a,sourceDate)===k&&['MAP','LAP','BAP'].includes(appointmentType(a)));
+  appointmentEntries.forEach(({appointment:a,sourceDate})=>items.push({id:`appointment-${a.id}`,at:Number(a.at)||new Date(`${k}T${a.time||'12:00'}`).getTime(),kind:'appointment',title:`${appointmentType(a)} booked`,detail:[a.contactName||a.name,a.address].filter(Boolean).join(' · ')||`Scheduled ${fmtDate(appointmentScheduledDate(a,sourceDate))}`}));
+  const interactions=prospectInteractions.filter(interaction=>interaction.date===k&&interaction.type==='Call').sort((a,b)=>(Number(a.at)||0)-(Number(b.at)||0));
+  if(interactions.length){
+    const first=Number(interactions[0].at)||parseKey(k).setHours(9),last=Number(interactions[interactions.length-1].at)||first;
+    const connected=interactions.filter(interaction=>prospectOutcomeMetricDelta(interaction.outcome).connects).length;
+    items.push({id:`prospecting-${k}`,at:last,kind:'prospecting',title:'Prospecting block logged',detail:`${interactions.length} call${interactions.length===1?'':'s'} · ${connected} connect${connected===1?'':'s'}${last-first>60000?` · ${dayLogTime(first)}–${dayLogTime(last)}`:''}`});
+  }
+  if(k===todayKey()&&knockingSessionActive){
+    const dToday=dayData(k),started=(Number(dToday.timerStartedAt)||Date.now())-Math.max(0,liveKnockSeconds(dToday)-knockingSessionStartSeconds)*1000;
+    items.push({id:'active-knocking-session',at:Date.now()+1,kind:'live',title:dToday.timerStartedAt?'Knocking session live':'Knocking session paused',detail:`${fmtTimer(Math.max(0,liveKnockSeconds(dToday)-knockingSessionStartSeconds))} elapsed · ${Number(knockingSessionStats.knocks)||0} knocks · ${Number(knockingSessionStats.clients)||0} connects`,sortAt:started});
+  }
+  const seen=new Set();return items.filter(item=>{const key=`${item.kind}|${item.title}|${item.detail}|${Math.round(item.at/60000)}`;if(seen.has(key))return false;seen.add(key);return true}).sort((a,b)=>a.at-b.at);
+}
+function setTodayPage(page='overview'){
+  todayPage=page==='log'?'log':'overview';
+  document.querySelectorAll('[data-today-page]').forEach(button=>{const active=button.dataset.todayPage===todayPage;button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active))});
+  $('#todayOverviewPanel')?.classList.toggle('active',todayPage==='overview');
+  $('#todayLogPanel')?.classList.toggle('active',todayPage==='log');
+  $('#todayOverviewPanel')?.setAttribute('aria-hidden',String(todayPage!=='overview'));
+  $('#todayLogPanel')?.setAttribute('aria-hidden',String(todayPage!=='log'));
+  if(todayPage==='log')renderDayLog();
+}
+function renderDayLog(){
+  const timeline=$('#dayLogTimeline');if(!timeline)return;const k=selectedDate,d=dayData(k),items=dayLogItems(k);
+  const sessions=(Array.isArray(d.knockingSessions)?d.knockingSessions.length:0)+(k===todayKey()&&knockingSessionActive?1:0)+(prospectInteractions.some(interaction=>interaction.date===k&&interaction.type==='Call')?1:0);
+  const contacts=prospects.filter(prospect=>dateKey(new Date(Number(prospect.createdAt)||0))===k).length;
+  const appointments=allAppointmentEntries().filter(({appointment:a,sourceDate})=>appointmentCreatedDate(a,sourceDate)===k&&['MAP','LAP','BAP'].includes(appointmentType(a))).length;
+  $('#dayLogSessionTotal').textContent=sessions;$('#dayLogContactTotal').textContent=contacts;$('#dayLogAppointmentTotal').textContent=appointments;
+  $('#dayLogTitle').textContent=k===todayKey()?'Today’s story':fmtDate(k);
+  $('#dayLogMeta').textContent=items.length?`${items.length} meaningful event${items.length===1?'':'s'}`:'Meaningful activity only';
+  if(!items.length){timeline.innerHTML='<div class="day-log-empty"><strong>No meaningful activity logged yet</strong><small>Your sessions, contacts and appointments will build the story of this day.</small></div>';return}
+  const icons={session:'▶',complete:'✓',pause:'Ⅱ',contact:'+',appointment:'◆',prospecting:'☎',live:'●'};
+  timeline.innerHTML=items.map(item=>`<article class="day-log-item ${item.kind}"><time>${escapeHtml(dayLogTime(item.at))}</time><span class="day-log-marker" aria-hidden="true">${icons[item.kind]||'•'}</span><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.detail)}</small></div></article>`).join('');
+}
 function renderToday(){
   const d=dayData(selectedDate),score=completion(selectedDate),kt=rollingKnockTarget(selectedDate),secs=liveKnockSeconds(d),wk=weekSummary();
   const past=isPastDate(selectedDate),scheduled=isWorkDayKey(selectedDate),locked=past||!scheduled;
@@ -581,6 +636,7 @@ function renderToday(){
   renderLeaderboardPosition();
   if($('#momentumWhisper'))$('#momentumWhisper').textContent=momentumWhisper();
   renderNowCard();
+  if(todayPage==='log')renderDayLog();
 }
 function recentWorkKeys(endKey=selectedDate,count=8){
   const out=[],d=parseKey(endKey);
@@ -896,46 +952,10 @@ function timelinePriority(viewDate=selectedDate){
   const items=timelineItemsForDate(viewDate),coach=coachingEngine(viewDate,items);
   return{...coach,items};
 }
-function timelineClockLabel(timestamp){
-  const value=Number(timestamp)||0;if(!value)return'';
-  return new Date(value).toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true}).replace(/\s/g,'').toLowerCase();
-}
-function todayActivityTimeline(viewDate=selectedDate){
-  const items=[],sessions=completedKnockingSessionsForDay(viewDate),logs=dailyKnockingLog(viewDate);
-  sessions.forEach(session=>{
-    const stats=session.stats||{},startedAt=Number(session.startedAt)||0,endedAt=Number(session.endedAt)||0;
-    if(startedAt)items.push({id:`session-start-${session.id}`,at:startedAt,kind:'session-start',title:'Started knocking',meta:'Doorknocking session started'});
-    if(endedAt)items.push({id:`session-end-${session.id}`,at:endedAt,kind:'session-end',title:'Session finished',meta:`${Number(stats.knocks)||0} knocks · ${Number(stats.clients)||0} connects · ${Number(stats.data)||0} data${(Number(stats.MAP)||0)+(Number(stats.LAP)||0)?` · ${(Number(stats.MAP)||0)+(Number(stats.LAP)||0)} appt${(Number(stats.MAP)||0)+(Number(stats.LAP)||0)===1?'':'s'}`:''}`});
-  });
-  if(viewDate===todayKey()&&knockingSessionActive){
-    const d=dayData(viewDate),latestStart=[...(d.events||[])].reverse().find(event=>event?.type==='knock'&&event?.label==='Knocking started');
-    const at=Number(latestStart?.at)||Date.now();
-    items.push({id:'session-live',at,kind:'session-live',title:d.timerStartedAt?'Knocking · Live':'Knocking session paused',meta:d.timerStartedAt?`${fmtTimer(liveKnockSeconds(d))} elapsed · ${dailyKnockingStats(viewDate).knocks} knocks`:'Tap Start to resume this session'});
-  }
-  (dayData(viewDate).events||[]).filter(event=>event?.type==='knock'&&event?.label==='Knocking paused').forEach(event=>items.push({id:`pause-${event.id}`,at:Number(event.at)||0,kind:'session-pause',title:'Session paused',meta:'Knocking session saved and ready to resume'}));
-  logs.filter(entry=>entry.type==='data').forEach(entry=>items.push({id:`contact-${entry.id}`,at:Number(entry.at)||0,kind:'contact',title:'Contact added',meta:[entry.name||'Unnamed contact',entry.address].filter(Boolean).join(' · ')}));
-  Object.entries(days).forEach(([sourceDate,raw])=>(raw?.appointments||[]).forEach(appointment=>{
-    if(appointmentCreatedDate(appointment,sourceDate)!==viewDate||isOfiAppointment(appointment))return;
-    const type=appointmentType(appointment);
-    items.push({id:`appointment-${appointment.id}`,at:Number(appointment.at)||0,kind:'appointment',title:`${type} booked`,meta:[appointment.contactName||appointment.name||'Contact not recorded',appointment.address,`${fmtDate(appointmentScheduledDate(appointment,sourceDate))} · ${appointmentTimeLabel(appointment,sourceDate)}`].filter(Boolean).join(' · ')});
-  }));
-  const deduped=new Map();items.filter(item=>item.at).forEach(item=>deduped.set(item.id,item));
-  return [...deduped.values()].sort((a,b)=>a.at-b.at);
-}
-function renderTodayTimelineDropdown(){
-  const button=$('#openTodayTimeline'),panel=$('#todayTimelineDropdown'),summary=$('#todayTimelineSummary'),list=$('#todayTimelineList'),activity=$('#nowCardActivity');
-  if(!button||!panel||!summary||!list)return;
-  const items=todayActivityTimeline(selectedDate),sessions=completedKnockingSessionsForDay(selectedDate).length+(selectedDate===todayKey()&&knockingSessionActive?1:0),contacts=dailyKnockingLog(selectedDate).filter(entry=>entry.type==='data').length,appointments=items.filter(item=>item.kind==='appointment').length;
-  if(activity)activity.textContent=items.length?`${items.length} meaningful activit${items.length===1?'y':'ies'} today · Tap to view`:'No meaningful activity yet · Tap to view';
-  button.setAttribute('aria-expanded',String(todayTimelineExpanded));button.setAttribute('aria-label',todayTimelineExpanded?'Collapse today’s timeline':'Expand today’s timeline');button.classList.toggle('expanded',todayTimelineExpanded);panel.classList.toggle('hidden',!todayTimelineExpanded);
-  summary.innerHTML=`<div><strong>${sessions}</strong><span>Session${sessions===1?'':'s'}</span></div><div><strong>${contacts}</strong><span>Contact${contacts===1?'':'s'}</span></div><div><strong>${appointments}</strong><span>Appointment${appointments===1?'':'s'}</span></div>`;
-  list.innerHTML=items.length?items.map(item=>`<article class="today-activity-item ${item.kind}"><time>${escapeHtml(timelineClockLabel(item.at))}</time><i aria-hidden="true"></i><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.meta)}</small></div></article>`).join(''):`<div class="today-timeline-empty"><strong>Nothing recorded yet</strong><small>Your sessions, contacts and appointments will appear here as the day builds.</small></div>`;
-}
 function renderNowCard(){
   const priority=timelinePriority(selectedDate);
   if($('#nowCardTitle'))$('#nowCardTitle').textContent=priority.title;
   if($('#nowCardMeta'))$('#nowCardMeta').textContent=coachSentenceCase(priority.meta);
-  renderTodayTimelineDropdown();
 }
 function renderTimeline(){
   if(!$('#dailyTimeline'))return;
@@ -1929,7 +1949,8 @@ $('#endKnockingSession').onclick=endKnockingSession;
 $('#pauseKnockingSession').onclick=async()=>{const d=dayData(todayKey());if(d.timerStartedAt)await toggleTimer();knockingSessionVisible=false;closeKnockingCapture();saveKnockingSessionState();renderKnockingSession();switchView('todayView')};
 $('#knockingSession').addEventListener('click',async e=>{const adjust=e.target.closest('[data-knock-adjust]');if(adjust){const type=adjust.dataset.knockAdjust,delta=Number(adjust.dataset.delta)||0,next=Math.max(0,(Number(knockingSessionStats[type])||0)+delta),actual=next-knockingSessionStats[type];if(!actual)return;knockingSessionStats[type]=next;if(type==='clients')await changeMetric('connects',actual);saveKnockingSessionState();renderKnockingSession();haptic();return}const edit=e.target.closest('[data-edit-knock-log]');if(edit){const found=findDailyKnockingLogEntry(edit.dataset.editKnockLog);if(found)openKnockingCapture(found.entry.type,found.entry);return}const remove=e.target.closest('[data-delete-knock-log]');if(remove){await deleteKnockingLogEntry(remove.dataset.deleteKnockLog);return}const capture=e.target.closest('[data-knock-capture]');if(capture){openKnockingCapture(capture.dataset.knockCapture);return}if(e.target.closest('[data-close-knock-capture]'))closeKnockingCapture()});
 $('#knockingSession').addEventListener('submit',async e=>{if(e.target.id!=='knockingCaptureForm')return;e.preventDefault();await submitKnockingCapture(e.target)});
-$('#openTodayTimeline').onclick=()=>{todayTimelineExpanded=!todayTimelineExpanded;renderTodayTimelineDropdown()};$('#resetKnock').onclick=resetKnock;$('#knockingMetricCard').onclick=e=>{if(e.target.closest('button'))return;openKnockingHistory()};$('#knockingMetricCard').onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.closest('button')){e.preventDefault();openKnockingHistory()}};$('#closeKnockingHistory').onclick=closeKnockingHistory;$('#previousDay').onclick=()=>shiftHeaderDate(-1);$('#nextDay').onclick=()=>shiftHeaderDate(1);$('#settingsShortcut').onclick=()=>switchView('settingsView');$('#homeShortcut').onclick=()=>switchView('todayView');$('#backToday').onclick=()=>{selectedDate=todayKey();appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()};
+document.querySelector('.today-page-tabs')?.addEventListener('click',e=>{const button=e.target.closest('[data-today-page]');if(button)setTodayPage(button.dataset.todayPage)});
+$('#openTodayTimeline').onclick=()=>switchView('scheduleView');$('#resetKnock').onclick=resetKnock;$('#knockingMetricCard').onclick=e=>{if(e.target.closest('button'))return;openKnockingHistory()};$('#knockingMetricCard').onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.closest('button')){e.preventDefault();openKnockingHistory()}};$('#closeKnockingHistory').onclick=closeKnockingHistory;$('#previousDay').onclick=()=>shiftHeaderDate(-1);$('#nextDay').onclick=()=>shiftHeaderDate(1);$('#settingsShortcut').onclick=()=>switchView('settingsView');$('#homeShortcut').onclick=()=>switchView('todayView');$('#backToday').onclick=()=>{selectedDate=todayKey();appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()};
 $('.tabbar').onclick=e=>{const b=e.target.closest('button[data-view]');if(b)switchView(b.dataset.view)};
 $('#dailyTimeline').onclick=e=>{
   const prospectCheck=e.target.closest('[data-followup-prospect]');if(prospectCheck){switchView('prospectingView');openProspectLog(prospectCheck.dataset.followupProspect,false);return}

@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=114-timeline">
+<link rel="stylesheet" href="styles.css?v=114-log">
 <title>AGNT</title>
 </head>
 <body>
@@ -108,6 +108,11 @@
 
   <main>
     <section id="todayView" class="view active dashboard">
+      <nav class="today-page-tabs" aria-label="Today page sections">
+        <button class="active" type="button" data-today-page="overview" aria-selected="true">Overview</button>
+        <button type="button" data-today-page="log" aria-selected="false">Log</button>
+      </nav>
+      <div id="todayOverviewPanel" class="today-page-panel today-overview-panel active">
       <section class="score-week glass">
         <div class="score-overview">
           <div class="score-copy">
@@ -125,15 +130,11 @@
           <div><span>LEADERBOARD POSITION</span><small id="leaderboardPositionMeta">Waiting for today’s rankings</small></div>
           <strong id="leaderboardPosition">—</strong>
         </div>
-        <button id="openTodayTimeline" class="now-card" type="button" aria-label="Expand today’s timeline" aria-expanded="false" aria-controls="todayTimelineDropdown">
+        <button id="openTodayTimeline" class="now-card" type="button" aria-label="Open today timeline">
           <span class="now-card-label">FOCUS</span>
-          <span class="now-card-copy"><strong id="nowCardTitle">Loading today…</strong><small id="nowCardMeta">Your next priority will appear here</small><em id="nowCardActivity">No meaningful activity yet</em></span>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+          <span class="now-card-copy"><strong id="nowCardTitle">Loading today…</strong><small id="nowCardMeta">Your next priority will appear here</small></span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
         </button>
-        <section id="todayTimelineDropdown" class="today-timeline-dropdown hidden" aria-label="Today’s timeline" aria-live="polite">
-          <div id="todayTimelineSummary" class="today-timeline-summary"></div>
-          <div id="todayTimelineList" class="today-timeline-list"></div>
-        </section>
       </section>
 
       <section class="metrics glass">
@@ -154,6 +155,18 @@
           <div class="actions knock-actions"><div id="knockPercent" class="metric-percent metric-ring" role="img" aria-label="Knocking: 0% complete, expected pace 0%, target 60 minutes">0%</div><button id="timerButton" class="timer" type="button" aria-label="Start knocking timer"><svg class="timer-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 6.5 17 12l-8.5 5.5Z"/></svg></button><button id="resetKnock" class="reset" aria-label="Reset today’s knocking">↶</button></div>
         </article>
       </section>
+      </div>
+      <div id="todayLogPanel" class="today-page-panel today-log-panel" aria-hidden="true">
+        <section class="day-log-summary glass" aria-label="Daily log summary">
+          <div><strong id="dayLogSessionTotal">0</strong><span>Sessions</span></div>
+          <div><strong id="dayLogContactTotal">0</strong><span>Contacts</span></div>
+          <div><strong id="dayLogAppointmentTotal">0</strong><span>Appointments</span></div>
+        </section>
+        <section class="day-log-card glass">
+          <div class="day-log-head"><div><span>DAY LOG</span><strong id="dayLogTitle">Today’s story</strong></div><small id="dayLogMeta">Meaningful activity only</small></div>
+          <div id="dayLogTimeline" class="day-log-timeline" aria-live="polite"></div>
+        </section>
+      </div>
     </section>
 
     <section id="scheduleView" class="view today-timeline-view">
@@ -556,6 +569,6 @@
 </div>
 
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=114-timeline"></script>
+<script type="module" src="app.js?v=114-log"></script>
 </body>
 </html>
