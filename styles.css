@@ -4770,8 +4770,13 @@ body.appointment-editing{overflow:hidden}
 .offday-metric-grid strong{display:inline-block;margin-top:7px;font-size:1.35rem;line-height:1;font-weight:850;letter-spacing:-.035em;color:#151820}
 .offday-metric-grid small{margin-left:4px;font-size:.68rem;color:#9099a8;font-weight:650}
 .offday-metric-grid i{display:block;height:4px;margin-top:11px;border-radius:999px;background:#e4e8ef;overflow:hidden}.offday-metric-grid i b{display:block;height:100%;max-width:100%;border-radius:inherit;background:#1b73e8}
-.offday-day-list{display:grid}.offday-day-list article{display:flex;align-items:center;justify-content:space-between;gap:15px;min-height:49px;border-top:1px solid rgba(44,50,61,.07)}.offday-day-list article:first-child{border-top:0}
-.offday-day-list div{display:flex;align-items:baseline;gap:7px}.offday-day-list span{font-size:.78rem;font-weight:780;color:#20242c}.offday-day-list small{font-size:.65rem;font-weight:650;color:#9aa2af}.offday-day-list strong{font-size:.7rem;font-weight:800;color:#5d687a;text-align:right}.offday-day-list article.complete strong{color:#23845d}.offday-day-list article.rest strong,.offday-day-list article.upcoming strong{color:#a0a7b2}
+.offday-week-strip-section{padding-bottom:17px}
+.offday-day-list{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.offday-day-list article{display:grid;place-items:center;align-content:center;gap:5px;min-width:0;min-height:55px;padding:8px 2px;border-radius:14px;background:#f5f7fa;text-align:center}
+.offday-day-list span{font-size:.57rem;font-weight:850;letter-spacing:.06em;text-transform:uppercase;color:#7f8999}
+.offday-day-list strong{max-width:100%;overflow:hidden;text-overflow:ellipsis;font-size:.59rem;line-height:1.1;font-weight:850;color:#5d687a;white-space:nowrap}
+.offday-day-list article.complete{background:#edf8f3}.offday-day-list article.complete strong{color:#23845d}
+.offday-day-list article.rest,.offday-day-list article.upcoming{background:#f7f8fa}.offday-day-list article.rest strong,.offday-day-list article.upcoming strong{color:#a0a7b2}
 .offday-appointment-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.offday-appointment-heading>div:first-child{min-width:0}
 .offday-appointment-counts{display:flex;gap:5px}.offday-appointment-counts span{min-width:37px;padding:8px 7px;border-radius:12px;background:#f3f5f8;text-align:center;font-size:.52rem;letter-spacing:.08em}.offday-appointment-counts strong{display:block;margin-bottom:2px;font-size:.9rem;line-height:1;font-weight:850;color:#171a21}
 .offday-appointment-list{display:grid}.offday-appointment-list article{display:grid;grid-template-columns:42px minmax(0,1fr);gap:11px;align-items:start;padding:13px 0;border-top:1px solid rgba(44,50,61,.07)}.offday-appointment-list article:first-child{border-top:0}
@@ -4781,3 +4786,5 @@ body.appointment-editing{overflow:hidden}
 .offday-open-agnt{position:absolute;left:0;right:0;bottom:0;margin:0;z-index:2}
 @media(max-height:760px){.offday-review-heading{padding:20px 4px 14px}.offday-review-heading h1{font-size:2.2rem}.offday-review-score{padding:17px}.offday-review-section{padding:16px}.offday-review-scroll{padding-bottom:76px}}
 @media(prefers-reduced-motion:reduce){.offday-review-screen{transition:none}}
+
+/* AGNT V114.5 — off-day review order and compact Monday–Sunday strip. */

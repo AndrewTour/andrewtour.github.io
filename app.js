@@ -188,7 +188,7 @@ function renderOffDayReview(){
   $('#offDayReviewScore').textContent=`${summary.score}%`;$('#offDayReviewSummary').textContent=offDayReviewSummaryText(summary);
   const metrics=[['Calls',summary.calls,summary.callsTarget,''],['Connects',summary.connects,summary.connectsTarget,''],['Data',summary.data,summary.dataTarget,''],['Knocking',summary.knockMinutes,summary.knockTarget,' min']];
   $('#offDayMetricGrid').innerHTML=metrics.map(([label,value,target,suffix])=>`<article><span>${escapeHtml(label)}</span><strong>${value}${suffix}</strong><small>of ${target}${suffix}</small><i><b style="width:${pct(value,Math.max(1,target))}%"></b></i></article>`).join('');
-  const today=todayKey();$('#offDayDayList').innerHTML=summary.dates.map(date=>{const k=dateKey(date),scheduled=workDays.includes(date.getDay()),future=k>today,p=scheduled&&!future?completion(k):0,status=!scheduled?'Rest day':future?'Upcoming':p>=100?'Complete':p?`${p}% complete`:'No activity logged';return `<article class="${!scheduled?'rest':future?'upcoming':p>=100?'complete':''}"><div><span>${date.toLocaleDateString('en-AU',{weekday:'long'})}</span><small>${date.toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</small></div><strong>${escapeHtml(status)}</strong></article>`}).join('');
+  const today=todayKey();$('#offDayDayList').innerHTML=summary.dates.map(date=>{const k=dateKey(date),scheduled=workDays.includes(date.getDay()),future=k>today,p=scheduled&&!future?completion(k):0,status=!scheduled?'Rest':future?'Next':p>=100?'Done':p?`${p}%`:'—';return `<article class="${!scheduled?'rest':future?'upcoming':p>=100?'complete':''}" title="${escapeHtml(date.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long'}))}"><span>${date.toLocaleDateString('en-AU',{weekday:'short'}).replace('.','')}</span><strong>${escapeHtml(status)}</strong></article>`}).join('');
   $('#offDayAppointmentCounts').innerHTML=['MAP','LAP','BAP'].map(type=>`<span><strong>${counts[type]||0}</strong>${type}</span>`).join('');
   $('#offDayAppointmentList').innerHTML=details.length?details.map(item=>`<article><span class="offday-appointment-type">${escapeHtml(item.type)}</span><div><strong>${escapeHtml(item.contactName||item.address||'Appointment')}</strong><small>${escapeHtml(item.address||'Address not recorded')}</small><em>${escapeHtml(offDayAppointmentMeta(item))}</em></div></article>`).join(''):`<div class="offday-empty"><strong>No appointments booked</strong><span>MAP, LAP and BAP appointments booked during this week will appear here.</span></div>`;
 }
@@ -1303,7 +1303,7 @@ async function completePendingProspectAppointmentFlow(){
 
 async function addAppointment({contactName,contactNumber,address,date,time,type,auction=false,prospectId=''}){
   const createdDate=todayKey();
-  if(!canEditDate(createdDate))return lockedToast();
+  if(isPastDate(createdDate))return lockedToast();
   const signature=[createdDate,date,time,type,contactName.trim().toLowerCase(),address.trim().toLowerCase()].join('|');
   if(appointmentSubmitLocks.has(signature))return null;
   appointmentSubmitLocks.add(signature);
