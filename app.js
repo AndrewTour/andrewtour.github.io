@@ -636,7 +636,6 @@ function renderToday(){
   renderLeaderboardPosition();
   if($('#momentumWhisper'))$('#momentumWhisper').textContent=momentumWhisper();
   renderNowCard();
-  if(todayPage==='log')renderDayLog();
 }
 function recentWorkKeys(endKey=selectedDate,count=8){
   const out=[],d=parseKey(endKey);
@@ -1923,7 +1922,7 @@ function bindViewport(){
 }
 async function init(){bindViewport();loadLocal('local');await finaliseExpiredTimers();if(!configured()){showAuthMessage('Firebase is not configured. You can still use device-only mode.');return}try{const fb=initializeApp(firebaseConfig);auth=getAuth(fb);await setPersistence(auth,browserLocalPersistence);db=initializeFirestore(fb,{experimentalAutoDetectLongPolling:true,localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});onAuthStateChanged(auth,u=>{if(u){startCloud(u)}else{clearActiveSession();$('#app').classList.add('hidden');$('#authGate').classList.remove('hidden')}})}catch(err){console.error(err);showAuthMessage(err.message)}}
 function showAuthMessage(msg){$('#authMessage').textContent=msg}
-function switchView(id){if(id!=='appointmentsView'&&appointmentHistoryMode)setAppointmentHistoryScreen(null);$$('.tabbar button').forEach(b=>b.classList.toggle('active',b.dataset.view===id));$$('.view').forEach(v=>v.classList.toggle('active',v.id===id));updateTopbar(id);if(id==='scheduleView')renderTimeline();if(id==='appointmentsView')renderAppointments();if(id==='prospectingView')renderProspecting();if(id==='insightsView')renderInsights()}
+function switchView(id){if(id!=='appointmentsView'&&appointmentHistoryMode)setAppointmentHistoryScreen(null);$$('.tabbar button').forEach(b=>b.classList.toggle('active',b.dataset.view===id));$$('.view').forEach(v=>v.classList.toggle('active',v.id===id));updateTopbar(id);if(id==='scheduleView'){renderTimeline();setTodayPage(todayPage);}if(id==='appointmentsView')renderAppointments();if(id==='prospectingView')renderProspecting();if(id==='insightsView')renderInsights()}
 
 function shiftHeaderDate(delta){
   const id=activeViewId();

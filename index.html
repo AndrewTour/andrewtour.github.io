@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=114-log">
+<link rel="stylesheet" href="styles.css?v=114-today-log">
 <title>AGNT</title>
 </head>
 <body>
@@ -108,11 +108,6 @@
 
   <main>
     <section id="todayView" class="view active dashboard">
-      <nav class="today-page-tabs" aria-label="Today page sections">
-        <button class="active" type="button" data-today-page="overview" aria-selected="true">Overview</button>
-        <button type="button" data-today-page="log" aria-selected="false">Log</button>
-      </nav>
-      <div id="todayOverviewPanel" class="today-page-panel today-overview-panel active">
       <section class="score-week glass">
         <div class="score-overview">
           <div class="score-copy">
@@ -155,6 +150,25 @@
           <div class="actions knock-actions"><div id="knockPercent" class="metric-percent metric-ring" role="img" aria-label="Knocking: 0% complete, expected pace 0%, target 60 minutes">0%</div><button id="timerButton" class="timer" type="button" aria-label="Start knocking timer"><svg class="timer-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 6.5 17 12l-8.5 5.5Z"/></svg></button><button id="resetKnock" class="reset" aria-label="Reset today’s knocking">↶</button></div>
         </article>
       </section>
+    </section>
+
+    <section id="scheduleView" class="view today-timeline-view">
+      <nav class="today-page-tabs" aria-label="Today page sections">
+        <button class="active" type="button" data-today-page="overview" aria-selected="true">Timeline</button>
+        <button type="button" data-today-page="log" aria-selected="false">Log</button>
+      </nav>
+      <div id="todayOverviewPanel" class="today-page-panel today-overview-panel active">
+        <div class="view-head timeline-view-head">
+          <div><span>TODAY</span><h2 id="timelineDateLabel"></h2></div>
+          <small id="timelineSummary">Your day at a glance</small>
+        </div>
+        <section class="timeline-overview glass">
+          <span class="timeline-overview-label">SMART COACH</span>
+          <strong id="timelineCurrentTitle">Loading today…</strong>
+          <small id="timelineCurrentMeta">Your schedule will appear below.</small>
+        </section>
+        <section id="dailyTimeline" class="daily-timeline glass" aria-live="polite"></section>
+        <button id="openDayReview" class="open-day-review hidden" type="button"><span>DAY IN REVIEW</span><strong>Review today and prepare tomorrow</strong><b aria-hidden="true">›</b></button>
       </div>
       <div id="todayLogPanel" class="today-page-panel today-log-panel" aria-hidden="true">
         <section class="day-log-summary glass" aria-label="Daily log summary">
@@ -167,20 +181,6 @@
           <div id="dayLogTimeline" class="day-log-timeline" aria-live="polite"></div>
         </section>
       </div>
-    </section>
-
-    <section id="scheduleView" class="view today-timeline-view">
-      <div class="view-head timeline-view-head">
-        <div><span>TODAY</span><h2 id="timelineDateLabel"></h2></div>
-        <small id="timelineSummary">Your day at a glance</small>
-      </div>
-      <section class="timeline-overview glass">
-        <span class="timeline-overview-label">SMART COACH</span>
-        <strong id="timelineCurrentTitle">Loading today…</strong>
-        <small id="timelineCurrentMeta">Your schedule will appear below.</small>
-      </section>
-      <section id="dailyTimeline" class="daily-timeline glass" aria-live="polite"></section>
-      <button id="openDayReview" class="open-day-review hidden" type="button"><span>DAY IN REVIEW</span><strong>Review today and prepare tomorrow</strong><b aria-hidden="true">›</b></button>
     </section>
 
     <section id="knockingSession" class="knocking-session hidden" aria-live="polite" aria-label="Doorknocking session">
@@ -569,6 +569,6 @@
 </div>
 
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=114-log"></script>
+<script type="module" src="app.js?v=114-today-log"></script>
 </body>
 </html>
