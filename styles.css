@@ -4718,3 +4718,32 @@ body.appointment-editing{overflow:hidden}
 .smart-log-card.live .smart-log-icon{background:#e2f7ee;color:#079a67;animation:day-log-pulse 1.6s ease-in-out infinite}
 .day-log-empty>span{display:grid;place-items:center;width:42px;height:42px;margin:0 auto 4px;border-radius:50%;background:#eef3ff;color:#0b63f3;font-size:1.1rem;font-weight:800}
 @media(max-height:720px){.smart-log-card{padding:12px}.smart-log-stats{margin-top:9px}}
+
+
+/* V114.3 — restore read-only leaderboard appointment summary; full agent stack opens it. */
+.leaderboard-performance-row[data-agent-summary]{cursor:pointer}
+.leaderboard-performance-row[data-agent-summary]:focus-visible{outline:2px solid #0b63f3;outline-offset:3px}
+.leaderboard-agent-summary-open{overflow:hidden}
+.leaderboard-agent-summary-overlay{position:fixed;inset:0;z-index:1200;display:flex;align-items:flex-end;justify-content:center;padding:18px;background:rgba(18,24,34,.3);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.leaderboard-agent-summary{width:min(100%,480px);max-height:min(82vh,720px);display:flex;flex-direction:column;padding:22px;border-radius:30px;background:rgba(255,255,255,.97);box-shadow:0 24px 70px rgba(26,38,58,.22)}
+.leaderboard-agent-summary header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.leaderboard-agent-summary header span{display:block;color:#7f8999;font-size:.62rem;font-weight:850;letter-spacing:.16em}
+.leaderboard-agent-summary header h2{margin:5px 0 2px;color:#111318;font-size:1.55rem;line-height:1.05}
+.leaderboard-agent-summary header p{margin:0;color:#929aa8;font-size:.78rem}
+.leaderboard-agent-summary header button{width:38px;height:38px;border:0;border-radius:50%;background:#f1f3f6;color:#535b68;font-size:1.45rem;line-height:1;cursor:pointer}
+.leaderboard-agent-summary-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:18px 0 14px}
+.leaderboard-agent-summary-kpis div{padding:12px 8px;border-radius:17px;background:#f3f5f8;text-align:center}
+.leaderboard-agent-summary-kpis strong{display:block;color:#111318;font-size:1.05rem}
+.leaderboard-agent-summary-kpis span{display:block;margin-top:2px;color:#8c95a4;font-size:.56rem;font-weight:850;letter-spacing:.08em}
+.leaderboard-agent-appointments{min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-right:2px}
+.leaderboard-agent-appointment{display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px;padding:14px 0;border-top:1px solid #e9ecf1}
+.leaderboard-agent-appointment>span{align-self:start;padding:7px 5px;border-radius:11px;background:#eaf1ff;color:#0b63f3;font-size:.58rem;font-weight:900;text-align:center}
+.leaderboard-agent-appointment strong,.leaderboard-agent-appointment small,.leaderboard-agent-appointment time{display:block}
+.leaderboard-agent-appointment strong{color:#15181e;font-size:.88rem;line-height:1.2}
+.leaderboard-agent-appointment small{margin-top:3px;color:#707988;font-size:.72rem;line-height:1.25}
+.leaderboard-agent-appointment time{margin-top:6px;color:#929aa8;font-size:.64rem;font-weight:750}
+.leaderboard-agent-summary-empty{padding:28px 18px;border-radius:18px;background:#f4f6f9;text-align:center}
+.leaderboard-agent-summary-empty strong{display:block;color:#181b21;font-size:.9rem}
+.leaderboard-agent-summary-empty p{margin:6px 0 0;color:#8992a1;font-size:.72rem;line-height:1.35}
+.leaderboard-agent-summary>.primary{flex:0 0 auto;margin-top:16px}
+@media(max-width:390px){.leaderboard-agent-summary-overlay{padding:10px}.leaderboard-agent-summary{padding:19px;border-radius:26px}}
