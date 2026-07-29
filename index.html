@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=119.2-ui-refinement">
+<link rel="stylesheet" href="styles.css?v=119.3-week-appointments-refinement">
 <title>AGNT</title>
 </head>
 <body>
@@ -78,12 +78,18 @@
     </div>
 
     <div class="offday-review-scroll">
-      <section class="offday-review-score" aria-label="Weekly performance">
-        <div>
-          <span>WEEK TO DATE</span>
-          <strong id="offDayReviewScore">0%</strong>
+      <section class="offday-review-score offday-review-week-card" aria-label="Weekly performance and daily overview">
+        <div class="offday-review-week-summary">
+          <div>
+            <span>WEEK TO DATE</span>
+            <strong id="offDayReviewScore">0%</strong>
+          </div>
+          <p id="offDayReviewSummary">Your weekly review is ready.</p>
         </div>
-        <p id="offDayReviewSummary">Your weekly review is ready.</p>
+        <div class="offday-review-week-days" aria-labelledby="offDayDaysTitle">
+          <div class="offday-review-week-days-head"><span>MONDAY — SUNDAY</span><h2 id="offDayDaysTitle">Week overview</h2></div>
+          <div id="offDayDayList" class="offday-day-list"></div>
+        </div>
       </section>
 
       <section class="offday-review-section" aria-labelledby="offDayMetricsTitle">
@@ -99,10 +105,6 @@
         <div id="offDayAppointmentList" class="offday-appointment-list"></div>
       </section>
 
-      <section class="offday-review-section offday-week-strip-section" aria-labelledby="offDayDaysTitle">
-        <div class="offday-review-section-head"><span>MONDAY — SUNDAY</span><h2 id="offDayDaysTitle">Week overview</h2></div>
-        <div id="offDayDayList" class="offday-day-list"></div>
-      </section>
     </div>
 
     <button id="openAgntButton" class="welcome-start offday-open-agnt" type="button">
@@ -333,12 +335,12 @@
         <div><h2 id="appointmentDateLabel"></h2></div>
       </div>
       <div id="appointmentMainContent">
-        <div class="appointment-destination-grid" aria-label="Appointment history">
-          <button class="appointment-destination-card glass" type="button" data-open-appointment-history="past">
-            <span>APPOINTMENT HISTORY</span><strong>Past Appointments</strong><small id="pastAppointmentSummary">View completed appointments and follow-ups</small><small id="pastAppointmentReminderMetric" class="appointment-card-reminder-metric hidden" role="status"></small><b aria-hidden="true">›</b>
+        <div class="appointment-destination-grid appointment-history-tabs" aria-label="Appointment history">
+          <button class="appointment-destination-card appointment-history-tab" type="button" data-open-appointment-history="past">
+            <span>PAST</span><strong>Past Appointments</strong><small id="pastAppointmentSummary">View completed appointments and follow-ups</small><small id="pastAppointmentReminderMetric" class="appointment-card-reminder-metric hidden" role="status"></small>
           </button>
-          <button class="appointment-destination-card glass" type="button" data-open-appointment-history="upcoming">
-            <span>SCHEDULE</span><strong>Upcoming Appointments</strong><small id="upcomingAppointmentSummary">View scheduled appointments</small><b aria-hidden="true">›</b>
+          <button class="appointment-destination-card appointment-history-tab" type="button" data-open-appointment-history="upcoming">
+            <span>UPCOMING</span><strong>Upcoming Appointments</strong><small id="upcomingAppointmentSummary">View scheduled appointments</small>
           </button>
         </div>
       <div id="appointmentLock" class="appointment-lock hidden">Past dates are locked and read-only.</div><form id="appointmentForm" class="appointment-form glass" novalidate>
@@ -640,6 +642,6 @@
 </div>
 
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=119.2-ui-refinement"></script>
+<script type="module" src="app.js?v=119.3-week-appointments-refinement"></script>
 </body>
 </html>

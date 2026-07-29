@@ -4912,3 +4912,135 @@ body.appointment-editing{overflow:hidden}
   .leaderboard-weekly-leader>small{font-size:.57rem}
   .leaderboard-summary-line{margin-top:11px;padding-top:9px}
 }
+
+/* AGNT V119.3 — off-day weekly card and appointment navigation refinements only. */
+.offday-review-week-card{
+  display:block;
+  padding:21px 19px 18px;
+}
+.offday-review-week-summary{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  align-items:center;
+  gap:22px;
+}
+.offday-review-week-summary>div>span,
+.offday-review-week-days-head>span{
+  display:block;
+  font-size:.65rem;
+  line-height:1.2;
+  font-weight:900;
+  letter-spacing:.19em;
+  color:#8791a3;
+}
+.offday-review-week-summary>div>strong{
+  display:block;
+  margin-top:3px;
+  font-size:2.65rem;
+  line-height:.95;
+  font-weight:850;
+  letter-spacing:-.07em;
+  color:#11141a;
+}
+.offday-review-week-summary>p{
+  margin:0;
+  font-size:.78rem;
+  line-height:1.46;
+  color:#687386;
+  font-weight:600;
+}
+.offday-review-week-days{
+  margin-top:17px;
+  padding-top:16px;
+  border-top:1px solid rgba(44,50,61,.07);
+}
+.offday-review-week-days-head{
+  display:flex;
+  align-items:end;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:11px;
+}
+.offday-review-week-days-head h2{
+  margin:0;
+  font-size:.9rem;
+  line-height:1.1;
+  font-weight:820;
+  letter-spacing:-.02em;
+  color:#151820;
+}
+.offday-review-week-card .offday-day-list article{
+  min-height:52px;
+}
+
+/* Appointment history uses the same equal-weight segmented navigation language as Today and Prospector. */
+#appointmentsView .appointment-history-tabs{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:7px;
+  width:100%;
+  padding:5px;
+  margin-bottom:14px;
+  border:1px solid rgba(118,118,128,.14);
+  border-radius:20px;
+  background:rgba(245,246,249,.92);
+  box-shadow:0 7px 18px rgba(15,23,42,.045);
+}
+#appointmentsView .appointment-history-tab{
+  min-width:0;
+  min-height:88px;
+  padding:12px 10px;
+  border:0;
+  border-radius:16px;
+  background:transparent;
+  box-shadow:none;
+  text-align:center;
+  color:inherit;
+}
+#appointmentsView .appointment-history-tab:first-child{
+  background:#fff;
+  box-shadow:0 5px 14px rgba(15,23,42,.07);
+}
+#appointmentsView .appointment-history-tab span{
+  margin:0 0 5px;
+  font-size:.59rem;
+  line-height:1.15;
+  font-weight:850;
+  letter-spacing:.13em;
+  color:#8992a1;
+}
+#appointmentsView .appointment-history-tab strong{
+  margin:0;
+  font-size:.88rem;
+  line-height:1.15;
+  font-weight:800;
+  white-space:nowrap;
+}
+#appointmentsView .appointment-history-tab small{
+  margin-top:6px;
+  font-size:.59rem;
+  line-height:1.3;
+  color:#8b94a3;
+}
+#appointmentsView .appointment-history-tab .appointment-card-reminder-metric{
+  margin-top:5px;
+  color:#c2871d;
+  font-weight:750;
+}
+
+/* Keep the appointment smart subtitle to one line without changing other screens. */
+.app:has(#appointmentsView.active) .view-subtitle{
+  max-width:min(52vw,300px);
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  line-height:1.2;
+}
+
+@media(max-width:390px){
+  .offday-review-week-summary{gap:16px}
+  .offday-review-week-summary>div>strong{font-size:2.4rem}
+  #appointmentsView .appointment-history-tab{padding-inline:7px}
+  #appointmentsView .appointment-history-tab strong{font-size:.8rem}
+  #appointmentsView .appointment-history-tab small{font-size:.55rem}
+}
