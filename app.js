@@ -525,35 +525,48 @@ function dayLogTime(at){
   const date=new Date(Number(at)||0);if(!Number.isFinite(date.getTime()))return'';
   return date.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true}).replace(' ','');
 }
+function dayLogRange(startAt,endAt){
+  const start=dayLogTime(startAt),end=dayLogTime(endAt);return end&&end!==start?`${start}–${end}`:start;
+}
+function dayLogTargetMilestones(k,d){
+  const milestones=[],metricTargets={calls:Number(targets.calls)||0,connects:Number(targets.connects)||0,data:Number(targets.data)||0};
+  Object.entries(metricTargets).forEach(([metric,target])=>{
+    if(!target)return;let total=0,hitAt=0;
+    (d.events||[]).filter(event=>event.type===metric&&Number(event.delta)>0).sort((a,b)=>(Number(a.at)||0)-(Number(b.at)||0)).some(event=>{
+      total+=Number(event.delta)||0;if(total>=target){hitAt=Number(event.at)||0;return true}return false
+    });
+    if(hitAt)milestones.push({id:`target-${metric}-${k}`,at:hitAt,kind:'target',title:`${metric.charAt(0).toUpperCase()+metric.slice(1)} target completed`,detail:`${target} ${metric} reached`});
+  });
+  const knockTarget=Number(rollingKnockTarget(k))||0;if(knockTarget){let seconds=0,hitAt=0;
+    (Array.isArray(d.knockingSessions)?d.knockingSessions:[]).slice().sort((a,b)=>(Number(a.endedAt)||0)-(Number(b.endedAt)||0)).some(session=>{
+      seconds+=Number(session.durationSeconds)||0;if(Math.floor(seconds/60)>=knockTarget){hitAt=Number(session.endedAt)||0;return true}return false
+    });
+    if(hitAt)milestones.push({id:`target-knock-${k}`,at:hitAt,kind:'target',title:'Knocking target completed',detail:`${knockTarget} active minutes reached`});
+  }
+  return milestones;
+}
 function dayLogItems(k=selectedDate){
   const d=dayData(k),items=[],completed=Array.isArray(d.knockingSessions)?d.knockingSessions:[];
   completed.forEach(session=>{
-    const stats=session.stats||{},appointments=(Number(stats.MAP)||0)+(Number(stats.LAP)||0),startedAt=Number(session.startedAt)||0,endedAt=Number(session.endedAt)||0;
-    if(startedAt)items.push({id:`knock-start-${session.id||startedAt}`,at:startedAt,kind:'session',title:'Knocking session started',detail:'Door knocking underway'});
-    if(endedAt)items.push({id:`knock-end-${session.id||endedAt}`,at:endedAt,kind:'complete',title:'Knocking session finished',detail:`${Number(stats.knocks)||0} knocks · ${Number(stats.clients)||0} connects · ${Number(stats.data)||0} data${appointments?` · ${appointments} appointment${appointments===1?'':'s'}`:''}`});
+    const stats=session.stats||{},startedAt=Number(session.startedAt)||0,endedAt=Number(session.endedAt)||0,durationSeconds=Number(session.durationSeconds)||Math.max(0,(endedAt-startedAt)/1000),appointments=(Number(stats.MAP)||0)+(Number(stats.LAP)||0);
+    if(!startedAt&&!endedAt)return;
+    items.push({id:`knock-session-${session.id||endedAt||startedAt}`,at:startedAt||endedAt,kind:'knocking',timeLabel:dayLogRange(startedAt||endedAt,endedAt||startedAt),title:'Door Knock Session',detail:`${fmtTimer(durationSeconds)} active`,stats:[`${Number(stats.knocks)||0} knocks`,`${Number(stats.clients)||0} connects`,`${Number(stats.data)||0} data`,...(appointments?[`${appointments} appointment${appointments===1?'':'s'}`]:[])]});
   });
-  const completedWindows=completed.map(session=>[Number(session.startedAt)||0,Number(session.endedAt)||0]);
-  (d.events||[]).forEach(event=>{
-    const label=String(event.label||''),lower=label.toLowerCase(),at=Number(event.at)||0;if(!at)return;
-    const insideCompleted=completedWindows.some(([start,end])=>start&&end&&at>=start-2000&&at<=end+2000);
-    if(event.type==='knock'&&lower.includes('paused'))items.push({id:event.id||`pause-${at}`,at,kind:'pause',title:'Knocking session paused',detail:'Session progress saved'});
-    else if(event.type==='knock'&&lower.includes('started')&&!insideCompleted)items.push({id:event.id||`start-${at}`,at,kind:'session',title:'Knocking session started',detail:'Door knocking underway'});
-  });
-  const createdContacts=prospects.filter(prospect=>dateKey(new Date(Number(prospect.createdAt)||0))===k);
-  createdContacts.forEach(prospect=>items.push({id:`contact-${prospect.id}`,at:Number(prospect.createdAt)||parseKey(k).setHours(9),kind:'contact',title:'Contact added',detail:prospect.name||formatProspectAddress(prospect.address||prospect.company,prospect.suburb)||'New contact'}));
   const appointmentEntries=allAppointmentEntries().filter(({appointment:a,sourceDate})=>appointmentCreatedDate(a,sourceDate)===k&&['MAP','LAP','BAP'].includes(appointmentType(a)));
-  appointmentEntries.forEach(({appointment:a,sourceDate})=>items.push({id:`appointment-${a.id}`,at:Number(a.at)||new Date(`${k}T${a.time||'12:00'}`).getTime(),kind:'appointment',title:`${appointmentType(a)} booked`,detail:[a.contactName||a.name,a.address].filter(Boolean).join(' · ')||`Scheduled ${fmtDate(appointmentScheduledDate(a,sourceDate))}`}));
+  appointmentEntries.forEach(({appointment:a,sourceDate})=>items.push({id:`appointment-${a.id}`,at:Number(a.at)||new Date(`${k}T${a.time||'12:00'}`).getTime(),kind:'appointment',title:`${appointmentType(a)} Booked`,detail:[a.contactName||a.name,a.address].filter(Boolean).join(' · ')||`Scheduled ${fmtDate(appointmentScheduledDate(a,sourceDate))}`}));
   const interactions=prospectInteractions.filter(interaction=>interaction.date===k&&interaction.type==='Call').sort((a,b)=>(Number(a.at)||0)-(Number(b.at)||0));
   if(interactions.length){
-    const first=Number(interactions[0].at)||parseKey(k).setHours(9),last=Number(interactions[interactions.length-1].at)||first;
-    const connected=interactions.filter(interaction=>prospectOutcomeMetricDelta(interaction.outcome).connects).length;
-    items.push({id:`prospecting-${k}`,at:last,kind:'prospecting',title:'Prospecting block logged',detail:`${interactions.length} call${interactions.length===1?'':'s'} · ${connected} connect${connected===1?'':'s'}${last-first>60000?` · ${dayLogTime(first)}–${dayLogTime(last)}`:''}`});
+    const first=Number(interactions[0].at)||parseKey(k).setHours(9),last=Number(interactions[interactions.length-1].at)||first,connected=interactions.filter(interaction=>prospectOutcomeMetricDelta(interaction.outcome).connects).length,dataAdded=interactions.reduce((sum,interaction)=>sum+(Number(prospectOutcomeMetricDelta(interaction.outcome).data)||0),0);
+    items.push({id:`prospecting-${k}`,at:first,kind:'prospecting',timeLabel:dayLogRange(first,last),title:'Prospecting',detail:last-first>60000?'Focused call block':'Calls logged',stats:[`${interactions.length} call${interactions.length===1?'':'s'}`,`${connected} connect${connected===1?'':'s'}`,...(dataAdded?[`${dataAdded} data`]:[])]});
   }
+  const createdContacts=prospects.filter(prospect=>dateKey(new Date(Number(prospect.createdAt)||0))===k);
+  createdContacts.forEach(prospect=>items.push({id:`contact-${prospect.id}`,at:Number(prospect.createdAt)||parseKey(k).setHours(9),kind:'contact',title:'Contact Added',detail:prospect.name||formatProspectAddress(prospect.address||prospect.company,prospect.suburb)||'New contact'}));
+  items.push(...dayLogTargetMilestones(k,d));
   if(k===todayKey()&&knockingSessionActive){
-    const dToday=dayData(k),started=(Number(dToday.timerStartedAt)||Date.now())-Math.max(0,liveKnockSeconds(dToday)-knockingSessionStartSeconds)*1000;
-    items.push({id:'active-knocking-session',at:Date.now()+1,kind:'live',title:dToday.timerStartedAt?'Knocking session live':'Knocking session paused',detail:`${fmtTimer(Math.max(0,liveKnockSeconds(dToday)-knockingSessionStartSeconds))} elapsed · ${Number(knockingSessionStats.knocks)||0} knocks · ${Number(knockingSessionStats.clients)||0} connects`,sortAt:started});
+    const dToday=dayData(k),elapsed=Math.max(0,liveKnockSeconds(dToday)-knockingSessionStartSeconds),started=(Number(dToday.timerStartedAt)||Date.now())-elapsed*1000;
+    items.push({id:'active-knocking-session',at:started,kind:'live',timeLabel:`${dayLogTime(started)}–Now`,title:dToday.timerStartedAt?'Door Knock Session':'Door Knock Session Paused',detail:`${fmtTimer(elapsed)} active`,stats:[`${Number(knockingSessionStats.knocks)||0} knocks`,`${Number(knockingSessionStats.clients)||0} connects`,`${Number(knockingSessionStats.data)||0} data`]});
   }
-  const seen=new Set();return items.filter(item=>{const key=`${item.kind}|${item.title}|${item.detail}|${Math.round(item.at/60000)}`;if(seen.has(key))return false;seen.add(key);return true}).sort((a,b)=>a.at-b.at);
+  const seen=new Set();return items.filter(item=>{const key=item.id||`${item.kind}|${item.title}|${item.detail}|${Math.round(item.at/60000)}`;if(seen.has(key))return false;seen.add(key);return true}).sort((a,b)=>a.at-b.at);
 }
 function setTodayPage(page='overview'){
   todayPage=page==='log'?'log':'overview';
@@ -571,10 +584,10 @@ function renderDayLog(){
   const appointments=allAppointmentEntries().filter(({appointment:a,sourceDate})=>appointmentCreatedDate(a,sourceDate)===k&&['MAP','LAP','BAP'].includes(appointmentType(a))).length;
   $('#dayLogSessionTotal').textContent=sessions;$('#dayLogContactTotal').textContent=contacts;$('#dayLogAppointmentTotal').textContent=appointments;
   $('#dayLogTitle').textContent=k===todayKey()?'Today’s story':fmtDate(k);
-  $('#dayLogMeta').textContent=items.length?`${items.length} meaningful event${items.length===1?'':'s'}`:'Meaningful activity only';
-  if(!items.length){timeline.innerHTML='<div class="day-log-empty"><strong>No meaningful activity logged yet</strong><small>Your sessions, contacts and appointments will build the story of this day.</small></div>';return}
-  const icons={session:'▶',complete:'✓',pause:'Ⅱ',contact:'+',appointment:'◆',prospecting:'☎',live:'●'};
-  timeline.innerHTML=items.map(item=>`<article class="day-log-item ${item.kind}"><time>${escapeHtml(dayLogTime(item.at))}</time><span class="day-log-marker" aria-hidden="true">${icons[item.kind]||'•'}</span><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.detail)}</small></div></article>`).join('');
+  $('#dayLogMeta').textContent=items.length?`${items.length} meaningful moment${items.length===1?'':'s'}`:'Meaningful activity only';
+  if(!items.length){timeline.innerHTML='<div class="day-log-empty"><span aria-hidden="true">◎</span><strong>Your day is ready to be written</strong><small>Completed sessions, booked appointments and achieved targets will appear here.</small></div>';return}
+  const icons={knocking:'🚪',appointment:'◆',prospecting:'☎',contact:'+',target:'✓',live:'●'};
+  timeline.innerHTML=items.map(item=>`<article class="smart-log-card ${item.kind}"><header><time>${escapeHtml(item.timeLabel||dayLogTime(item.at))}</time><span class="smart-log-icon" aria-hidden="true">${icons[item.kind]||'•'}</span><div><strong>${escapeHtml(item.title)}</strong>${item.detail?`<small>${escapeHtml(item.detail)}</small>`:''}</div></header>${Array.isArray(item.stats)&&item.stats.length?`<div class="smart-log-stats">${item.stats.map(stat=>`<span>${escapeHtml(stat)}</span>`).join('')}</div>`:''}</article>`).join('');
 }
 function renderToday(){
   const d=dayData(selectedDate),score=completion(selectedDate),kt=rollingKnockTarget(selectedDate),secs=liveKnockSeconds(d),wk=weekSummary();
