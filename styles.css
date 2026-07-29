@@ -4803,3 +4803,112 @@ body.appointment-editing{overflow:hidden}
 .scorecard-achievement-grid article.complete strong{color:#21873d}
 .leaderboard-only-view #leaderboardInsights{display:block}
 @media(max-width:390px){.scorecard-momentum-grid,.scorecard-best-grid,.scorecard-achievement-grid{gap:7px}.scorecard-momentum-grid article,.scorecard-best-grid article,.scorecard-achievement-grid article{padding:10px}}
+
+/* AGNT v119.2 — Today control parity and Leaderboard spacing refinement only. */
+#scheduleView .today-page-tabs{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:4px;
+  width:100%;
+  padding:4px;
+  margin-bottom:12px;
+  overflow:hidden;
+  border:0;
+  border-radius:17px;
+  background:rgba(255,255,255,.72);
+  box-shadow:0 5px 18px rgba(18,25,38,.08),inset 0 0 0 1px rgba(123,132,151,.16);
+}
+#scheduleView .today-page-tabs button{
+  min-width:0;
+  min-height:38px;
+  padding:8px 4px;
+  border:0;
+  border-radius:13px;
+  background:transparent;
+  color:#858b94;
+  font-size:12px;
+  line-height:1;
+  font-weight:750;
+  letter-spacing:0;
+}
+#scheduleView .today-page-tabs button.active{
+  background:rgba(255,255,255,.92);
+  color:#111318;
+  box-shadow:0 2px 10px rgba(18,25,38,.08);
+}
+
+#insightsView.leaderboard-only-view{
+  padding-bottom:12px;
+}
+#leaderboardInsights.active,
+.leaderboard-only-view #leaderboardInsights{
+  height:100%;
+  min-height:100%;
+}
+#leaderboardInsights .leaderboard-dashboard{
+  margin-bottom:12px;
+  padding:18px 18px 15px;
+  border-radius:25px;
+}
+.leaderboard-leaders{
+  grid-template-columns:minmax(0,1.48fr) minmax(118px,.78fr);
+  gap:16px;
+}
+.leaderboard-daily-leader{
+  gap:14px;
+}
+.leaderboard-daily-leader .leaderboard-ring{
+  width:78px;
+  height:78px;
+  flex-basis:78px;
+}
+.leaderboard-daily-leader .leaderboard-ring::after{inset:7px}
+.leaderboard-daily-leader .leaderboard-ring strong{
+  font-size:1.3rem;
+  transform:translateY(-8px);
+}
+.leaderboard-daily-leader .leaderboard-ring span{
+  font-size:.52rem;
+  transform:translateY(14px);
+}
+.leaderboard-daily-leader .leaderboard-hero-copy>strong{
+  margin-top:6px;
+  font-size:1.28rem;
+}
+.leaderboard-daily-leader .leaderboard-hero-copy>small{
+  margin-top:6px;
+  font-size:.64rem;
+}
+.leaderboard-weekly-leader{
+  padding-left:16px;
+}
+.leaderboard-weekly-leader>strong{
+  margin-top:7px;
+  font-size:.9rem;
+}
+.leaderboard-weekly-leader>small{
+  margin-top:6px;
+  font-size:.64rem;
+}
+.leaderboard-summary-line{
+  margin-top:13px;
+  padding-top:11px;
+}
+.leaderboard-summary-line span{font-size:.48rem}
+.leaderboard-summary-line strong{font-size:.78rem}
+#leaderboardInsights .leaderboard-unified-card{
+  margin-bottom:0;
+}
+
+@media(max-width:390px){
+  #scheduleView .today-page-tabs button{font-size:11px}
+  #leaderboardInsights .leaderboard-dashboard{padding:15px 14px 13px}
+  .leaderboard-leaders{grid-template-columns:minmax(0,1.48fr) minmax(103px,.72fr);gap:12px}
+  .leaderboard-daily-leader{gap:10px}
+  .leaderboard-daily-leader .leaderboard-ring{width:68px;height:68px;flex-basis:68px}
+  .leaderboard-daily-leader .leaderboard-hero-copy>strong{font-size:1.08rem}
+  .leaderboard-daily-leader .leaderboard-hero-copy>small{font-size:.57rem}
+  .leaderboard-weekly-leader{padding-left:11px}
+  .leaderboard-weekly-leader>strong{font-size:.78rem}
+  .leaderboard-weekly-leader>small{font-size:.57rem}
+  .leaderboard-summary-line{margin-top:11px;padding-top:9px}
+}
