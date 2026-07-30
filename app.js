@@ -601,8 +601,12 @@ function dayLogTargetMilestones(k,d){
   }
   return milestones;
 }
+function meaningfulKnockingSession(session){
+  const stats=session?.stats||{},durationSeconds=Number(session?.durationSeconds)||Math.max(0,((Number(session?.endedAt)||0)-(Number(session?.startedAt)||0))/1000),loggedMetrics=['knocks','clients','data','MAP','LAP'].some(metric=>(Number(stats[metric])||0)>0);
+  return durationSeconds>=60||loggedMetrics;
+}
 function dayLogItems(k=selectedDate){
-  const d=dayData(k),items=[],completed=Array.isArray(d.knockingSessions)?d.knockingSessions:[];
+  const d=dayData(k),items=[],completed=(Array.isArray(d.knockingSessions)?d.knockingSessions:[]).filter(meaningfulKnockingSession);
   completed.forEach(session=>{
     const stats=session.stats||{},startedAt=Number(session.startedAt)||0,endedAt=Number(session.endedAt)||0,durationSeconds=Number(session.durationSeconds)||Math.max(0,(endedAt-startedAt)/1000),appointments=(Number(stats.MAP)||0)+(Number(stats.LAP)||0);
     if(!startedAt&&!endedAt)return;
@@ -638,7 +642,7 @@ function setTodayPage(page='overview'){
 }
 function renderDayLog(){
   const timeline=$('#dayLogTimeline');if(!timeline)return;const k=selectedDate,d=dayData(k),items=dayLogItems(k);
-  const sessions=(Array.isArray(d.knockingSessions)?d.knockingSessions.length:0)+(k===todayKey()&&knockingSessionActive?1:0)+(prospectInteractions.some(interaction=>interaction.date===k&&interaction.type==='Call')?1:0);
+  const sessions=(Array.isArray(d.knockingSessions)?d.knockingSessions.filter(meaningfulKnockingSession).length:0)+(k===todayKey()&&knockingSessionActive?1:0)+(prospectInteractions.some(interaction=>interaction.date===k&&interaction.type==='Call')?1:0);
   const contacts=prospects.filter(prospect=>dateKey(new Date(Number(prospect.createdAt)||0))===k).length;
   const appointments=allAppointmentEntries().filter(({appointment:a,sourceDate})=>appointmentCreatedDate(a,sourceDate)===k&&['MAP','LAP','BAP'].includes(appointmentType(a))).length;
   $('#dayLogSessionTotal').textContent=sessions;$('#dayLogContactTotal').textContent=contacts;$('#dayLogAppointmentTotal').textContent=appointments;

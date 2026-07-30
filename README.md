@@ -70,3 +70,10 @@ Firebase, authentication, Firestore paths and rules, UID separation, local cache
 - Existing local-only Hot Spotting imports migrate to Firestore after the user’s first confirmed cloud load.
 - Imports, individual removals and Clear All now sync across that user’s devices.
 - No UI, matching, session, Firebase path, rule or unrelated functionality changes.
+
+
+## v119.14 — Day Log session cleanup
+
+- Day Log remains scoped to the signed-in user's UID-backed day and prospecting data.
+- Completed knocking sessions under 60 seconds with no knocks, connects, data, MAP or LAP activity are excluded from the Day Log and its session total.
+- No Firebase paths, rules, metrics, session storage, Hot Spotting, Pipeline or UI behaviour changed.
