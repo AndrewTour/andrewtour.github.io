@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=119.4-week-overview-appointment-rows">
+<link rel="stylesheet" href="styles.css?v=119.13-hotspot-sync">
 <title>AGNT</title>
 </head>
 <body>
@@ -305,6 +305,13 @@
           <div><span>DOORKNOCKING SESSION</span><strong id="knockingSessionTimer">00:00</strong></div>
           <button id="endKnockingSession" type="button">End Session</button>
         </header>
+        <section id="knockingHotSpottingRecommendations" class="knocking-hotspot-recommendations glass hidden" aria-label="Recommended streets to door knock">
+          <button id="toggleKnockingHotSpotting" class="knocking-hotspot-toggle" type="button" aria-expanded="false" aria-controls="knockingHotSpottingList">
+            <span class="knocking-hotspot-head"><span>HOT SPOTTING</span><strong>Streets worth knocking</strong><small>Based on your latest market activity.</small></span>
+            <span class="knocking-hotspot-toggle-meta"><b id="knockingHotSpottingCount">0</b><i aria-hidden="true">⌄</i></span>
+          </button>
+          <div id="knockingHotSpottingList" class="knocking-hotspot-list hidden"></div>
+        </section>
         <section class="knocking-session-card glass">
           <div class="knocking-session-grid" aria-label="Session tallies">
             <div class="knocking-tally-card"><span>KNOCKS</span><strong id="knockSessionKnocks">0</strong><div class="knocking-tally-actions"><button type="button" data-knock-adjust="knocks" data-delta="-1" aria-label="Remove knock">−</button><button type="button" data-knock-adjust="knocks" data-delta="1">+ Add knock</button></div></div>
@@ -445,6 +452,10 @@
           <div><span>TODAY'S PIPELINE</span><strong id="prospectingDueCount">0</strong><small id="prospectingDueLabel">follow-ups ready</small></div>
           <button id="startProspectingSession" class="primary" type="button">Start Session</button>
         </section>
+        <section class="prospecting-hero glass">
+          <div><span>HOT SPOTTING</span><strong id="hotSpottingReadyCount">0</strong><small id="hotSpottingReadyLabel">clients ready</small></div>
+          <button id="openHotSpotting" class="primary" type="button">Start Session</button>
+        </section>
         <section class="prospecting-stats" aria-label="Prospecting overview">
           <button class="prospecting-stat glass" data-prospect-filter="overdue"><span>OVERDUE</span><strong id="prospectingOverdue">0</strong></button>
           <button class="prospecting-stat glass" data-prospect-filter="today"><span>DUE TODAY</span><strong id="prospectingToday">0</strong></button>
@@ -479,6 +490,24 @@
           <section class="pipeline-timeframe glass"><div class="pipeline-timeframe-head"><h3>1–3 months</h3></div><div id="pipelineList1" class="pipeline-seller-list"></div></section>
           <section class="pipeline-timeframe glass"><div class="pipeline-timeframe-head"><h3>6–12 months</h3></div><div id="pipelineList2" class="pipeline-seller-list"></div></section>
           <section class="pipeline-timeframe glass"><div class="pipeline-timeframe-head"><h3>12 months+</h3></div><div id="pipelineList3" class="pipeline-seller-list"></div></section>
+        </section>
+
+        <section id="prospectorMarketPanel" class="prospector-market-panel hidden" aria-live="polite">
+          <button id="backFromMarketPulse" class="market-pulse-back text-btn" type="button">‹ Back to Sessions</button>
+          <section class="market-pulse-hero glass">
+            <div><span>HOT SPOTTING</span><h3>Turn market activity into calls</h3><p>Paste the text from today’s Market Pulse email. AGNT will identify property events and match same-street contacts in the same suburb.</p></div>
+            <strong id="marketPulseEventCount">0</strong>
+          </section>
+          <section class="market-pulse-results glass">
+            <div class="prospecting-section-head"><div><span>TODAY’S OPPORTUNITIES</span><h3>Hot spotting sessions</h3><small id="marketPulseMatchSummary">Paste an email to find matching contacts.</small></div><button id="clearMarketPulseEvents" class="text-btn" type="button">Clear all</button></div>
+            <div id="marketPulseList" class="market-pulse-list"></div>
+          </section>
+          <section class="market-pulse-import glass">
+            <div class="section-label"><span>IMPORT EMAIL</span><small>Manual prototype · no inbox access</small></div>
+            <textarea id="marketPulseInput" rows="8" placeholder="Paste the Market Pulse email content here…"></textarea>
+            <div class="market-pulse-import-actions"><button id="clearMarketPulseInput" class="secondary" type="button">Clear</button><button id="importMarketPulse" class="primary" type="button">Find Opportunities</button></div>
+            <p id="marketPulseImportStatus" class="market-pulse-status">Nothing imported yet.</p>
+          </section>
         </section>
         <section id="prospectorInsightsPanel" class="prospector-insights-panel hidden" aria-live="polite">
           <div class="insight-period-switch glass" role="tablist" aria-label="Prospecting insight period">
@@ -642,6 +671,6 @@
 </div>
 
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=119.4-week-overview-appointment-rows"></script>
+<script type="module" src="app.js?v=119.13-hotspot-sync"></script>
 </body>
 </html>

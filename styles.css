@@ -5043,3 +5043,102 @@ body.appointment-editing{overflow:hidden}
   #appointmentsView .appointment-history-tab strong{font-size:.94rem}
   #appointmentsView .appointment-history-tab small{font-size:.68rem}
 }
+
+
+/* v119.5 Market Pulse prototype */
+.prospector-sections{grid-template-columns:repeat(5,minmax(0,1fr))}
+.prospector-sections button{font-size:10.5px;letter-spacing:-.01em}
+.prospector-market-panel{display:grid;gap:14px}
+.prospector-market-panel.hidden{display:none!important}
+.market-pulse-hero,.market-pulse-import,.market-pulse-results{padding:20px;border-radius:24px}
+.market-pulse-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:18px}
+.market-pulse-hero span,.market-pulse-import .section-label span{display:block;color:#8994a7;font-size:11px;font-weight:850;letter-spacing:.18em}
+.market-pulse-hero h3{margin:7px 0 6px;font-size:24px;line-height:1.05}
+.market-pulse-hero p{margin:0;color:#7f899b;font-size:14px;line-height:1.45}
+.market-pulse-hero>strong{font-size:44px;line-height:1;color:#111318}
+.market-pulse-import textarea{width:100%;margin-top:14px;padding:15px;border:1px solid rgba(20,29,43,.09);border-radius:18px;background:#f5f7fa;color:#111318;font:inherit;font-size:14px;line-height:1.5;resize:vertical;box-sizing:border-box;outline:none}
+.market-pulse-import textarea:focus{border-color:rgba(30,116,235,.45);box-shadow:0 0 0 3px rgba(30,116,235,.08)}
+.market-pulse-import-actions{display:grid;grid-template-columns:.8fr 1.2fr;gap:10px;margin-top:12px}
+.market-pulse-import-actions button{min-height:48px;border-radius:16px}
+.market-pulse-status{margin:12px 2px 0;color:#8994a7;font-size:12px;line-height:1.4}
+.market-pulse-list{display:grid;gap:12px;margin-top:16px}
+.market-pulse-card{padding:17px;border-radius:20px;background:#f5f7fa;border:1px solid rgba(20,29,43,.045)}
+.market-pulse-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.market-pulse-card-head>button{width:30px;height:30px;border:0;border-radius:50%;background:#e9edf3;color:#7b8492;font-size:20px}
+.market-event-tag{display:inline-flex;align-items:center;min-height:27px;padding:0 10px;border-radius:999px;background:#e8eef8;color:#326cb5;font-size:10px;font-weight:900;letter-spacing:.11em;text-transform:uppercase}
+.event-just-listed{background:#e5f5e9;color:#22804a}.event-withdrawn{background:#eceef2;color:#626a76}.event-price-update{background:#fff1dc;color:#b26800}.event-sold{background:#e6efff;color:#2567c5}.event-under-offer{background:#f1e9ff;color:#7246a8}
+.market-pulse-card h4{margin:12px 0 3px;font-size:18px;line-height:1.2}.market-pulse-card>p{margin:0;color:#8490a2;font-size:13px}
+.market-pulse-match{display:flex;align-items:baseline;gap:8px;margin-top:16px}.market-pulse-match strong{font-size:28px}.market-pulse-match span{color:#788397;font-size:13px;font-weight:700}
+.market-pulse-preview{display:grid;gap:5px;margin:12px 0 14px;padding:12px;border-radius:14px;background:#fff}.market-pulse-preview span,.market-pulse-preview em{color:#687487;font-size:12px;font-style:normal;line-height:1.35}.market-pulse-preview em{font-weight:800;color:#2875d8}
+.market-pulse-card>.primary{width:100%;min-height:46px;border-radius:15px}.market-pulse-card>.primary:disabled{opacity:.45}
+@media(max-width:390px){.prospector-sections button{font-size:9.5px;padding-inline:2px}.market-pulse-hero{align-items:flex-start}.market-pulse-hero>strong{font-size:36px}}
+
+/* v119.6 — Market Pulse session entry and call context */
+.prospector-sections{grid-template-columns:repeat(4,minmax(0,1fr))}
+.market-pulse-back{justify-self:start;margin:0 2px -4px;padding:4px 0}
+.market-pulse-details{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.market-pulse-details span{padding:6px 9px;border-radius:999px;background:#fff;color:#687487;font-size:11px;font-weight:750}
+.market-session-context{margin-bottom:12px;padding:14px 15px;border-radius:18px;background:linear-gradient(180deg,#eef5ff,#e7f0ff);border:1px solid rgba(23,104,216,.12)}
+.market-session-context span{display:block;color:#1768d8;font-size:10px;font-weight:900;letter-spacing:.13em}
+.market-session-context strong{display:block;margin-top:6px;color:#111318;font-size:16px;line-height:1.25}
+.market-session-context small{display:block;margin-top:5px;color:#5f718b;font-size:12px;font-weight:700;line-height:1.4}
+@media(max-width:390px){.prospecting-hero{align-items:center}.prospector-sections button{font-size:10.5px}}
+
+
+/* v119.9 — Hot Spotting card typography and summary-only sessions */
+.market-pulse-hero>div>span{
+  text-transform:uppercase!important;
+}
+.market-pulse-hero h3,
+.market-pulse-hero p{
+  text-transform:none!important;
+}
+.market-event-tag{
+  text-transform:uppercase!important;
+}
+.market-pulse-card h4,
+.market-pulse-match strong{
+  font-weight:800;
+}
+.market-pulse-match{
+  margin-bottom:14px;
+}
+
+/* v119.11 — Hot Spotting recommendations in live knocking session */
+.knocking-hotspot-recommendations{border-radius:26px;padding:16px;background:#fff;border:1px solid rgba(20,24,32,.08);box-shadow:0 12px 32px rgba(30,40,60,.08)}
+.knocking-hotspot-head span{display:block;font-size:.55rem;letter-spacing:.14em;font-weight:900;color:#0b63f3}.knocking-hotspot-head strong{display:block;margin-top:5px;font-size:1.05rem;line-height:1.2}.knocking-hotspot-head small{display:block;margin-top:4px;color:#7a8392;font-size:.67rem}
+.knocking-hotspot-list{display:grid;gap:9px;margin-top:13px}.knocking-hotspot-item{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:7px 10px;padding:12px;border-radius:17px;background:#f4f7fb}.knocking-hotspot-item>div:first-child strong{display:block;font-size:.84rem;line-height:1.2}.knocking-hotspot-item>div:first-child small{display:block;margin-top:3px;color:#7a8392;font-size:.61rem}.knocking-hotspot-reasons{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:5px}.knocking-hotspot-reasons span{padding:5px 7px;border-radius:999px;background:#fff;color:#0b63f3;font-size:.48rem;letter-spacing:.08em;font-weight:900}.knocking-hotspot-item p{grid-column:1/-1;margin:0;color:#697384;font-size:.6rem;line-height:1.35}
+
+
+/* v119.12 — compact Hot Spotting dropdown, shared event colours and Day Log spacing */
+.knocking-hotspot-recommendations{padding:0;overflow:hidden}
+.knocking-hotspot-toggle{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:14px;width:100%;padding:16px;border:0;background:transparent;color:inherit;text-align:left}
+.knocking-hotspot-toggle .knocking-hotspot-head{display:block;min-width:0}
+.knocking-hotspot-toggle-meta{display:flex;align-items:center;gap:9px;color:#7a8392}
+.knocking-hotspot-toggle-meta b{display:grid;place-items:center;min-width:28px;height:28px;padding:0 8px;border-radius:999px;background:#f1f4f9;color:#344054;font-size:.68rem}
+.knocking-hotspot-toggle-meta i{display:block;font-size:1.25rem;font-style:normal;line-height:1;transform:rotate(0deg);transition:transform .18s ease}
+.knocking-hotspot-toggle[aria-expanded="true"] .knocking-hotspot-toggle-meta i{transform:rotate(180deg)}
+.knocking-hotspot-list{margin:0;padding:0 16px 16px;border-top:1px solid rgba(20,24,32,.06)}
+.knocking-hotspot-list.hidden{display:none!important}
+.knocking-hotspot-item:first-child{margin-top:12px}
+.knocking-hotspot-reasons .market-event-tag{min-height:24px;padding:0 8px;font-size:.46rem}
+
+/* One shared status palette wherever Hot Spotting event labels appear. */
+.market-event-tag.event-withdrawn{background:#f2e8e8;color:#a34848}
+.market-event-tag.event-just-listed,.market-event-tag.event-listed{background:#e5f5e9;color:#22804a}
+.market-event-tag.event-sold,.market-event-tag.event-just-sold{background:#e6efff;color:#2567c5}
+.market-event-tag.event-price-update,.market-event-tag.event-price-changed,.market-event-tag.event-price-change{background:#fff1dc;color:#b26800}
+.market-event-tag.event-under-offer{background:#f1e9ff;color:#7246a8}
+.market-event-tag.event-auction-result{background:#e9f4f5;color:#28767c}
+
+/* Give full time ranges their own space so timeline icons never overlap them. */
+.smart-log-card header{grid-template-columns:108px 26px minmax(0,1fr);gap:8px}
+.smart-log-card time{overflow:visible;text-align:right;white-space:nowrap;font-size:.59rem;letter-spacing:-.015em}
+.smart-log-stats{margin-left:150px}
+@media(max-width:390px){
+  .smart-log-card{padding-inline:11px}
+  .smart-log-card header{grid-template-columns:96px 24px minmax(0,1fr);gap:6px}
+  .smart-log-card time{font-size:.55rem}
+  .smart-log-icon{width:22px;height:22px}
+  .smart-log-stats{margin-left:132px}
+}

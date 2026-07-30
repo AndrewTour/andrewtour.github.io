@@ -40,3 +40,33 @@ Firebase, authentication, Firestore paths and rules, UID separation, local cache
 - The appointment contact dropdown now uses native momentum scrolling and selects contacts only on a genuine tap.
 - Session-created appointments now save and advance to the next client before the optional calendar hand-off, so returning from Calendar resumes the active session immediately.
 - Firebase, authentication, Firestore paths/rules, UID separation, daily queue, 21-day exclusion and unrelated UI remain unchanged.
+
+## v119.5 — Market Pulse Prototype
+- Added a manual Market Pulse text importer inside Prospector.
+- Parses supported property event labels and full addresses.
+- Matches active callable contacts by normalised same street and suburb.
+- Creates calling queues through the existing Prospector session workflow.
+- Stores imported events per user in local storage with duplicate protection.
+- No Outlook access, Cloud Functions, Firestore path changes or Firebase configuration changes.
+
+## v119.10 — Hot Spotting address matching audit
+- Rebuilt same-street keys from the stored event address on load so previously imported opportunities use the improved matcher.
+- Normalises road type abbreviations and expanded common Australian street types.
+- Handles unit, lot, shop, suite, apartment, villa, level and flat prefixes.
+- Handles slash addresses, number ranges, alphanumeric street numbers, commas, semicolons and postcode/state formatting.
+- Matches against all active callable Prospector contacts while continuing to exclude archived and Do Not Contact records.
+
+
+## v119.12 — Hot Spotting dropdown and Day Log cleanup
+- Collapsed Streets worth knocking into a compact expandable first card.
+- Applied one event-status colour palette across Hot Spotting cards and knocking recommendations.
+- Increased Day Log time-column spacing so time ranges and icons do not overlap.
+- No Firebase, data-model, session-logic or sync changes.
+
+
+## v119.13 — Hot Spotting cloud persistence
+- Added each user’s Hot Spotting events to their existing private Firestore prospecting state.
+- Retained the UID-specific local copy as the offline cache.
+- Existing local-only Hot Spotting imports migrate to Firestore after the user’s first confirmed cloud load.
+- Imports, individual removals and Clear All now sync across that user’s devices.
+- No UI, matching, session, Firebase path, rule or unrelated functionality changes.
