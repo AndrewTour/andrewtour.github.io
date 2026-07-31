@@ -1,4 +1,4 @@
-const CACHE='agnt-v125-1-manual-dialler';
+const CACHE='agnt-v125-2-manual-dialler-refine';
 const ASSETS=['./','./index.html','./styles.css?v=125.1-manual-dialler','./app.js?v=125.1-manual-dialler','./firebase-config.js','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));

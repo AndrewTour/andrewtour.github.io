@@ -88,3 +88,10 @@ Firebase, authentication, Firestore paths and rules, UID separation, local cache
 - Connected adds one call and one connect. Voicemail, no answer and wrong/disconnected add one call only. Cancelled adds no metrics.
 - The post-call screen can prefill a new contact or appointment with the dialled number.
 - Firebase configuration, paths, rules, UID separation, existing prospecting data and all unrelated features are unchanged.
+
+
+## v125.2 — Quick Call presentation refinement
+- Formats Australian mobile numbers as 4-3-3 while dialling.
+- Enlarges the centred keypad and call control by approximately 10%.
+- Removes metric explanations from the outcome choices while retaining the result summary after selection.
+- No other application behaviour changed.

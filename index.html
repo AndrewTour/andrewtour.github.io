@@ -701,11 +701,11 @@
     <div class="action-sheet-handle"></div>
     <div class="action-sheet-head"><div><small>CALL OUTCOME</small><h2 id="manualCallOutcomeTitle">How did the call go?</h2><p id="manualCallOutcomeNumber"></p></div><button id="closeManualCallOutcome" type="button" class="action-sheet-close" aria-label="Close">×</button></div>
     <div id="manualCallOutcomeOptions" class="manual-call-outcome-options">
-      <button type="button" data-manual-call-outcome="Connected"><span>Connected</span><small>Counts as a call and connect</small></button>
-      <button type="button" data-manual-call-outcome="Left voicemail"><span>Left voicemail</span><small>Counts as a call only</small></button>
-      <button type="button" data-manual-call-outcome="No answer"><span>No answer</span><small>Counts as a call only</small></button>
-      <button type="button" data-manual-call-outcome="Wrong / disconnected"><span>Wrong / disconnected</span><small>Counts as a call only</small></button>
-      <button type="button" class="manual-call-cancelled" data-manual-call-outcome="Cancelled"><span>Cancelled / did not call</span><small>No metrics added</small></button>
+      <button type="button" data-manual-call-outcome="Connected"><span>Connected</span></button>
+      <button type="button" data-manual-call-outcome="Left voicemail"><span>Left voicemail</span></button>
+      <button type="button" data-manual-call-outcome="No answer"><span>No answer</span></button>
+      <button type="button" data-manual-call-outcome="Wrong / disconnected"><span>Wrong / disconnected</span></button>
+      <button type="button" class="manual-call-cancelled" data-manual-call-outcome="Cancelled"><span>Cancelled / did not call</span></button>
     </div>
     <div id="manualCallPostActions" class="manual-call-post-actions hidden">
       <div class="manual-call-result"><span id="manualCallResultIcon">✓</span><div><strong id="manualCallResultTitle">Call logged</strong><small id="manualCallResultMeta"></small></div></div>
@@ -717,6 +717,6 @@
 </div>
 
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=125.1-manual-dialler"></script>
+<script type="module" src="app.js?v=125.2-manual-dialler-refine"></script>
 </body>
 </html>
