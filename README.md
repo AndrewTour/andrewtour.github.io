@@ -95,3 +95,10 @@ Firebase, authentication, Firestore paths and rules, UID separation, local cache
 - Enlarges the centred keypad and call control by approximately 10%.
 - Removes metric explanations from the outcome choices while retaining the result summary after selection.
 - No other application behaviour changed.
+
+
+## v125.3 — Hot Spotting street session progress
+- Hot Spotting street tiles now show called, connects and follow-up progress.
+- Session buttons progress from Start Session to Active Session to Session Complete.
+- Completed Hot Spotting session buttons display in green while preserving the existing summary.
+- No Firebase configuration or rules changes are required.
