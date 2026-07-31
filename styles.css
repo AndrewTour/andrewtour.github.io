@@ -5173,3 +5173,13 @@ body.manual-dialler-open,body.manual-call-outcome-open{overflow:hidden}
 .prospecting-hero>.market-session-start-btn{background:#111318;color:#fff}
 .prospecting-hero>.market-session-active-btn{background:#0b63f3;color:#fff}
 .prospecting-hero>.market-session-complete-btn,.prospecting-hero>.market-session-complete-btn:disabled{background:#2fa866;color:#fff;opacity:1}
+
+/* V125.7 — Session-state colour specificity fix only */
+.market-pulse-card>.market-session-start-btn,
+.prospecting-hero>.market-session-start-btn{background:#111318!important;color:#fff!important;border-color:#111318!important}
+.market-pulse-card>.market-session-active-btn,
+.prospecting-hero>.market-session-active-btn{background:#0b63f3!important;color:#fff!important;border-color:#0b63f3!important}
+.market-pulse-card>.market-session-complete-btn,
+.market-pulse-card>.market-session-complete-btn:disabled,
+.prospecting-hero>.market-session-complete-btn,
+.prospecting-hero>.market-session-complete-btn:disabled{background:#2fa866!important;color:#fff!important;border-color:#2fa866!important;opacity:1!important}

@@ -124,3 +124,12 @@ Firebase, authentication, Firestore paths and rules, UID separation, local cache
 - Keeps Today’s Pipeline independent from Hot Spotting totals.
 - A Hot Spotting interaction only affects Today’s Pipeline when it belongs to the same contact already in that pipeline, through the existing contacted-today rules.
 - Prospector Today buttons now mirror Smart Hot Spotting states: black Start Session, blue Active Session and green Session Complete.
+
+
+## V125.7 — Session-state colour specificity fix
+
+- Corrected CSS specificity so session state colours display over the global primary-button style.
+- Start Session remains black.
+- Active Session displays blue.
+- Session Complete displays green, including disabled completed buttons.
+- No session logic, metrics, Firebase or pipeline behaviour changed.
