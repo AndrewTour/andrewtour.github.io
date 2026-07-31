@@ -110,3 +110,17 @@ Firebase, authentication, Firestore paths and rules, UID separation, local cache
 - Skipped contacts count toward street-session progress without adding call or connect metrics.
 - Session Complete is now applied only when Review & End Session is selected.
 - Early session exit leaves the street in Active Session so it can be resumed.
+
+
+## v125.5 — Hot Spotting call summary and button colours
+
+- Skipped contacts continue to count as processed for session completion, but are excluded from the visible called total.
+- A session with 14 logged calls and 3 skipped contacts across 17 neighbours displays 14/17 called.
+- Restored Hot Spotting session button colours: black for Start Session, blue for Active Session and green for Session Complete.
+- No other application behaviour changed.
+
+
+## V125.6 — Prospector Today session states
+- Keeps Today’s Pipeline independent from Hot Spotting totals.
+- A Hot Spotting interaction only affects Today’s Pipeline when it belongs to the same contact already in that pipeline, through the existing contacted-today rules.
+- Prospector Today buttons now mirror Smart Hot Spotting states: black Start Session, blue Active Session and green Session Complete.
