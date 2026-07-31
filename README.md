@@ -77,3 +77,14 @@ Firebase, authentication, Firestore paths and rules, UID separation, local cache
 - Day Log remains scoped to the signed-in user's UID-backed day and prospecting data.
 - Completed knocking sessions under 60 seconds with no knocks, connects, data, MAP or LAP activity are excluded from the Day Log and its session total.
 - No Firebase paths, rules, metrics, session storage, Hot Spotting, Pipeline or UI behaviour changed.
+
+
+## v125.1 — Quick Call keypad
+
+- Added a compact phone button to the Prospector toolbar.
+- Added an in-app keypad for manually entered, unsaved numbers.
+- Calls hand off to the native iPhone dialler through `tel:`.
+- Returning to AGNT opens an outcome sheet.
+- Connected adds one call and one connect. Voicemail, no answer and wrong/disconnected add one call only. Cancelled adds no metrics.
+- The post-call screen can prefill a new contact or appointment with the dialled number.
+- Firebase configuration, paths, rules, UID separation, existing prospecting data and all unrelated features are unchanged.

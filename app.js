@@ -21,6 +21,7 @@ let todayPage='overview';
 let appointmentEditReturnState=null;
 let appointmentLinkedProspectId='';
 let pendingProspectAppointmentFlow=null;
+let manualDiallerNumber='',manualCallOutcome='',manualCallLaunchGuardUntil=0;
 const daySaveChains=new Map();
 let dirtyDayKeys=new Set();
 const appointmentSubmitLocks=new Set();
@@ -1642,6 +1643,23 @@ function levelClass(p){return p>=100?'l4':p>=67?'l3':p>=34?'l2':p>0?'l1':''}
 function renderMonth(){const y=monthCursor.getFullYear(),m=monthCursor.getMonth();$('#monthLabel').textContent=monthCursor.toLocaleDateString('en-AU',{month:'long',year:'numeric'});const vals=[];for(let d=1;d<=new Date(y,m+1,0).getDate();d++){const dt=new Date(y,m,d);if(workDays.includes(dt.getDay()))vals.push(completion(dateKey(dt)))}const groups=[];for(let i=0;i<vals.length;i+=4){const g=vals.slice(i,i+4);groups.push(Math.round(g.reduce((a,b)=>a+b,0)/Math.max(1,g.length)))}$('#monthBars').innerHTML=groups.map((p,i)=>`<div title="${p}%"><i style="height:${Math.max(3,p)}%"></i><small>W${i+1}</small></div>`).join('')}
 function renderCalendar(){const labels=['M','T','W','T','F','S','S'];$('#calendarYear').textContent=year;const months=[];for(let m=0;m<12;m++){const first=new Date(year,m,1),pad=(first.getDay()+6)%7;let cells=`<div class="weekday-row">${labels.map(x=>`<b>${x}</b>`).join('')}</div><div class="days">${'<i></i>'.repeat(pad)}`;for(let d=1;d<=new Date(year,m+1,0).getDate();d++){const dt=new Date(year,m,d),k=dateKey(dt),p=completion(k),off=!workDays.includes(dt.getDay());cells+=`<button class="day-cell ${levelClass(p)} ${off?'off':''} ${k===todayKey()?'today':''} ${k===selectedDate?'selected':''}" data-date="${k}" title="${fmtDate(k)} · ${p}%">${d}</button>`}cells+='</div>';months.push(`<section class="month"><h3>${new Date(year,m,1).toLocaleDateString('en-AU',{month:'long'})}</h3>${cells}</section>`)}$('#calendarGrid').innerHTML=months.join('')}
 
+function manualCallStorageKey(){return`agnt-manual-call-v125-${uid||currentUser?.uid||'device'}`}
+function readPendingManualCall(){try{const value=JSON.parse(localStorage.getItem(manualCallStorageKey())||'null');return value&&typeof value==='object'?value:null}catch{return null}}
+function writePendingManualCall(value){try{if(value)localStorage.setItem(manualCallStorageKey(),JSON.stringify(value));else localStorage.removeItem(manualCallStorageKey())}catch(err){console.warn('Manual call state could not be saved',err)}}
+function normaliseDialNumber(value=''){let clean=String(value).replace(/[^+\d]/g,'');if(clean.includes('+'))clean=(clean.startsWith('+')?'+':'')+clean.replace(/\+/g,'');return clean.slice(0,18)}
+function displayDialNumber(value=''){const number=normaliseDialNumber(value);if(!number)return'\u00a0';if(number.startsWith('+61')&&number.length>3){const local='0'+number.slice(3);return local.replace(/(\d{4})(?=\d)/,'$1 ').replace(/(\d{3})(?=\d)/g,'$1 ').trim()}return number.replace(/(\d{4})(?=\d)/g,'$1 ').trim()}
+function renderManualDialler(){const output=$('#manualDiallerNumber'),call=$('#manualDiallerCall');if(output)output.textContent=displayDialNumber(manualDiallerNumber);if(call)call.disabled=normaliseDialNumber(manualDiallerNumber).replace(/\D/g,'').length<6}
+function openManualDialler(){manualDiallerNumber='';renderManualDialler();const modal=$('#manualDiallerModal');modal?.classList.add('open');modal?.setAttribute('aria-hidden','false');document.body.classList.add('manual-dialler-open')}
+function closeManualDialler(){const modal=$('#manualDiallerModal');modal?.classList.remove('open');modal?.setAttribute('aria-hidden','true');document.body.classList.remove('manual-dialler-open')}
+function closeManualCallOutcome({clear=true}={}){const modal=$('#manualCallOutcomeModal');modal?.classList.remove('open');modal?.setAttribute('aria-hidden','true');document.body.classList.remove('manual-call-outcome-open');manualCallOutcome='';$('#manualCallOutcomeOptions')?.classList.remove('hidden');$('#manualCallPostActions')?.classList.add('hidden');if(clear)writePendingManualCall(null)}
+function showManualCallOutcome(){const pending=readPendingManualCall();if(!pending?.number||pending.outcomeLogged)return;const modal=$('#manualCallOutcomeModal');if(!modal)return;$('#manualCallOutcomeNumber').textContent=displayDialNumber(pending.number);$('#manualCallOutcomeOptions').classList.remove('hidden');$('#manualCallPostActions').classList.add('hidden');modal.classList.add('open');modal.setAttribute('aria-hidden','false');document.body.classList.add('manual-call-outcome-open')}
+function maybeShowManualCallOutcome(){const pending=readPendingManualCall();if(!pending?.number||pending.outcomeLogged||Date.now()<manualCallLaunchGuardUntil)return;showManualCallOutcome()}
+function launchManualCall(){const number=normaliseDialNumber(manualDiallerNumber);if(number.replace(/\D/g,'').length<6)return;const pending={id:prospectId(),number,launchedAt:Date.now(),outcomeLogged:false};writePendingManualCall(pending);manualCallLaunchGuardUntil=Date.now()+1600;closeManualDialler();window.location.href=`tel:${number}`;setTimeout(maybeShowManualCallOutcome,2600)}
+async function applyManualCallOutcome(outcome,pending){if(!pending?.id||outcome==='Cancelled')return;const key=todayKey(),d=dayData(key);if(d.events.some(event=>event?.sourceInteractionId===pending.id))return;const connected=outcome==='Connected',at=Date.now();d.calls=Math.max(0,d.calls+1);d.events.push({id:uuid(),type:'calls',label:`Quick Call · ${outcome}`,delta:1,at,sourceInteractionId:pending.id,phone:pending.number});if(connected){d.connects=Math.max(0,d.connects+1);d.events.push({id:uuid(),type:'connects',label:'Quick Call · Connected',delta:1,at,sourceInteractionId:pending.id,phone:pending.number})}d.events=d.events.slice(-500);days[key]=d;haptic();await saveDay(key)}
+async function saveManualCallOutcome(outcome){const pending=readPendingManualCall();if(!pending?.number)return closeManualCallOutcome();manualCallOutcome=outcome;if(outcome!=='Cancelled'){try{await applyManualCallOutcome(outcome,pending)}catch(err){console.error('Quick call metrics failed to save',err);toast('Call logged locally. Please check sync.')}}const updated={...pending,outcome,outcomeLogged:true,loggedAt:Date.now()};writePendingManualCall(updated);$('#manualCallOutcomeOptions').classList.add('hidden');$('#manualCallPostActions').classList.remove('hidden');$('#manualCallResultIcon').textContent=outcome==='Cancelled'?'×':'✓';$('#manualCallResultTitle').textContent=outcome==='Cancelled'?'Call cancelled':'Call logged';$('#manualCallResultMeta').textContent=outcome==='Connected'?'+1 call · +1 connect':outcome==='Cancelled'?'No metrics added':'+1 call · No connect';renderAll()}
+function manualCallPhone(){return readPendingManualCall()?.number||''}
+function saveManualCallAsContact(){const phone=manualCallPhone();closeManualCallOutcome();switchView('prospectingView');openProspectEditor();const input=$('#prospectEditor input[name="phone"]');if(input){input.value=phone;requestAnimationFrame(()=>$('#prospectEditor input[name="name"]')?.focus({preventScroll:true}))}}
+function bookManualCallAppointment(){const phone=manualCallPhone();closeManualCallOutcome();editingAppointment=null;appointmentEditReturnState=null;appointmentHistoryMode=null;appointmentDate=todayKey();appointmentLinkedProspectId='';$('#appointmentForm')?.reset();$('#appointmentContactNumber').value=phone;$('#appointmentDatePicker').value=appointmentDate;$('#appointmentTime').value='12:00';$('#appointmentAuction').checked=false;updateOfiFormState();switchView('appointmentsView');requestAnimationFrame(()=>$('#appointmentContactName')?.focus({preventScroll:true}))}
 function prospectId(){return `p_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 function cleanText(value,max=500){return String(value??'').trim().slice(0,max)}
 function pipelineDefaultsForTimeframe(timeframe=''){
@@ -2261,6 +2279,20 @@ $('#appointmentsView').addEventListener('keydown',e=>{
 
 $('#prospectSearch').oninput=()=>renderProspecting();$('#pipelineSort')&&($('#pipelineSort').onchange=e=>{pipelineSort=e.target.value;renderSellerPipeline()});
 $('#addProspectButton').onclick=()=>openProspectEditor();
+$('#openManualDialler').onclick=openManualDialler;
+$('#closeManualDialler').onclick=closeManualDialler;
+$('#manualDiallerModal').onclick=e=>{if(e.target.id==='manualDiallerModal')closeManualDialler()};
+$('#manualDiallerKeypad').onclick=e=>{const key=e.target.closest('[data-dial-key]'),del=e.target.closest('[data-dial-delete]');if(key){const value=key.dataset.dialKey;if(value==='+'&&manualDiallerNumber)return;manualDiallerNumber=normaliseDialNumber(manualDiallerNumber+value);renderManualDialler();haptic()}else if(del){manualDiallerNumber=manualDiallerNumber.slice(0,-1);renderManualDialler();haptic()}};
+$('#manualDiallerCall').onclick=launchManualCall;
+$('#manualCallOutcomeOptions').onclick=e=>{const button=e.target.closest('[data-manual-call-outcome]');if(button)saveManualCallOutcome(button.dataset.manualCallOutcome)};
+$('#closeManualCallOutcome').onclick=()=>closeManualCallOutcome();
+$('#manualCallOutcomeModal').onclick=e=>{if(e.target.id==='manualCallOutcomeModal')closeManualCallOutcome()};
+$('#manualCallSaveContact').onclick=saveManualCallAsContact;
+$('#manualCallBookAppointment').onclick=bookManualCallAppointment;
+$('#manualCallDone').onclick=()=>closeManualCallOutcome();
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')setTimeout(maybeShowManualCallOutcome,180)});
+window.addEventListener('focus',()=>setTimeout(maybeShowManualCallOutcome,180));
+window.addEventListener('pageshow',()=>setTimeout(maybeShowManualCallOutcome,180));
 $('#startProspectingSession').onclick=startProspectingSession;
 $('#openHotSpotting')&&($('#openHotSpotting').onclick=()=>{setProspectorSection('market');renderProspecting()});
 $('#backFromMarketPulse')&&($('#backFromMarketPulse').onclick=()=>{setProspectorSection('today');renderProspecting()});

@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=119.14-clean-knock-log">
+<link rel="stylesheet" href="styles.css?v=125.1-manual-dialler">
 <title>AGNT</title>
 </head>
 <body>
@@ -443,6 +443,9 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
           <input id="prospectSearch" type="search" placeholder="Search name, street, suburb, phone etc." autocomplete="off">
         </div>
+        <button id="openManualDialler" class="prospecting-call-button" type="button" aria-label="Open call keypad" title="Call a number">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.2 3.9 9.8 3c.7-.2 1.5.2 1.8.9l1.2 3.1c.2.6.1 1.2-.4 1.6l-1.7 1.5a14 14 0 0 0 3.2 3.2l1.5-1.7c.4-.5 1.1-.6 1.6-.4l3.1 1.2c.7.3 1.1 1.1.9 1.8l-.9 2.6c-.3.9-1.1 1.5-2.1 1.5C10.8 18.3 5.7 13.2 5.7 6c0-1 .6-1.8 1.5-2.1Z"/></svg>
+        </button>
         <button id="addProspectButton" class="prospecting-add" type="button" aria-label="Add prospect">+</button>
       </div>
 
@@ -670,7 +673,50 @@
   </div>
 </div>
 
+
+<div id="manualDiallerModal" class="modal manual-dialler-modal" aria-hidden="true">
+  <section class="manual-dialler glass" role="dialog" aria-modal="true" aria-labelledby="manualDiallerTitle">
+    <div class="manual-dialler-head"><button id="closeManualDialler" type="button" aria-label="Close keypad">×</button><div><small>QUICK CALL</small><h2 id="manualDiallerTitle">Enter a number</h2></div><span></span></div>
+    <div id="manualDiallerNumber" class="manual-dialler-number" aria-live="polite">&nbsp;</div>
+    <div id="manualDiallerKeypad" class="manual-dialler-keypad" aria-label="Phone keypad">
+      <button type="button" data-dial-key="1"><strong>1</strong><small>&nbsp;</small></button>
+      <button type="button" data-dial-key="2"><strong>2</strong><small>ABC</small></button>
+      <button type="button" data-dial-key="3"><strong>3</strong><small>DEF</small></button>
+      <button type="button" data-dial-key="4"><strong>4</strong><small>GHI</small></button>
+      <button type="button" data-dial-key="5"><strong>5</strong><small>JKL</small></button>
+      <button type="button" data-dial-key="6"><strong>6</strong><small>MNO</small></button>
+      <button type="button" data-dial-key="7"><strong>7</strong><small>PQRS</small></button>
+      <button type="button" data-dial-key="8"><strong>8</strong><small>TUV</small></button>
+      <button type="button" data-dial-key="9"><strong>9</strong><small>WXYZ</small></button>
+      <button type="button" data-dial-key="+"><strong>+</strong><small>&nbsp;</small></button>
+      <button type="button" data-dial-key="0"><strong>0</strong><small>&nbsp;</small></button>
+      <button type="button" data-dial-delete aria-label="Delete digit"><strong>⌫</strong><small>&nbsp;</small></button>
+    </div>
+    <button id="manualDiallerCall" class="manual-dialler-call" type="button" disabled aria-label="Call number"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.2 3.9 9.8 3c.7-.2 1.5.2 1.8.9l1.2 3.1c.2.6.1 1.2-.4 1.6l-1.7 1.5a14 14 0 0 0 3.2 3.2l1.5-1.7c.4-.5 1.1-.6 1.6-.4l3.1 1.2c.7.3 1.1 1.1.9 1.8l-.9 2.6c-.3.9-1.1 1.5-2.1 1.5C10.8 18.3 5.7 13.2 5.7 6c0-1 .6-1.8 1.5-2.1Z"/></svg></button>
+  </section>
+</div>
+
+<div id="manualCallOutcomeModal" class="modal action-sheet-modal manual-call-outcome-modal" aria-hidden="true">
+  <section class="action-sheet glass manual-call-outcome-sheet" role="dialog" aria-modal="true" aria-labelledby="manualCallOutcomeTitle">
+    <div class="action-sheet-handle"></div>
+    <div class="action-sheet-head"><div><small>CALL OUTCOME</small><h2 id="manualCallOutcomeTitle">How did the call go?</h2><p id="manualCallOutcomeNumber"></p></div><button id="closeManualCallOutcome" type="button" class="action-sheet-close" aria-label="Close">×</button></div>
+    <div id="manualCallOutcomeOptions" class="manual-call-outcome-options">
+      <button type="button" data-manual-call-outcome="Connected"><span>Connected</span><small>Counts as a call and connect</small></button>
+      <button type="button" data-manual-call-outcome="Left voicemail"><span>Left voicemail</span><small>Counts as a call only</small></button>
+      <button type="button" data-manual-call-outcome="No answer"><span>No answer</span><small>Counts as a call only</small></button>
+      <button type="button" data-manual-call-outcome="Wrong / disconnected"><span>Wrong / disconnected</span><small>Counts as a call only</small></button>
+      <button type="button" class="manual-call-cancelled" data-manual-call-outcome="Cancelled"><span>Cancelled / did not call</span><small>No metrics added</small></button>
+    </div>
+    <div id="manualCallPostActions" class="manual-call-post-actions hidden">
+      <div class="manual-call-result"><span id="manualCallResultIcon">✓</span><div><strong id="manualCallResultTitle">Call logged</strong><small id="manualCallResultMeta"></small></div></div>
+      <button id="manualCallSaveContact" type="button" class="secondary">Save as a contact</button>
+      <button id="manualCallBookAppointment" type="button" class="primary">Book appointment</button>
+      <button id="manualCallDone" type="button" class="text-btn">Done</button>
+    </div>
+  </section>
+</div>
+
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=119.14-clean-knock-log"></script>
+<script type="module" src="app.js?v=125.1-manual-dialler"></script>
 </body>
 </html>
