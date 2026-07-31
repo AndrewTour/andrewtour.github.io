@@ -102,3 +102,11 @@ Firebase, authentication, Firestore paths and rules, UID separation, local cache
 - Session buttons progress from Start Session to Active Session to Session Complete.
 - Completed Hot Spotting session buttons display in green while preserving the existing summary.
 - No Firebase configuration or rules changes are required.
+
+## v125.4 — Hot Spotting session state correction
+
+- Starting a Hot Spotting street session immediately persists the Active Session state.
+- Renamed the matching-contact label to Neighbours Found.
+- Skipped contacts count toward street-session progress without adding call or connect metrics.
+- Session Complete is now applied only when Review & End Session is selected.
+- Early session exit leaves the street in Active Session so it can be resumed.
