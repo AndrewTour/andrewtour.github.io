@@ -5183,3 +5183,33 @@ body.manual-dialler-open,body.manual-call-outcome-open{overflow:hidden}
 .market-pulse-card>.market-session-complete-btn:disabled,
 .prospecting-hero>.market-session-complete-btn,
 .prospecting-hero>.market-session-complete-btn:disabled{background:#2fa866!important;color:#fff!important;border-color:#2fa866!important;opacity:1!important}
+
+/* AGNT OG Passkey proof-of-concept — authentication UI only. */
+.passkey-sign-in{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:48px;margin-top:15px;padding:11px 15px;border:0;border-radius:14px;background:#111318;color:#fff;font-size:.78rem;font-weight:850;box-shadow:0 8px 20px rgba(17,19,24,.16)}
+.passkey-sign-in svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.passkey-sign-in:active{transform:scale(.985)}
+.passkey-sign-in:disabled{cursor:not-allowed;opacity:.44;box-shadow:none}
+.auth-card .passkey-support-note{margin:8px 4px 0;color:#747b86;font-size:.62rem;line-height:1.35}
+.auth-divider{display:flex;align-items:center;gap:10px;margin:14px 0 2px;color:#9298a2;font-size:.54rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.auth-divider::before,.auth-divider::after{content:"";height:1px;flex:1;background:rgba(20,24,32,.1)}
+.auth-divider span{white-space:nowrap}
+
+.passkey-settings{margin:14px 0 17px;padding:15px;border:1px solid rgba(20,24,32,.08);border-radius:20px;background:linear-gradient(145deg,#fbfcfe,#f3f6fa)}
+.passkey-settings-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.passkey-settings-head span{display:block;color:#0b63f3;font-size:.54rem;font-weight:900;letter-spacing:.13em}
+.passkey-settings-head h3{margin:4px 0 0;color:#141820;font-size:.88rem;line-height:1.2}
+.passkey-settings>p{margin:8px 0 0;color:#737c89;font-size:.65rem;line-height:1.4}
+.passkey-status-badge{display:inline-flex;align-items:center;min-height:24px;padding:4px 8px;border-radius:999px;background:#e9edf3;color:#687386;font-size:.52rem;font-weight:900;letter-spacing:.04em;white-space:nowrap}
+.passkey-status-badge.active{background:#e4f6eb;color:#21804b}
+.passkey-status-badge.error{background:#fde9ec;color:#bd334b}
+.passkey-credential-list{display:grid;gap:7px;margin-top:11px}
+.passkey-credential{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 11px;border:1px solid rgba(20,24,32,.07);border-radius:14px;background:#fff}
+.passkey-credential strong,.passkey-credential small{display:block}
+.passkey-credential strong{color:#1a1e26;font-size:.68rem}
+.passkey-credential small{margin-top:3px;color:#7f8793;font-size:.56rem;line-height:1.3}
+.passkey-credential button{padding:6px 8px;border:0;border-radius:10px;background:#fcebed;color:#b63c4f;font-size:.56rem;font-weight:850}
+.passkey-add{margin-top:11px}
+.passkey-add:disabled{opacity:.45}
+.settings .passkey-settings-message{display:block;min-height:14px;margin-top:8px;color:#697386;font-size:.58rem;line-height:1.35;text-align:left}
+.settings .passkey-settings-message.error{color:#c3394e}
+.settings .passkey-settings-message.success{color:#23804c}

@@ -1,4 +1,24 @@
-# AGNT V91 — Booking / Editor Header Separation
+# AGNT OG Passkey Proof-of-Concept
+
+This isolated test build adds optional Apple/Android WebAuthn passkeys to the uploaded OG package. Existing email/password authentication, Firebase UIDs, Firestore paths, rules, local data and application behaviour are preserved.
+
+The included Firebase Function must be deployed before passkey registration or sign-in can work. See `PASSKEY-SETUP.md` for the isolated test deployment and acceptance process. Do not replace the current BETA with this package.
+
+## Passkey POC changes
+
+- Added `Continue with passkey` to the login screen.
+- Added passkey registration, status and removal in Settings.
+- Added a server-side WebAuthn verification function using SimpleWebAuthn.
+- Successful verification mints a Firebase custom token for the user's existing UID.
+- Retained email/password and device-only recovery paths.
+- Added the `icons/` directory already referenced by the manifest and service worker.
+- No existing Firestore paths, rules, UID separation, local cache, sync or business logic were changed.
+
+---
+
+# Previous release history
+
+## AGNT V91 — Booking / Editor Header Separation
 
 Incremental update built from V90.
 

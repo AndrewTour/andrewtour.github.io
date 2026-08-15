@@ -1,3 +1,9 @@
+AGNT OG PASSKEY PROOF-OF-CONCEPT
+
+This is an isolated test package. Do not replace the current BETA.
+Read PASSKEY-SETUP.md before uploading or deploying anything.
+The Firebase Function must be deployed before passkey sign-in can work.
+
 DAILY ACCOUNTABILITY PWA
 
 Upload every file and the icons folder to the root of your GitHub Pages repository.

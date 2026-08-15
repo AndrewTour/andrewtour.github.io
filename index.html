@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=125.7-session-colour-fix">
+<link rel="stylesheet" href="styles.css?v=125.7-passkey-poc1">
 <title>AGNT</title>
 </head>
 <body>
@@ -18,7 +18,13 @@
     <div class="brand-mark">AGNT</div>
     <h1>AGNT</h1>
     <p>Sign in once and your data stays live across your devices.</p>
-    <input id="email" type="email" autocomplete="email" placeholder="Email" required>
+    <button id="passkeySignIn" class="passkey-sign-in" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8.5" cy="10" r="4.5"/><path d="M13 10h7M17 10v3M20 10v2"/><path d="M6.75 10h3.5"/></svg>
+      <span>Continue with passkey</span>
+    </button>
+    <small id="passkeySupportNote" class="passkey-support-note">Use Face ID, fingerprint or your device passcode.</small>
+    <div class="auth-divider" aria-hidden="true"><span>or use email</span></div>
+    <input id="email" type="email" autocomplete="username webauthn" placeholder="Email" required>
     <input id="password" type="password" autocomplete="current-password" placeholder="Password" minlength="6" required>
     <button class="primary" type="submit">Sign in</button>
     <button id="createAccount" class="secondary" type="button">Create account</button>
@@ -572,6 +578,16 @@
           <article><span>This week</span><strong id="profileWeekScore">0%</strong></article>
           <article><span>Work days</span><strong id="profileWorkDays">4</strong></article>
         </div>
+        <section class="passkey-settings" aria-labelledby="passkeySettingsTitle">
+          <div class="passkey-settings-head">
+            <div><span>PASSKEY</span><h3 id="passkeySettingsTitle">Faster, protected sign-in</h3></div>
+            <strong id="passkeyStatusBadge" class="passkey-status-badge">Checking</strong>
+          </div>
+          <p id="passkeySettingsCopy">Use Face ID, fingerprint or your device passcode when signing in.</p>
+          <div id="passkeyCredentialList" class="passkey-credential-list" aria-live="polite"></div>
+          <button id="addPasskey" class="secondary passkey-add" type="button">Set up a passkey</button>
+          <small id="passkeySettingsMessage" class="passkey-settings-message"></small>
+        </section>
         <label>Agent name<input id="agentName" type="text" maxlength="40" placeholder="Your name"></label>
         <label>Calls target<input id="callsTarget" type="number" min="1"></label>
         <label>Connects target<input id="connectsTarget" type="number" min="1"></label>
@@ -717,6 +733,6 @@
 </div>
 
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=125.7-session-colour-fix"></script>
+<script type="module" src="app.js?v=125.7-passkey-poc1"></script>
 </body>
 </html>

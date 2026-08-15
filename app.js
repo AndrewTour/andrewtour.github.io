@@ -1,6 +1,6 @@
 import { firebaseConfig } from './firebase-config.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js';
-import { getAuth, setPersistence, browserLocalPersistence, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut as firebaseSignOut } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
+import { getAuth, setPersistence, browserLocalPersistence, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithCustomToken, signOut as firebaseSignOut } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, onSnapshot, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
 
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
@@ -16,6 +16,7 @@ let year=new Date().getFullYear(), monthCursor=new Date(), uid='local', currentU
 let unsubDays=null, unsubProfile=null, unsubLeaderboard=null, unsubProspecting=null, timerTick=null, syncTimer=null, leaderboardPublishTimer=null, prospectingSaveTimer=null;
 let pendingSyncOperations=0, syncHasError=false, lastLeaderboardSignature='', lastProspectingSignature='';
 let pendingProspectingPayload=null, pendingProspectingSignature='', prospectingWriteInFlight=false, prospectingSaveWaiters=[];
+let passkeyCredentials=[],passkeyCredentialsLoading=false,passkeyCredentialsLoaded=false,passkeyCredentialsError='',passkeyOperationActive=false;
 let editingAppointment=null;
 let todayPage='overview';
 let appointmentEditReturnState=null;
@@ -69,6 +70,112 @@ function fmtDate(k){return parseKey(k).toLocaleDateString('en-AU',{weekday:'long
 function fmtTimer(sec){const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=Math.floor(sec%60);return h?`${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`}
 function uuid(){return crypto.randomUUID?.()||`${Date.now()}-${Math.random()}`}
 function configured(){return firebaseConfig?.apiKey&&!firebaseConfig.apiKey.startsWith('PASTE_')}
+function passkeyApiConfigured(){return /^https:\/\//i.test(String(firebaseConfig?.passkeyApiUrl||''))}
+function passkeysSupported(){return Boolean(window.isSecureContext&&window.PublicKeyCredential&&navigator.credentials?.create&&navigator.credentials?.get)}
+function base64UrlToBuffer(value){
+  const normalised=String(value||'').replace(/-/g,'+').replace(/_/g,'/'),padding='='.repeat((4-normalised.length%4)%4),binary=atob(normalised+padding),bytes=new Uint8Array(binary.length);
+  for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+  return bytes.buffer;
+}
+function bufferToBase64Url(value){
+  if(value===null||value===undefined)return null;
+  const bytes=value instanceof ArrayBuffer?new Uint8Array(value):new Uint8Array(value.buffer,value.byteOffset||0,value.byteLength),chunk=0x8000;
+  let binary='';for(let i=0;i<bytes.length;i+=chunk)binary+=String.fromCharCode(...bytes.subarray(i,i+chunk));
+  return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function passkeyCreationOptions(options){
+  if(typeof PublicKeyCredential.parseCreationOptionsFromJSON==='function')return PublicKeyCredential.parseCreationOptionsFromJSON(options);
+  return{...options,challenge:base64UrlToBuffer(options.challenge),user:{...options.user,id:base64UrlToBuffer(options.user.id)},excludeCredentials:(options.excludeCredentials||[]).map(item=>({...item,id:base64UrlToBuffer(item.id)}))};
+}
+function passkeyRequestOptions(options){
+  if(typeof PublicKeyCredential.parseRequestOptionsFromJSON==='function')return PublicKeyCredential.parseRequestOptionsFromJSON(options);
+  return{...options,challenge:base64UrlToBuffer(options.challenge),allowCredentials:(options.allowCredentials||[]).map(item=>({...item,id:base64UrlToBuffer(item.id)}))};
+}
+function passkeyCredentialJson(credential){
+  if(typeof credential?.toJSON==='function')return credential.toJSON();
+  const response=credential.response,registration=typeof response?.getTransports==='function';
+  const responseJson=registration?{
+    clientDataJSON:bufferToBase64Url(response.clientDataJSON),
+    attestationObject:bufferToBase64Url(response.attestationObject),
+    transports:response.getTransports?.()||[],
+    publicKeyAlgorithm:response.getPublicKeyAlgorithm?.(),
+    publicKey:bufferToBase64Url(response.getPublicKey?.())
+  }:{
+    clientDataJSON:bufferToBase64Url(response.clientDataJSON),
+    authenticatorData:bufferToBase64Url(response.authenticatorData),
+    signature:bufferToBase64Url(response.signature),
+    userHandle:bufferToBase64Url(response.userHandle)
+  };
+  Object.keys(responseJson).forEach(key=>responseJson[key]===undefined&&delete responseJson[key]);
+  return{id:credential.id,rawId:bufferToBase64Url(credential.rawId),type:credential.type,response:responseJson,clientExtensionResults:credential.getClientExtensionResults?.()||{},authenticatorAttachment:credential.authenticatorAttachment||undefined};
+}
+async function passkeyApi(route,payload={},authenticated=false){
+  if(!passkeyApiConfigured())throw new Error('Passkey service is not configured.');
+  const headers={'Content-Type':'application/json'};
+  if(authenticated){if(!currentUser)throw new Error('Sign in with email first.');headers.Authorization=`Bearer ${await currentUser.getIdToken()}`}
+  let response;
+  try{response=await fetch(`${firebaseConfig.passkeyApiUrl.replace(/\/$/,'')}/${route}`,{method:'POST',headers,body:JSON.stringify(payload),cache:'no-store'})}catch{throw new Error('Passkey service is unavailable. Check the Firebase Function deployment.')}
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(data.error||'Passkey request failed.');
+  return data;
+}
+function passkeyErrorMessage(error,action='Passkey'){
+  if(error?.name==='NotAllowedError')return `${action} cancelled.`;
+  if(error?.name==='InvalidStateError')return 'This passkey is already linked to the account.';
+  if(error?.name==='SecurityError')return 'This website address is not authorised for passkeys.';
+  return String(error?.message||`${action} failed.`).replace(/^Firebase:\s*/i,'');
+}
+function setPasskeySettingsMessage(message='',type=''){
+  const node=$('#passkeySettingsMessage');if(!node)return;node.textContent=message;node.className=`passkey-settings-message${type?` ${type}`:''}`;
+}
+function passkeyDateLabel(value){const ms=Number(value);if(!ms)return'Not used yet';return new Date(ms).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})}
+function renderPasskeySettings(){
+  const badge=$('#passkeyStatusBadge'),copy=$('#passkeySettingsCopy'),list=$('#passkeyCredentialList'),add=$('#addPasskey');if(!badge||!copy||!list||!add)return;
+  badge.className='passkey-status-badge';add.disabled=passkeyOperationActive||passkeyCredentialsLoading||Boolean(passkeyCredentialsError)||!cloud||!passkeysSupported()||!passkeyApiConfigured();
+  if(!cloud){badge.textContent='Unavailable';copy.textContent='Sign in with your Firebase account to set up a passkey.';list.innerHTML='';add.textContent='Set up a passkey';return}
+  if(!passkeysSupported()){badge.textContent='Unsupported';badge.classList.add('error');copy.textContent='Passkeys are not supported by this browser or the page is not using HTTPS.';list.innerHTML='';add.textContent='Passkeys unavailable';return}
+  if(passkeyCredentialsLoading&&!passkeyCredentialsLoaded){badge.textContent='Checking';list.innerHTML='';return}
+  if(passkeyCredentialsError){badge.textContent='Unavailable';badge.classList.add('error');copy.textContent=passkeyCredentialsError;list.innerHTML='';add.textContent='Passkey service unavailable';return}
+  if(!passkeyCredentialsLoaded){badge.textContent='Ready';list.innerHTML='';add.textContent='Set up a passkey';return}
+  if(passkeyCredentials.length){badge.textContent='Active';badge.classList.add('active');copy.textContent='Your account can use Face ID, fingerprint or device verification to sign in.';list.innerHTML=passkeyCredentials.map((item,index)=>`<div class="passkey-credential"><div><strong>Passkey ${index+1}</strong><small>Added ${passkeyDateLabel(item.createdAt)} · Last used ${passkeyDateLabel(item.lastUsedAt)}</small></div><button type="button" data-remove-passkey="${escapeHtml(item.id)}">Remove</button></div>`).join('');add.textContent='Add another passkey'}
+  else{badge.textContent='Not set up';copy.textContent='Use Face ID, fingerprint or your device passcode when signing in.';list.innerHTML='';add.textContent='Set up a passkey'}
+}
+async function refreshPasskeyCredentials({quiet=false}={}){
+  if(!cloud||!currentUser||!passkeysSupported()||!passkeyApiConfigured()||passkeyCredentialsLoading)return;
+  passkeyCredentialsLoading=true;renderPasskeySettings();
+  try{const data=await passkeyApi('credentials/list',{},true);passkeyCredentials=Array.isArray(data.credentials)?data.credentials:[];passkeyCredentialsLoaded=true;passkeyCredentialsError='';if(!quiet)setPasskeySettingsMessage('')}
+  catch(error){passkeyCredentials=[];passkeyCredentialsLoaded=false;passkeyCredentialsError=passkeyErrorMessage(error);if(!quiet)setPasskeySettingsMessage(passkeyCredentialsError,'error')}
+  finally{passkeyCredentialsLoading=false;renderPasskeySettings()}
+}
+async function registerPasskey(){
+  if(passkeyOperationActive)return;if(!currentUser)return setPasskeySettingsMessage('Sign in with email first.','error');
+  passkeyOperationActive=true;setPasskeySettingsMessage('Preparing secure setup…');renderPasskeySettings();
+  try{
+    const start=await passkeyApi('registration/options',{},true),credential=await navigator.credentials.create({publicKey:passkeyCreationOptions(start.options)});
+    if(!credential)throw new Error('No passkey was created.');
+    await passkeyApi('registration/verify',{challengeId:start.challengeId,response:passkeyCredentialJson(credential)},true);
+    passkeyCredentialsLoaded=false;passkeyCredentialsError='';setPasskeySettingsMessage('Passkey added. You can use it the next time you sign in.','success');toast('Passkey added');await refreshPasskeyCredentials({quiet:true});
+  }catch(error){setPasskeySettingsMessage(passkeyErrorMessage(error,'Passkey setup'),'error')}
+  finally{passkeyOperationActive=false;renderPasskeySettings()}
+}
+async function signInWithPasskey(){
+  if(passkeyOperationActive)return;showAuthMessage('');passkeyOperationActive=true;const button=$('#passkeySignIn');if(button)button.disabled=true;
+  try{
+    if(!passkeysSupported())throw new Error('Passkeys are not supported by this browser or the page is not using HTTPS.');
+    const start=await passkeyApi('authentication/options'),credential=await navigator.credentials.get({publicKey:passkeyRequestOptions(start.options)});
+    if(!credential)throw new Error('No passkey was selected.');
+    const result=await passkeyApi('authentication/verify',{challengeId:start.challengeId,response:passkeyCredentialJson(credential)});
+    await signInWithCustomToken(auth,result.firebaseToken);
+  }catch(error){showAuthMessage(passkeyErrorMessage(error,'Passkey sign-in'))}
+  finally{passkeyOperationActive=false;if(button)button.disabled=!passkeysSupported()||!passkeyApiConfigured()}
+}
+async function removePasskey(id){
+  if(passkeyOperationActive||!id||!confirm('Remove this passkey from your AGNT account?'))return;
+  passkeyOperationActive=true;setPasskeySettingsMessage('Removing passkey…');renderPasskeySettings();
+  try{await passkeyApi('credentials/delete',{credentialId:id},true);passkeyCredentials=passkeyCredentials.filter(item=>item.id!==id);passkeyCredentialsLoaded=true;setPasskeySettingsMessage('Passkey removed.','success');toast('Passkey removed')}
+  catch(error){setPasskeySettingsMessage(passkeyErrorMessage(error,'Passkey removal'),'error')}
+  finally{passkeyOperationActive=false;renderPasskeySettings()}
+}
 function isPastDate(k){return k<todayKey()}
 function canEditDate(k){return !isPastDate(k)&&isWorkDayKey(k)}
 function lockedToast(){haptic(20);toast(isPastDate(selectedDate)?'This day is complete and locked':'This day is not in your accountability schedule')}
@@ -108,7 +215,7 @@ function saveDirtyDays(){try{localStorage.setItem(storagePrefix(uid)+'dirty-days
 function markDayDirty(k){dirtyDayKeys.add(k);saveDirtyDays()}
 function clearDayDirty(k,clientUpdatedAt){if(Number(days[k]?.clientUpdatedAt)===Number(clientUpdatedAt)){dirtyDayKeys.delete(k);saveDirtyDays()}}
 function saveLocal(){const prefix=storagePrefix(uid);try{const serialised=JSON.stringify(normaliseDaysMap(days));const previous=localStorage.getItem(prefix+'days');if(previous)localStorage.setItem(prefix+'days-backup',previous);localStorage.setItem(prefix+'days',serialised);localStorage.setItem(prefix+'targets',JSON.stringify(targets));localStorage.setItem(prefix+'agent-name',agentName);localStorage.setItem(prefix+'work-days',JSON.stringify(workDays));localStorage.setItem(prefix+'calendar-preference',calendarPreference);localStorage.setItem(prefix+'prospects',JSON.stringify(prospects));localStorage.setItem(prefix+'prospect-interactions',JSON.stringify(prospectInteractions));localStorage.setItem(prefix+'market-pulse-events',JSON.stringify(marketPulseEvents));return true}catch(err){console.error('Local save failed',err);return false}}
-function clearActiveSession(){unsubDays?.();unsubProfile?.();unsubLeaderboard?.();unsubProspecting?.();unsubDays=unsubProfile=unsubLeaderboard=unsubProspecting=null;clearInterval(timerTick);clearTimeout(syncTimer);clearTimeout(leaderboardPublishTimer);clearTimeout(prospectingSaveTimer);prospectingSaveTimer=null;pendingProspectingPayload=null;pendingProspectingSignature='';prospectingWriteInFlight=false;prospectingSaveWaiters.splice(0).forEach(({resolve})=>resolve());currentUser=null;uid='local';cloud=false;pendingSyncOperations=0;syncHasError=false;lastLeaderboardSignature='';lastProspectingSignature='';dirtyDayKeys=new Set();resetState()}
+function clearActiveSession(){unsubDays?.();unsubProfile?.();unsubLeaderboard?.();unsubProspecting?.();unsubDays=unsubProfile=unsubLeaderboard=unsubProspecting=null;clearInterval(timerTick);clearTimeout(syncTimer);clearTimeout(leaderboardPublishTimer);clearTimeout(prospectingSaveTimer);prospectingSaveTimer=null;pendingProspectingPayload=null;pendingProspectingSignature='';prospectingWriteInFlight=false;prospectingSaveWaiters.splice(0).forEach(({resolve})=>resolve());currentUser=null;uid='local';cloud=false;pendingSyncOperations=0;syncHasError=false;lastLeaderboardSignature='';lastProspectingSignature='';dirtyDayKeys=new Set();passkeyCredentials=[];passkeyCredentialsLoading=false;passkeyCredentialsLoaded=false;passkeyCredentialsError='';passkeyOperationActive=false;resetState()}
 function displayAgentName(){return (agentName||currentUser?.displayName||currentUser?.email?.split('@')[0]||'Agent').trim()}
 function welcomeProfileName(){return (agentName||currentUser?.displayName||'Agent').trim()||'Agent'}
 function welcomeStorageKey(){return `${storagePrefix(uid)}welcome:${todayKey()}`}
@@ -2128,7 +2235,7 @@ async function endKnockingSession(){
 function parseCsv(text){const rows=[];let row=[],cell='',quoted=false;for(let i=0;i<text.length;i++){const c=text[i],n=text[i+1];if(c==='"'&&quoted&&n==='"'){cell+='"';i++;continue}if(c==='"'){quoted=!quoted;continue}if(c===','&&!quoted){row.push(cell);cell='';continue}if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&n==='\n')i++;row.push(cell);if(row.some(x=>x.trim()))rows.push(row);row=[];cell='';continue}cell+=c}row.push(cell);if(row.some(x=>x.trim()))rows.push(row);return rows}
 async function importProspectCsv(file){const rows=parseCsv(await file.text());if(rows.length<2)throw new Error('No contact rows found');const headers=rows.shift().map(x=>x.trim().toLowerCase());const findExact=(obj,names)=>{for(const n of names){const key=headers.findIndex(h=>h===n);if(key>=0&&obj[key])return obj[key]}return''};const find=(obj,names)=>{const exact=findExact(obj,names);if(exact)return exact;for(const n of names){const key=headers.findIndex(h=>h.includes(n));if(key>=0&&obj[key])return obj[key]}return''};let added=0;for(const r of rows){const name=find(r,['name','contact name','full name'])||[find(r,['first name']),find(r,['last name'])].filter(Boolean).join(' ');const phone=find(r,['mobile','phone','telephone']);const email=find(r,['email']);const organisation=findExact(r,['organisation','organization']);const company=findExact(r,['company']);const suburb=find(r,['suburb']);const rawAddress=organisation||findExact(r,['address'])||find(r,['property address','street address'])||company;const address=formatProspectAddress(rawAddress,suburb);if(!name&&!phone&&!email&&!address&&!company)continue;prospects.push(normaliseProspect({name:name||'Unnamed contact',phone,email,address,company:organisation||company,suburb,source:find(r,['source']),tags:find(r,['tags','category']),stage:find(r,['stage'])||'Nurture',temperature:find(r,['temperature'])||'Cold',nextFollowUp:find(r,['next follow up','follow up date'])}));added++}prospects=normaliseProspects(prospects);await saveProspecting();toast(`${added} contact${added===1?'':'s'} imported`)}
 
-function renderSettings(){const name=displayAgentName();$('#agentName').value=name;$('#callsTarget').value=targets.calls;$('#connectsTarget').value=targets.connects;$('#dataTarget').value=targets.data;$('#weeklyKnockTarget').value=targets.weeklyKnock;$$('[name=workDay]').forEach(el=>el.checked=workDays.includes(Number(el.value)));$$('[name=calendarPreference]').forEach(el=>el.checked=el.value===calendarPreference);$('#accountEmail').textContent=currentUser?.email||'Device-only mode';$('#modeNote').textContent=cloud?'Live sync is active. Use the same login on every device.':'Data is stored only on this device.';const initials=name.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]?.toUpperCase()||'').join('')||'A';if($('#profileAvatar'))$('#profileAvatar').textContent=initials;if($('#profileSyncState'))$('#profileSyncState').textContent=cloud?'Live sync active':'Device-only profile';if($('#profileTodayScore'))$('#profileTodayScore').textContent=`${completion(todayKey())}%`;if($('#profileWeekScore'))$('#profileWeekScore').textContent=`${weekSummary().score}%`;if($('#profileWorkDays'))$('#profileWorkDays').textContent=workDays.length}
+function renderSettings(){const name=displayAgentName();$('#agentName').value=name;$('#callsTarget').value=targets.calls;$('#connectsTarget').value=targets.connects;$('#dataTarget').value=targets.data;$('#weeklyKnockTarget').value=targets.weeklyKnock;$$('[name=workDay]').forEach(el=>el.checked=workDays.includes(Number(el.value)));$$('[name=calendarPreference]').forEach(el=>el.checked=el.value===calendarPreference);$('#accountEmail').textContent=currentUser?.email||'Device-only mode';$('#modeNote').textContent=cloud?'Live sync is active. Use the same login on every device.':'Data is stored only on this device.';const initials=name.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]?.toUpperCase()||'').join('')||'A';if($('#profileAvatar'))$('#profileAvatar').textContent=initials;if($('#profileSyncState'))$('#profileSyncState').textContent=cloud?'Live sync active':'Device-only profile';if($('#profileTodayScore'))$('#profileTodayScore').textContent=`${completion(todayKey())}%`;if($('#profileWeekScore'))$('#profileWeekScore').textContent=`${weekSummary().score}%`;if($('#profileWorkDays'))$('#profileWorkDays').textContent=workDays.length;renderPasskeySettings()}
 function renderDayViews(){renderToday();renderTimeline();renderAppointments();renderInsights();renderSettings()}
 function renderAll(){renderDayViews();renderProspecting();const reviewButton=$('#openDayReview');if(reviewButton)reviewButton.classList.toggle('hidden',new Date().getHours()<17||selectedDate!==todayKey()||!isWorkDayKey(todayKey()));maybeShowDayReview()}
 
@@ -2151,7 +2258,7 @@ async function startCloud(user){
   unsubProfile=onSnapshot(doc(db,'users',uid),snap=>{if(snap.exists()){const profile=snap.data();let changed=false;if(profile.targets&&JSON.stringify({...DEFAULTS,...profile.targets})!==JSON.stringify(targets)){targets={...DEFAULTS,...profile.targets};changed=true}if(Array.isArray(profile.workDays)&&profile.workDays.length&&JSON.stringify(normaliseWorkDays(profile.workDays))!==JSON.stringify(workDays)){workDays=normaliseWorkDays(profile.workDays);changed=true}if(profile.name&&profile.name!==agentName){agentName=profile.name;changed=true}if(changed){saveLocal();renderAll();scheduleLeaderboardPublish()}}},err=>console.error(err));
   unsubProspecting=onSnapshot(doc(db,'users',uid,'prospecting','state'),{includeMetadataChanges:true},snap=>{if(snap.exists()){const data=snap.data(),nextProspects=normaliseProspects(data.prospects),nextInteractions=normaliseProspectInteractions(data.interactions),hasMarketEvents=Object.prototype.hasOwnProperty.call(data,'marketPulseEvents'),cloudMarketEvents=hasMarketEvents?normaliseMarketPulseEvents(data.marketPulseEvents):[],cloudSignature=prospectingSignature(nextProspects,nextInteractions,cloudMarketEvents);if(!snap.metadata.hasPendingWrites)lastProspectingSignature=cloudSignature;const nextMarketEvents=hasMarketEvents?cloudMarketEvents:normaliseMarketPulseEvents(marketPulseEvents),nextSignature=prospectingSignature(nextProspects,nextInteractions,nextMarketEvents);if(nextSignature!==prospectingSignature()){prospects=nextProspects;prospectInteractions=nextInteractions;marketPulseEvents=nextMarketEvents;saveLocal();renderProspecting();renderMarketPulse()}if(!hasMarketEvents&&nextMarketEvents.length&&!snap.metadata.hasPendingWrites&&!snap.metadata.fromCache){queueProspectingSave().catch(err=>console.error('Hot Spotting migration failed',err))}}},err=>{console.error('Prospecting sync failed',err);toast('Prospecting data is saved locally. Cloud sync needs attention.')});
   unsubLeaderboard=onSnapshot(collection(db,'leaderboard'),{includeMetadataChanges:true},snap=>{const next=snap.docs.map(d=>({uid:d.id,...d.data()}));if(JSON.stringify(next)!==JSON.stringify(leaderboardEntries)){leaderboardEntries=next;renderLeaderboard()}const own=next.find(entry=>entry.uid===uid);if(own)lastLeaderboardSignature=leaderboardSignature(own)},err=>{console.error('Leaderboard read failed',err);$('#leaderboardStatus').textContent='SYNC ERROR'});
-  refreshSyncStatus();showApp();scheduleLeaderboardPublish();
+  refreshSyncStatus();showApp();scheduleLeaderboardPublish();refreshPasskeyCredentials({quiet:true}).catch(err=>console.error('Passkey status failed',err));
 }
 
 function showApp(){$('#authGate').classList.add('hidden');$('#app').classList.remove('hidden');$('#appointmentDatePicker').value=appointmentDate;restoreProspectingSessionState();restoreKnockingSessionState();renderKnockingSession();renderAll();ensureTick();showLaunchExperience()}
@@ -2177,9 +2284,10 @@ function bindViewport(){
   window.visualViewport?.addEventListener('scroll',updateAppViewport,{passive:true});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden){updateAppViewport();finaliseExpiredTimers().then(()=>renderAll())}});
 }
-async function init(){bindViewport();loadLocal('local');await finaliseExpiredTimers();if(!configured()){showAuthMessage('Firebase is not configured. You can still use device-only mode.');return}try{const fb=initializeApp(firebaseConfig);auth=getAuth(fb);await setPersistence(auth,browserLocalPersistence);db=initializeFirestore(fb,{experimentalAutoDetectLongPolling:true,localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});onAuthStateChanged(auth,u=>{if(u){startCloud(u)}else{clearActiveSession();$('#app').classList.add('hidden');$('#authGate').classList.remove('hidden')}})}catch(err){console.error(err);showAuthMessage(err.message)}}
+function configurePasskeyLogin(){const button=$('#passkeySignIn'),note=$('#passkeySupportNote');if(!button||!note)return;const supported=passkeysSupported(),ready=passkeyApiConfigured();button.disabled=!supported||!ready;if(!supported)note.textContent='Passkeys require a supported browser and HTTPS.';else if(!ready)note.textContent='The passkey service has not been configured.';else note.textContent='Use Face ID, fingerprint or your device passcode.'}
+async function init(){bindViewport();configurePasskeyLogin();loadLocal('local');await finaliseExpiredTimers();if(!configured()){showAuthMessage('Firebase is not configured. You can still use device-only mode.');return}try{const fb=initializeApp(firebaseConfig);auth=getAuth(fb);await setPersistence(auth,browserLocalPersistence);db=initializeFirestore(fb,{experimentalAutoDetectLongPolling:true,localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});onAuthStateChanged(auth,u=>{if(u){startCloud(u)}else{clearActiveSession();$('#app').classList.add('hidden');$('#authGate').classList.remove('hidden');configurePasskeyLogin()}})}catch(err){console.error(err);showAuthMessage(err.message)}}
 function showAuthMessage(msg){$('#authMessage').textContent=msg}
-function switchView(id){if(id!=='appointmentsView'&&appointmentHistoryMode)setAppointmentHistoryScreen(null);$$('.tabbar button').forEach(b=>b.classList.toggle('active',b.dataset.view===id));$$('.view').forEach(v=>v.classList.toggle('active',v.id===id));updateTopbar(id);if(id==='scheduleView'){renderTimeline();setTodayPage(todayPage);}if(id==='appointmentsView')renderAppointments();if(id==='prospectingView')renderProspecting();if(id==='insightsView')renderInsights()}
+function switchView(id){if(id!=='appointmentsView'&&appointmentHistoryMode)setAppointmentHistoryScreen(null);$$('.tabbar button').forEach(b=>b.classList.toggle('active',b.dataset.view===id));$$('.view').forEach(v=>v.classList.toggle('active',v.id===id));updateTopbar(id);if(id==='scheduleView'){renderTimeline();setTodayPage(todayPage);}if(id==='appointmentsView')renderAppointments();if(id==='prospectingView')renderProspecting();if(id==='insightsView')renderInsights();if(id==='settingsView'&&!passkeyCredentialsLoaded)refreshPasskeyCredentials().catch(err=>console.error('Passkey status failed',err))}
 
 function shiftHeaderDate(delta){
   const id=activeViewId();
@@ -2197,6 +2305,9 @@ function openCalendar(){$('#calendarModal').classList.add('open');renderCalendar
 
 $('#authForm').addEventListener('submit',async e=>{e.preventDefault();showAuthMessage('');try{await signInWithEmailAndPassword(auth,$('#email').value,$('#password').value)}catch(err){showAuthMessage(err.message)}});
 $('#createAccount').onclick=async()=>{try{await createUserWithEmailAndPassword(auth,$('#email').value,$('#password').value)}catch(err){showAuthMessage(err.message)}};
+$('#passkeySignIn').onclick=signInWithPasskey;
+$('#addPasskey').onclick=registerPasskey;
+$('#passkeyCredentialList').onclick=e=>{const button=e.target.closest('[data-remove-passkey]');if(button)removePasskey(button.dataset.removePasskey)};
 $('#startDayButton').onclick=dismissDailyWelcome;
 $('#openAgntButton').onclick=dismissOffDayReview;
 $('#localMode').onclick=()=>{clearActiveSession();uid='local';loadLocal('local');setSync('offline','This device');showApp()};
