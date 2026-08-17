@@ -4,6 +4,5 @@ export const firebaseConfig = {
   projectId: "daily-accountability-be0ac",
   storageBucket: "daily-accountability-be0ac.firebasestorage.app",
   messagingSenderId: "948051142195",
-  appId: "1:948051142195:web:7dbe6fb935d3fc6b6d6546",
-  passkeyApiUrl: "https://australia-southeast1-daily-accountability-be0ac.cloudfunctions.net/passkeyApi"
+  appId: "1:948051142195:web:7dbe6fb935d3fc6b6d6546"
 };

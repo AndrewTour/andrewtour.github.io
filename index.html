@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light" data-auth="true">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
@@ -9,28 +9,161 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=125.7-passkey-poc1">
+<link rel="stylesheet" href="styles.css?v=1.36.7-safe-cleanup">
 <title>AGNT</title>
 </head>
 <body>
-<div id="authGate" class="auth-gate">
-  <form id="authForm" class="auth-card glass">
+<div id="bootGate" class="boot-gate" aria-live="polite"><div class="boot-mark">AGNT<span aria-hidden="true">.</span></div><small>Loading your day…</small></div>
+<div id="authGate" class="auth-gate hidden">
+  <form id="authForm" class="auth-card glass" onsubmit="return false;">
     <div class="brand-mark">AGNT</div>
     <h1>AGNT</h1>
     <p>Sign in once and your data stays live across your devices.</p>
-    <button id="passkeySignIn" class="passkey-sign-in" type="button">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8.5" cy="10" r="4.5"/><path d="M13 10h7M17 10v3M20 10v2"/><path d="M6.75 10h3.5"/></svg>
-      <span>Continue with passkey</span>
-    </button>
-    <small id="passkeySupportNote" class="passkey-support-note">Use Face ID, fingerprint or your device passcode.</small>
-    <div class="auth-divider" aria-hidden="true"><span>or use email</span></div>
-    <input id="email" type="email" autocomplete="username webauthn" placeholder="Email" required>
+    <input id="email" type="email" autocomplete="email" placeholder="Email" required>
     <input id="password" type="password" autocomplete="current-password" placeholder="Password" minlength="6" required>
     <button class="primary" type="submit">Sign in</button>
     <button id="createAccount" class="secondary" type="button">Create account</button>
     <button id="localMode" class="text-btn" type="button">Continue on this device only</button>
     <small id="authMessage"></small>
   </form>
+</div>
+
+<div id="teamOnboarding" class="team-onboarding hidden" aria-hidden="true">
+  <section class="team-onboarding-card" role="dialog" aria-modal="true" aria-labelledby="teamOnboardingTitle" aria-describedby="teamSetupMessage">
+    <div class="team-onboarding-handle" aria-hidden="true"></div>
+    <div class="team-onboarding-top"><span class="team-onboarding-brand">AGNT<span aria-hidden="true">.</span></span><button id="closeTeamSetup" class="team-close text-btn" type="button">Later</button></div>
+    <div class="team-panel" data-team-panel="choices">
+      <div class="team-onboarding-heading"><span class="team-onboarding-kicker">ACCOUNT SETUP</span><h1 id="teamOnboardingTitle">Choose how you work</h1><p>Set up your leaderboard without changing your existing accountability data.</p><small id="teamOnboardingEmail" class="team-onboarding-email"></small></div>
+      <div class="team-choice-list">
+        <button id="teamChoiceSolo" class="team-choice" type="button"><span class="team-choice-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"></circle><path d="M5.5 20c.6-4 2.8-6 6.5-6s5.9 2 6.5 6"></path></svg></span><span class="team-choice-copy"><strong>Just me</strong><small>Keep your leaderboard private to this account.</small></span><span class="team-choice-arrow" aria-hidden="true">›</span></button>
+        <button id="teamChoiceCreate" class="team-choice" type="button"><span class="team-choice-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"></circle><path d="M3.5 19c.5-3.5 2.3-5.2 5.5-5.2 2.1 0 3.7.8 4.6 2.4M17.5 8v6M14.5 11h6"></path></svg></span><span class="team-choice-copy"><strong>Create a team</strong><small>Start a private leaderboard and invite your team.</small></span><span class="team-choice-arrow" aria-hidden="true">›</span></button>
+        <button id="teamChoiceJoin" class="team-choice" type="button"><span class="team-choice-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="3"></circle><circle cx="16" cy="9" r="2.5"></circle><path d="M2.8 19c.5-3.5 2.2-5.2 5.2-5.2 3.1 0 4.8 1.7 5.2 5.2M13 15.2c.8-.8 1.8-1.2 3.2-1.2 2.6 0 4.1 1.5 4.5 4.5"></path></svg></span><span class="team-choice-copy"><strong>Join a team</strong><small>Connect securely using your team invite code.</small></span><span class="team-choice-arrow" aria-hidden="true">›</span></button>
+      </div>
+    </div>
+    <div class="team-panel hidden" data-team-panel="create">
+      <button class="team-back" type="button" data-team-back aria-label="Back to account setup"><span aria-hidden="true">‹</span> Back</button>
+      <div class="team-onboarding-heading"><span class="team-onboarding-kicker">CREATE TEAM</span><h1 id="teamCreateTitle">Start your team</h1><p>Create a private leaderboard. You’ll receive one invite code to share with your team.</p></div>
+      <label class="team-field"><span>Team name</span><input id="newTeamName" type="text" maxlength="60" autocomplete="organization" placeholder="e.g. Team Pana"></label>
+      <div class="team-privacy-note"><span aria-hidden="true">✓</span><p><strong>Private by default</strong><small>Only verified members can view the team leaderboard.</small></p></div>
+      <button id="createTeamSubmit" class="primary team-submit" type="button" data-idle-label="Create team">Create team</button>
+    </div>
+    <div class="team-panel hidden" data-team-panel="join">
+      <button class="team-back" type="button" data-team-back aria-label="Back to account setup"><span aria-hidden="true">‹</span> Back</button>
+      <div class="team-onboarding-heading"><span class="team-onboarding-kicker">JOIN TEAM</span><h1 id="teamJoinTitle">Join your team</h1><p>Enter the private invite code supplied by your team owner.</p></div>
+      <label class="team-field"><span>Team code</span><input id="teamCodeInput" type="text" inputmode="text" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="10" placeholder="ABCD123456"></label>
+      <div class="team-privacy-note"><span aria-hidden="true">✓</span><p><strong>Your data stays with you</strong><small>Joining only adds your accountability results to the team leaderboard.</small></p></div>
+      <button id="joinTeamCode" class="primary team-submit" type="button" data-idle-label="Continue">Continue</button>
+    </div>
+    <div class="team-panel hidden" data-team-panel="join-confirm">
+      <button class="team-back" type="button" data-team-back="join" aria-label="Back to team code"><span aria-hidden="true">‹</span> Back</button>
+      <div class="team-onboarding-heading"><span class="team-onboarding-kicker">CONFIRM TEAM</span><h1 id="teamJoinConfirmTitle">Join this team?</h1><p>Confirm the team before your accountability results appear on its private leaderboard.</p></div>
+      <div class="team-join-confirm-card"><span class="team-join-confirm-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="3"></circle><circle cx="16" cy="9" r="2.5"></circle><path d="M2.8 19c.5-3.5 2.2-5.2 5.2-5.2 3.1 0 4.8 1.7 5.2 5.2M13 15.2c.8-.8 1.8-1.2 3.2-1.2 2.6 0 4.1 1.5 4.5 4.5"></path></svg></span><div><span>YOU’RE JOINING</span><strong id="teamJoinConfirmName">Team</strong><small>Invite code <b id="teamJoinConfirmCode"></b></small></div></div>
+      <div class="team-privacy-note"><span aria-hidden="true">✓</span><p><strong>Your personal data stays with you</strong><small>Only your accountability summary is shared with this team leaderboard.</small></p></div>
+      <button id="confirmJoinTeam" class="primary team-submit" type="button" data-idle-label="Join team">Join team</button>
+    </div>
+    <div class="team-panel hidden" data-team-panel="created">
+      <div class="team-onboarding-heading team-created-heading"><span class="team-onboarding-kicker">TEAM CREATED</span><h1 id="teamCreatedTitle">Your team is ready</h1><p>Invite your members now or return to this code anytime from Settings.</p></div>
+      <div class="team-created-summary"><span class="team-created-check" aria-hidden="true">✓</span><div><span>TEAM</span><strong id="teamCreatedName">Your team</strong></div></div>
+      <div class="team-created-code"><span>INVITE CODE</span><strong id="teamCreatedCode"></strong><small>Only share this code with people you want on the leaderboard.</small></div>
+      <div class="team-created-actions"><button id="shareCreatedTeamInvite" class="primary" type="button" data-idle-label="Share invite">Share invite</button><button id="copyCreatedTeamCode" class="secondary" type="button" data-idle-label="Copy code">Copy code</button></div>
+      <button id="finishTeamCreation" class="team-created-done text-btn" type="button">Done</button>
+    </div>
+    <p id="teamSetupMessage" role="status" aria-live="polite"></p>
+  </section>
+</div>
+
+<div id="teamManager" class="team-manager hidden" aria-hidden="true">
+  <section class="team-manager-card" role="dialog" aria-modal="true" aria-labelledby="teamManagerTitle" aria-describedby="teamManagerStatus">
+    <div class="team-manager-handle" aria-hidden="true"></div>
+    <div class="team-manager-top"><span class="team-manager-brand">AGNT<span aria-hidden="true">.</span></span><button id="closeTeamManager" class="team-manager-close text-btn" type="button">Done</button></div>
+    <div class="team-manager-heading"><span>TEAM MANAGEMENT</span><h1 id="teamManagerTitle">Your team</h1><p id="teamManagerSummary">Manage access to your private leaderboard.</p></div>
+    <div class="team-manager-invite"><div><span>INVITE CODE</span><strong id="teamManagerCode"></strong><small>Share this code with people you want to add.</small></div><div class="team-manager-invite-actions"><button id="shareTeamManagerInvite" type="button" data-idle-label="Share">Share</button><button id="copyTeamManagerCode" type="button" data-idle-label="Copy">Copy</button></div></div>
+    <button id="refreshTeamInviteCode" class="team-manager-refresh" type="button"><span>Refresh invite code</span><small>Disable the current code and create a new one.</small><b aria-hidden="true">›</b></button>
+    <div class="team-manager-section-head"><span>MEMBERS</span><small id="teamManagerMemberCount">0 members</small></div>
+    <div id="teamMemberList" class="team-member-list" role="list" aria-live="polite"></div>
+    <p id="teamManagerStatus" role="status" aria-live="polite"></p>
+    <button id="deleteTeam" class="team-manager-refresh team-manager-delete" type="button"><span>Delete team</span><small>Permanently remove this team. Personal AGNT data stays with each member.</small><b aria-hidden="true">›</b></button>
+  </section>
+</div>
+
+<div id="teamRemoveConfirm" class="team-remove-confirm hidden" aria-hidden="true">
+  <section class="team-remove-confirm-card" role="alertdialog" aria-modal="true" aria-labelledby="teamRemoveTitle" aria-describedby="teamRemoveDescription">
+    <span class="team-remove-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M8 10v7M12 10v7M16 10v7M6 7l1 14h10l1-14"></path></svg></span>
+    <span class="team-remove-kicker">REMOVE ACCESS</span>
+    <h2 id="teamRemoveTitle">Remove member?</h2>
+    <p id="teamRemoveDescription">They will lose access to this team. Their personal AGNT data will not be deleted.</p>
+    <div class="team-remove-actions"><button id="cancelTeamMemberRemoval" class="secondary" type="button">Cancel</button><button id="confirmTeamMemberRemoval" class="danger" type="button">Remove member</button></div>
+    <small id="teamRemoveStatus" role="status" aria-live="polite"></small>
+  </section>
+</div>
+
+<div id="teamDeleteConfirm" class="team-leave-confirm hidden" aria-hidden="true">
+  <section class="team-leave-confirm-card" role="alertdialog" aria-modal="true" aria-labelledby="teamDeleteTitle" aria-describedby="teamDeleteDescription">
+    <span class="team-leave-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M8 10v7M12 10v7M16 10v7M6 7l1 14h10l1-14"></path></svg></span>
+    <span class="team-leave-kicker">DELETE TEAM</span>
+    <h2 id="teamDeleteTitle">Delete this team?</h2>
+    <p id="teamDeleteDescription">The team and its shared access will be removed. Personal AGNT data will not be deleted.</p>
+    <div class="team-leave-data-note"><span aria-hidden="true">✓</span><p><strong>Personal data stays protected</strong><small>Contacts, notes, appointments and activity history remain with each member.</small></p></div>
+    <div class="team-leave-actions"><button id="cancelTeamDelete" class="secondary" type="button">Cancel</button><button id="confirmTeamDelete" class="danger" type="button">Delete team</button></div>
+    <small id="teamDeleteStatus" role="status" aria-live="polite"></small>
+  </section>
+</div>
+
+<div id="teamLeaveConfirm" class="team-leave-confirm hidden" aria-hidden="true">
+  <section class="team-leave-confirm-card" role="alertdialog" aria-modal="true" aria-labelledby="teamLeaveTitle" aria-describedby="teamLeaveDescription">
+    <span class="team-leave-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10"></path></svg></span>
+    <span class="team-leave-kicker">LEAVE TEAM</span>
+    <h2 id="teamLeaveTitle">Leave your team?</h2>
+    <p id="teamLeaveDescription">You will leave this team and its leaderboard. Your personal AGNT data will stay with your account.</p>
+    <div class="team-leave-data-note"><span aria-hidden="true">✓</span><p><strong>Your data stays protected</strong><small>Contacts, notes, appointments and activity history will not be deleted.</small></p></div>
+    <div class="team-leave-actions"><button id="cancelTeamLeave" class="secondary" type="button">Cancel</button><button id="confirmTeamLeave" class="danger" type="button">Leave team</button></div>
+    <small id="teamLeaveStatus" role="status" aria-live="polite"></small>
+  </section>
+</div>
+
+<div id="teamCodeRefreshConfirm" class="team-code-refresh-confirm hidden" aria-hidden="true">
+  <section class="team-code-refresh-confirm-card" role="alertdialog" aria-modal="true" aria-labelledby="teamCodeRefreshTitle" aria-describedby="teamCodeRefreshDescription">
+    <span class="team-code-refresh-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M18.5 12a6.5 6.5 0 0 0-11-4.5L4 11M5.5 12a6.5 6.5 0 0 0 11 4.5L20 13"></path></svg></span>
+    <span class="team-code-refresh-kicker">REFRESH INVITE</span>
+    <h2 id="teamCodeRefreshTitle">Refresh invite code?</h2>
+    <p id="teamCodeRefreshDescription">The current code will stop working immediately and a new code will be created.</p>
+    <div class="team-code-refresh-note"><span aria-hidden="true">✓</span><p><strong>Current members stay connected</strong><small>This only changes how new members join your team.</small></p></div>
+    <div class="team-code-refresh-actions"><button id="cancelTeamCodeRefresh" class="secondary" type="button">Cancel</button><button id="confirmTeamCodeRefresh" class="primary" type="button">Refresh code</button></div>
+    <small id="teamCodeRefreshStatus" role="status" aria-live="polite"></small>
+  </section>
+</div>
+
+<div id="returningSnapshotScreen" class="returning-snapshot-screen hidden" aria-hidden="true">
+  <section class="returning-snapshot-shell" aria-labelledby="returningSnapshotTitle">
+    <div class="returning-snapshot-top">
+      <span class="returning-snapshot-brand">AGNT<span aria-hidden="true">.</span></span>
+      <span id="returningSnapshotDate" class="returning-snapshot-date"></span>
+    </div>
+    <div class="returning-snapshot-hero">
+      <span id="returningSnapshotKicker" class="returning-snapshot-kicker">RIGHT NOW</span>
+      <div class="returning-snapshot-score-row"><strong id="returningSnapshotScore">0%</strong><span>today</span></div>
+      <h1 id="returningSnapshotTitle">Keep the day moving.</h1>
+      <p id="returningSnapshotPriority">Loading your current priorities…</p>
+      <div class="returning-snapshot-progress" aria-hidden="true"><i id="returningSnapshotProgress"></i></div>
+    </div>
+    <div class="returning-snapshot-grid">
+      <article><span>ACTIVITY LEFT</span><strong id="returningSnapshotActivity">—</strong><small>Calls · Connects · Data</small></article>
+      <article><span>APPOINTMENTS</span><strong id="returningSnapshotAppointments">—</strong><small id="returningSnapshotAppointmentMeta">Today</small></article>
+      <article><span>PIPELINE</span><strong id="returningSnapshotPipeline">—</strong><small id="returningSnapshotPipelineMeta">Ready to work</small></article>
+      <article><span>KNOCKING</span><strong id="returningSnapshotKnocking">—</strong><small id="returningSnapshotKnockingMeta">Today</small></article>
+      <article><span>DAY PULSE</span><strong id="returningSnapshotPulse">—</strong><small id="returningSnapshotPulseMeta">Current pace</small></article>
+      <article><span>LEADERBOARD</span><strong id="returningSnapshotRank">—</strong><small id="returningSnapshotRankMeta">Today</small></article>
+    </div>
+    <div class="returning-snapshot-next">
+      <span>NEXT BLOCK</span>
+      <strong id="returningSnapshotNextBlock">Keep moving.</strong>
+      <small id="returningSnapshotNextBlockMeta">AGNT is lining up the next priority.</small>
+    </div>
+    <div class="returning-snapshot-footer">
+      <span>Tap anywhere to open now</span>
+      <span class="returning-snapshot-opening">Opening AGNT<span class="returning-snapshot-dots" aria-hidden="true">…</span></span>
+    </div>
+  </section>
 </div>
 
 <div id="welcomeScreen" class="welcome-screen hidden" aria-hidden="true">
@@ -157,7 +290,7 @@
         <button id="previousDay" class="icon-btn topbar-nav-icon" type="button" aria-label="Previous day"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6.5 9 12l5.5 5.5"/></svg></button>
         <button id="nextDay" class="icon-btn topbar-nav-icon" type="button" aria-label="Next day"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 6.5 5.5 5.5-5.5 5.5"/></svg></button>
       </div>
-      <button id="settingsShortcut" class="icon-btn settings-shortcut-icon hidden" type="button" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.6 3.4l.55-1.4h3.7l.55 1.4a2 2 0 0 0 2.55 1.15l1.38-.57 2.62 2.62-.57 1.38a2 2 0 0 0 1.15 2.55l1.4.55v3.7l-1.4.55a2 2 0 0 0-1.15 2.55l.57 1.38-2.62 2.62-1.38-.57a2 2 0 0 0-2.55 1.15l-.55 1.4h-3.7l-.55-1.4a2 2 0 0 0-2.55-1.15l-1.38.57-2.62-2.62.57-1.38a2 2 0 0 0-1.15-2.55l-1.4-.55v-3.7l1.4-.55a2 2 0 0 0 1.15-2.55L3.05 6.6l2.62-2.62 1.38.57A2 2 0 0 0 9.6 3.4Z"/><circle cx="12" cy="12.85" r="3.15"/></svg></button>
+      <button id="leaderboardModeShortcut" class="icon-btn leaderboard-mode-shortcut hidden" type="button" aria-label="Switch leaderboard to weekly view" title="Daily leaderboard">DAY</button>
       <button id="homeShortcut" class="icon-btn home-shortcut-icon hidden" type="button" aria-label="Return to Today"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 10 8-6 8 6"/><path d="M6.5 9.5V20h11V9.5"/><path d="M10 20v-6h4v6"/></svg></button>
     </div>
   </header>
@@ -297,6 +430,7 @@
           <div><strong id="dayLogContactTotal">0</strong><span>Contacts</span></div>
           <div><strong id="dayLogAppointmentTotal">0</strong><span>Appointments</span></div>
         </section>
+        <section id="todayWins" class="today-wins glass hidden" aria-live="polite"><div class="day-log-head"><div><span>TODAY’S WINS</span><strong>Momentum created</strong></div><small id="todayWinsMeta"></small></div><div id="todayWinsGrid" class="today-wins-grid"></div></section>
         <section class="day-log-card glass">
           <div class="day-log-head"><div><span>DAY LOG</span><strong id="dayLogTitle">Today’s story</strong></div><small id="dayLogMeta">Meaningful activity only</small></div>
           <div id="dayLogTimeline" class="day-log-timeline" aria-live="polite"></div>
@@ -413,9 +547,9 @@
           </div>
         </section>
         <section class="leaderboard-card leaderboard-unified-card glass">
-          <div class="leaderboard-mode-tabs" role="tablist" aria-label="Leaderboard period">
-            <button id="leaderboardDayTab" class="active" type="button" role="tab" aria-selected="true" data-leaderboard-mode="day">Day</button>
-            <button id="leaderboardWeekTab" type="button" role="tab" aria-selected="false" data-leaderboard-mode="week">Week</button>
+          <div class="leaderboard-mode-tabs leaderboard-mode-tabs-legacy" role="tablist" aria-label="Leaderboard period" aria-hidden="true">
+            <button id="leaderboardDayTab" class="active" type="button" role="tab" aria-selected="true" data-leaderboard-mode="day" tabindex="-1">Day</button>
+            <button id="leaderboardWeekTab" type="button" role="tab" aria-selected="false" data-leaderboard-mode="week" tabindex="-1">Week</button>
           </div>
           <div class="leaderboard-head leaderboard-unified-head">
             <div><span id="leaderboardPeriodLabel">DAILY LEADERBOARD</span><h2 id="leaderboardDate"></h2></div>
@@ -429,7 +563,7 @@
               </div>
             </div>
           </div>
-          <div class="leaderboard-metric-head" aria-hidden="true"><span>Calls</span><span>Conn.</span><span>Data</span><span>Knock</span><span>MAP</span><span>LAP</span><span>BAP</span></div>
+          <div class="leaderboard-metric-head" aria-hidden="true"><span></span><span>Agent</span><span>Calls</span><span>Connects</span><span>Data</span><span>Knocking</span><span>Appts</span><span>Score</span></div>
           <div id="leaderboardList" class="leaderboard-list leaderboard-unified-list"><div class="empty">Waiting for team data…</div></div>
           <p id="leaderboardNote" class="leaderboard-note">Ranked by daily overall completion percentage.</p>
         </section>
@@ -458,12 +592,21 @@
       <div id="prospectingDashboard" class="prospecting-dashboard">
         <div id="prospectorTodayPanel" class="prospector-panel">
         <section class="prospecting-hero glass">
-          <div><span>TODAY'S PIPELINE</span><strong id="prospectingDueCount">0</strong><small id="prospectingDueLabel">follow-ups ready</small></div>
+          <div><span>PIPELINE</span><strong id="prospectingDueCount">0</strong><small id="prospectingDueLabel">follow-ups ready</small><em id="pipelineWorkState" class="prospector-work-state">Ready to build momentum</em></div>
           <button id="startProspectingSession" class="primary" type="button">Start Session</button>
         </section>
         <section class="prospecting-hero glass">
-          <div><span>HOT SPOTTING</span><strong id="hotSpottingReadyCount">0</strong><small id="hotSpottingReadyLabel">clients ready</small></div>
+          <div><span>HOT SPOTTING</span><strong id="hotSpottingReadyCount">0</strong><small id="hotSpottingReadyLabel">clients ready</small><em id="hotSpottingWorkState" class="prospector-work-state">No live opportunity yet</em></div>
           <button id="openHotSpotting" class="primary" type="button">Start Session</button>
+        </section>
+        <section class="prospecting-hero glass buyer-list-hero">
+          <div><span>BUYER LIST</span><strong id="buyerListReadyCount">0</strong><small id="buyerListReadyLabel">Import an Agentbox call list</small><em id="buyerListWorkState" class="prospector-work-state">Name, mobile and address/suburb</em></div>
+          <button id="openBuyerListSession" class="primary" type="button">Import PDF</button>
+          <input id="buyerPdfImport" type="file" accept="application/pdf,.pdf" hidden>
+        </section>
+        <section class="prospecting-hero glass">
+          <div><span>BROADCAST</span><strong aria-hidden="true">SMS</strong><small>Build and send a campaign</small><em id="broadcastWorkState" class="prospector-work-state">Choose an audience to begin</em></div>
+          <button id="openBroadcast" class="primary" type="button">Broadcast</button>
         </section>
         <section class="prospecting-stats" aria-label="Prospecting overview">
           <button class="prospecting-stat glass" data-prospect-filter="overdue"><span>OVERDUE</span><strong id="prospectingOverdue">0</strong></button>
@@ -476,7 +619,6 @@
         </section>
         </div>
         <section id="prospectorContactsPanel" class="prospecting-section prospector-contacts-panel glass hidden">
-          <button id="backFromArchivedContacts" class="text-btn archived-contacts-back hidden" type="button">‹ Back</button>
           <div class="prospecting-section-head contacts-head"><div><span id="prospectContactsEyebrow">CONTACTS</span><h3 id="prospectContactsHeading">Your database</h3><small id="prospectContactCount">0 contacts · Sorted A–Z</small></div><div class="contacts-head-actions"><label class="prospect-import-button">Import CSV<input id="prospectCsvImport" type="file" accept=".csv,text/csv"></label><button id="toggleProspectBulk" class="text-btn manage-contacts-btn" type="button">Manage Contacts</button><button id="toggleArchivedContacts" class="text-btn manage-contacts-btn" type="button">Archived</button></div></div>
           <div class="prospect-bulk-bar"><span id="prospectSelectedCount">0 selected</span><button id="selectAllProspects" class="text-btn" type="button">Select All</button><button id="restoreSelectedProspects" class="primary hidden" type="button" disabled>Restore</button><button id="deleteSelectedProspects" class="danger-btn" type="button" disabled>Delete</button></div>
           <div id="prospectContactList" class="prospect-list contacts-list"></div>
@@ -517,6 +659,127 @@
             <div class="market-pulse-import-actions"><button id="clearMarketPulseInput" class="secondary" type="button">Clear</button><button id="importMarketPulse" class="primary" type="button">Find Opportunities</button></div>
             <p id="marketPulseImportStatus" class="market-pulse-status">Nothing imported yet.</p>
           </section>
+        </section>
+        <section id="prospectorBroadcastPanel" class="prospector-campaigns-panel hidden" aria-live="polite">
+          <button id="broadcastBack" class="market-pulse-back text-btn" type="button">‹ Back</button>
+
+          <div id="broadcastMenu">
+            <section class="campaign-hero glass">
+              <div><span>BROADCAST</span><h3>Choose a broadcast</h3><p>Select the campaign you want to build, then review the audience and message before sending.</p></div>
+            </section>
+            <section class="broadcast-type-list" aria-label="Broadcast types">
+              <button class="broadcast-type-card glass" type="button" data-broadcast-type="end-of-month"><span class="broadcast-type-icon" aria-hidden="true">EOM</span><span><strong>End of month</strong><small>Share a local market update with your database.</small></span><b aria-hidden="true">›</b></button>
+              <button class="broadcast-type-card glass" type="button" data-broadcast-type="just-listed"><span class="broadcast-type-icon" aria-hidden="true">JL</span><span><strong>Just listed</strong><small>Let nearby contacts know about a new listing.</small></span><b aria-hidden="true">›</b></button>
+              <button class="broadcast-type-card glass" type="button" data-broadcast-type="just-sold"><span class="broadcast-type-icon" aria-hidden="true">JS</span><span><strong>Just sold</strong><small>Share a recent result and start property conversations.</small></span><b aria-hidden="true">›</b></button>
+              <button class="broadcast-type-card glass" type="button" data-broadcast-type="coming-soon"><span class="broadcast-type-icon" aria-hidden="true">CS</span><span><strong>Coming soon</strong><small>Give selected contacts an early property heads-up.</small></span><b aria-hidden="true">›</b></button>
+              <button class="broadcast-type-card glass" type="button" data-broadcast-type="auction-reminder"><span class="broadcast-type-icon" aria-hidden="true">AR</span><span><strong>Auction reminder</strong><small>Remind interested contacts about an upcoming auction.</small></span><b aria-hidden="true">›</b></button>
+            </section>
+          </div>
+
+          <div id="broadcastBuilderFlow" class="hidden broadcast-step-flow">
+            <div class="broadcast-step-progress" aria-label="Broadcast progress">
+              <span data-broadcast-progress="1">1</span><i></i><span data-broadcast-progress="2">2</span><i></i><span data-broadcast-progress="3">3</span>
+            </div>
+
+            <section id="broadcastStepRecipients" class="broadcast-step-page" data-broadcast-step="1">
+              <header class="broadcast-step-heading">
+                <span id="broadcastTypeEyebrow">BROADCAST</span>
+                <h3>Choose recipients</h3>
+                <p id="broadcastTypeDescription">Select the people who should receive this update.</p>
+                <strong id="campaignEligibleCount">0</strong>
+              </header>
+              <div class="broadcast-step-surface">
+                <div class="broadcast-step-section-head"><div><span>1 · AUDIENCE</span><h4>Who should receive this?</h4></div><small id="campaignAudienceMeta">Select an audience</small></div>
+                <div id="campaignLargeAudience" class="broadcast-audience-mode hidden">
+                  <div class="broadcast-audience-intro"><strong>Suburb-wide audience</strong><small>End-of-month updates include all eligible contacts in the selected suburb.</small></div>
+                  <label class="broadcast-select-field">SUBURB<select id="campaignSuburbSelect"></select></label>
+                </div>
+                <div id="campaignStreetAudience" class="broadcast-audience-mode hidden">
+                  <div class="broadcast-audience-intro"><strong>Street audience</strong><small>Select a street, then choose the neighbours who should receive this update.</small></div>
+                  <div class="campaign-filter-grid">
+                    <label>SUBURB<select id="campaignStreetSuburb"></select></label>
+                    <label>STREET<select id="campaignStreetSelect"></select></label>
+                  </div>
+                  <div id="campaignStreetRecipients" class="broadcast-recipient-list"></div>
+                </div>
+                <div class="campaign-filter-grid broadcast-filter-row">
+                  <label>NOT CONTACTED FOR<select id="campaignRecency"><option value="0">Any time</option><option value="7">7+ days</option><option value="30">30+ days</option><option value="60">60+ days</option><option value="90">90+ days</option></select></label>
+                </div>
+                <div class="campaign-checks"><label><input id="campaignExcludeDnc" type="checkbox" checked> Exclude do-not-contact</label><label><input id="campaignExcludeRecent" type="checkbox" checked> Exclude anyone contacted today</label></div>
+              </div>
+              <div class="broadcast-step-actions"><button id="broadcastNextToMessage" class="primary" type="button">Continue to message</button></div>
+            </section>
+
+            <section id="broadcastStepMessage" class="broadcast-step-page hidden" data-broadcast-step="2">
+              <header class="broadcast-step-heading">
+                <span>2 · MESSAGE</span>
+                <h3>Write your message</h3>
+                <p>Write once. AGNT personalises each SMS before it reaches the recipient.</p>
+              </header>
+              <div class="broadcast-step-surface">
+                <label class="broadcast-field-label">CAMPAIGN NAME<input id="campaignName" type="text" placeholder="Campaign name"></label>
+                <label class="broadcast-field-label">MESSAGE BODY<textarea id="campaignMessage" rows="10"></textarea></label>
+                <div class="broadcast-token-row" aria-label="Available personalisation fields"><span>{{FirstName}}</span><span>{{FullName}}</span><span>{{Suburb}}</span><span>{{AgentName}}</span></div>
+                <div class="campaign-delay"><label>DELAY BETWEEN MESSAGES<select id="campaignDelay"><option value="1">1 second</option><option value="2" selected>2 seconds</option><option value="3">3 seconds</option><option value="5">5 seconds</option></select></label></div>
+              </div>
+              <div class="broadcast-step-actions"><button id="broadcastNextToReview" class="primary" type="button">Review campaign</button></div>
+            </section>
+
+            <section id="broadcastStepReview" class="broadcast-step-page hidden" data-broadcast-step="3">
+              <header class="broadcast-step-heading">
+                <span>3 · REVIEW &amp; SEND</span>
+                <h3>Check before sending</h3>
+                <p id="campaignReviewMeta">No audience selected</p>
+              </header>
+              <div class="broadcast-review-switch" role="tablist" aria-label="Broadcast environment">
+                <button id="broadcastReviewLive" class="active" type="button">Campaign</button>
+                <button id="broadcastReviewTest" type="button">Test environment</button>
+              </div>
+              <div id="broadcastLiveReview" class="broadcast-step-surface">
+                <div id="campaignReadiness" class="broadcast-readiness" aria-live="polite"></div><div id="campaignWarnings" class="campaign-warnings"></div>
+                <div id="campaignPreview" class="campaign-preview"><div class="empty">Choose an audience and write a message to preview recipients.</div></div>
+                <button id="launchCampaignShortcut" class="primary campaign-launch" type="button">Open AGNT Bulk SMS</button>
+                <p class="campaign-disclaimer">AGNT prepares the personalised payload. iOS Shortcuts performs the sending. Review the recipient count and samples before continuing.</p>
+              </div>
+              <div id="broadcastTestReview" class="broadcast-step-surface bulk-sms-test-lab hidden">
+                <div class="broadcast-step-section-head"><div><span>TEST ENVIRONMENT</span><h4>Send without live CRM contacts</h4></div><small id="bulkSmsTestMeta">Enter test recipients</small></div>
+                <p class="bulk-sms-test-intro">This isolated test does not use or update live CRM contacts. Enter one recipient per line using <strong>Name, mobile</strong> or just a mobile number.</p>
+                <label class="bulk-sms-test-field">TEST RECIPIENTS<textarea id="bulkSmsTestRecipients" rows="4" placeholder="Andrew, 0412 345 678&#10;Clare, 0498 765 432"></textarea></label>
+                <label class="bulk-sms-test-field">TEST MESSAGE<textarea id="bulkSmsTestMessage" rows="7">Hi {{FirstName}},
+
+This is a test message from AGNT Bulk SMS.
+
+Thanks,
+Andrew Tour | McGrath</textarea></label>
+                <div class="campaign-delay"><label>DELAY BETWEEN MESSAGES<select id="bulkSmsTestDelay"><option value="0">No delay</option><option value="2">2 seconds</option><option value="3">3 seconds</option><option value="5" selected>5 seconds</option><option value="8">8 seconds</option><option value="10">10 seconds</option></select></label></div>
+                <div id="bulkSmsTestWarnings" class="campaign-warnings"></div>
+                <div id="bulkSmsTestPreview" class="campaign-preview"><div class="empty">Add test recipients to preview the payload.</div></div>
+                <details class="bulk-sms-json"><summary>View JSON payload</summary><pre id="bulkSmsTestJson"></pre></details>
+                <button id="launchBulkSmsTest" class="primary campaign-launch" type="button" disabled>Open AGNT Bulk SMS test</button>
+                <p class="campaign-disclaimer">Only the numbers entered above are included. AGNT records the shortcut launch, not carrier delivery.</p>
+                <div class="bulk-sms-test-history"><span>LATEST TEST LAUNCHES</span><div id="bulkSmsTestHistory" class="campaign-history"></div></div>
+              </div>
+            </section>
+
+            <section id="broadcastStepSuccess" class="broadcast-step-page hidden" data-broadcast-step="4">
+              <div class="broadcast-success-mark" aria-hidden="true">✓</div>
+              <header class="broadcast-step-heading broadcast-success-heading">
+                <span>CAMPAIGN READY</span>
+                <h3>Sent to AGNT Bulk SMS</h3>
+                <p>Your personalised campaign has been handed to the test sending environment.</p>
+              </header>
+              <div class="broadcast-step-surface broadcast-success-summary">
+                <div><span>CAMPAIGN</span><strong id="broadcastSuccessName">Campaign</strong></div>
+                <div><span>RECIPIENTS</span><strong id="broadcastSuccessCount">0 SMS</strong></div>
+                <div><span>LAUNCHED</span><strong id="broadcastSuccessTime">Just now</strong></div>
+              </div>
+              <div class="broadcast-previous-campaign">
+                <span>PREVIOUS CAMPAIGN</span>
+                <div id="campaignHistory" class="campaign-history"></div>
+              </div>
+              <div class="broadcast-step-actions"><button id="broadcastStartAnother" class="primary" type="button">Create another broadcast</button><button id="broadcastReturnProspector" class="secondary" type="button">Return to Prospector</button></div>
+            </section>
+          </div>
         </section>
         <section id="prospectorInsightsPanel" class="prospector-insights-panel hidden" aria-live="polite">
           <div class="insight-period-switch glass" role="tablist" aria-label="Prospecting insight period">
@@ -567,6 +830,8 @@
       <section id="prospectingSession" class="prospecting-session hidden" aria-live="polite"></section>
     </section>
 
+
+
     <section id="settingsView" class="view">
       <div class="settings glass">
         <div class="profile-hero">
@@ -578,21 +843,31 @@
           <article><span>This week</span><strong id="profileWeekScore">0%</strong></article>
           <article><span>Work days</span><strong id="profileWorkDays">4</strong></article>
         </div>
-        <section class="passkey-settings" aria-labelledby="passkeySettingsTitle">
-          <div class="passkey-settings-head">
-            <div><span>PASSKEY</span><h3 id="passkeySettingsTitle">Faster, protected sign-in</h3></div>
-            <strong id="passkeyStatusBadge" class="passkey-status-badge">Checking</strong>
+        <fieldset id="teamAccountCard" class="team-account-settings">
+          <legend>Team</legend>
+          <div class="team-account-summary">
+            <div class="team-account-heading"><div><span id="teamAccountMode">Not assigned</span><strong id="teamAccountName">Set up Solo or Team</strong></div><span id="teamAccountRole" class="team-role-badge"></span></div>
+            <div id="teamJoinCodePanel" class="team-code-panel hidden"><div><span>INVITE CODE</span><strong id="teamAccountCode"></strong></div><button id="copyTeamCode" type="button">Copy</button></div>
+            <p id="teamAccountStatus" class="team-account-status"></p>
           </div>
-          <p id="passkeySettingsCopy">Use Face ID, fingerprint or your device passcode when signing in.</p>
-          <div id="passkeyCredentialList" class="passkey-credential-list" aria-live="polite"></div>
-          <button id="addPasskey" class="secondary passkey-add" type="button">Set up a passkey</button>
-          <small id="passkeySettingsMessage" class="passkey-settings-message"></small>
-        </section>
+          <button id="manageTeamMembers" class="secondary hidden" type="button">Manage members</button>
+          <button id="leaveCurrentTeam" class="secondary team-leave-button hidden" type="button">Leave team</button>
+          <button id="openTeamSetup" class="secondary" type="button">Choose setup</button>
+        </fieldset>
         <label>Agent name<input id="agentName" type="text" maxlength="40" placeholder="Your name"></label>
         <label>Calls target<input id="callsTarget" type="number" min="1"></label>
         <label>Connects target<input id="connectsTarget" type="number" min="1"></label>
         <label>Data target<input id="dataTarget" type="number" min="1"></label>
         <label>Weekly knocking target<input id="weeklyKnockTarget" type="number" min="1"></label>
+        <fieldset class="appearance-settings">
+          <legend>Appearance</legend>
+          <p>Choose how AGNT looks after you sign in.</p>
+          <div class="appearance-options" role="radiogroup" aria-label="Appearance">
+            <label><input type="radio" name="appearancePreference" value="system"><span>System</span></label>
+            <label><input type="radio" name="appearancePreference" value="light"><span>Light</span></label>
+            <label><input type="radio" name="appearancePreference" value="dark"><span>Dark</span></label>
+          </div>
+        </fieldset>
         <fieldset class="workday-settings">
           <legend>Accountability days</legend>
           <p>Select the days included in your targets, insights and leaderboard.</p>
@@ -610,8 +885,14 @@
           <legend>Calendar Preference</legend>
           <p>Calendar</p>
           <div class="calendar-preference-options">
-            <label><input type="radio" name="calendarPreference" value="apple"><span>Apple Calendar</span></label>
-            <label><input type="radio" name="calendarPreference" value="outlook"><span>Outlook Calendar</span></label>
+            <label>
+              <input type="radio" name="calendarPreference" value="apple">
+              <span class="calendar-option-content"><svg class="calendar-service-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M16.7 12.8c0-2.7 2.2-4 2.3-4.1-1.3-1.9-3.3-2.1-4-2.1-1.7-.2-3.3 1-4.2 1-.9 0-2.3-1-3.8-.9-2 .1-3.8 1.2-4.8 3-2.1 3.6-.5 8.9 1.5 11.8 1 1.4 2.1 3 3.7 2.9 1.5-.1 2.1-1 3.9-1 1.8 0 2.3 1 3.9 1 1.6 0 2.6-1.4 3.6-2.9 1.1-1.7 1.6-3.3 1.6-3.4-.1 0-3.7-1.4-3.7-5.3ZM13.9 4.8c.8-1 1.4-2.5 1.2-3.9-1.2.1-2.7.8-3.6 1.8-.8.9-1.5 2.4-1.3 3.8 1.4.1 2.8-.7 3.7-1.7Z"/></svg><span class="calendar-option-label">Apple Calendar</span></span>
+            </label>
+            <label>
+              <input type="radio" name="calendarPreference" value="outlook">
+              <span class="calendar-option-content"><svg class="calendar-service-icon outlook" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5.5 10.5 4v16L3 18.5v-13Zm9 1.2h8.2c.4 0 .8.4.8.8v9c0 .4-.4.8-.8.8H12V6.7Zm1.5 2.1v6.4h5.8V8.8h-5.8Z"/><path d="m12 9 4.3 3 4.3-3v1.8l-4.3 3-4.3-3V9Z"/></svg><span class="calendar-option-label">Outlook Calendar</span></span>
+            </label>
           </div>
         </fieldset>
         <button id="saveSettings" class="primary">Save settings</button>
@@ -658,6 +939,24 @@
     <div id="calendarGrid" class="calendar-grid"></div>
   </div>
 </div>
+<div id="appointmentAssignmentModal" class="appointment-assignment-modal hidden" aria-hidden="true">
+  <section class="appointment-assignment-card glass" role="dialog" aria-modal="true" aria-labelledby="appointmentAssignmentTitle">
+    <span class="appointment-assignment-kicker">ASSIGN APPOINTMENT</span>
+    <h2 id="appointmentAssignmentTitle">Who is this appointment for?</h2>
+    <p>The person booking it keeps the appointment stat.</p>
+    <label>Assigned to<select id="appointmentAssignmentSelect"><option value="">Me</option></select></label>
+    <div class="appointment-assignment-actions"><button id="cancelAppointmentAssignment" class="secondary" type="button">Cancel</button><button id="confirmAppointmentAssignment" class="primary" type="button">Confirm booking</button></div>
+  </section>
+</div>
+
+<div id="teamAppointmentNotice" class="team-appointment-notice hidden" aria-hidden="true">
+  <section class="team-appointment-notice-card glass" role="alertdialog" aria-modal="true" aria-labelledby="teamAppointmentNoticeTitle">
+    <span class="team-appointment-notice-kicker">APPOINTMENT BOOKED FOR YOU</span><h2 id="teamAppointmentNoticeTitle">A teammate booked an appointment for you.</h2>
+    <div class="team-appointment-notice-detail"><span id="teamAppointmentNoticeType">MAP</span><strong id="teamAppointmentNoticeContact">Contact</strong><small id="teamAppointmentNoticeAddress">Address</small><em id="teamAppointmentNoticeWhen">Date · time</em></div>
+    <div class="team-appointment-notice-actions"><button id="teamAppointmentGotIt" class="secondary" type="button">Got it</button><button id="teamAppointmentAddCalendar" class="primary" type="button">Add to calendar</button></div>
+  </section>
+</div>
+
 <div id="followUpModal" class="modal action-sheet-modal" aria-hidden="true">
   <div class="action-sheet glass" role="dialog" aria-modal="true" aria-labelledby="followUpModalTitle">
     <div class="action-sheet-handle"></div>
@@ -733,6 +1032,9 @@
 </div>
 
 <div id="toast" class="toast"></div>
-<script type="module" src="app.js?v=125.7-passkey-poc1"></script>
+
+
+
+<script type="module" src="app.js?v=1.36.7-safe-cleanup"></script>
 </body>
 </html>

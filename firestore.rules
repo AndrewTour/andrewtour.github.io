@@ -1,19 +1,132 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Private account data. Each agent can only access their own records.
-    match /users/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+    function signedIn() {
+      return request.auth != null;
     }
 
-    // Shared daily leaderboard. Signed-in agents can read the team table,
-    // but can only create or change the row that matches their own UID.
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function isTeamMember(teamId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid));
+    }
+
+    function isTeamOwner(teamId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/teams/$(teamId))
+        && get(/databases/$(database)/documents/teams/$(teamId)).data.ownerUid == request.auth.uid;
+    }
+
+    // Stable personal-data rules. Kept structurally aligned with the confirmed
+    // pre-Teams production rules: a user can only access their own records.
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+
+      match /{document=**} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // Stable publication path is deliberately preserved.
+    // Team security: users may only read their own legacy row.
+    // Team views read the isolated team leaderboard below instead.
     match /leaderboard/{userId} {
-      allow read: if request.auth != null;
-      allow create, update: if request.auth != null
-                            && request.auth.uid == userId
-                            && request.resource.data.uid == request.auth.uid;
-      allow delete: if request.auth != null && request.auth.uid == userId;
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId);
+    }
+
+    // Team metadata. Team creation is owner-only. Existing members can read.
+    match /teams/{teamId} {
+      allow create: if signedIn()
+                    && request.resource.data.ownerUid == request.auth.uid
+                    && request.resource.data.joinEnabled == true
+                    && request.resource.data.joinCode is string;
+      allow read: if isTeamMember(teamId) || isTeamOwner(teamId);
+      allow update: if isTeamOwner(teamId)
+                    && request.resource.data.ownerUid == resource.data.ownerUid;
+      allow delete: if isTeamOwner(teamId);
+
+      match /members/{memberId} {
+        // A user can verify their own membership; team members can see their team.
+        allow read: if isOwner(memberId) || isTeamMember(teamId);
+
+        // Owner creation is validated against the post-batch team document.
+        // Normal joining requires the exact current join code from the team.
+        allow create: if isOwner(memberId)
+                      && request.resource.data.uid == request.auth.uid
+                      && request.resource.data.teamId == teamId
+                      && (
+                        (
+                          request.resource.data.role == 'owner'
+                          && getAfter(/databases/$(database)/documents/teams/$(teamId)).data.ownerUid == request.auth.uid
+                        )
+                        ||
+                        (
+                          request.resource.data.role == 'member'
+                          && getAfter(/databases/$(database)/documents/teams/$(teamId)).data.joinEnabled == true
+                          && request.resource.data.joinCodeUsed == getAfter(/databases/$(database)/documents/teams/$(teamId)).data.joinCode
+                        )
+                      );
+
+        allow update: if isTeamOwner(teamId)
+                      || (isOwner(memberId)
+                          && request.resource.data.uid == request.auth.uid
+                          && request.resource.data.teamId == teamId
+                          && request.resource.data.role == resource.data.role);
+        allow delete: if isTeamOwner(teamId) || isOwner(memberId);
+      }
+
+      // Team appointment assignment. Setter keeps personal appointment/stat record.
+      match /appointments/{appointmentId} {
+        allow read: if isTeamMember(teamId);
+        allow create: if isTeamMember(teamId)
+                      && request.resource.data.setterUid == request.auth.uid
+                      && request.resource.data.assignedToUid is string
+                      && request.resource.data.assignedToUid != request.auth.uid
+                      && exists(/databases/$(database)/documents/teams/$(teamId)/members/$(request.resource.data.assignedToUid));
+        allow update: if isTeamMember(teamId)
+                      && ((resource.data.setterUid == request.auth.uid && request.resource.data.setterUid == resource.data.setterUid)
+                          || (resource.data.assignedToUid == request.auth.uid
+                              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['acknowledgedAt','calendarAddedAt','updatedAt'])));
+        allow delete: if isTeamOwner(teamId) || resource.data.setterUid == request.auth.uid;
+      }
+
+      // Secure team-facing leaderboard. This is additive; it does not replace
+      // leaderboard/{uid} publishing during the Teams transition.
+      match /leaderboard/{memberId} {
+        allow read: if isTeamMember(teamId);
+        allow create, update: if isOwner(memberId)
+                              && isTeamMember(teamId)
+                              && request.resource.data.uid == request.auth.uid;
+        allow delete: if isTeamOwner(teamId) || isOwner(memberId);
+      }
+    }
+
+    // Private join-code lookup. Exact document gets are allowed, collection
+    // listing is not. Only the owning team may create/change/delete its mapping.
+    match /teamCodes/{code} {
+      allow get: if signedIn();
+      allow list: if false;
+
+      allow create: if signedIn()
+                    && request.resource.data.code == code
+                    && request.resource.data.ownerUid == request.auth.uid
+                    && getAfter(/databases/$(database)/documents/teams/$(request.resource.data.teamId)).data.ownerUid == request.auth.uid
+                    && getAfter(/databases/$(database)/documents/teams/$(request.resource.data.teamId)).data.joinCode == code;
+
+      allow update: if signedIn()
+                    && get(/databases/$(database)/documents/teams/$(resource.data.teamId)).data.ownerUid == request.auth.uid;
+      allow delete: if signedIn()
+                    && get(/databases/$(database)/documents/teams/$(resource.data.teamId)).data.ownerUid == request.auth.uid;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

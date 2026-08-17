@@ -1,28 +1,37 @@
 import { firebaseConfig } from './firebase-config.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js';
-import { getAuth, setPersistence, browserLocalPersistence, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithCustomToken, signOut as firebaseSignOut } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, onSnapshot, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
+import { getAuth, setPersistence, browserLocalPersistence, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut as firebaseSignOut } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, getDoc, getDocs, query, where, writeBatch, onSnapshot, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
 
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const DEFAULT_WORK_DAYS=[1,2,4,5];
 let workDays=[...DEFAULT_WORK_DAYS];
 let offDayReviewDismissedThisSession=false;
-const CALL_PLAN=[[9,'Active Buyer Calls','Hot buyers, offers, contracts and second inspections'],[10,'Past OFI Calls','Recent attendees, missed callbacks and buyer feedback'],[11,'Pipeline Calls','Current sellers, warm leads and next-step conversations'],[12,'Past Appraisals','Owners with a likely 3–12 month move'],[13,'Database Reconnects','Long-term owners and dormant contacts'],[14,'Just Listed & Coming Soon','Buyers, neighbours and local owner awareness'],[15,'Just Sold Calls','Result calls and nearby owner follow-up'],[16,'Priority Follow-Up','Offers, appointments and tomorrow’s pipeline']];
 const DEFAULTS={calls:50,connects:25,data:10,weeklyKnock:240};
 const SELLING_TIMEFRAMES=['Now','1–3 months','6–12 months','12 months+'];
-let targets={...DEFAULTS}, days={}, prospects=[], prospectInteractions=[], marketPulseEvents=[], prospectFilter='priority', prospectSection='today', prospectContactsMode='active', pipelineTemperature='All', pipelineSort='followup', prospectBulkMode=false, selectedProspectIds=new Set(), activeProspectId=null, prospectSessionIds=[], prospectSessionIndex=0, prospectSessionActive=false, prospectSessionStats={calls:0,connects:0,temperate:0,appointments:0}, prospectSessionContext=null, selectedDate=dateKey(new Date()), appointmentDate=selectedDate, appointmentHistoryMode=null, agentName='', calendarPreference='outlook', leaderboardEntries=[], leaderboardMode='day', leaderboardDayOffset=0, leaderboardWeekOffset=0, scorecardWeekOffset=0, prospectInsightPeriod='week';
+const AGNT_BULK_SMS_SHORTCUT='AGNT Bulk SMS';
+let targets={...DEFAULTS}, days={}, prospects=[], prospectInteractions=[], marketPulseEvents=[], prospectFilter='priority', prospectSection='today', prospectContactsMode='active', pipelineTemperature='All', pipelineSort='followup', prospectBulkMode=false, selectedProspectIds=new Set(), activeProspectId=null, prospectSessionIds=[], prospectSessionIndex=0, prospectSessionActive=false, prospectSessionStats={calls:0,connects:0,temperate:0,appointments:0,sms:0}, prospectSessionContext=null, selectedDate=dateKey(new Date()), appointmentDate=selectedDate, appointmentHistoryMode=null, agentName='', calendarPreference='outlook', appearancePreference='system', leaderboardEntries=[], leaderboardMode='day', leaderboardDayOffset=0, leaderboardWeekOffset=0, scorecardWeekOffset=0, prospectInsightPeriod='week', campaignHistory=[], bulkSmsTestLaunches=[], selectedBroadcastType='', selectedBroadcastSuburb='', selectedBroadcastStreet='', selectedBroadcastRecipientIds=new Set(), broadcastStep=1, broadcastReviewMode='live', broadcastLastLaunch=null;
 let knockingSessionActive=false,knockingSessionVisible=false,knockingSessionEnding=false,knockingSessionStats={knocks:0,clients:0,data:0,MAP:0,LAP:0},knockingSessionLog=[],knockingSessionStartSeconds=0,knockingCaptureType='',knockingEditingLogId='';
-let year=new Date().getFullYear(), monthCursor=new Date(), uid='local', currentUser=null, cloud=false, db=null, auth=null;
-let unsubDays=null, unsubProfile=null, unsubLeaderboard=null, unsubProspecting=null, timerTick=null, syncTimer=null, leaderboardPublishTimer=null, prospectingSaveTimer=null;
-let pendingSyncOperations=0, syncHasError=false, lastLeaderboardSignature='', lastProspectingSignature='';
+let year=new Date().getFullYear(), uid='local', currentUser=null, cloud=false, db=null, auth=null;
+let unsubDays=null, unsubProfile=null, unsubLeaderboard=null, unsubProspecting=null, unsubTeamMembership=null, unsubTeamMembers=null, unsubAppointmentAssignees=null, unsubAssignedTeamAppointments=null, timerTick=null, syncTimer=null, leaderboardPublishTimer=null, prospectingSaveTimer=null, returningSnapshotTimer=null;
+let accountMode='unconfigured',teamId=null,teamRole=null,teamName='',teamJoinCode='',teamLayerStatus='idle',teamLayerError='',creatingAccount=false,teamOnboardingActive=false;
+let teamSetupBusy=false,teamSetupReturnFocus=null,pendingTeamJoin=null;
+let teamMembers=[],teamMembersStatus='idle',teamMembersError='',teamMembersDataSignature='',subscribedMembershipTeamId='',subscribedMembersTeamId='',teamManagerOpen=false,teamManagerReturnFocus=null,pendingTeamMemberRemoval=null,teamMemberActionBusy=false;
+let appointmentAssignees=[],assignedTeamAppointments=[],pendingTeamAppointmentNotice=null,teamAppointmentNoticeOpen=false,dismissedTeamAppointmentNotices=new Set(),subscribedAppointmentTeamId='',pendingAppointmentAssignment=null;
+let teamLeaveBusy=false,teamLeaveReturnFocus=null;
+let teamInviteRefreshBusy=false,teamInviteRefreshReturnFocus=null;
+let teamDeleteBusy=false,teamDeleteReturnFocus=null;
+let pendingSyncOperations=0, syncHasError=false, lastLeaderboardSignature='', lastTeamLeaderboardSignature='', lastProspectingSignature='';
+let subscribedTeamId='',teamLeaderboardDataSignature='',teamInitialisationToken=0;
+let leaderboardListRenderMarkup='';
 let pendingProspectingPayload=null, pendingProspectingSignature='', prospectingWriteInFlight=false, prospectingSaveWaiters=[];
-let passkeyCredentials=[],passkeyCredentialsLoading=false,passkeyCredentialsLoaded=false,passkeyCredentialsError='',passkeyOperationActive=false;
 let editingAppointment=null;
 let todayPage='overview';
 let appointmentEditReturnState=null;
 let appointmentLinkedProspectId='';
 let pendingProspectAppointmentFlow=null;
 let manualDiallerNumber='',manualCallOutcome='',manualCallLaunchGuardUntil=0;
+let buyerSession={contacts:[],index:0,active:false,fileName:'',importedAt:0};
 const daySaveChains=new Map();
 let dirtyDayKeys=new Set();
 const appointmentSubmitLocks=new Set();
@@ -70,112 +79,6 @@ function fmtDate(k){return parseKey(k).toLocaleDateString('en-AU',{weekday:'long
 function fmtTimer(sec){const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=Math.floor(sec%60);return h?`${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`}
 function uuid(){return crypto.randomUUID?.()||`${Date.now()}-${Math.random()}`}
 function configured(){return firebaseConfig?.apiKey&&!firebaseConfig.apiKey.startsWith('PASTE_')}
-function passkeyApiConfigured(){return /^https:\/\//i.test(String(firebaseConfig?.passkeyApiUrl||''))}
-function passkeysSupported(){return Boolean(window.isSecureContext&&window.PublicKeyCredential&&navigator.credentials?.create&&navigator.credentials?.get)}
-function base64UrlToBuffer(value){
-  const normalised=String(value||'').replace(/-/g,'+').replace(/_/g,'/'),padding='='.repeat((4-normalised.length%4)%4),binary=atob(normalised+padding),bytes=new Uint8Array(binary.length);
-  for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
-  return bytes.buffer;
-}
-function bufferToBase64Url(value){
-  if(value===null||value===undefined)return null;
-  const bytes=value instanceof ArrayBuffer?new Uint8Array(value):new Uint8Array(value.buffer,value.byteOffset||0,value.byteLength),chunk=0x8000;
-  let binary='';for(let i=0;i<bytes.length;i+=chunk)binary+=String.fromCharCode(...bytes.subarray(i,i+chunk));
-  return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-}
-function passkeyCreationOptions(options){
-  if(typeof PublicKeyCredential.parseCreationOptionsFromJSON==='function')return PublicKeyCredential.parseCreationOptionsFromJSON(options);
-  return{...options,challenge:base64UrlToBuffer(options.challenge),user:{...options.user,id:base64UrlToBuffer(options.user.id)},excludeCredentials:(options.excludeCredentials||[]).map(item=>({...item,id:base64UrlToBuffer(item.id)}))};
-}
-function passkeyRequestOptions(options){
-  if(typeof PublicKeyCredential.parseRequestOptionsFromJSON==='function')return PublicKeyCredential.parseRequestOptionsFromJSON(options);
-  return{...options,challenge:base64UrlToBuffer(options.challenge),allowCredentials:(options.allowCredentials||[]).map(item=>({...item,id:base64UrlToBuffer(item.id)}))};
-}
-function passkeyCredentialJson(credential){
-  if(typeof credential?.toJSON==='function')return credential.toJSON();
-  const response=credential.response,registration=typeof response?.getTransports==='function';
-  const responseJson=registration?{
-    clientDataJSON:bufferToBase64Url(response.clientDataJSON),
-    attestationObject:bufferToBase64Url(response.attestationObject),
-    transports:response.getTransports?.()||[],
-    publicKeyAlgorithm:response.getPublicKeyAlgorithm?.(),
-    publicKey:bufferToBase64Url(response.getPublicKey?.())
-  }:{
-    clientDataJSON:bufferToBase64Url(response.clientDataJSON),
-    authenticatorData:bufferToBase64Url(response.authenticatorData),
-    signature:bufferToBase64Url(response.signature),
-    userHandle:bufferToBase64Url(response.userHandle)
-  };
-  Object.keys(responseJson).forEach(key=>responseJson[key]===undefined&&delete responseJson[key]);
-  return{id:credential.id,rawId:bufferToBase64Url(credential.rawId),type:credential.type,response:responseJson,clientExtensionResults:credential.getClientExtensionResults?.()||{},authenticatorAttachment:credential.authenticatorAttachment||undefined};
-}
-async function passkeyApi(route,payload={},authenticated=false){
-  if(!passkeyApiConfigured())throw new Error('Passkey service is not configured.');
-  const headers={'Content-Type':'application/json'};
-  if(authenticated){if(!currentUser)throw new Error('Sign in with email first.');headers.Authorization=`Bearer ${await currentUser.getIdToken()}`}
-  let response;
-  try{response=await fetch(`${firebaseConfig.passkeyApiUrl.replace(/\/$/,'')}/${route}`,{method:'POST',headers,body:JSON.stringify(payload),cache:'no-store'})}catch{throw new Error('Passkey service is unavailable. Check the Firebase Function deployment.')}
-  const data=await response.json().catch(()=>({}));
-  if(!response.ok)throw new Error(data.error||'Passkey request failed.');
-  return data;
-}
-function passkeyErrorMessage(error,action='Passkey'){
-  if(error?.name==='NotAllowedError')return `${action} cancelled.`;
-  if(error?.name==='InvalidStateError')return 'This passkey is already linked to the account.';
-  if(error?.name==='SecurityError')return 'This website address is not authorised for passkeys.';
-  return String(error?.message||`${action} failed.`).replace(/^Firebase:\s*/i,'');
-}
-function setPasskeySettingsMessage(message='',type=''){
-  const node=$('#passkeySettingsMessage');if(!node)return;node.textContent=message;node.className=`passkey-settings-message${type?` ${type}`:''}`;
-}
-function passkeyDateLabel(value){const ms=Number(value);if(!ms)return'Not used yet';return new Date(ms).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})}
-function renderPasskeySettings(){
-  const badge=$('#passkeyStatusBadge'),copy=$('#passkeySettingsCopy'),list=$('#passkeyCredentialList'),add=$('#addPasskey');if(!badge||!copy||!list||!add)return;
-  badge.className='passkey-status-badge';add.disabled=passkeyOperationActive||passkeyCredentialsLoading||Boolean(passkeyCredentialsError)||!cloud||!passkeysSupported()||!passkeyApiConfigured();
-  if(!cloud){badge.textContent='Unavailable';copy.textContent='Sign in with your Firebase account to set up a passkey.';list.innerHTML='';add.textContent='Set up a passkey';return}
-  if(!passkeysSupported()){badge.textContent='Unsupported';badge.classList.add('error');copy.textContent='Passkeys are not supported by this browser or the page is not using HTTPS.';list.innerHTML='';add.textContent='Passkeys unavailable';return}
-  if(passkeyCredentialsLoading&&!passkeyCredentialsLoaded){badge.textContent='Checking';list.innerHTML='';return}
-  if(passkeyCredentialsError){badge.textContent='Unavailable';badge.classList.add('error');copy.textContent=passkeyCredentialsError;list.innerHTML='';add.textContent='Passkey service unavailable';return}
-  if(!passkeyCredentialsLoaded){badge.textContent='Ready';list.innerHTML='';add.textContent='Set up a passkey';return}
-  if(passkeyCredentials.length){badge.textContent='Active';badge.classList.add('active');copy.textContent='Your account can use Face ID, fingerprint or device verification to sign in.';list.innerHTML=passkeyCredentials.map((item,index)=>`<div class="passkey-credential"><div><strong>Passkey ${index+1}</strong><small>Added ${passkeyDateLabel(item.createdAt)} · Last used ${passkeyDateLabel(item.lastUsedAt)}</small></div><button type="button" data-remove-passkey="${escapeHtml(item.id)}">Remove</button></div>`).join('');add.textContent='Add another passkey'}
-  else{badge.textContent='Not set up';copy.textContent='Use Face ID, fingerprint or your device passcode when signing in.';list.innerHTML='';add.textContent='Set up a passkey'}
-}
-async function refreshPasskeyCredentials({quiet=false}={}){
-  if(!cloud||!currentUser||!passkeysSupported()||!passkeyApiConfigured()||passkeyCredentialsLoading)return;
-  passkeyCredentialsLoading=true;renderPasskeySettings();
-  try{const data=await passkeyApi('credentials/list',{},true);passkeyCredentials=Array.isArray(data.credentials)?data.credentials:[];passkeyCredentialsLoaded=true;passkeyCredentialsError='';if(!quiet)setPasskeySettingsMessage('')}
-  catch(error){passkeyCredentials=[];passkeyCredentialsLoaded=false;passkeyCredentialsError=passkeyErrorMessage(error);if(!quiet)setPasskeySettingsMessage(passkeyCredentialsError,'error')}
-  finally{passkeyCredentialsLoading=false;renderPasskeySettings()}
-}
-async function registerPasskey(){
-  if(passkeyOperationActive)return;if(!currentUser)return setPasskeySettingsMessage('Sign in with email first.','error');
-  passkeyOperationActive=true;setPasskeySettingsMessage('Preparing secure setup…');renderPasskeySettings();
-  try{
-    const start=await passkeyApi('registration/options',{},true),credential=await navigator.credentials.create({publicKey:passkeyCreationOptions(start.options)});
-    if(!credential)throw new Error('No passkey was created.');
-    await passkeyApi('registration/verify',{challengeId:start.challengeId,response:passkeyCredentialJson(credential)},true);
-    passkeyCredentialsLoaded=false;passkeyCredentialsError='';setPasskeySettingsMessage('Passkey added. You can use it the next time you sign in.','success');toast('Passkey added');await refreshPasskeyCredentials({quiet:true});
-  }catch(error){setPasskeySettingsMessage(passkeyErrorMessage(error,'Passkey setup'),'error')}
-  finally{passkeyOperationActive=false;renderPasskeySettings()}
-}
-async function signInWithPasskey(){
-  if(passkeyOperationActive)return;showAuthMessage('');passkeyOperationActive=true;const button=$('#passkeySignIn');if(button)button.disabled=true;
-  try{
-    if(!passkeysSupported())throw new Error('Passkeys are not supported by this browser or the page is not using HTTPS.');
-    const start=await passkeyApi('authentication/options'),credential=await navigator.credentials.get({publicKey:passkeyRequestOptions(start.options)});
-    if(!credential)throw new Error('No passkey was selected.');
-    const result=await passkeyApi('authentication/verify',{challengeId:start.challengeId,response:passkeyCredentialJson(credential)});
-    await signInWithCustomToken(auth,result.firebaseToken);
-  }catch(error){showAuthMessage(passkeyErrorMessage(error,'Passkey sign-in'))}
-  finally{passkeyOperationActive=false;if(button)button.disabled=!passkeysSupported()||!passkeyApiConfigured()}
-}
-async function removePasskey(id){
-  if(passkeyOperationActive||!id||!confirm('Remove this passkey from your AGNT account?'))return;
-  passkeyOperationActive=true;setPasskeySettingsMessage('Removing passkey…');renderPasskeySettings();
-  try{await passkeyApi('credentials/delete',{credentialId:id},true);passkeyCredentials=passkeyCredentials.filter(item=>item.id!==id);passkeyCredentialsLoaded=true;setPasskeySettingsMessage('Passkey removed.','success');toast('Passkey removed')}
-  catch(error){setPasskeySettingsMessage(passkeyErrorMessage(error,'Passkey removal'),'error')}
-  finally{passkeyOperationActive=false;renderPasskeySettings()}
-}
 function isPastDate(k){return k<todayKey()}
 function canEditDate(k){return !isPastDate(k)&&isWorkDayKey(k)}
 function lockedToast(){haptic(20);toast(isPastDate(selectedDate)?'This day is complete and locked':'This day is not in your accountability schedule')}
@@ -206,17 +109,168 @@ function refreshSyncStatus(){
 function beginSyncOperation(){pendingSyncOperations++;refreshSyncStatus()}
 function endSyncOperation({error=false}={}){pendingSyncOperations=Math.max(0,pendingSyncOperations-1);if(error)syncHasError=true;refreshSyncStatus()}
 function clearSyncError(){syncHasError=false;refreshSyncStatus()}
+function leaderboardConnectionState(){
+  if(!cloud)return{label:'DEVICE ONLY',visual:'offline'};
+  if(teamLayerStatus==='error')return{label:'TEAM ERROR',visual:'error'};
+  if(accountMode==='team'){
+    if(!navigator.onLine)return{label:'TEAM OFFLINE',visual:'offline'};
+    if(teamLayerStatus==='live')return{label:'TEAM LIVE',visual:'live'};
+    return{label:'TEAM SYNCING',visual:'connecting'};
+  }
+  if(accountMode==='solo')return{label:'SOLO',visual:'live'};
+  if(teamLayerStatus==='connecting')return{label:'TEAM SYNCING',visual:'connecting'};
+  return{label:'PRIVATE',visual:'offline'};
+}
+function renderLeaderboardStatus(){
+  const node=$('#leaderboardStatus');if(!node)return;
+  const status=leaderboardConnectionState();
+  if(node.textContent!==status.label)node.textContent=status.label;
+  node.className=`leaderboard-live ${status.visual}`;
+}
 
+const appearanceMedia=window.matchMedia?.('(prefers-color-scheme: dark)');
+let authScreenActive=true;
+function normaliseAppearance(value){return value==='light'||value==='dark'?value:'system'}
+function effectiveTheme(pref=appearancePreference){
+  if(authScreenActive)return 'light';
+  return pref==='dark'||(pref==='system'&&appearanceMedia?.matches)?'dark':'light';
+}
+function applyAppearance(pref=appearancePreference,{persist=true}={}){
+  appearancePreference=normaliseAppearance(pref);
+  const theme=effectiveTheme(appearancePreference);
+  document.documentElement.dataset.appearance=appearancePreference;
+  document.documentElement.dataset.theme=theme;
+  document.documentElement.dataset.auth=authScreenActive?'true':'false';
+  document.documentElement.style.colorScheme=theme;
+  const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.setAttribute('content',theme==='dark'?'#0b0d11':'#ffffff');
+  if(persist){try{localStorage.setItem('agnt:appearance',appearancePreference)}catch{}}
+}
+function setAuthScreenActive(active){authScreenActive=Boolean(active);applyAppearance(appearancePreference,{persist:false})}
+appearanceMedia?.addEventListener?.('change',()=>{if(appearancePreference==='system'&&!authScreenActive)applyAppearance('system',{persist:false})});
+applyAppearance(localStorage.getItem('agnt:appearance')||'system',{persist:false});
 function storagePrefix(userId=uid){return `da:${userId||'local'}:`}
-function resetState(){days={};targets={...DEFAULTS};workDays=[...DEFAULT_WORK_DAYS];agentName='';calendarPreference='outlook';leaderboardEntries=[];marketPulseEvents=[];selectedDate=todayKey();appointmentDate=selectedDate}
+function teamStateCacheKey(userId=uid){return `${storagePrefix(userId)}verified-team-v2`}
+function readCachedTeamState(userId=uid){
+  if(!userId||userId==='local')return null;
+  try{
+    const value=safeJsonParse(localStorage.getItem(teamStateCacheKey(userId))||'null',null);
+    if(!value||value.schemaVersion!==2)return null;
+    if(value.accountMode==='solo')return{mode:'solo',id:null,role:null,name:'',joinCode:''};
+    const id=String(value.teamId||'');if(value.accountMode!=='team'||!id)return null;
+    return{mode:'team',id,role:String(value.teamRole||'member'),name:String(value.teamName||'Team'),joinCode:String(value.teamJoinCode||'')};
+  }catch{return null}
+}
+function cacheVerifiedTeamState(){
+  if(!uid||uid==='local'||!['solo','team'].includes(accountMode))return;
+  const value={schemaVersion:2,accountMode,teamId:accountMode==='team'?teamId:null,teamRole:accountMode==='team'?teamRole:null,teamName:accountMode==='team'?teamName:'',teamJoinCode:accountMode==='team'&&teamRole==='owner'?teamJoinCode:'',verifiedAt:Date.now()};
+  try{localStorage.setItem(teamStateCacheKey(uid),JSON.stringify(value))}catch(err){console.warn('Verified team state could not be cached',err)}
+}
+function forgetCachedTeamState(userId=uid){try{localStorage.removeItem(teamStateCacheKey(userId))}catch{}}
+function resetState(){days={};targets={...DEFAULTS};workDays=[...DEFAULT_WORK_DAYS];agentName='';calendarPreference='outlook';appearancePreference=normaliseAppearance(localStorage.getItem('agnt:appearance')||'system');applyAppearance(appearancePreference,{persist:false});leaderboardEntries=[];marketPulseEvents=[];accountMode='unconfigured';teamId=null;teamRole=null;teamName='';teamJoinCode='';teamLayerStatus='idle';teamLayerError='';teamOnboardingActive=false;teamSetupBusy=false;teamSetupReturnFocus=null;pendingTeamJoin=null;teamMembers=[];teamMembersStatus='idle';teamMembersError='';teamMembersDataSignature='';subscribedMembershipTeamId='';subscribedMembersTeamId='';appointmentAssignees=[];assignedTeamAppointments=[];pendingTeamAppointmentNotice=null;teamAppointmentNoticeOpen=false;dismissedTeamAppointmentNotices=new Set();subscribedAppointmentTeamId='';pendingAppointmentAssignment=null;teamManagerOpen=false;teamManagerReturnFocus=null;pendingTeamMemberRemoval=null;teamMemberActionBusy=false;teamLeaveBusy=false;teamLeaveReturnFocus=null;teamInviteRefreshBusy=false;teamInviteRefreshReturnFocus=null;teamDeleteBusy=false;teamDeleteReturnFocus=null;subscribedTeamId='';teamLeaderboardDataSignature='';leaderboardListRenderMarkup='';selectedDate=todayKey();appointmentDate=selectedDate}
 function safeJsonParse(value,fallback){try{return JSON.parse(value)}catch{return fallback}}
-function loadLocal(userId=uid){resetState();const prefix=storagePrefix(userId);try{days=normaliseDaysMap(safeJsonParse(localStorage.getItem(prefix+'days')||localStorage.getItem(prefix+'days-backup')||'{}',{}));targets={...DEFAULTS,...safeJsonParse(localStorage.getItem(prefix+'targets')||'{}',{})};agentName=localStorage.getItem(prefix+'agent-name')||'';const savedWorkDays=safeJsonParse(localStorage.getItem(prefix+'work-days')||'null',null);if(Array.isArray(savedWorkDays)&&savedWorkDays.length)workDays=normaliseWorkDays(savedWorkDays);const savedCalendarPreference=localStorage.getItem(prefix+'calendar-preference');calendarPreference=savedCalendarPreference==='apple'?'apple':'outlook';prospects=normaliseProspects(safeJsonParse(localStorage.getItem(prefix+'prospects')||'[]',[]));prospectInteractions=normaliseProspectInteractions(safeJsonParse(localStorage.getItem(prefix+'prospect-interactions')||'[]',[]));marketPulseEvents=normaliseMarketPulseEvents(safeJsonParse(localStorage.getItem(prefix+'market-pulse-events')||'[]',[]));dirtyDayKeys=new Set(safeJsonParse(localStorage.getItem(prefix+'dirty-days')||'[]',[]).filter(validDateKey))}catch(err){console.error('Local data recovery failed',err);resetState();dirtyDayKeys=new Set()}}
+function loadLocal(userId=uid){resetState();const prefix=storagePrefix(userId);try{days=normaliseDaysMap(safeJsonParse(localStorage.getItem(prefix+'days')||localStorage.getItem(prefix+'days-backup')||'{}',{}));targets={...DEFAULTS,...safeJsonParse(localStorage.getItem(prefix+'targets')||'{}',{})};agentName=localStorage.getItem(prefix+'agent-name')||'';const savedWorkDays=safeJsonParse(localStorage.getItem(prefix+'work-days')||'null',null);if(Array.isArray(savedWorkDays)&&savedWorkDays.length)workDays=normaliseWorkDays(savedWorkDays);const savedCalendarPreference=localStorage.getItem(prefix+'calendar-preference');calendarPreference=savedCalendarPreference==='apple'?'apple':'outlook';prospects=normaliseProspects(safeJsonParse(localStorage.getItem(prefix+'prospects')||'[]',[]));prospectInteractions=normaliseProspectInteractions(safeJsonParse(localStorage.getItem(prefix+'prospect-interactions')||'[]',[]));marketPulseEvents=normaliseMarketPulseEvents(safeJsonParse(localStorage.getItem(prefix+'market-pulse-events')||'[]',[]));campaignHistory=safeJsonParse(localStorage.getItem(prefix+'campaign-history')||'[]',[]);bulkSmsTestLaunches=safeJsonParse(localStorage.getItem(prefix+'bulk-sms-test-launches')||'[]',[]);dirtyDayKeys=new Set(safeJsonParse(localStorage.getItem(prefix+'dirty-days')||'[]',[]).filter(validDateKey))}catch(err){console.error('Local data recovery failed',err);resetState();dirtyDayKeys=new Set()}}
 function saveDirtyDays(){try{localStorage.setItem(storagePrefix(uid)+'dirty-days',JSON.stringify([...dirtyDayKeys]))}catch(err){console.error('Dirty-day queue save failed',err)}}
 function markDayDirty(k){dirtyDayKeys.add(k);saveDirtyDays()}
 function clearDayDirty(k,clientUpdatedAt){if(Number(days[k]?.clientUpdatedAt)===Number(clientUpdatedAt)){dirtyDayKeys.delete(k);saveDirtyDays()}}
-function saveLocal(){const prefix=storagePrefix(uid);try{const serialised=JSON.stringify(normaliseDaysMap(days));const previous=localStorage.getItem(prefix+'days');if(previous)localStorage.setItem(prefix+'days-backup',previous);localStorage.setItem(prefix+'days',serialised);localStorage.setItem(prefix+'targets',JSON.stringify(targets));localStorage.setItem(prefix+'agent-name',agentName);localStorage.setItem(prefix+'work-days',JSON.stringify(workDays));localStorage.setItem(prefix+'calendar-preference',calendarPreference);localStorage.setItem(prefix+'prospects',JSON.stringify(prospects));localStorage.setItem(prefix+'prospect-interactions',JSON.stringify(prospectInteractions));localStorage.setItem(prefix+'market-pulse-events',JSON.stringify(marketPulseEvents));return true}catch(err){console.error('Local save failed',err);return false}}
-function clearActiveSession(){unsubDays?.();unsubProfile?.();unsubLeaderboard?.();unsubProspecting?.();unsubDays=unsubProfile=unsubLeaderboard=unsubProspecting=null;clearInterval(timerTick);clearTimeout(syncTimer);clearTimeout(leaderboardPublishTimer);clearTimeout(prospectingSaveTimer);prospectingSaveTimer=null;pendingProspectingPayload=null;pendingProspectingSignature='';prospectingWriteInFlight=false;prospectingSaveWaiters.splice(0).forEach(({resolve})=>resolve());currentUser=null;uid='local';cloud=false;pendingSyncOperations=0;syncHasError=false;lastLeaderboardSignature='';lastProspectingSignature='';dirtyDayKeys=new Set();passkeyCredentials=[];passkeyCredentialsLoading=false;passkeyCredentialsLoaded=false;passkeyCredentialsError='';passkeyOperationActive=false;resetState()}
+function saveLocal(){const prefix=storagePrefix(uid);try{const serialised=JSON.stringify(normaliseDaysMap(days));const previous=localStorage.getItem(prefix+'days');if(previous)localStorage.setItem(prefix+'days-backup',previous);localStorage.setItem(prefix+'days',serialised);localStorage.setItem(prefix+'targets',JSON.stringify(targets));localStorage.setItem(prefix+'agent-name',agentName);localStorage.setItem(prefix+'work-days',JSON.stringify(workDays));localStorage.setItem(prefix+'calendar-preference',calendarPreference);localStorage.setItem(prefix+'prospects',JSON.stringify(prospects));localStorage.setItem(prefix+'prospect-interactions',JSON.stringify(prospectInteractions));localStorage.setItem(prefix+'market-pulse-events',JSON.stringify(marketPulseEvents));localStorage.setItem(prefix+'campaign-history',JSON.stringify(campaignHistory.slice(0,20)));localStorage.setItem(prefix+'bulk-sms-test-launches',JSON.stringify(bulkSmsTestLaunches.slice(0,10)));return true}catch(err){console.error('Local save failed',err);return false}}
+function clearActiveSession(){teamInitialisationToken++;unsubDays?.();unsubProfile?.();unsubLeaderboard?.();unsubProspecting?.();unsubTeamMembership?.();unsubTeamMembers?.();unsubAppointmentAssignees?.();unsubAssignedTeamAppointments?.();unsubDays=unsubProfile=unsubLeaderboard=unsubProspecting=unsubTeamMembership=unsubTeamMembers=unsubAppointmentAssignees=unsubAssignedTeamAppointments=null;hideTeamAppointmentNotice({acknowledge:false});hideTeamManager({restoreFocus:false});closeTeamMemberRemoval({force:true});hideTeamLeaveConfirmation({force:true,restoreFocus:false});hideTeamCodeRefreshConfirmation({force:true,restoreFocus:false});clearInterval(timerTick);clearTimeout(syncTimer);clearTimeout(leaderboardPublishTimer);clearTimeout(prospectingSaveTimer);clearTimeout(returningSnapshotTimer);returningSnapshotTimer=null;prospectingSaveTimer=null;pendingProspectingPayload=null;pendingProspectingSignature='';prospectingWriteInFlight=false;prospectingSaveWaiters.splice(0).forEach(({resolve})=>resolve());currentUser=null;uid='local';cloud=false;pendingSyncOperations=0;syncHasError=false;lastLeaderboardSignature='';lastTeamLeaderboardSignature='';lastProspectingSignature='';dirtyDayKeys=new Set();resetState()}
 function displayAgentName(){return (agentName||currentUser?.displayName||currentUser?.email?.split('@')[0]||'Agent').trim()}
+function returningSnapshotReadyKey(){return `${storagePrefix(uid)}returning-snapshot-ready`}
+function returningSnapshotHasHistory(){
+  try{
+    if(localStorage.getItem(returningSnapshotReadyKey())==='1')return true;
+    const prefix=storagePrefix(uid),keys=Object.keys(localStorage);
+    return Boolean(localStorage.getItem(prefix+'days')||localStorage.getItem(prefix+'prospects')||localStorage.getItem(prefix+'agent-name')||keys.some(key=>key.startsWith(prefix+'welcome:')));
+  }catch{return false}
+}
+function markReturningSnapshotReady(){try{localStorage.setItem(returningSnapshotReadyKey(),'1')}catch{}}
+function returningSnapshotPipelineCount(){
+  const standardSession=prospectSessionActive&&!cleanText(prospectSessionContext?.eventId,160);
+  if(standardSession)return Math.max(0,prospectSessionIds.length-prospectSessionIndex);
+  try{
+    const raw=safeJsonParse(localStorage.getItem(dailyProspectPipelineKey())||'[]',[]);
+    if(Array.isArray(raw)&&raw.length)return raw.filter(id=>{const p=prospectById(id);return p&&!p.archived&&!prospectContactedToday(id)}).length;
+  }catch{}
+  return sortedEligibleProspectPipeline().filter(p=>!prospectContactedToday(p.id)).slice(0,50).length;
+}
+function returningSnapshotUpcomingAppointment(now=new Date()){
+  const current=now.getHours()*60+now.getMinutes();
+  return appointmentEntriesForDate(todayKey()).map(entry=>({entry,minutes:timelineMinutes(entry.appointment.time)})).filter(item=>Number.isFinite(item.minutes)&&item.minutes>=current-15).sort((a,b)=>a.minutes-b.minutes)[0]||null;
+}
+function returningSnapshotLeaderboardText(){
+  if(!cloud)return 'This device';
+  const rows=sortedTodayLeaderboard(),index=rows.findIndex(row=>row.uid===uid);
+  if(index>=0)return `#${index+1} of ${rows.length} today`;
+  return rows.length?`${rows.length} ranked today`:'Live sync';
+}
+function returningSnapshotPulse(k=todayKey()){
+  if(!isWorkDayKey(k))return{value:'Recovery',meta:'No targets scheduled today'};
+  if(completion(k)>=100)return{value:'Complete',meta:'Core targets are banked'};
+  const state=dayTrackState(k),previous=previousScheduledKey(k),change=previous?completion(k)-completion(previous):0;
+  const value=state==='on'?'On track':state==='risk'?'Watch pace':'Needs focus';
+  if(!previous)return{value,meta:completion(k)>0?'Momentum building today':'First action sets the pace'};
+  if(change>0)return{value,meta:`${change}% ahead of last workday`};
+  if(change<0)return{value,meta:`${Math.abs(change)}% below last workday`};
+  return{value,meta:'Level with last workday'};
+}
+function returningSnapshotNextBlock(now,data){
+  const current=now.getHours()*60+now.getMinutes(),next=data.nextAppointment,untilNext=next?next.minutes-current:9999,hour=now.getHours();
+  if(next&&untilNext>=0&&untilNext<=60){const a=next.entry.appointment;return{title:'Prepare for the next appointment',meta:`${appointmentTimeLabel(a,next.entry.sourceDate)} · ${a.contactName||a.name||appointmentType(a)}`}}
+  if(prospectSessionActive&&!cleanText(prospectSessionContext?.eventId,160)&&data.pipeline>0)return{title:'Resume your pipeline session',meta:`${data.pipeline} clients · about ${formatEstimatedTime(estimatedMinutes(data.pipeline))}`};
+  if(hour>=14&&data.knockRemaining>0)return{title:'Protect the knocking block',meta:`${data.knockRemaining} min remaining today`};
+  const core=data.callsRemaining+data.connectsRemaining+data.dataRemaining;
+  if(core>0)return{title:'Close the core activity gap',meta:`${data.callsRemaining} calls · ${data.connectsRemaining} connects · ${data.dataRemaining} data`};
+  if(data.knockRemaining>0)return{title:hour<14?'Set up the field block':'Finish the field block',meta:`${data.knockRemaining} knocking min remaining`};
+  if(next){const a=next.entry.appointment;return{title:'Stay clean for the next appointment',meta:`${appointmentTimeLabel(a,next.entry.sourceDate)} · ${a.contactName||a.name||appointmentType(a)}`}}
+  return{title:'Strengthen tomorrow',meta:'Use the clear space for follow-ups, appointments and pipeline'};
+}
+function returningSnapshotSmartCopy(now,data){
+  const hour=now.getHours(),next=data.nextAppointment,untilNext=next?next.minutes-(now.getHours()*60+now.getMinutes()):9999;
+  if(data.score>=100)return{title:'Targets complete.',priority:'Use the remaining time to strengthen tomorrow’s pipeline and protect any appointments still ahead.'};
+  if(next&&untilNext>=0&&untilNext<=60){const a=next.entry.appointment;return{title:'Protect the next hour.',priority:`${appointmentTimeLabel(a,next.entry.sourceDate)} · ${a.contactName||a.name||appointmentType(a)} is next. Finish the current task and leave a clean prep window.`}}
+  if(prospectSessionActive&&!cleanText(prospectSessionContext?.eventId,160)&&data.pipeline>0)return{title:'Pick up where you left off.',priority:`${data.pipeline} clients remain in your current pipeline session · about ${formatEstimatedTime(estimatedMinutes(data.pipeline))}.`};
+  if(hour<12){
+    if(data.callsRemaining+data.connectsRemaining+data.dataRemaining===0)return{title:'Core activity is banked.',priority:data.knockRemaining>0?'Knocking is the next major block. Use the gap to work follow-ups and appointments.':'Keep building tomorrow’s pipeline.'};
+    return{title:'Build the lead early.',priority:`${data.callsRemaining} calls · ${data.connectsRemaining} connects · ${data.dataRemaining} data remaining. Keep the first block moving.`};
+  }
+  if(hour<14){
+    if(data.pipeline>0)return{title:'Keep the middle of the day productive.',priority:`${data.pipeline} pipeline clients are ready. Clear the strongest conversations before the field block.`};
+    return{title:'Keep the day moving.',priority:`${data.callsRemaining} calls · ${data.connectsRemaining} connects · ${data.dataRemaining} data remaining before the afternoon field block.`};
+  }
+  if(hour<18){
+    if(data.knockRemaining>0)return{title:'The field block matters now.',priority:`${data.knockRemaining} knocking minutes remain today. Protect that block, then close any remaining activity gaps.`};
+    return{title:'Finish with intent.',priority:`Knocking is complete. ${data.callsRemaining+data.connectsRemaining+data.dataRemaining?`${data.callsRemaining} calls · ${data.connectsRemaining} connects · ${data.dataRemaining} data remain.`:'Use the finish to strengthen tomorrow’s pipeline.'}`};
+  }
+  return{title:'Close the loop.',priority:data.callsRemaining+data.connectsRemaining+data.dataRemaining+data.knockRemaining?'Finish the remaining controllables, then set up tomorrow before you switch off.':'Today is complete. Protect tomorrow by leaving the pipeline and calendar clean.'};
+}
+function renderReturningSnapshot(){
+  const screen=$('#returningSnapshotScreen');if(!screen)return;
+  const now=new Date(),k=todayKey(),d=dayData(k),knockTarget=rollingKnockTarget(k),knockMinutes=Math.floor(liveKnockSeconds(d)/60),appointments=appointmentEntriesForDate(k),next=returningSnapshotUpcomingAppointment(now),pipeline=returningSnapshotPipelineCount();
+  const data={score:completion(k),callsRemaining:Math.max(0,targets.calls-d.calls),connectsRemaining:Math.max(0,targets.connects-d.connects),dataRemaining:Math.max(0,targets.data-d.data),knockRemaining:Math.max(0,knockTarget-knockMinutes),appointments,nextAppointment:next,pipeline};
+  const copy=returningSnapshotSmartCopy(now,data),hour=now.getHours();
+  $('#returningSnapshotDate').textContent=now.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'short'});
+  $('#returningSnapshotKicker').textContent=hour<12?'THIS MORNING':hour<14?'MIDDAY':hour<18?'THIS AFTERNOON':'THIS EVENING';
+  $('#returningSnapshotScore').textContent=`${data.score}%`;$('#returningSnapshotProgress').style.width=`${Math.max(0,Math.min(100,data.score))}%`;
+  $('#returningSnapshotTitle').textContent=copy.title;$('#returningSnapshotPriority').textContent=copy.priority;
+  $('#returningSnapshotActivity').textContent=`${data.callsRemaining} · ${data.connectsRemaining} · ${data.dataRemaining}`;
+  if(next){const a=next.entry.appointment;$('#returningSnapshotAppointments').textContent=appointmentTimeLabel(a,next.entry.sourceDate);$('#returningSnapshotAppointmentMeta').textContent=a.contactName||a.name||appointmentType(a)}
+  else{$('#returningSnapshotAppointments').textContent=appointments.length?`${appointments.length} today`:'Clear';$('#returningSnapshotAppointmentMeta').textContent=appointments.length?'No upcoming appointment':'No appointments today'}
+  $('#returningSnapshotPipeline').textContent=prospectSessionActive&&!cleanText(prospectSessionContext?.eventId,160)?`${pipeline} left`:`${pipeline} ready`;$('#returningSnapshotPipelineMeta').textContent=prospectSessionActive&&!cleanText(prospectSessionContext?.eventId,160)?'Current session':'Eligible today';
+  if(data.knockRemaining<=0){$('#returningSnapshotKnocking').textContent='Complete';$('#returningSnapshotKnockingMeta').textContent=`${knockMinutes} min logged`}
+  else if(hour<14){$('#returningSnapshotKnocking').textContent='2:00pm';$('#returningSnapshotKnockingMeta').textContent=`${data.knockRemaining} min planned`}
+  else{$('#returningSnapshotKnocking').textContent=`${data.knockRemaining} min`;$('#returningSnapshotKnockingMeta').textContent='Remaining today'}
+  const pulse=returningSnapshotPulse(k),rank=returningSnapshotLeaderboardText(),nextBlock=returningSnapshotNextBlock(now,data);
+  $('#returningSnapshotPulse').textContent=pulse.value;$('#returningSnapshotPulseMeta').textContent=pulse.meta;
+  $('#returningSnapshotRank').textContent=rank;$('#returningSnapshotRankMeta').textContent=cloud?'Today · live team':'Local only';
+  $('#returningSnapshotNextBlock').textContent=nextBlock.title;$('#returningSnapshotNextBlockMeta').textContent=nextBlock.meta;
+}
+function refreshReturningSnapshotIfVisible(){const screen=$('#returningSnapshotScreen');if(screen&&!screen.classList.contains('hidden'))renderReturningSnapshot()}
+function dismissReturningSnapshot(){
+  clearTimeout(returningSnapshotTimer);returningSnapshotTimer=null;const screen=$('#returningSnapshotScreen');if(!screen)return;screen.classList.add('is-leaving');screen.setAttribute('aria-hidden','true');setTimeout(()=>screen.classList.add('hidden'),260);
+}
+function showReturningSnapshot(){
+  const screen=$('#returningSnapshotScreen');if(!screen)return false;renderReturningSnapshot();markReturningSnapshotReady();screen.classList.remove('hidden','is-leaving');screen.setAttribute('aria-hidden','false');clearTimeout(returningSnapshotTimer);returningSnapshotTimer=setTimeout(dismissReturningSnapshot,4000);return true;
+}
 function welcomeProfileName(){return (agentName||currentUser?.displayName||'Agent').trim()||'Agent'}
 function welcomeStorageKey(){return `${storagePrefix(uid)}welcome:${todayKey()}`}
 function dayPlanStorageKey(k=todayKey()){return `${storagePrefix(uid)}day-plan:${k}`}
@@ -252,7 +306,7 @@ function renderWelcomeScreen(){
   $('#welcomeDate').textContent=now.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long'});
   const appointmentSummary=$('#welcomeAppointmentSummary'),appointmentList=$('#welcomeAppointmentList');
   appointmentSummary.textContent=appointments.length?`You’ve got ${appointments.length} appointment${appointments.length===1?'':'s'} today.`:'You’ve got no appointments today.';
-  appointmentList.innerHTML=appointments.map(({appointment:a,sourceDate})=>`<article class="welcome-appointment"><time>${escapeHtml(appointmentTimeLabel(a,sourceDate))}</time><span class="welcome-appointment-dot" aria-hidden="true"></span><div><strong>${escapeHtml(a.contactName||a.name||'Appointment')}</strong><small>${escapeHtml(welcomeAppointmentDetail(a))}</small></div></article>`).join('');
+  appointmentList.innerHTML=appointments.map(({appointment:a,sourceDate})=>`<article class="welcome-appointment"><time>${escapeHtml(appointmentTimeLabel(a,sourceDate))}</time><span class="welcome-appointment-dot" aria-hidden="true"></span><div><strong>${escapeHtml(isOfiAppointment(a)?'OFI':a.contactName||a.name||'Appointment')}</strong><small>${escapeHtml(welcomeAppointmentDetail(a))}</small></div></article>`).join('');
   appointmentList.classList.toggle('hidden',!appointments.length);
   $('#welcomePipelineText').textContent=followUps.length?`You’ve got ${followUps.length} pipeline follow-up${followUps.length===1?'':'s'} today.`:'You’ve got no pipeline follow-ups today.';
   $('#welcomeMomentumTitle').textContent=momentum.title;$('#welcomeMomentumText').textContent=momentum.text;
@@ -263,7 +317,7 @@ function showDailyWelcome(){
 }
 function dismissDailyWelcome(){
   const screen=$('#welcomeScreen');if(!screen)return;
-  captureDayPlan();
+  captureDayPlan();markReturningSnapshotReady();
   try{localStorage.setItem(welcomeStorageKey(),'1')}catch{}
   screen.classList.add('is-leaving');screen.setAttribute('aria-hidden','true');setTimeout(()=>screen.classList.add('hidden'),320);
 }
@@ -306,7 +360,9 @@ function showOffDayReview(){
 function dismissOffDayReview(){
   const screen=$('#offDayReviewScreen');if(!screen)return;offDayReviewDismissedThisSession=true;screen.classList.add('is-leaving');screen.setAttribute('aria-hidden','true');setTimeout(()=>screen.classList.add('hidden'),320);
 }
-function showLaunchExperience(){if(!showOffDayReview())showDailyWelcome()}
+function returningSnapshotOpenKey(){return `${storagePrefix(uid)}returning-snapshot-open-toggle`}
+function shouldShowReturningSnapshotThisOpen(){try{const previous=Number(localStorage.getItem(returningSnapshotOpenKey())||0),next=(previous+1)%2;localStorage.setItem(returningSnapshotOpenKey(),String(next));return next===0}catch{return true}}
+function showLaunchExperience(){if(showOffDayReview())return;if(returningSnapshotHasHistory()){if(shouldShowReturningSnapshotThisOpen())showReturningSnapshot();return}showDailyWelcome()}
 function currentDayPlan(k=todayKey()){
   const saved=readDayPlan(k);if(saved)return saved;
   const appointments=appointmentEntriesForDate(k).map(({appointment:a,sourceDate})=>({id:a.id||calendarExportId(a,sourceDate),sourceDate,name:a.contactName||a.name||'Appointment',type:appointmentType(a),address:a.address||''}));
@@ -342,26 +398,39 @@ function closeDayReview(){const overlay=$('#dayReviewOverlay');if(!overlay)retur
 function maybeShowDayReview(){const now=new Date();if(now.getHours()<18||!welcomeSeenToday()||dayReviewSeen())return;showDayReview({automatic:true})}
 function leaderboardPayload(){
   const k=todayKey(),d=dayData(k),knockMinutes=Math.floor(liveKnockSeconds(d)/60),knockTarget=rollingKnockTarget(k);
-  return{uid,name:displayAgentName(),email:currentUser?.email||'',date:k,activeToday:isWorkDayKey(k),workDays:[...workDays],calls:d.calls,connects:d.connects,data:d.data,knockMinutes,score:completion(k),targets:{calls:targets.calls,connects:targets.connects,data:targets.data,knock:knockTarget},appointments:appointmentCountsForDate(k),appointmentDetails:leaderboardAppointmentDetailsForDate(k),dailyHistory:recentDailyHistory(),weekHistory:recentWeekHistory(),clientUpdatedAt:Date.now(),updatedAt:serverTimestamp()}
+  return{uid,name:displayAgentName(),email:currentUser?.email||'',date:k,activeToday:isWorkDayKey(k),workDays:[...workDays],calls:d.calls,connects:d.connects,data:d.data,knockMinutes,score:completion(k),targets:{calls:targets.calls,connects:targets.connects,data:targets.data,knock:knockTarget},appointments:appointmentCountsForDate(k),appointmentDetails:leaderboardAppointmentDetailsForDate(k),dailyHistory:recentDailyHistory(),weekHistory:recentWeekHistory(),weeklyKnockTarget:targets.weeklyKnock,clientUpdatedAt:Date.now(),updatedAt:serverTimestamp()}
 }
 function leaderboardSignature(payload){const clean={...payload};delete clean.clientUpdatedAt;delete clean.updatedAt;return JSON.stringify(clean)}
-function scheduleLeaderboardPublish(){if(!cloud||!db||!uid)return;clearTimeout(leaderboardPublishTimer);leaderboardPublishTimer=setTimeout(publishLeaderboard,180)}
-async function publishLeaderboard(){if(!cloud||!db||!uid)return;const payload=leaderboardPayload(),signature=leaderboardSignature(payload);if(signature===lastLeaderboardSignature){if($('#leaderboardStatus'))$('#leaderboardStatus').textContent='LIVE';return}beginSyncOperation();try{await setDoc(doc(db,'leaderboard',uid),payload,{merge:true});lastLeaderboardSignature=signature;if($('#leaderboardStatus'))$('#leaderboardStatus').textContent='LIVE';endSyncOperation()}catch(err){console.error('Leaderboard publish failed',err);endSyncOperation({error:true});if($('#leaderboardStatus'))$('#leaderboardStatus').textContent='SYNC ERROR'}}
+function scheduleLeaderboardPublish(){
+  if(!cloud||!db||!uid)return;
+  if(accountMode==='solo'){
+    leaderboardEntries=[leaderboardPayload()];
+    renderLeaderboard();
+  }
+  clearTimeout(leaderboardPublishTimer);
+  leaderboardPublishTimer=setTimeout(()=>{
+    if(accountMode==='team')publishTeamLeaderboard();
+    else if(accountMode==='solo')publishLeaderboard();
+  },180);
+}
+async function publishLeaderboard(){if(!cloud||!db||!uid||accountMode!=='solo')return;const payload=leaderboardPayload(),signature=leaderboardSignature(payload);if(signature===lastLeaderboardSignature){renderLeaderboardStatus();return}beginSyncOperation();try{await setDoc(doc(db,'leaderboard',uid),payload,{merge:true});lastLeaderboardSignature=signature;endSyncOperation();renderLeaderboardStatus()}catch(err){console.error('Leaderboard publish failed',err);endSyncOperation({error:true});renderLeaderboardStatus()}}
 async function persistDayToCloud(k,clean,{quiet=false}={}){
   if(!cloud||!db||!uid)return;
   beginSyncOperation();
   try{await setDoc(doc(db,'users',uid,'days',k),{...clean,updatedAt:serverTimestamp()},{merge:true});clearDayDirty(k,clean.clientUpdatedAt);if(k===todayKey())scheduleLeaderboardPublish();endSyncOperation()}
   catch(err){console.error('Day sync failed',err);endSyncOperation({error:true});if(!quiet)toast('Saved on this device. Cloud sync failed.');throw err}
 }
-async function saveDay(k,{quiet=false}={}){
+async function saveDay(k,{quiet=false,awaitCloud=true,render=true}={}){
   if(!validDateKey(k))return;
   const clean={...dayData(k),clientUpdatedAt:Date.now()};days[k]=clean;markDayDirty(k);
-  saveLocal();renderDayViews();
+  saveLocal();if(render)renderDayViews();
   if(!cloud)return;
   const previous=daySaveChains.get(k)||Promise.resolve();
   const next=previous.catch(()=>{}).then(()=>persistDayToCloud(k,{...days[k]},{quiet}));
   daySaveChains.set(k,next);
-  try{await next}finally{if(daySaveChains.get(k)===next)daySaveChains.delete(k)}
+  const release=()=>{if(daySaveChains.get(k)===next)daySaveChains.delete(k)};
+  if(!awaitCloud){next.catch(err=>console.error('Deferred day sync failed',err)).finally(release);return}
+  try{await next}finally{release()}
 }
 async function saveTargets(){saveLocal();if(!cloud)return;beginSyncOperation();try{await setDoc(doc(db,'users',uid),{targets,workDays:[...workDays],name:displayAgentName(),email:currentUser?.email||'',updatedAt:serverTimestamp()},{merge:true});scheduleLeaderboardPublish();endSyncOperation()}catch(err){console.error(err);endSyncOperation({error:true});toast('Targets saved locally. Cloud sync failed.')}}
 function addEvent(d,type,label,delta=0){d.events.push({id:uuid(),type,label,delta,at:Date.now()});d.events=d.events.slice(-500)}
@@ -382,15 +451,16 @@ function leaderboardAppointmentDetailsBetween(startKey,endKey){
   Object.entries(days).forEach(([sourceDate,raw])=>(raw?.appointments||[]).forEach(appointment=>{
     const bookedDate=appointmentCreatedDate(appointment,sourceDate),type=appointmentType(appointment);
     if(bookedDate<startKey||bookedDate>endKey||!['MAP','LAP','BAP'].includes(type))return;
-    details.push({type,bookedDate,scheduledDate:appointmentScheduledDate(appointment,sourceDate),time:appointment.time||'',contactName:appointment.contactName||appointment.name||'',address:appointment.address||''});
+    details.push({type,bookedDate,scheduledDate:appointmentScheduledDate(appointment,sourceDate),time:appointment.time||'',contactName:appointment.contactName||appointment.name||'',address:appointment.address||'',assignedToUid:String(appointment.assignedToUid||''),assignedToName:String(appointment.assignedToName||'')});
   }));
-  return details.sort((a,b)=>String(a.scheduledDate||'').localeCompare(String(b.scheduledDate||''))||String(a.time||'').localeCompare(String(b.time||''))||String(a.contactName||'').localeCompare(String(b.contactName||'')));
+  prospects.forEach(prospect=>{const at=Number(prospect.dataCreditedAt)||0;if(!at)return;const bookedDate=dateKey(new Date(at));if(bookedDate<startKey||bookedDate>endKey)return;details.push({type:'Data',bookedDate,scheduledDate:'',time:'',contactName:prospect.name||'',address:formatProspectAddress(prospect.address||prospect.company,prospect.suburb)||prospect.address||''})});
+  return details.sort((a,b)=>String(a.bookedDate||'').localeCompare(String(b.bookedDate||''))||String(a.scheduledDate||'').localeCompare(String(b.scheduledDate||''))||String(a.time||'').localeCompare(String(b.time||''))||String(a.contactName||'').localeCompare(String(b.contactName||'')));
 }
 function leaderboardAppointmentDetailsForDate(k){return leaderboardAppointmentDetailsBetween(k,k)}
 function leaderboardAppointmentDetailsForWeek(baseDate){const start=mondayOf(baseDate),end=new Date(start);end.setDate(start.getDate()+6);return leaderboardAppointmentDetailsBetween(dateKey(start),dateKey(end))}
 function normaliseLeaderboardAppointmentDetails(value){
   if(!Array.isArray(value))return null;
-  return value.map(item=>({type:normaliseAppointmentType(item?.type),bookedDate:validDateKey(item?.bookedDate)?item.bookedDate:'',scheduledDate:validDateKey(item?.scheduledDate)?item.scheduledDate:'',time:String(item?.time||''),contactName:String(item?.contactName||''),address:String(item?.address||'')})).filter(item=>['MAP','LAP','BAP'].includes(item.type));
+  return value.map(item=>({type:normaliseAppointmentType(item?.type),bookedDate:validDateKey(item?.bookedDate)?item.bookedDate:'',scheduledDate:validDateKey(item?.scheduledDate)?item.scheduledDate:'',time:String(item?.time||''),contactName:String(item?.contactName||''),address:String(item?.address||''),assignedToUid:String(item?.assignedToUid||''),assignedToName:String(item?.assignedToName||'')})).filter(item=>['MAP','LAP','BAP','DATA'].includes(item.type)).map(item=>({...item,type:item.type==='DATA'?'Data':item.type}));
 }
 function normaliseLeaderboardAppointmentCounts(value){
   if(!value||typeof value!=='object')return emptyLeaderboardAppointmentCounts(null);
@@ -534,7 +604,6 @@ function dayTrackState(k=selectedDate){
   if(states.includes('risk'))return 'risk';
   return 'on';
 }
-function isDayOnTrack(k=selectedDate){return dayTrackState(k)==='on'}
 function momentumWhisper(){
   if(selectedDate!==todayKey()){
     const previous=previousScheduledKey(selectedDate),change=previous?completion(selectedDate)-completion(previous):0;
@@ -548,24 +617,6 @@ function momentumWhisper(){
   if(change>0)return `▲ ${change}% ahead of your last workday`;
   if(change<0)return `▼ ${Math.abs(change)}% below your last workday · time to respond`;
   return completion(todayKey())>0?'Momentum building today':'First action starts the momentum';
-}
-function todayGuidance(){
-  if(selectedDate!==todayKey())return `${fmtDate(selectedDate)} · ${completion(selectedDate)}% complete`;
-  if(!isWorkDayKey(selectedDate))return 'No accountability targets scheduled today';
-  const d=dayData(selectedDate),kt=rollingKnockTarget(selectedDate),remaining={
-    calls:Math.max(0,targets.calls-d.calls),
-    connects:Math.max(0,targets.connects-d.connects),
-    data:Math.max(0,targets.data-d.data),
-    knocking:Math.max(0,kt-Math.floor(liveKnockSeconds(d)/60))
-  };
-  const labels={calls:'calls',connects:'connects',data:'data',knocking:'knocking minutes'};
-  const pcts={calls:pct(d.calls,targets.calls),connects:pct(d.connects,targets.connects),data:pct(d.data,targets.data),knocking:pct(liveKnockSeconds(d)/60,kt)};
-  const weakest=Object.entries(pcts).sort((a,b)=>a[1]-b[1])[0]?.[0]||'calls';
-  const total=Object.values(remaining).reduce((a,b)=>a+b,0);
-  const now=new Date(),planningStart=new Date(now);planningStart.setHours(18,30,0,0);
-  if(now>=planningStart)return 'Calendar Management / Plan Tomorrow';
-  if(total===0)return 'All daily targets complete. Keep building tomorrow’s pipeline.';
-  return `Focus Now: ${metricLabel(weakest)} · ${remaining[weakest]} ${labels[weakest]} remaining`;
 }
 function rollingKnockTarget(k){const weekStart=mondayOf(parseKey(k));const ordered=weekKeys(weekStart);let prior=0,seen=0;for(const key of ordered){if(key===k)break;prior+=Math.floor(liveKnockSeconds(dayData(key))/60);seen++}return Math.ceil(Math.max(0,targets.weeklyKnock-prior)/Math.max(1,ordered.length-seen))}
 function completion(k){if(!isWorkDayKey(k))return 0;const d=dayData(k),kt=rollingKnockTarget(k);return Math.round((pct(d.calls,targets.calls)+pct(d.connects,targets.connects)+pct(d.data,targets.data)+pct(liveKnockSeconds(d)/60,kt))/4)}
@@ -594,12 +645,26 @@ async function changeMetric(metric,delta){if(!canEditDate(selectedDate))return l
 async function toggleTimer(){if(!canEditDate(selectedDate))return lockedToast();const d=dayData(selectedDate);if(d.timerStartedAt){d.knockSeconds=liveKnockSeconds(d);d.timerStartedAt=null;addEvent(d,'knock','Knocking paused')}else{d.timerStartedAt=Date.now();d.alarmPlayed=false;addEvent(d,'knock','Knocking started')}days[selectedDate]=d;haptic(18);await saveDay(selectedDate);ensureTick()}
 async function resetKnock(){if(!canEditDate(selectedDate))return lockedToast();if(!confirm('Reset knocking time for this date?'))return;const d=dayData(selectedDate);d.knockSeconds=0;d.timerStartedAt=null;d.alarmPlayed=false;addEvent(d,'knock','Knocking reset');days[selectedDate]=d;await saveDay(selectedDate);ensureTick()}
 async function finaliseExpiredTimers(){const today=todayKey();for(const [k,raw] of Object.entries(days)){if(k<today&&raw?.timerStartedAt){const d=dayData(k);d.knockSeconds=liveKnockSeconds(d);d.timerStartedAt=null;d.alarmPlayed=true;addEvent(d,'knock','Knocking stopped automatically at day close');days[k]=d;await saveDay(k,{quiet:true})}}}
-function ensureTick(){clearInterval(timerTick);if(dayData(selectedDate).timerStartedAt)timerTick=setInterval(()=>{renderToday();renderKnockingSession();const d=dayData(selectedDate),target=rollingKnockTarget(selectedDate)*60;if(liveKnockSeconds(d)>=target&&!d.alarmPlayed){d.alarmPlayed=true;days[selectedDate]=d;saveDay(selectedDate,{quiet:true});alarm()}},1000)}
+function renderKnockTimerOnly(){
+  const d=dayData(selectedDate),kt=rollingKnockTarget(selectedDate),secs=liveKnockSeconds(d);
+  const past=isPastDate(selectedDate),scheduled=isWorkDayKey(selectedDate);
+  $('#knockValue').textContent=fmtTimer(secs);
+  $('#knockTargetText').textContent=past?'Final result':(!scheduled?'No target today':knockRemainingText(Math.floor(secs/60),kt));
+  $('#knockRemaining').textContent=past?'Day locked':(!scheduled?'Not scheduled':knockPaceText(Math.floor(secs/60),kt));
+  const knockMinutes=Math.floor(secs/60),knockActual=pct(knockMinutes,kt);
+  const knockPaceNow=new Date(),knockPaceEnd=new Date(knockPaceNow);knockPaceEnd.setHours(17,0,0,0);const knockExpected=(selectedDate===todayKey()&&scheduled)?(knockPaceNow>=knockPaceEnd?100:Math.min(100,Math.round(expectedKnockAt(kt,knockPaceNow)/Math.max(1,kt)*100))):0;
+  const knockRing=$('#knockPercent');
+  if(knockRing){
+    knockRing.textContent=`${knockActual}%`;
+    knockRing.style.setProperty('--actual',knockActual);
+    knockRing.style.setProperty('--pace',knockExpected);
+    knockRing.classList.toggle('complete',knockActual>=100);
+    knockRing.setAttribute('aria-label',`Knocking: ${knockActual}% complete, expected pace ${knockExpected}%, target ${kt} minutes`);
+  }
+}
+function ensureTick(){clearInterval(timerTick);if(dayData(selectedDate).timerStartedAt)timerTick=setInterval(()=>{renderKnockTimerOnly();renderKnockingSession();const d=dayData(selectedDate),target=rollingKnockTarget(selectedDate)*60;if(liveKnockSeconds(d)>=target&&!d.alarmPlayed){d.alarmPlayed=true;days[selectedDate]=d;saveDay(selectedDate,{quiet:true});alarm()}},1000)}
 function alarm(){haptic([180,100,180]);toast('Today’s knocking target reached');try{const c=new AudioContext(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=880;g.gain.value=.17;o.start();o.stop(c.currentTime+.7)}catch{}}
 
-function formatHour(h){return `${h%12||12}:00 ${h>=12?'PM':'AM'}`}
-function renderCallPlan(){const now=new Date(),h=now.getHours();let current=CALL_PLAN.find(x=>x[0]===h);if(h<9)current=[8,'Prepare your priority list','Before 9:00 AM'];if(h>=17)current=[17,'Review follow-up and plan tomorrow','9:00 AM–5:00 PM call day complete'];$('#currentCall').textContent=current[1];$('#currentSlot').textContent=h>=9&&h<17?`${formatHour(h)}–${formatHour(h+1)} · 10 call target`:current[2];$('#callPlan').innerHTML=CALL_PLAN.map(([hour,title,note])=>`<div class="call-row ${hour===h?'active':''}"><b>${formatHour(hour)}</b><span><strong>${title}</strong><small>${note}</small></span><em>10</em></div>`).join('')}
-function callsPaceText(value){if(selectedDate!==todayKey())return `${Math.max(0,targets.calls-value)} remaining`;const expected=expectedAt('calls',targets.calls,new Date()),diff=value-expected;return value>=targets.calls?'Target complete':diff===0?'On track':diff>0?`${diff} ahead of target`:`${Math.abs(diff)} behind target`}
 function activeViewId(){return document.querySelector('.view.active')?.id||'todayView'}
 function pageHeaderState(id=activeViewId()){
   if(id==='todayView')return{title:welcomeMessage(),subtitle:''};
@@ -629,12 +694,12 @@ function pageHeaderState(id=activeViewId()){
   const label=document.querySelector(`.tabbar button[data-view="${id}"] span`)?.textContent||'AGNT';
   if(id==='prospectingView'){
     const overdue=activeProspects().filter(p=>p.nextFollowUp&&p.nextFollowUp<todayKey()).length,due=activeProspects().filter(p=>p.nextFollowUp===todayKey()).length,sellers=sellerPipelineProspects().length;
-    if(prospectSection==='contacts'){const count=prospectContactsMode==='archived'?archivedProspects().length:activeProspects().length;return{title:prospectContactsMode==='archived'?'Archived':label,subtitle:count?`${count} contact${count===1?'':'s'} ${prospectContactsMode==='archived'?'archived.':'ready to work.'}`:prospectContactsMode==='archived'?'No archived contacts.':'Build the database one useful conversation at a time.'}};
-    if(prospectSection==='pipeline')return{title:label,subtitle:sellers?`${sellers} active seller${sellers===1?'':'s'} across your pipeline.`:'Qualify the next opportunity into your pipeline.'};
-    if(prospectSection==='market')return{title:'Hot Spotting',subtitle:'Turn today’s property changes into focused calling sessions.'};if(prospectSection==='insights')return{title:label,subtitle:'See what is creating conversations and appointments.'};
+    if(prospectSection==='contacts'){const count=prospectContactsMode==='archived'?archivedProspects().length:activeProspects().length;return{title:prospectContactsMode==='archived'?'Archived':label,subtitle:count?`${count} contact${count===1?'':'s'} ${prospectContactsMode==='archived'?'archived.':'ready to work.'}`:prospectContactsMode==='archived'?'No archived contacts.':'Build the database one conversation at a time.'}};
+    if(prospectSection==='pipeline')return{title:label,subtitle:sellers?`${sellers} active seller${sellers===1?'':'s'} across your pipeline.`:'Qualify the next seller opportunity.'};
+    if(prospectSection==='market')return{title:'Hot Spotting',subtitle:'Turn today’s market changes into calls.'};if(prospectSection==='broadcast')return{title:'Broadcast',subtitle:'Build and review an SMS campaign.'};if(prospectSection==='insights')return{title:label,subtitle:'See what creates conversations and appointments.'};
     if(overdue)return{title:label,subtitle:`${overdue} overdue follow-up${overdue===1?'':'s'} need attention.`};
     if(due)return{title:label,subtitle:`${due} follow-up${due===1?'':'s'} due today.`};
-    return{title:label,subtitle:'Your follow-up list is clear — create the next opportunity.'};
+    return{title:label,subtitle:'Follow-ups clear — create the next opportunity.'};
   }
   const subtitle=id==='settingsView'?'Make AGNT work your way.':id==='insightsView'?'Set the pace. Raise the standard.':'';
   return{title:label,subtitle};
@@ -659,12 +724,21 @@ function getEmptyState(type,context={}){
 function emptyStateMarkup(state){return `<div class="empty-state" role="status"><strong>${escapeHtml(state.title||'')}</strong>${state.message?`<p>${escapeHtml(state.message)}</p>`:''}</div>`}
 function updateTopbar(id=activeViewId()){
   const isToday=id==='todayView';
+  const app=$('#app'),progress=$('.broadcast-step-progress'),builder=$('#broadcastBuilderFlow'),topActions=$('.top-actions');
+  const inBroadcast=id==='prospectingView'&&prospectSection==='broadcast';
+  const building=inBroadcast&&Boolean(selectedBroadcastType&&BROADCAST_TYPES[selectedBroadcastType]);
+  app?.classList.toggle('broadcast-fullscreen',inBroadcast);
+  app?.classList.toggle('broadcast-building',building);
+  if(progress&&builder&&topActions){
+    if(building&&progress.parentElement!==topActions)topActions.insertBefore(progress,topActions.firstChild);
+    if(!building&&progress.parentElement!==builder)builder.insertBefore(progress,builder.firstChild);
+  }
   const label=document.querySelector(`.tabbar button[data-view="${id}"] span`)?.textContent||'AGNT';
   const dateLine=document.querySelector('.date-line');
   const todaySlot=$('#todaySyncSlot');
   const syncBadge=$('#syncBadge');
   const syncPopover=$('#syncPopover');
-  const headerState=pageHeaderState(id);
+  const headerState=broadcastHeaderState()||pageHeaderState(id);
   $('#viewTitle').textContent=headerState.title;
   const subtitle=$('#viewSubtitle');
   const subtitleText=headerState.subtitle||'';
@@ -682,7 +756,7 @@ function updateTopbar(id=activeViewId()){
   if(syncPopover&&syncPopover.parentElement!==document.body)document.body.append(syncPopover);
   const showDateNav=id==='todayView'||id==='scheduleView'||id==='appointmentsView';
   $('#dateNavActions')?.classList.toggle('hidden',!showDateNav);
-  $('#settingsShortcut')?.classList.toggle('hidden',id!=='insightsView');
+  $('#leaderboardModeShortcut')?.classList.toggle('hidden',id!=='insightsView');
   $('#homeShortcut')?.classList.toggle('hidden',id!=='settingsView');
 }
 function dayLogTime(at){
@@ -756,6 +830,7 @@ function renderDayLog(){
   $('#dayLogSessionTotal').textContent=sessions;$('#dayLogContactTotal').textContent=contacts;$('#dayLogAppointmentTotal').textContent=appointments;
   $('#dayLogTitle').textContent=k===todayKey()?'Today’s story':fmtDate(k);
   $('#dayLogMeta').textContent=items.length?`${items.length} meaningful moment${items.length===1?'':'s'}`:'Meaningful activity only';
+  const wins=[];if(d.calls>=targets.calls)wins.push(`${d.calls} calls completed`);if(d.connects>=targets.connects)wins.push(`${d.connects} connects achieved`);if(d.data>=targets.data)wins.push(`${d.data} data captured`);if(Math.floor(liveKnockSeconds(d)/60)>=rollingKnockTarget(k))wins.push(`${Math.floor(liveKnockSeconds(d)/60)} minutes knocked`);if(appointments)wins.push(`${appointments} appointment${appointments===1?'':'s'} created`);const hotMoves=prospectInteractions.filter(x=>x.date===k&&(x.outcome==='Appointment booked'||validDateKey(x.nextFollowUp))).length;if(hotMoves)wins.push(`${hotMoves} next action${hotMoves===1?'':'s'} secured`);const winsPanel=$('#todayWins'),winsGrid=$('#todayWinsGrid');if(winsPanel&&winsGrid){winsPanel.classList.toggle('hidden',!wins.length);$('#todayWinsMeta').textContent=wins.length?`${wins.length} meaningful win${wins.length===1?'':'s'}`:'';winsGrid.innerHTML=wins.slice(0,4).map(win=>`<div><span>✓</span><strong>${escapeHtml(win)}</strong></div>`).join('')}
   if(!items.length){timeline.innerHTML='<div class="day-log-empty"><span aria-hidden="true">◎</span><strong>Your day is ready to be written</strong><small>Completed sessions, booked appointments and achieved targets will appear here.</small></div>';return}
   const icons={knocking:'🚪',appointment:'◆',prospecting:'☎',contact:'+',target:'✓',live:'●'};
   timeline.innerHTML=items.map(item=>`<article class="smart-log-card ${item.kind}"><header><time>${escapeHtml(item.timeLabel||dayLogTime(item.at))}</time><span class="smart-log-icon" aria-hidden="true">${icons[item.kind]||'•'}</span><div><strong>${escapeHtml(item.title)}</strong>${item.detail?`<small>${escapeHtml(item.detail)}</small>`:''}</div></header>${Array.isArray(item.stats)&&item.stats.length?`<div class="smart-log-stats">${item.stats.map(stat=>`<span>${escapeHtml(stat)}</span>`).join('')}</div>`:''}</article>`).join('');
@@ -777,13 +852,14 @@ function renderToday(){
   }
   $('#dailyScore').textContent=`${score}%`;
   $('#scoreBar').style.width=`${score}%`;
+  $('#scoreBar').classList.toggle('complete',score>=100);
   for(const m of ['calls','connects','data']){
     const val=d[m],target=targets[m],p=pct(val,target),rem=Math.max(0,target-val);
     $(`#${m}Value`).textContent=val;
     $(`#${m}TargetLabel`).textContent=`/${target}`;
     $(`#${m}TargetText`).textContent=past?'Final result':(!scheduled?'No target today':metricRemainingText(val,target));
     const ring=$(`#${m}Percent`);
-    const pacePct=(selectedDate===todayKey()&&scheduled)?Math.min(100,Math.round(expectedAt(m,target,new Date())/Math.max(1,target)*100)):0;
+    const paceNow=new Date(),pacePct=(selectedDate===todayKey()&&scheduled)?(paceNow>=workdayEnd(paceNow)?100:Math.min(100,Math.round(expectedAt(m,target,paceNow)/Math.max(1,target)*100))):0;
     ring.textContent=`${p}%`;
     ring.classList.add('metric-ring');
     ring.style.setProperty('--actual',p);
@@ -797,7 +873,7 @@ function renderToday(){
   $('#knockTargetText').textContent=past?'Final result':(!scheduled?'No target today':knockRemainingText(Math.floor(secs/60),kt));
   $('#knockRemaining').textContent=past?'Day locked':(!scheduled?'Not scheduled':knockPaceText(Math.floor(secs/60),kt));
   const knockMinutes=Math.floor(secs/60),knockActual=pct(knockMinutes,kt);
-  const knockExpected=(selectedDate===todayKey()&&scheduled)?Math.min(100,Math.round(expectedKnockAt(kt,new Date())/Math.max(1,kt)*100)):0;
+  const knockPaceNow=new Date(),knockPaceEnd=new Date(knockPaceNow);knockPaceEnd.setHours(17,0,0,0);const knockExpected=(selectedDate===todayKey()&&scheduled)?(knockPaceNow>=knockPaceEnd?100:Math.min(100,Math.round(expectedKnockAt(kt,knockPaceNow)/Math.max(1,kt)*100))):0;
   const knockRing=$('#knockPercent');
   if(knockRing){
     knockRing.textContent=`${knockActual}%`;
@@ -842,7 +918,6 @@ function renderDayTrend(){
   const labels=pts.map((p,i)=>{if(i%2&&i!==pts.length-1)return'';const d=parseKey(p.k);return `<text x="${p.x}" y="${h-2}" text-anchor="middle" class="trend-label">${d.getDate()}</text>`}).join('');
   svg.innerHTML=`<defs><linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#69dbf2" stop-opacity=".28"/><stop offset="100%" stop-color="#5e8fff" stop-opacity="0"/></linearGradient></defs>${grid}${area?`<path d="${area}" fill="url(#trendFill)"/>`:''}${path?`<path d="${path}" class="trend-line"/>`:''}${circles}${labels}`;
 }
-function renderWeekDays(){if(!$('#weekDays'))return;$('#weekDays').innerHTML=weekKeys().map(k=>{const p=completion(k),d=parseKey(k);return `<button class="week-day ${k===selectedDate?'selected':''} ${p>=100?'complete':''}" data-date="${k}"><b>${workDayName(d.getDay()).slice(0,3).toUpperCase()}</b><small>${d.getDate()} · ${p}%</small></button>`}).join('')}
 
 function normaliseAppointmentType(value){const raw=String(value||'').trim().toLowerCase();if(raw==='bap'||raw==='buyer appointment')return'BAP';if(raw==='map'||raw==='appraisal'||raw==='market appraisal')return'MAP';if(raw==='lap'||raw==='listing appointment')return'LAP';if(raw==='ofi'||raw==='open for inspection'||raw==='pu'||raw==='price update')return'OFI';return String(value||'').trim().toUpperCase()}
 function appointmentType(a){return normaliseAppointmentType(a.type||(Array.isArray(a.types)?a.types[0]:''))||'—'}
@@ -912,19 +987,10 @@ function exportAppointmentToCalendar(a,sourceDate=''){
   if(calendarPreference==='apple')return exportAppointmentToAppleCalendar(a,sourceDate);
   exportAppointmentToOutlook(a,sourceDate);
 }
-function appointmentCalendarButton(a,sourceDate=''){
-  const added=appointmentAddedToCalendar(a,sourceDate),id=escapeHtml(calendarExportId(a,sourceDate)),source=escapeHtml(sourceDate);
-  const icon=added?'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4.5 8.5h15M5.5 5h13a1.5 1.5 0 0 1 1.5 1.5v12a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-12A1.5 1.5 0 0 1 5.5 5Z"/><path d="m9 14 2 2 4-4"/></svg>':'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4.5 8.5h15M5.5 5h13a1.5 1.5 0 0 1 1.5 1.5v12a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-12A1.5 1.5 0 0 1 5.5 5Z"/><path d="M12 11v6M9 14h6"/></svg>';
-  return `<button class="appointment-calendar ${added?'is-added':''}" data-calendar-appointment="${id}" data-source-date="${source}" aria-label="${added?'Added to calendar':'Add appointment to calendar'}" title="${added?'Added to calendar':'Add to calendar'}">${icon}</button>`;
-}
 function appointmentEntriesForDate(viewDate){
-  const entries=dayData(viewDate).appointments.map(a=>({appointment:a,sourceDate:viewDate,isReminder:false}));
-  Object.entries(days).forEach(([sourceDate,day])=>{
-    if(sourceDate===viewDate)return;
-    (day?.appointments||[]).forEach(a=>{
-      if(appointmentScheduledDate(a,sourceDate)===viewDate)entries.push({appointment:a,sourceDate,isReminder:true});
-    });
-  });
+  const entries=dayData(viewDate).appointments.map(a=>({appointment:a,sourceDate:viewDate,isReminder:false,isTeamAssigned:false}));
+  Object.entries(days).forEach(([sourceDate,day])=>{if(sourceDate===viewDate)return;(day?.appointments||[]).forEach(a=>{if(appointmentScheduledDate(a,sourceDate)===viewDate)entries.push({appointment:a,sourceDate,isReminder:true,isTeamAssigned:false});});});
+  assignedTeamAppointments.forEach(a=>{const sourceDate=appointmentCreatedDate(a,a.createdDate||viewDate)||a.createdDate||viewDate;if(appointmentScheduledDate(a,sourceDate)===viewDate)entries.push({appointment:a,sourceDate,isReminder:true,isTeamAssigned:true});});
   return entries.sort((x,y)=>appointmentTimestamp(x.appointment,x.sourceDate)-appointmentTimestamp(y.appointment,y.sourceDate));
 }
 function timelineMinutes(value){
@@ -1014,7 +1080,12 @@ function timelineStatus(item,index,items,viewDate,focusItemId=''){
 function timelineTimeBlockIndex(items,viewDate){
   if(viewDate!==todayKey()||!items.length)return-1;
   const now=new Date(),nowMinutes=now.getHours()*60+now.getMinutes();
-  return items.findIndex(item=>item.minutes===nowMinutes);
+  const timed=items.map((item,index)=>({item,index})).filter(({item})=>item.kind!=='followup');
+  let active=-1;
+  for(const {item,index} of timed){
+    if(nowMinutes>=item.minutes)active=index;else break;
+  }
+  return active;
 }
 function timelineFocusId(items,kind){
   return items.find(item=>item.kind===kind)?.id||'';
@@ -1256,14 +1327,22 @@ function appointmentBookedLabel(a,sourceDate=''){
   const created=a.createdDate||a.logDate||sourceDate;
   return created?shortAppointmentDate(parseKey(created)):'';
 }
+function appointmentSortPriority(entry){
+  const a=entry.appointment,sourceDate=entry.sourceDate,lifecycle=appointmentLifecycle(a,sourceDate),outcome=appointmentOutcomeLabel(a.outcome);
+  if(lifecycle==='follow-up'&&!outcome&&!a.followUpDate)return 0; // requires outcome
+  if(lifecycle==='follow-up'&&outcome!=='Still Nurturing')return 1; // follow-up due/scheduled
+  if(outcome==='Still Nurturing')return 2; // nurturing
+  if(lifecycle==='upcoming')return 3;
+  if(lifecycle==='completed')return 4;
+  return 5;
+}
+function sortAppointmentEntries(entries){
+  return [...entries].sort((x,y)=>appointmentSortPriority(x)-appointmentSortPriority(y)||appointmentTimestamp(x.appointment,x.sourceDate)-appointmentTimestamp(y.appointment,y.sourceDate));
+}
 function appointmentHistoryEntries(mode){
-  const now=Date.now();
-  return allAppointmentEntries().filter(({appointment:a,sourceDate})=>{
-    if(mode==='past'&&isOfiAppointment(a))return false;
-    const scheduledAt=appointmentTimestamp(a,sourceDate);
-    if(!scheduledAt)return mode==='past';
-    return mode==='past'?scheduledAt<=now:scheduledAt>now;
-  });
+  const now=Date.now(),shared=assignedTeamAppointments.map(a=>({appointment:a,sourceDate:appointmentCreatedDate(a,a.createdDate||todayKey())||a.createdDate||todayKey(),scheduled:appointmentScheduledDate(a,a.createdDate||todayKey()),isTeamAssigned:true}));
+  const entries=[...allAppointmentEntries().map(entry=>({...entry,isTeamAssigned:false})),...shared].filter(({appointment:a,sourceDate})=>{if(mode==='past'&&isOfiAppointment(a))return false;const scheduledAt=appointmentTimestamp(a,sourceDate);if(!scheduledAt)return mode==='past';return mode==='past'?scheduledAt<=now:scheduledAt>now;});
+  return sortAppointmentEntries(entries);
 }
 function appointmentReminderText(){
   const due=dueFollowUps();
@@ -1281,13 +1360,14 @@ function setAppointmentHistoryScreen(mode){
 }
 
 function appointmentCardMarkup(entry,{dailyLog=false,history=false}={}){
-  const {appointment:a,sourceDate,scheduled}=entry;
+  const {appointment:a,sourceDate,scheduled}=entry,isTeamAssigned=Boolean(entry.isTeamAssigned||a.isTeamAssigned);
   const contact=escapeHtml(a.contactName||a.name||'Contact not recorded'),rawPhone=String(a.contactNumber||a.phone||'').trim(),phone=escapeHtml(rawPhone),dial=rawPhone.replace(/[^+\d]/g,''),address=escapeHtml(a.address||'Address not recorded'),type=escapeHtml(appointmentType(a)),time=escapeHtml(appointmentTimeLabel(a,sourceDate)),lifecycle=appointmentLifecycle(a,sourceDate);
   const statusText=lifecycle==='upcoming'?'Upcoming':lifecycle==='completed'?'Completed':followUpDueLabel(a);
   const note=a.outcomeNote?`<small class="appointment-outcome-note">${escapeHtml(a.outcomeNote)}</small>`:'';
   const callAction=dial?`<a class="appointment-call appointment-action-wide" href="tel:${dial}">Call</a>`:'';
   let actions;
-  if(isOfiAppointment(a)){const added=appointmentAddedToCalendar(a,sourceDate),calendarLabel=added?'Added to Calendar':'Add to Calendar';actions=`${callAction}<button class="appointment-secondary-action appointment-calendar-action ${added?'is-added':''}" data-calendar-appointment="${escapeHtml(calendarExportId(a,sourceDate))}" data-source-date="${escapeHtml(sourceDate)}">${added?'✓ ':''}${calendarLabel}</button>`;}
+  if(isTeamAssigned){const added=appointmentAddedToCalendar(a,sourceDate),calendarLabel=added?'Added to Calendar':'Add to Calendar';actions=`${callAction}<button class="appointment-secondary-action appointment-calendar-action ${added?'is-added':''}" data-calendar-team-appointment="${escapeHtml(a.teamAppointmentId||a.id)}" data-source-date="${escapeHtml(sourceDate)}">${added?'✓ ':''}${calendarLabel}</button>`;}
+  else if(isOfiAppointment(a)){const added=appointmentAddedToCalendar(a,sourceDate),calendarLabel=added?'Added to Calendar':'Add to Calendar';actions=`${callAction}<button class="appointment-secondary-action appointment-calendar-action ${added?'is-added':''}" data-calendar-appointment="${escapeHtml(calendarExportId(a,sourceDate))}" data-source-date="${escapeHtml(sourceDate)}">${added?'✓ ':''}${calendarLabel}</button>`;}
   else if(dailyLog){
     const added=appointmentAddedToCalendar(a,sourceDate),calendarLabel=added?'Added to Calendar':'Add to Calendar';
     actions=`${callAction}<button class="appointment-secondary-action appointment-calendar-action ${added?'is-added':''}" data-calendar-appointment="${escapeHtml(calendarExportId(a,sourceDate))}" data-source-date="${escapeHtml(sourceDate)}">${added?'✓ ':''}${calendarLabel}</button>`;
@@ -1306,10 +1386,12 @@ function appointmentCardMarkup(entry,{dailyLog=false,history=false}={}){
   const ofiSchedule=isOfiAppointment(a)?`<div class="appointment-ofi-schedule ${appointmentHasAuction(a)?'has-auction':''}"><div><span>OPEN FOR INSPECTION</span><strong>${escapeHtml(time)}–${escapeHtml(timelineTimeLabel(appointmentEndMinutes(a)))}</strong><small>${appointmentDurationMinutes(a)} minute booking</small></div>${appointmentHasAuction(a)?`<div><span>AUCTION</span><strong>${escapeHtml(timelineTimeLabel(appointmentAuctionMinutes(a)))}</strong><small>Commences immediately after</small></div>`:''}</div>`:'';
   const loggedMeta=dailyLog&&a.scheduledDate&&a.scheduledDate!==sourceDate?`<small class="appointment-log-scheduled">Scheduled for ${escapeHtml(shortAppointmentDate(scheduled))} at ${time}</small>`:`<small class="appointment-booked-for">${escapeHtml(shortAppointmentDate(scheduled))} at ${time}</small>`;
   const bookedMeta=history&&booked?`<small class="appointment-created-meta">Booked ${escapeHtml(booked)}</small>`:'';
-  const dueMeta=history&&a.followUpDate?`<small class="appointment-followup-timestamp ${a.followUpDate<todayKey()?'overdue':''}">Follow-up due ${escapeHtml(shortAppointmentDate(a.followUpDate))}</small>`:'';
-  return `<article class="appointment-card appointment-card-premium appointment-followup-card ${lifecycle}" data-appointment-card-edit="${escapeHtml(a.id)}" data-source-date="${escapeHtml(sourceDate)}" role="button" tabindex="0" aria-label="Edit ${type} appointment at ${address}">
-    <button class="appointment-delete" data-delete-appointment="${escapeHtml(a.id)}" data-source-date="${escapeHtml(sourceDate)}" aria-label="Delete appointment" title="Delete appointment">×</button>
-    <div class="appointment-card-copy"><div class="appointment-card-top"><span class="appointment-type-badge">${type}</span><span class="appointment-status-badge ${lifecycle}">${escapeHtml(statusText)}</span></div><strong>${address}</strong><small>${contact}${phone?` · ${phone}`:''}</small>${ofiSchedule}${loggedMeta}${bookedMeta}${dueMeta}${note}</div>
+  const assignmentMeta=isTeamAssigned?`<small class="appointment-team-assigned-meta">Booked for you by ${escapeHtml(teamAppointmentSetterFirstName(a.setterName||'a teammate'))}</small>`:(!isTeamAssigned&&a.assignedToUid&&String(a.assignedToUid)!==String(uid)&&a.assignedToName?`<small class="appointment-booked-for-teammate">Booked for ${escapeHtml(teamAppointmentSetterFirstName(a.assignedToName))}</small>`:'');
+  const dueMeta=history&&!isTeamAssigned&&a.followUpDate?`<small class="appointment-followup-timestamp ${a.followUpDate<todayKey()?'overdue':''}">Follow-up due ${escapeHtml(shortAppointmentDate(a.followUpDate))}</small>`:'';
+  const cardAttrs=isTeamAssigned?'':`data-appointment-card-edit="${escapeHtml(a.id)}" role="button" tabindex="0" aria-label="Edit ${type} appointment at ${address}"`;
+  return `<article class="appointment-card appointment-card-premium appointment-followup-card ${lifecycle} ${isTeamAssigned?'team-assigned':''}" ${cardAttrs} data-source-date="${escapeHtml(sourceDate)}">
+    ${isTeamAssigned?'':`<button class="appointment-delete" data-delete-appointment="${escapeHtml(a.id)}" data-source-date="${escapeHtml(sourceDate)}" aria-label="Delete appointment" title="Delete appointment">×</button>`}
+    <div class="appointment-card-copy"><div class="appointment-card-top"><span class="appointment-type-badge">${type}</span><span class="appointment-status-badge ${lifecycle}">${escapeHtml(statusText)}</span></div><strong>${address}</strong><small>${contact}${phone?` · ${phone}`:''}</small>${ofiSchedule}${loggedMeta}${bookedMeta}${assignmentMeta}${dueMeta}${note}</div>
     <div class="appointment-followup-actions">${actions}</div>
   </article>`;
 }
@@ -1351,7 +1433,9 @@ function renderAppointments(){
     $('#appointmentHistoryList').innerHTML=history.length?history.map(entry=>appointmentCardMarkup(entry,{history:true})).join(''):emptyStateMarkup(getEmptyState('appointments-history',{mode:appointmentHistoryMode}));
   }
 
-  const daily=all.filter(({appointment:a,sourceDate})=>appointmentCreatedDate(a,sourceDate)===appointmentDate);
+  const personalDaily=all.filter(({appointment:a,sourceDate})=>appointmentCreatedDate(a,sourceDate)===appointmentDate).map(entry=>({...entry,isTeamAssigned:false}));
+  const assignedDaily=assignedTeamAppointments.filter(a=>appointmentScheduledDate(a,a.createdDate||appointmentDate)===appointmentDate).map(a=>({appointment:a,sourceDate:appointmentCreatedDate(a,a.createdDate||appointmentDate)||a.createdDate||appointmentDate,scheduled:appointmentDate,isTeamAssigned:true}));
+  const daily=sortAppointmentEntries([...personalDaily,...assignedDaily]);
   $('#appointmentsList').innerHTML=daily.length?daily.map(entry=>appointmentCardMarkup(entry,{dailyLog:true})).join(''):emptyStateMarkup(getEmptyState('appointments-daily',{date:appointmentDate}));
   if(activeViewId()==='appointmentsView')updateTopbar('appointmentsView');
 }
@@ -1377,7 +1461,6 @@ function selectAppointmentContact(id){
   $('#appointmentAddress').value=formatProspectAddress(p.address||p.company,p.suburb)||p.address||'';
   hideAppointmentContactSuggestions();
 }
-function resetAppointmentContactLink(){appointmentLinkedProspectId='';hideAppointmentContactSuggestions()}
 function renderProspectAppointmentFlowHeader(){
   const header=$('#appointmentProspectFlowHeader');if(!header)return;
   header.classList.toggle('hidden',!pendingProspectAppointmentFlow);
@@ -1407,16 +1490,44 @@ async function completePendingProspectAppointmentFlow(){
   if(p.sellingTimeframe!==sellingTimeframe)prospectInteractions.push({id:prospectId(),prospectId:p.id,date:todayKey(),at:Date.now()+1,type:'Pipeline',outcome:'Selling timeframe updated',note:`Selling timeframe changed from ${p.sellingTimeframe||'Not set'} to ${sellingTimeframe||'Not currently selling'}.`,nextFollowUp:''});
   prospects=prospects.map(x=>x.id===p.id?normaliseProspect({...x,temperature,motivation,temperatureManual,sellingTimeframe,lastContact:todayKey(),nextFollowUp:validDateKey(next)?next:'',stage:'Appointment Booked',updatedAt:Date.now()}):x);
   const delta=prospectOutcomeMetricDelta(outcome);
-  try{await applyProspectingOutcomeMetrics(outcome,interactionId)}catch(err){console.error('Prospector metric save failed',err);toast('Appointment saved. Metrics are pending sync.')}
+  try{await applyProspectingOutcomeMetrics(outcome,interactionId,{awaitCloud:!flow.fromSession})}catch(err){console.error('Prospector metric save failed',err);toast('Appointment saved. Metrics are pending sync.')}
   prospectInteractions=prospectInteractions.map(x=>x.id===interactionId?{...x,metricsApplied:true}:x);
-  try{await saveProspecting({render:false})}catch(err){console.error('Prospecting log save failed',err);toast('The appointment is saved locally. Please check sync.')}
+  try{await saveProspecting({render:false,awaitCloud:!flow.fromSession})}catch(err){console.error('Prospecting log save failed',err);toast('The appointment is saved locally. Please check sync.')}
   if(flow.fromSession&&prospectSessionActive){prospectSessionStats.calls+=delta.calls;prospectSessionStats.connects+=delta.connects;if(temperature==='Warm'||temperature==='Hot')prospectSessionStats.temperate++;prospectSessionStats.appointments++;prospectSessionIndex++;saveProspectingSessionState()}
   pendingProspectAppointmentFlow=null;appointmentLinkedProspectId='';renderProspectAppointmentFlowHeader();
   switchView('prospectingView');
-  if(flow.fromSession&&prospectSessionActive){toast('Appointment booked');showProspectingSession()}else{toast('Appointment booked');renderProspectDetail(p.id)}
+  if(flow.fromSession&&prospectSessionActive){toast('Appointment booked');showProspectingSession();requestAnimationFrame(()=>showProspectingSession())}else{toast('Appointment booked');renderProspectDetail(p.id)}
 }
 
-async function addAppointment({contactName,contactNumber,address,date,time,type,auction=false,prospectId=''}){
+function teamAppointmentMemberName(member){const profileName=String(member?.name||'').trim(),liveName=String(leaderboardEntries.find(entry=>String(entry.uid||'')===String(member?.uid||''))?.name||'').trim(),name=profileName||liveName||'Team member';return name==='Team member'?name:(name.split(/\s+/).filter(Boolean)[0]||'Team member')}
+function teamAppointmentBookingDisplayName(member){const live=leaderboardEntries.find(entry=>String(entry.uid||'')===String(member?.uid||'')),liveName=String(live?.name||'').trim();if(liveName)return liveName.split(/\s+/).filter(Boolean)[0]||'Team member';const profileName=String(member?.name||'').trim();if(!profileName)return'Team member';const first=profileName.split(/\s+/).filter(Boolean)[0]||'Team member';return first.includes('.')?(first.split('.')[0]||'Team member'):first}
+function renderAppointmentAssignmentPopup(preferredUid=uid){
+  const select=$('#appointmentAssignmentSelect');if(!select)return;
+  const sorted=[...appointmentAssignees].sort((a,b)=>String(a.uid)===uid?-1:String(b.uid)===uid?1:teamAppointmentBookingDisplayName(a).localeCompare(teamAppointmentBookingDisplayName(b)));
+  const members=sorted.length?sorted:[{uid,name:displayAgentName()}];
+  select.innerHTML=members.map(member=>`<option value="${escapeHtml(member.uid)}">${escapeHtml(String(member.uid)===uid?'Me':teamAppointmentBookingDisplayName(member))}</option>`).join('');
+  select.value=members.some(member=>String(member.uid)===String(preferredUid))?String(preferredUid):uid;
+}
+function showAppointmentAssignmentPopup(){
+  const modal=$('#appointmentAssignmentModal');if(!modal||!pendingAppointmentAssignment)return;
+  renderAppointmentAssignmentPopup(uid);modal.classList.remove('hidden');modal.setAttribute('aria-hidden','false');document.body.classList.add('appointment-assignment-open');requestAnimationFrame(()=>$('#appointmentAssignmentSelect')?.focus({preventScroll:true}));
+}
+function hideAppointmentAssignmentPopup({clear=true}={}){
+  const modal=$('#appointmentAssignmentModal');modal?.classList.add('hidden');modal?.setAttribute('aria-hidden','true');document.body.classList.remove('appointment-assignment-open');if(clear)pendingAppointmentAssignment=null;
+}
+
+function stopTeamAppointmentLayer(){unsubAppointmentAssignees?.();unsubAssignedTeamAppointments?.();unsubAppointmentAssignees=unsubAssignedTeamAppointments=null;subscribedAppointmentTeamId='';appointmentAssignees=[];assignedTeamAppointments=[];pendingTeamAppointmentNotice=null;hideTeamAppointmentNotice({acknowledge:false});renderAppointments()}
+function normaliseAssignedTeamAppointment(data={},id=''){const source=validDateKey(data.createdDate)?data.createdDate:todayKey(),a=normaliseAppointmentRecord({...data,id:data.appointmentId||data.id||id},source);return{...a,teamAppointmentId:String(id||data.teamAppointmentId||a.id),setterUid:String(data.setterUid||''),setterName:String(data.setterName||'a teammate'),assignedToUid:String(data.assignedToUid||''),assignedToName:String(data.assignedToName||displayAgentName()),acknowledgedAt:data.acknowledgedAt||null,calendarAddedAt:data.calendarAddedAt||null,isTeamAssigned:true}}
+function teamAppointmentConfirmationLabel(type){return{LAP:'Listing Appointment',MAP:'Market Appraisal',BAP:'Buyer Appointment',OFI:'Open for Inspection'}[normaliseAppointmentType(type)]||'Appointment'}
+function teamAppointmentSetterFirstName(name=''){const clean=String(name||'A teammate').trim();return clean.split(/\s+/).filter(Boolean)[0]||'A teammate'}
+function maybeShowTeamAppointmentNotice(){if(teamAppointmentNoticeOpen||!cloud||accountMode!=='team'||!teamId||$('#app')?.classList.contains('hidden'))return;const next=assignedTeamAppointments.filter(a=>!a.acknowledgedAt&&a.setterUid!==uid&&!dismissedTeamAppointmentNotices.has(String(a.teamAppointmentId||a.id))).sort((a,b)=>(Number(a.at)||0)-(Number(b.at)||0))[0];if(!next)return;pendingTeamAppointmentNotice=next;teamAppointmentNoticeOpen=true;const modal=$('#teamAppointmentNotice');if(!modal)return;const setter=teamAppointmentSetterFirstName(next.setterName),label=teamAppointmentConfirmationLabel(appointmentType(next));$('#teamAppointmentNoticeTitle').textContent=`${setter} booked this ${label} for you.`;$('#teamAppointmentNoticeType').textContent=appointmentType(next);$('#teamAppointmentNoticeContact').textContent=next.contactName||'Contact not recorded';$('#teamAppointmentNoticeAddress').textContent=next.address||'Address not recorded';$('#teamAppointmentNoticeWhen').textContent=`${fmtDate(appointmentScheduledDate(next,next.createdDate||todayKey()))} · ${appointmentTimeLabel(next,next.createdDate||todayKey())}`;modal.classList.remove('hidden');modal.setAttribute('aria-hidden','false');modal.style.display='grid';document.body.classList.add('team-appointment-notice-open');requestAnimationFrame(()=>$('#teamAppointmentAddCalendar')?.focus({preventScroll:true}))}
+async function acknowledgeTeamAppointment(a,{calendar=false}={}){if(!a?.teamAppointmentId||!cloud||!db||!teamId)return;try{await setDoc(doc(db,'teams',teamId,'appointments',a.teamAppointmentId),{acknowledgedAt:serverTimestamp(),calendarAddedAt:calendar?serverTimestamp():a.calendarAddedAt||null,updatedAt:serverTimestamp()},{merge:true})}catch(err){console.error('Appointment acknowledgement failed',err)}}
+function hideTeamAppointmentNotice({acknowledge=true,calendar=false}={}){const modal=$('#teamAppointmentNotice');if(!modal)return;const current=pendingTeamAppointmentNotice;if(current)dismissedTeamAppointmentNotices.add(String(current.teamAppointmentId||current.id));modal.classList.add('hidden');modal.setAttribute('aria-hidden','true');modal.style.display='none';document.body.classList.remove('team-appointment-notice-open');teamAppointmentNoticeOpen=false;pendingTeamAppointmentNotice=null;if(acknowledge&&current){current.acknowledgedAt=current.acknowledgedAt||Date.now();if(calendar)current.calendarAddedAt=current.calendarAddedAt||Date.now();acknowledgeTeamAppointment(current,{calendar})}}
+function subscribeTeamAppointmentLayer(){if(!cloud||accountMode!=='team'||!teamId){stopTeamAppointmentLayer();return}if(subscribedAppointmentTeamId===teamId&&unsubAppointmentAssignees&&unsubAssignedTeamAppointments)return;stopTeamAppointmentLayer();subscribedAppointmentTeamId=teamId;const listeningTeamId=teamId;unsubAppointmentAssignees=onSnapshot(collection(db,'teams',listeningTeamId,'members'),{includeMetadataChanges:true},snap=>{if(teamId!==listeningTeamId)return;appointmentAssignees=snap.docs.map(item=>({...item.data(),uid:item.id}))},err=>console.error('Appointment team list failed',err));const assignedQuery=query(collection(db,'teams',listeningTeamId,'appointments'),where('assignedToUid','==',uid));unsubAssignedTeamAppointments=onSnapshot(assignedQuery,{includeMetadataChanges:true},snap=>{if(teamId!==listeningTeamId)return;assignedTeamAppointments=snap.docs.map(item=>normaliseAssignedTeamAppointment(item.data(),item.id)).sort((a,b)=>appointmentTimestamp(a,a.createdDate||todayKey())-appointmentTimestamp(b,b.createdDate||todayKey()));renderAppointments();renderTimeline();refreshReturningSnapshotIfVisible();maybeShowTeamAppointmentNotice()},err=>console.error('Assigned appointments failed',err))}
+function teamAppointmentPayload(appointment,assignedToUid){const member=appointmentAssignees.find(entry=>String(entry.uid||'')===String(assignedToUid||''));return{appointmentId:String(appointment.id),contactName:appointment.contactName||'',contactNumber:appointment.contactNumber||'',address:appointment.address||'',date:appointmentScheduledDate(appointment,appointment.createdDate),time:appointment.time||'12:00',type:appointmentType(appointment),auction:Boolean(appointment.auction),types:[appointmentType(appointment)],createdDate:appointmentCreatedDate(appointment,appointment.createdDate),logDate:appointmentCreatedDate(appointment,appointment.createdDate),scheduledDate:appointmentScheduledDate(appointment,appointment.createdDate),scheduledAt:Number(appointment.scheduledAt)||appointmentTimestamp(appointment,appointment.createdDate),at:Number(appointment.at)||Date.now(),setterUid:uid,setterName:displayAgentName(),assignedToUid:String(assignedToUid),assignedToName:teamAppointmentMemberName(member||{uid:assignedToUid}),updatedAt:serverTimestamp()}}
+async function syncTeamAppointmentAssignment(appointment,previousAssignedToUid=''){if(!cloud||!db||accountMode!=='team'||!teamId||!appointment?.id)return;const assignedToUid=String(appointment.assignedToUid||uid),previous=String(previousAssignedToUid||''),ref=doc(db,'teams',teamId,'appointments',String(appointment.id));if(assignedToUid===uid){if(previous&&previous!==uid){const batch=writeBatch(db);batch.delete(ref);await batch.commit()}return}const payload=teamAppointmentPayload(appointment,assignedToUid);if(!previous||previous!==assignedToUid)await setDoc(ref,{...payload,acknowledgedAt:null,calendarAddedAt:null,createdAt:serverTimestamp()});else await setDoc(ref,payload,{merge:true})}
+async function removeTeamAppointmentAssignment(appointment){if(!cloud||!db||accountMode!=='team'||!teamId||!appointment?.id||!appointment.assignedToUid||appointment.assignedToUid===uid)return;const batch=writeBatch(db);batch.delete(doc(db,'teams',teamId,'appointments',String(appointment.id)));await batch.commit()}
+async function addAppointment({contactName,contactNumber,address,date,time,type,auction=false,prospectId='',assignedToUid=uid}){
   const createdDate=todayKey();
   if(isPastDate(createdDate))return lockedToast();
   const signature=[createdDate,date,time,type,contactName.trim().toLowerCase(),address.trim().toLowerCase()].join('|');
@@ -1428,11 +1539,11 @@ async function addAppointment({contactName,contactNumber,address,date,time,type,
   const recentDuplicate=d.appointments.find(a=>[appointmentCreatedDate(a,createdDate),appointmentScheduledDate(a,createdDate),a.time,appointmentType(a),String(a.contactName||'').trim().toLowerCase(),String(a.address||'').trim().toLowerCase()].join('|')===signature&&Date.now()-(Number(a.at)||0)<15000);
   if(recentDuplicate){appointmentSubmitLocks.delete(signature);return recentDuplicate}
   let linkedProspect=null;if(normaliseAppointmentType(type)==='LAP')linkedProspect=await connectListingAppointmentToPipeline({contactName,contactNumber,address});
-  const appointment=normaliseAppointmentRecord({id:uuid(),contactName,contactNumber,address,date,time,type,auction:type==='OFI'&&auction,types:[type],prospectId:linkedProspect?.id||prospectId||'',createdDate,logDate:createdDate,scheduledDate:date,scheduledAt,at:Date.now()},createdDate);
+  const assignedMember=appointmentAssignees.find(entry=>String(entry.uid||'')===String(assignedToUid||''));const appointment=normaliseAppointmentRecord({id:uuid(),contactName,contactNumber,address,date,time,type,auction:type==='OFI'&&auction,types:[type],prospectId:linkedProspect?.id||prospectId||'',assignedToUid:String(assignedToUid||uid),assignedToName:String(assignedToUid||uid)===uid?displayAgentName():teamAppointmentMemberName(assignedMember||{uid:assignedToUid}),setterUid:uid,setterName:displayAgentName(),createdDate,logDate:createdDate,scheduledDate:date,scheduledAt,at:Date.now()},createdDate);
   d.appointments.push(appointment);
-  addEvent(d,'appointment',`${type} · ${contactName} · ${address} · booked for ${date} ${time}`);
+  const bookedForMeta=String(assignedToUid||uid)!==String(uid)&&appointment.assignedToName?` · Booked for ${teamAppointmentSetterFirstName(appointment.assignedToName)}`:'';addEvent(d,'appointment',`${type} · ${contactName} · ${address} · booked for ${date} ${time}${bookedForMeta}`);
   days[createdDate]=d;
-  try{await saveDay(createdDate);renderAppointments();toast(date===createdDate?'Appointment logged':'Appointment logged and reminder created');return appointment}
+  try{await saveDay(createdDate);try{await syncTeamAppointmentAssignment(appointment)}catch(err){console.error('Team appointment assignment failed',err);toast('Appointment saved. Team assignment needs sync.')}renderAppointments();toast(date===createdDate?'Appointment logged':'Appointment logged and reminder created');return appointment}
   finally{appointmentSubmitLocks.delete(signature)}
 }
 function beginEditAppointment(id,sourceDate){
@@ -1457,14 +1568,14 @@ function closeAppointmentEditor(){
   renderAppointments();
   requestAnimationFrame(()=>window.scrollTo({top:returnState?.scrollY||0,behavior:'instant'}));
 }
-async function editAppointment({contactName,contactNumber,address,date,time,type,auction=false}){
+async function editAppointment({contactName,contactNumber,address,date,time,type,auction=false,assignedToUid=uid}){
   if(!editingAppointment)return null;
   const {id,sourceDate}=editingAppointment,d=dayData(sourceDate),index=d.appointments.findIndex(a=>String(a.id)===String(id));
   if(index<0)return toast('Appointment could not be found');
   const existing=d.appointments[index],scheduledAt=new Date(`${date}T${time}`).getTime();if(!validDateKey(date)||!Number.isFinite(scheduledAt))return toast('Appointment date or time is invalid');
   let prospectId=existing.prospectId||'';if(normaliseAppointmentType(type)==='LAP'){const linked=await connectListingAppointmentToPipeline({contactName,contactNumber,address});prospectId=linked?.id||prospectId}
-  d.appointments[index]=normaliseAppointmentRecord({...existing,contactName,contactNumber,address,date,scheduledDate:date,time,type,auction:type==='OFI'&&auction,types:[type],scheduledAt,prospectId,updatedAt:Date.now()},sourceDate);
-  addEvent(d,'appointment',`${type} · ${contactName} · appointment updated for ${date} ${time}`);days[sourceDate]=d;await saveDay(sourceDate);editingAppointment=null;renderAll();toast('Appointment updated');return d.appointments[index];
+  const previousAssignedToUid=String(existing.assignedToUid||uid),assignedMember=appointmentAssignees.find(entry=>String(entry.uid||'')===String(assignedToUid||''));d.appointments[index]=normaliseAppointmentRecord({...existing,contactName,contactNumber,address,date,scheduledDate:date,time,type,auction:type==='OFI'&&auction,types:[type],scheduledAt,prospectId,assignedToUid:String(assignedToUid||uid),assignedToName:String(assignedToUid||uid)===uid?displayAgentName():teamAppointmentMemberName(assignedMember||{uid:assignedToUid}),setterUid:existing.setterUid||uid,setterName:existing.setterName||displayAgentName(),updatedAt:Date.now()},sourceDate);
+  addEvent(d,'appointment',`${type} · ${contactName} · appointment updated for ${date} ${time}`);days[sourceDate]=d;await saveDay(sourceDate);try{await syncTeamAppointmentAssignment(d.appointments[index],previousAssignedToUid)}catch(err){console.error('Team appointment update failed',err);toast('Appointment updated. Team assignment needs sync.')}editingAppointment=null;renderAll();toast('Appointment updated');return d.appointments[index];
 }
 async function deleteAppointment(id,sourceDate=appointmentDate){
   const d=dayData(sourceDate),index=d.appointments.findIndex(a=>String(a.id)===String(id));
@@ -1472,7 +1583,7 @@ async function deleteAppointment(id,sourceDate=appointmentDate){
   const appointment=d.appointments[index],exportId=calendarExportId(appointment,sourceDate);
   d.appointments.splice(index,1);days[sourceDate]=d;
   const ids=calendarExportIds();ids.delete(exportId);localStorage.setItem(calendarExportStorageKey(),JSON.stringify([...ids]));
-  await saveDay(sourceDate);renderAll();toast('Appointment deleted');
+  await saveDay(sourceDate);try{await removeTeamAppointmentAssignment(appointment)}catch(err){console.error('Team appointment delete failed',err)}renderAll();toast('Appointment deleted');
 }
 
 
@@ -1503,14 +1614,36 @@ function normaliseDailyLeaderboardEntry(entry,key){
   return{uid:entry.uid,name:entry.name,email:entry.email,calls:saved.calls??null,connects:saved.connects??null,data:saved.data??null,knockMinutes:saved.knockMinutes??null,score:saved.score||0,targets:saved.targets||{},appointments:normaliseLeaderboardAppointmentCounts(saved.appointments),appointmentDetails:normaliseLeaderboardAppointmentDetails(saved.appointmentDetails)};
 }
 function dailyLeaderboardRows(){const key=selectedLeaderboardDayKey();return leaderboardEntries.map(entry=>normaliseDailyLeaderboardEntry(entry,key)).filter(Boolean).sort(sortLeaderboardRows)}
-function weeklyLeaderboardRows(){
-  const wk=selectedLeaderboardWeekKey();
-  return leaderboardEntries.map(entry=>{const w=entry.weekHistory?.[wk];return w?{uid:entry.uid,name:entry.name,email:entry.email,...w,appointments:normaliseLeaderboardAppointmentCounts(w.appointments),appointmentDetails:normaliseLeaderboardAppointmentDetails(w.appointmentDetails)}:null}).filter(Boolean).sort(sortLeaderboardRows);
+function leaderboardScheduledWeekKeys(entry,baseDate){
+  const scheduled=normaliseWorkDays(entry?.workDays||workDays),start=mondayOf(baseDate),keys=[];
+  for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);if(scheduled.includes(d.getDay()))keys.push(dateKey(d))}
+  return keys;
 }
-function currentWeekLeaderboardRows(){
-  const wk=weekKeyFromDate(new Date());
-  return leaderboardEntries.map(entry=>{const w=entry.weekHistory?.[wk];return w?{uid:entry.uid,name:entry.name,email:entry.email,...w,appointments:normaliseLeaderboardAppointmentCounts(w.appointments),appointmentDetails:normaliseLeaderboardAppointmentDetails(w.appointmentDetails)}:null}).filter(Boolean).sort(sortLeaderboardRows);
+function leaderboardDailySource(entry,key){
+  if(entry?.date===key)return{calls:entry.calls??0,connects:entry.connects??0,data:entry.data??0,knockMinutes:entry.knockMinutes??0,score:entry.score??0,targets:entry.targets||{},appointments:entry.appointments,appointmentDetails:entry.appointmentDetails};
+  const saved=entry?.dailyHistory?.[key];
+  if(saved==null)return null;
+  if(typeof saved==='number')return{calls:0,connects:0,data:0,knockMinutes:0,score:saved,targets:{},appointments:null,appointmentDetails:null};
+  return saved;
 }
+function derivedCurrentWeekRecord(entry,baseDate){
+  const wk=weekKeyFromDate(baseDate),saved=entry?.weekHistory?.[wk]||null,keys=leaderboardScheduledWeekKeys(entry,baseDate),records=keys.map(key=>leaderboardDailySource(entry,key));
+  if(!records.some(Boolean))return saved;
+  const count=Math.max(1,keys.length),dailyTarget=entry?.targets||{},savedTargets=saved?.targets||{};
+  const perDay=(key)=>Number(dailyTarget[key])||Math.round((Number(savedTargets[key])||0)/count)||0;
+  const totals=records.reduce((acc,record)=>{if(!record)return acc;acc.calls+=Number(record.calls)||0;acc.connects+=Number(record.connects)||0;acc.data+=Number(record.data)||0;acc.knockMinutes+=Number(record.knockMinutes)||0;const a=normaliseLeaderboardAppointmentCounts(record.appointments);['MAP','LAP','BAP'].forEach(type=>{if(a[type]!=null)acc.appointments[type]+=Number(a[type])||0});const details=normaliseLeaderboardAppointmentDetails(record.appointmentDetails);if(Array.isArray(details))acc.appointmentDetails.push(...details);return acc},{calls:0,connects:0,data:0,knockMinutes:0,appointments:emptyLeaderboardAppointmentCounts(),appointmentDetails:[]});
+  const targetsForWeek={calls:perDay('calls')*count,connects:perDay('connects')*count,data:perDay('data')*count,knock:Number(entry?.weeklyKnockTarget)||Number(savedTargets.knock)||0};
+  const scores=[pct(totals.calls,targetsForWeek.calls),pct(totals.connects,targetsForWeek.connects),pct(totals.data,targetsForWeek.data)];
+  if(targetsForWeek.knock>0)scores.push(pct(totals.knockMinutes,targetsForWeek.knock));
+  const score=Math.round(scores.reduce((sum,value)=>sum+value,0)/Math.max(1,scores.length));
+  return{...(saved||{}),weekKey:wk,weekStart:wk,workDays:[...(entry?.workDays||workDays)],calls:totals.calls,connects:totals.connects,data:totals.data,knockMinutes:totals.knockMinutes,score,targets:targetsForWeek,appointments:totals.appointments,appointmentDetails:totals.appointmentDetails};
+}
+function weeklyLeaderboardEntry(entry,baseDate){
+  const wk=weekKeyFromDate(baseDate),currentWk=weekKeyFromDate(new Date()),w=wk===currentWk?derivedCurrentWeekRecord(entry,baseDate):entry.weekHistory?.[wk];
+  return w?{uid:entry.uid,name:entry.name,email:entry.email,...w,appointments:normaliseLeaderboardAppointmentCounts(w.appointments),appointmentDetails:normaliseLeaderboardAppointmentDetails(w.appointmentDetails)}:null;
+}
+function weeklyLeaderboardRows(){const base=selectedLeaderboardWeekDate();return leaderboardEntries.map(entry=>weeklyLeaderboardEntry(entry,base)).filter(Boolean).sort(sortLeaderboardRows)}
+function currentWeekLeaderboardRows(){const base=new Date();return leaderboardEntries.map(entry=>weeklyLeaderboardEntry(entry,base)).filter(Boolean).sort(sortLeaderboardRows)}
 function metricLabel(key){return({calls:'Calls',connects:'Connects',data:'Data',knocking:'Knocking'})[key]||'Calls'}
 function leaderboardMetricItem(value,target,label,suffix=''){
   if(value==null)return `<span class="leaderboard-performance-metric unavailable" role="img" aria-label="${label}: unavailable"><strong>—</strong><i><b style="width:0%"></b></i></span>`;
@@ -1518,29 +1651,27 @@ function leaderboardMetricItem(value,target,label,suffix=''){
   const complete=safeTarget>0&&safeValue>=safeTarget;
   return `<span class="leaderboard-performance-metric ${complete?'complete':''}" role="img" aria-label="${label}: ${safeValue}${suffix}, ${metricPct}% complete"><strong>${safeValue}${suffix}</strong><i><b style="width:${metricPct}%"></b></i></span>`;
 }
-function leaderboardAppointmentItem(value,label){
-  if(value==null)return `<span class="leaderboard-performance-metric leaderboard-appointment-metric unavailable" role="img" aria-label="${label} appointments: unavailable"><strong>—</strong></span>`;
+function leaderboardAppointmentItem(value,label='Appointments'){
+  if(value==null)return `<span class="leaderboard-performance-metric leaderboard-appointment-metric unavailable" role="img" aria-label="${label}: unavailable"><strong>—</strong></span>`;
   const safeValue=Math.max(0,Math.round(Number(value)||0));
-  return `<span class="leaderboard-performance-metric leaderboard-appointment-metric" role="img" aria-label="${label} appointments booked: ${safeValue}"><strong>${safeValue}</strong></span>`;
+  return `<span class="leaderboard-performance-metric leaderboard-appointment-metric" role="img" aria-label="${label} booked: ${safeValue}"><strong>${safeValue}</strong></span>`;
+}
+function leaderboardAppointmentTotal(appointments){
+  const values=[appointments?.MAP,appointments?.LAP,appointments?.BAP];
+  if(values.every(value=>value==null))return null;
+  return values.reduce((sum,value)=>sum+(Number.isFinite(Number(value))?Math.max(0,Math.round(Number(value))):0),0);
 }
 function leaderboardRowHtml(r,i,weekly=false){
-  const t=r.targets||{},appointments=normaliseLeaderboardAppointmentCounts(r.appointments),score=Math.max(0,Math.min(100,r.score||0)),name=escapeHtml(r.name||r.email?.split('@')[0]||'Agent');
-  return `<article class="leaderboard-row leaderboard-performance-row ${r.uid===uid?'me':''} ${i===0?'leader':''}" data-agent-summary="${escapeHtml(r.uid||'')}" role="button" tabindex="0" aria-label="View ${name} appointment summary">
-    <div class="leaderboard-performance-head">
-      <b class="rank">${i+1}</b>
-      <div class="agent"><strong>${name}</strong>${r.uid===uid?'<small>You</small>':i===0?'<small>Leading</small>':''}</div>
-      <em>${score}%<small>${weekly?'Week':'Day'}</small></em>
-    </div>
-    <i class="leaderboard-overall-progress" aria-hidden="true"><b style="width:${score}%"></b></i>
-    <div class="leaderboard-performance-metrics">
-      ${leaderboardMetricItem(r.calls,t.calls,'Calls')}
-      ${leaderboardMetricItem(r.connects,t.connects,'Connects')}
-      ${leaderboardMetricItem(r.data,t.data,'Data')}
-      ${leaderboardMetricItem(r.knockMinutes,t.knock,'Knock','m')}
-      ${leaderboardAppointmentItem(appointments.MAP,'MAP')}
-      ${leaderboardAppointmentItem(appointments.LAP,'LAP')}
-      ${leaderboardAppointmentItem(appointments.BAP,'BAP')}
-    </div>
+  const t=r.targets||{},appointments=normaliseLeaderboardAppointmentCounts(r.appointments),appointmentTotal=leaderboardAppointmentTotal(appointments),score=Math.max(0,Math.min(100,r.score||0)),name=escapeHtml(r.name||r.email?.split('@')[0]||'Agent'),agentUid=escapeHtml(r.uid||'');
+  return `<article class="leaderboard-row leaderboard-performance-row leaderboard-viewport-row ${r.uid===uid?'me':''} ${i===0?'leader':''}" data-agent-summary="${agentUid}" role="button" tabindex="0" aria-label="View ${name} appointment summary">
+    <b class="rank">${i+1}</b>
+    <div class="agent leaderboard-agent-trigger"><strong>${name}</strong>${r.uid===uid?'<small>You</small>':i===0?'<small>Leading</small>':''}</div>
+    ${leaderboardMetricItem(r.calls,t.calls,'Calls')}
+    ${leaderboardMetricItem(r.connects,t.connects,'Connects')}
+    ${leaderboardMetricItem(r.data,t.data,'Data')}
+    ${leaderboardMetricItem(r.knockMinutes,t.knock,'Knock','m')}
+    ${leaderboardAppointmentItem(appointmentTotal)}
+    <em>${score}%<small>${weekly?'W':'D'}</small></em>
   </article>`;
 }
 function leaderboardAppointmentPeriodLabel(){return leaderboardMode==='week'?`Week ${formatWeekRange(selectedLeaderboardWeekDate())}`:fmtDate(selectedLeaderboardDayKey())}
@@ -1554,7 +1685,7 @@ function showLeaderboardAgentSummary(agentUid){
   if(!row)return;
   document.querySelector('.leaderboard-agent-summary-overlay')?.remove();
   const name=escapeHtml(row.name||row.email?.split('@')[0]||'Agent'),details=normaliseLeaderboardAppointmentDetails(row.appointmentDetails),counts=normaliseLeaderboardAppointmentCounts(row.appointments),knownTotal=['MAP','LAP','BAP'].reduce((sum,type)=>sum+(Number(counts[type])||0),0);
-  const cards=details?.length?details.map(item=>`<article class="leaderboard-agent-appointment"><span>${escapeHtml(item.type)}</span><div><strong>${escapeHtml(item.contactName||'Client not recorded')}</strong><small>${escapeHtml(item.address||'Address not recorded')}</small><time>${escapeHtml(leaderboardAppointmentDateTime(item))}</time></div></article>`).join(''):details===null&&knownTotal?`<div class="leaderboard-agent-summary-empty"><strong>${knownTotal} appointment${knownTotal===1?'':'s'} booked</strong><p>Details will appear after this agent receives the latest app update.</p></div>`:`<div class="leaderboard-agent-summary-empty"><strong>No appointments booked</strong><p>There are no MAP, LAP or BAP appointments recorded for this period.</p></div>`;
+  const cards=details?.length?details.map(item=>`<article class="leaderboard-agent-appointment"><span>${escapeHtml(item.type)}</span><div><strong>${escapeHtml(item.contactName||'Client not recorded')}</strong><small>${escapeHtml(item.address||'Address not recorded')}</small>${item.assignedToName?`<em class="leaderboard-booked-for">Booked for ${escapeHtml(teamAppointmentSetterFirstName(item.assignedToName))}</em>`:''}${item.type==='Data'?'':`<time>${escapeHtml(leaderboardAppointmentDateTime(item))}</time>`}</div></article>`).join(''):details===null&&knownTotal?`<div class="leaderboard-agent-summary-empty"><strong>${knownTotal} appointment${knownTotal===1?'':'s'} booked</strong><p>Details will appear after this agent receives the latest app update.</p></div>`:`<div class="leaderboard-agent-summary-empty"><strong>No appointments or data recorded</strong><p>There are no MAP, LAP, BAP or Data entries recorded for this period.</p></div>`;
   const overlay=document.createElement('div');overlay.className='leaderboard-agent-summary-overlay';overlay.innerHTML=`<section class="leaderboard-agent-summary glass" role="dialog" aria-modal="true" aria-label="${name} appointment summary"><header><div><span>AGENT SUMMARY</span><h2>${name}</h2><p>${escapeHtml(leaderboardAppointmentPeriodLabel())}</p></div><button type="button" data-close-agent-summary aria-label="Close agent summary">×</button></header><div class="leaderboard-agent-summary-kpis"><div><strong>${counts.MAP??'—'}</strong><span>MAP</span></div><div><strong>${counts.LAP??'—'}</strong><span>LAP</span></div><div><strong>${counts.BAP??'—'}</strong><span>BAP</span></div></div><div class="leaderboard-agent-appointments">${cards}</div><button class="primary" type="button" data-close-agent-summary>Done</button></section>`;
   document.body.append(overlay);document.body.classList.add('leaderboard-agent-summary-open');
   const close=()=>{overlay.remove();document.body.classList.remove('leaderboard-agent-summary-open')};
@@ -1564,22 +1695,15 @@ function renderUnifiedLeaderboard(){
   const isWeek=leaderboardMode==='week',rows=isWeek?weeklyLeaderboardRows():dailyLeaderboardRows();
   $('#leaderboardDayTab').classList.toggle('active',!isWeek);$('#leaderboardWeekTab').classList.toggle('active',isWeek);
   $('#leaderboardDayTab').setAttribute('aria-selected',String(!isWeek));$('#leaderboardWeekTab').setAttribute('aria-selected',String(isWeek));
+  if($('#leaderboardModeShortcut')){$('#leaderboardModeShortcut').textContent=isWeek?'WEEK':'DAY';$('#leaderboardModeShortcut').setAttribute('aria-label',isWeek?'Switch leaderboard to daily view':'Switch leaderboard to weekly view');$('#leaderboardModeShortcut').title=isWeek?'Weekly leaderboard':'Daily leaderboard';}
   $('#dayHistoryControls').classList.toggle('hidden',isWeek);$('#weekHistoryControls').classList.toggle('hidden',!isWeek);
   $('#leaderboardPeriodLabel').textContent=isWeek?'WEEKLY LEADERBOARD':'DAILY LEADERBOARD';
   $('#leaderboardDate').textContent=isWeek?`Week ${formatWeekRange(selectedLeaderboardWeekDate())}`:fmtDate(selectedLeaderboardDayKey());
   const periodDate=isWeek?selectedLeaderboardWeekDate():selectedLeaderboardDayDate(),periodKey=isWeek?selectedLeaderboardWeekKey():selectedLeaderboardDayKey();
-  $('#leaderboardList').innerHTML=rows.length?rows.map((r,i)=>leaderboardRowHtml(r,i,isWeek)).join(''):emptyStateMarkup(getEmptyState('leaderboard',{future:periodKey>todayKey(),past:periodKey<todayKey(),date:periodDate}));
+  const list=$('#leaderboardList'),listMarkup=rows.length?rows.map((r,i)=>leaderboardRowHtml(r,i,isWeek)).join(''):emptyStateMarkup(getEmptyState('leaderboard',{future:periodKey>todayKey(),past:periodKey<todayKey(),date:periodDate}));
+  if(listMarkup!==leaderboardListRenderMarkup){list.innerHTML=listMarkup;leaderboardListRenderMarkup=listMarkup}
   $('#leaderboardNote').textContent=isWeek?'Ranked by weekly overall completion. Use the arrows to review prior weeks.':'Ranked by daily overall completion. Use the arrows to review prior days.';
   $('#dayNext').disabled=leaderboardDayOffset>=0;$('#dayToday').disabled=leaderboardDayOffset===0;$('#weekNext').disabled=leaderboardWeekOffset>=0;
-}
-function renderWeeklyLeaderboard(){renderUnifiedLeaderboard()}
-function leaderboardMomentum(entry){
-  const prevKey=previousScheduledKey(todayKey(),entry.workDays||workDays);
-  if(!prevKey)return{diff:0,label:'—',className:'flat'};
-  const raw=entry.dailyHistory?.[prevKey],prev=typeof raw==='number'?raw:Number(raw?.score);
-  if(!Number.isFinite(prev))return{diff:0,label:'—',className:'flat'};
-  const diff=(entry.score||0)-prev;
-  return{diff,label:diff>0?`▲ ${diff}%`:diff<0?`▼ ${Math.abs(diff)}%`:'• 0%',className:diff>0?'up':diff<0?'down':'flat'};
 }
 function personalBests(){
   let bestDay={value:0,key:null},bestCalls={value:0,key:null},bestConnects={value:0,key:null},bestKnock={value:0,key:null},bestAppointments={value:0,key:null};
@@ -1596,28 +1720,9 @@ function personalBests(){
   }
   return{bestDay,bestCalls,bestConnects,bestKnock,bestAppointments};
 }
-function renderPersonalBests(){
-  if(!$('#bestDayScore'))return;
-  const b=personalBests();
-  $('#bestDayScore').textContent=`${b.bestDay.value}%`;
-  $('#bestDayDate').textContent=b.bestDay.key?fmtDate(b.bestDay.key):'No completed days yet';
-  $('#bestCallsValue').textContent=b.bestCalls.value;
-  $('#bestCallsDate').textContent=b.bestCalls.key?fmtDate(b.bestCalls.key):'No activity recorded yet';
-  $('#bestKnockValue').textContent=`${b.bestKnock.value} min`;
-  $('#bestKnockDate').textContent=b.bestKnock.key?fmtDate(b.bestKnock.key):'No activity recorded yet';
-}
-function renderMondayReview(){
-  if(!$('#mondayReviewScore'))return;
-  const base=weekDateFromOffset(-1),summary=weekSummaryFor(base),metrics=summary.metricPcts||{};
-  const strongest=Object.entries(metrics).sort((a,b)=>b[1]-a[1])[0]||['calls',0];
-  const weakest=Object.entries(metrics).sort((a,b)=>a[1]-b[1])[0]||['calls',0];
-  $('#mondayReviewWeek').textContent=`Week ${formatWeekRange(base)}`;
-  $('#mondayReviewScore').textContent=`${summary.score}%`;
-  $('#mondayReviewText').textContent=`Strongest: ${metricLabel(strongest[0])} ${strongest[1]}% · Improve: ${metricLabel(weakest[0])} ${weakest[1]}%`;
-}
 function renderLeaderboard(){
   const date=todayKey(),rows=sortedTodayLeaderboard(),weeklyRows=currentWeekLeaderboardRows();
-  $('#leaderboardStatus').textContent=cloud?'LIVE':'DEVICE ONLY';
+  renderLeaderboardStatus();
   const meIndex=rows.findIndex(r=>r.uid===uid),me=meIndex>=0?rows[meIndex]:null,myScore=me?.score??completion(date),dailyLeader=rows[0]||null,weeklyLeader=weeklyRows[0]||null,leaderScore=dailyLeader?.score||0,gap=rows.length?Math.max(0,leaderScore-myScore):0;
   const dailyLeaderName=dailyLeader?.name||dailyLeader?.email?.split('@')[0]||'—',weeklyLeaderName=weeklyLeader?.name||weeklyLeader?.email?.split('@')[0]||'—';
   if($('#leaderboardRing'))$('#leaderboardRing').style.setProperty('--score',Math.max(0,Math.min(100,leaderScore)));
@@ -1635,34 +1740,12 @@ function renderLeaderboard(){
 
 function scorecardWeekDate(){return weekDateFromOffset(scorecardWeekOffset)}
 function scorecardGrade(score){return score>=100?'A+':score>=95?'A':score>=90?'A−':score>=80?'B':score>=70?'C':'Needs Attention'}
-function scorecardAppointments(base=scorecardWeekDate()){
-  const start=mondayOf(base),end=new Date(start);end.setDate(start.getDate()+6);
-  const startKey=dateKey(start),endKey=dateKey(end),entries=[];
-  Object.entries(days).forEach(([sourceDate,day])=>(day?.appointments||[]).forEach(a=>{
-    const scheduled=appointmentScheduledDate(a,sourceDate);
-    if(scheduled>=startKey&&scheduled<=endKey)entries.push({appointment:a,sourceDate,scheduled});
-  }));
-  return entries.sort((x,y)=>appointmentTimestamp(x.appointment,x.sourceDate)-appointmentTimestamp(y.appointment,y.sourceDate));
-}
 function scorecardWeekRecords(){
   const keys=Object.keys(days).sort();
   if(!keys.length)return[];
   const first=mondayOf(parseKey(keys[0])),last=mondayOf(new Date()),records=[];
   for(let d=new Date(first);d<=last;d.setDate(d.getDate()+7)){const base=new Date(d),w=weekSummaryFor(base);records.push({base,score:w.score,calls:w.calls})}
   return records;
-}
-function scorecardWeekStreak(records){let count=0;for(let i=records.length-1;i>=0;i--){if(records[i].score>=90)count++;else break}return count}
-function renderScorecardAppointments(entries,base){
-  const panel=$('#scorecardAppointmentHistory'),list=$('#scorecardAppointmentList');
-  if(!panel||!list)return;
-  $('#scorecardAppointmentHistoryLabel').textContent=`Week ${formatWeekRange(base)}`;
-  list.innerHTML=entries.length?entries.map(({appointment:a,sourceDate,scheduled})=>{
-    const phone=String(a.contactNumber||a.phone||'').trim(),contact=a.contactName||a.name||'Contact not recorded',address=a.address||'Address not recorded';
-    const when=`${parseKey(scheduled).toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long'})} at ${appointmentTimeLabel(a,sourceDate)}`;
-    const tel=phone?`<a class="scorecard-call" href="tel:${escapeHtml(phone.replace(/[^+\d]/g,''))}">Call ${escapeHtml(contact.split(/\s+/)[0]||'contact')}</a>`:'';
-    const lifecycle=appointmentLifecycle(a,sourceDate),status=lifecycle==='completed'?(appointmentOutcomeLabel(a.outcome)||'Completed'):lifecycle==='follow-up'?followUpDueLabel(a):'Upcoming';
-    return `<article class="scorecard-appointment-item"><header><span>${escapeHtml(appointmentType(a))}</span><small>${escapeHtml(status)}</small></header><h3>${escapeHtml(address)}</h3><p>${escapeHtml(contact)}${phone?` · ${escapeHtml(phone)}`:''}<br>Booked for ${escapeHtml(when)}</p><div class="scorecard-followup-actions">${tel}${lifecycle!=='upcoming'?`<button data-update-outcome="${a.id}" data-source-date="${sourceDate}">Update Outcome</button>`:''}</div></article>`;
-  }).join(''):'<div class="empty"><strong>No appointments this week</strong><small>Booked appointments will appear here.</small></div>';
 }
 function previousWeekDate(base){const d=new Date(base);d.setDate(d.getDate()-7);return d}
 function signedChange(current,previous,unit='%'){
@@ -1745,11 +1828,23 @@ function renderScorecard(){
 }
 
 function renderInsights(){renderScorecard();renderLeaderboard()}
-function renderYearOverview(){const labels=['M','T','W','T','F','S','S'];const months=[];for(let m=0;m<12;m++){const first=new Date(year,m,1),pad=(first.getDay()+6)%7;let cells=`<div class="mini-weekdays">${labels.map(x=>`<b>${x}</b>`).join('')}</div><div class="mini-days">${'<i></i>'.repeat(pad)}`;for(let d=1;d<=new Date(year,m+1,0).getDate();d++){const dt=new Date(year,m,d),k=dateKey(dt),p=completion(k),off=!workDays.includes(dt.getDay());cells+=`<button class="mini-day ${levelClass(p)} ${off?'off':''} ${k===todayKey()?'today':''} ${k===selectedDate?'selected':''}" data-date="${k}" aria-label="${fmtDate(k)}, ${p}% complete">${d}</button>`}cells+='</div>';months.push(`<section class="mini-month"><h3>${new Date(year,m,1).toLocaleDateString('en-AU',{month:'short'})}</h3>${cells}</section>`)}$('#yearHeatmap').innerHTML=months.join('')}
 function levelClass(p){return p>=100?'l4':p>=67?'l3':p>=34?'l2':p>0?'l1':''}
-function renderMonth(){const y=monthCursor.getFullYear(),m=monthCursor.getMonth();$('#monthLabel').textContent=monthCursor.toLocaleDateString('en-AU',{month:'long',year:'numeric'});const vals=[];for(let d=1;d<=new Date(y,m+1,0).getDate();d++){const dt=new Date(y,m,d);if(workDays.includes(dt.getDay()))vals.push(completion(dateKey(dt)))}const groups=[];for(let i=0;i<vals.length;i+=4){const g=vals.slice(i,i+4);groups.push(Math.round(g.reduce((a,b)=>a+b,0)/Math.max(1,g.length)))}$('#monthBars').innerHTML=groups.map((p,i)=>`<div title="${p}%"><i style="height:${Math.max(3,p)}%"></i><small>W${i+1}</small></div>`).join('')}
 function renderCalendar(){const labels=['M','T','W','T','F','S','S'];$('#calendarYear').textContent=year;const months=[];for(let m=0;m<12;m++){const first=new Date(year,m,1),pad=(first.getDay()+6)%7;let cells=`<div class="weekday-row">${labels.map(x=>`<b>${x}</b>`).join('')}</div><div class="days">${'<i></i>'.repeat(pad)}`;for(let d=1;d<=new Date(year,m+1,0).getDate();d++){const dt=new Date(year,m,d),k=dateKey(dt),p=completion(k),off=!workDays.includes(dt.getDay());cells+=`<button class="day-cell ${levelClass(p)} ${off?'off':''} ${k===todayKey()?'today':''} ${k===selectedDate?'selected':''}" data-date="${k}" title="${fmtDate(k)} · ${p}%">${d}</button>`}cells+='</div>';months.push(`<section class="month"><h3>${new Date(year,m,1).toLocaleDateString('en-AU',{month:'long'})}</h3>${cells}</section>`)}$('#calendarGrid').innerHTML=months.join('')}
 
+function buyerSessionStorageKey(){return`agnt-buyer-session-v1-${uid||currentUser?.uid||'device'}`}
+function loadBuyerSession(){try{const raw=JSON.parse(localStorage.getItem(buyerSessionStorageKey())||'null');if(raw&&Array.isArray(raw.contacts))buyerSession={contacts:raw.contacts.map((c,i)=>({id:cleanText(c.id,80)||`buyer_${i}`,name:cleanText(c.name,120)||'Unknown buyer',phone:normaliseDialNumber(c.phone),address:cleanText(c.address,240),doNotSms:Boolean(c.doNotSms),status:cleanText(c.status,40)})).filter(c=>c.phone),index:Math.max(0,Number(raw.index)||0),active:Boolean(raw.active),fileName:cleanText(raw.fileName,160),importedAt:Number(raw.importedAt)||0}}catch(err){console.warn('Buyer session could not be restored',err)}}
+function saveBuyerSession(){try{localStorage.setItem(buyerSessionStorageKey(),JSON.stringify(buyerSession))}catch(err){console.warn('Buyer session could not be saved',err)}}
+function clearBuyerSession(){buyerSession={contacts:[],index:0,active:false,fileName:'',importedAt:0};try{localStorage.removeItem(buyerSessionStorageKey())}catch{}renderBuyerSessionHero()}
+function buyerSessionRemaining(){return Math.max(0,buyerSession.contacts.length-buyerSession.index)}
+function renderBuyerSessionHero(){const count=$('#buyerListReadyCount'),label=$('#buyerListReadyLabel'),state=$('#buyerListWorkState'),button=$('#openBuyerListSession');if(!count||!button)return;const remaining=buyerSessionRemaining();count.textContent=buyerSession.contacts.length?remaining:'0';label.textContent=buyerSession.contacts.length?`${remaining} buyer${remaining===1?'':'s'} remaining`:'Import an Agentbox call list';state.textContent=buyerSession.active?'Session ready to continue':buyerSession.contacts.length?'List imported and reviewed':'Name, mobile and address/suburb';button.textContent=buyerSession.active?'Continue Session':buyerSession.contacts.length?'Start Session':'Import PDF'}
+function buyerPdfMobile(value=''){const text=String(value).replace(/\u00a0/g,' ');const labelled=text.match(/\[\s*M\s*\]\s*:?\s*((?:\+?61\s*4|04)[\d\s()\-]{7,18})/i);const fallback=text.match(/(?:\+?61\s*4|04)[\d\s()\-]{7,18}/);const raw=(labelled?.[1]||fallback?.[0]||'').trim();if(!raw)return'';let number=normaliseDialNumber(raw);if(number.startsWith('614'))number='+'+number;if(/^61?4\d{8}$/.test(number)&&!number.startsWith('+'))number=number.startsWith('61')?`+${number}`:`0${number}`;const digits=number.replace(/\D/g,'');if(number.startsWith('+61'))return digits.length===11&&digits.startsWith('614')?number:'';return /^04\d{8}$/.test(number)?number:''}
+async function extractBuyerPdf(file){const pdfjs=await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs');pdfjs.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';const pdf=await pdfjs.getDocument({data:await file.arrayBuffer()}).promise,contacts=[];let columnBounds=null;for(let pageNo=1;pageNo<=pdf.numPages;pageNo++){const page=await pdf.getPage(pageNo),content=await page.getTextContent(),viewport=page.getViewport({scale:1});const items=content.items.map(item=>({text:String(item.str||'').replace(/\u00a0/g,' ').trim(),x:Number(item.transform?.[4])||0,y:Number(item.transform?.[5])||0})).filter(item=>item.text);if(!columnBounds){const nameHead=items.find(item=>/^Name$/i.test(item.text)),addressHead=items.find(item=>/^Address$/i.test(item.text)),contactHead=items.find(item=>/^Contact$/i.test(item.text));if(nameHead&&addressHead&&contactHead)columnBounds=[(nameHead.x+addressHead.x)/2,(addressHead.x+contactHead.x)/2];else columnBounds=[viewport.width*.22,viewport.width*.51]}const lines=[];for(const item of items){let line=lines.find(row=>Math.abs(row.y-item.y)<=4);if(!line){line={y:item.y,cells:['','','']};lines.push(line)}const col=item.x<columnBounds[0]?0:item.x<columnBounds[1]?1:2;line.cells[col]+=(line.cells[col]?' ':'')+item.text}lines.sort((a,b)=>b.y-a.y);let current=null;const flush=()=>{if(!current)return;const phone=buyerPdfMobile(current.contact);if(phone)contacts.push({id:`buyer_${Date.now().toString(36)}_${contacts.length}_${pageNo}`,name:current.name.replace(/\s+/g,' ').trim(),phone,address:current.address.replace(/\s+/g,' ').trim(),doNotSms:/do\s*not\s*sms/i.test(current.contact)});current=null};for(const line of lines){let[name,address,contact]=line.cells.map(value=>value.trim());const all=`${name} ${address} ${contact}`.trim();if(!all||/Basic Contact\/Call List|Printed by:|Print Date:|^Name\s+Address\s+Contact$|agentboxcrm\.com\.au|Page\s+\d+\s+of\s+\d+/i.test(all))continue;if(/^(Name|Address|Contact)$/i.test(name)||/^(Name|Address|Contact)$/i.test(address)||/^(Name|Address|Contact)$/i.test(contact))continue;if(name){flush();current={name,address,contact}}else if(current){if(address)current.address+=(current.address?' ':'')+address;if(contact)current.contact+=(current.contact?' ':'')+contact}}flush()}const seen=new Set();return contacts.filter(contact=>{const key=`${contact.name.toLowerCase()}|${contact.phone.replace(/\D/g,'')}`;if(seen.has(key))return false;seen.add(key);return true})}
+function showBuyerImportReview(contacts,fileName=''){const host=$('#prospectingSession');if(!host)return;$('#prospectingDashboard').classList.add('hidden');$('#prospectDetail').classList.add('hidden');host.classList.remove('hidden');host.dataset.sessionView='1';host.innerHTML=`<div class="prospect-session-head"><button type="button" data-buyer-import-back aria-label="Back">‹</button><span>${contacts.length} callable buyers</span><button type="button" data-buyer-import-clear>Cancel</button></div><section class="buyer-import-review glass"><div class="buyer-import-review-head"><span>BUYER LIST</span><h2>Review imported contacts</h2><p>${escapeHtml(fileName)} · Check the details before starting.</p></div><div class="buyer-import-rows">${contacts.map((c,i)=>`<article data-buyer-review-row="${i}"><input aria-label="Buyer name" data-buyer-name value="${escapeHtml(c.name)}"><input aria-label="Buyer mobile" inputmode="tel" data-buyer-phone value="${escapeHtml(displayDialNumber(c.phone))}"><input aria-label="Buyer address or suburb" data-buyer-address value="${escapeHtml(c.address)}"><button type="button" data-remove-buyer="${i}" aria-label="Remove ${escapeHtml(c.name)}">×</button>${c.doNotSms?'<small>DO NOT SMS</small>':''}</article>`).join('')}</div><button class="primary" type="button" data-confirm-buyer-import>Start Buyer Session</button></section>`;host._buyerImport={contacts,fileName}}
+async function importBuyerPdf(file){if(!file)return;toast('Reading buyer list…');try{const contacts=await extractBuyerPdf(file);if(!contacts.length)return toast('No callable mobile numbers found');showBuyerImportReview(contacts,file.name)}catch(err){console.error('Buyer PDF import failed',err);toast('Buyer list could not be read. Check your connection and PDF format.')}}
+function openBuyerListSession(){if(buyerSession.active||buyerSession.contacts.length){buyerSession.active=true;saveBuyerSession();showBuyerSession();return}$('#buyerPdfImport')?.click()}
+function launchBuyerSessionCall(){const buyer=buyerSession.contacts[buyerSession.index];if(!buyer)return;const number=normaliseDialNumber(buyer.phone),pending={id:prospectId(),number,launchedAt:Date.now(),outcomeLogged:false,source:'buyer-session',buyerId:buyer.id,buyerName:buyer.name};writePendingManualCall(pending);manualCallLaunchGuardUntil=Date.now()+1600;window.location.href=`tel:${number}`;setTimeout(maybeShowManualCallOutcome,2600)}
+function showBuyerSession(){if(!buyerSession.active)return;const host=$('#prospectingSession');$('#prospectingDashboard').classList.add('hidden');$('#prospectDetail').classList.add('hidden');host.classList.remove('hidden');host.dataset.sessionView='1';while(buyerSession.index<buyerSession.contacts.length&&buyerSession.contacts[buyerSession.index].status)buyerSession.index++;saveBuyerSession();const remaining=buyerSessionRemaining();if(!remaining){host.innerHTML=`<div class="prospect-session-head"><button type="button" data-buyer-session-back aria-label="Back">‹</button><span>Buyer List · Complete</span><button type="button" data-end-buyer-session>End Session</button></div><section class="prospect-session-card glass prospect-session-complete"><span class="prospect-avatar session-avatar">✓</span><h2>Queue complete</h2><p>You’ve worked through every buyer in this call list.</p><button class="primary" type="button" data-end-buyer-session>Finish Session</button></section>`;return}const buyer=buyerSession.contacts[buyerSession.index],initials=buyer.name.split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();host.innerHTML=`<div class="prospect-session-head"><button type="button" data-buyer-session-back aria-label="Back">‹</button><span>Buyer List · ${buyerSession.index+1} of ${buyerSession.contacts.length}</span><button type="button" data-end-buyer-session>End Session</button></div><section class="prospect-session-card glass"><span class="prospect-avatar session-avatar">${escapeHtml(initials)}</span><span>BUYER CALL</span><h2>${escapeHtml(buyer.name)}</h2><p>${escapeHtml(buyer.address||'No address or suburb supplied')}</p><div class="prospect-session-context"><div><span>MOBILE</span><strong>${escapeHtml(displayDialNumber(buyer.phone))}</strong></div><div><span>REMAINING</span><strong>${remaining} buyer${remaining===1?'':'s'}</strong></div></div>${buyer.doNotSms?'<blockquote>Agentbox flag: Do Not SMS</blockquote>':''}<button class="primary" type="button" data-call-buyer-session>Call ${escapeHtml(buyer.name.split(' ')[0])}</button><button class="text-btn" type="button" data-skip-buyer-session>Skip for now</button></section>`}
+function completeBuyerSessionCall(outcome,pending){if(pending?.source!=='buyer-session')return;const buyer=buyerSession.contacts.find(c=>c.id===pending.buyerId);if(buyer)buyer.status=outcome;while(buyerSession.index<buyerSession.contacts.length&&buyerSession.contacts[buyerSession.index].status)buyerSession.index++;saveBuyerSession();renderBuyerSessionHero()}
 function manualCallStorageKey(){return`agnt-manual-call-v125-${uid||currentUser?.uid||'device'}`}
 function readPendingManualCall(){try{const value=JSON.parse(localStorage.getItem(manualCallStorageKey())||'null');return value&&typeof value==='object'?value:null}catch{return null}}
 function writePendingManualCall(value){try{if(value)localStorage.setItem(manualCallStorageKey(),JSON.stringify(value));else localStorage.removeItem(manualCallStorageKey())}catch(err){console.warn('Manual call state could not be saved',err)}}
@@ -1763,7 +1858,7 @@ function showManualCallOutcome(){const pending=readPendingManualCall();if(!pendi
 function maybeShowManualCallOutcome(){const pending=readPendingManualCall();if(!pending?.number||pending.outcomeLogged||Date.now()<manualCallLaunchGuardUntil)return;showManualCallOutcome()}
 function launchManualCall(){const number=normaliseDialNumber(manualDiallerNumber);if(number.replace(/\D/g,'').length<6)return;const pending={id:prospectId(),number,launchedAt:Date.now(),outcomeLogged:false};writePendingManualCall(pending);manualCallLaunchGuardUntil=Date.now()+1600;closeManualDialler();window.location.href=`tel:${number}`;setTimeout(maybeShowManualCallOutcome,2600)}
 async function applyManualCallOutcome(outcome,pending){if(!pending?.id||outcome==='Cancelled')return;const key=todayKey(),d=dayData(key);if(d.events.some(event=>event?.sourceInteractionId===pending.id))return;const connected=outcome==='Connected',at=Date.now();d.calls=Math.max(0,d.calls+1);d.events.push({id:uuid(),type:'calls',label:`Quick Call · ${outcome}`,delta:1,at,sourceInteractionId:pending.id,phone:pending.number});if(connected){d.connects=Math.max(0,d.connects+1);d.events.push({id:uuid(),type:'connects',label:'Quick Call · Connected',delta:1,at,sourceInteractionId:pending.id,phone:pending.number})}d.events=d.events.slice(-500);days[key]=d;haptic();await saveDay(key)}
-async function saveManualCallOutcome(outcome){const pending=readPendingManualCall();if(!pending?.number)return closeManualCallOutcome();manualCallOutcome=outcome;if(outcome!=='Cancelled'){try{await applyManualCallOutcome(outcome,pending)}catch(err){console.error('Quick call metrics failed to save',err);toast('Call logged locally. Please check sync.')}}const updated={...pending,outcome,outcomeLogged:true,loggedAt:Date.now()};writePendingManualCall(updated);$('#manualCallOutcomeOptions').classList.add('hidden');$('#manualCallPostActions').classList.remove('hidden');$('#manualCallResultIcon').textContent=outcome==='Cancelled'?'×':'✓';$('#manualCallResultTitle').textContent=outcome==='Cancelled'?'Call cancelled':'Call logged';$('#manualCallResultMeta').textContent=outcome==='Connected'?'+1 call · +1 connect':outcome==='Cancelled'?'No metrics added':'+1 call · No connect';renderAll()}
+async function saveManualCallOutcome(outcome){const pending=readPendingManualCall();if(!pending?.number)return closeManualCallOutcome();manualCallOutcome=outcome;if(outcome!=='Cancelled'){try{await applyManualCallOutcome(outcome,pending)}catch(err){console.error('Quick call metrics failed to save',err);toast('Call logged locally. Please check sync.')}}completeBuyerSessionCall(outcome,pending);const updated={...pending,outcome,outcomeLogged:true,loggedAt:Date.now()};writePendingManualCall(updated);$('#manualCallOutcomeOptions').classList.add('hidden');$('#manualCallPostActions').classList.remove('hidden');$('#manualCallResultIcon').textContent=outcome==='Cancelled'?'×':'✓';$('#manualCallResultTitle').textContent=outcome==='Cancelled'?'Call cancelled':'Call logged';$('#manualCallResultMeta').textContent=outcome==='Connected'?'+1 call · +1 connect':outcome==='Cancelled'?'No metrics added':'+1 call · No connect';renderAll()}
 function manualCallPhone(){return readPendingManualCall()?.number||''}
 function saveManualCallAsContact(){const phone=manualCallPhone();closeManualCallOutcome();switchView('prospectingView');openProspectEditor();const input=$('#prospectEditor input[name="phone"]');if(input){input.value=phone;requestAnimationFrame(()=>$('#prospectEditor input[name="name"]')?.focus({preventScroll:true}))}}
 function bookManualCallAppointment(){const phone=manualCallPhone();closeManualCallOutcome();editingAppointment=null;appointmentEditReturnState=null;appointmentHistoryMode=null;appointmentDate=todayKey();appointmentLinkedProspectId='';$('#appointmentForm')?.reset();$('#appointmentContactNumber').value=phone;$('#appointmentDatePicker').value=appointmentDate;$('#appointmentTime').value='12:00';$('#appointmentAuction').checked=false;updateOfiFormState();switchView('appointmentsView');requestAnimationFrame(()=>$('#appointmentContactName')?.focus({preventScroll:true}))}
@@ -1780,7 +1875,7 @@ function pipelineDefaultsForTimeframe(timeframe=''){
 }
 function normaliseProspect(raw={}){
   const p=raw&&typeof raw==='object'?raw:{},sellingTimeframe=SELLING_TIMEFRAMES.includes(p.sellingTimeframe)?p.sellingTimeframe:'',temperatureManual=Boolean(p.temperatureManual),motivationManual=Boolean(p.motivationManual),defaults=pipelineDefaultsForTimeframe(sellingTimeframe);
-  return{id:cleanText(p.id,80)||prospectId(),name:cleanText(p.name,120)||'Unnamed contact',phone:cleanText(p.phone,50),email:cleanText(p.email,180),address:cleanText(p.address,240),company:cleanText(p.company,240),suburb:cleanText(p.suburb,100),tags:Array.isArray(p.tags)?p.tags.map(x=>cleanText(x,50)).filter(Boolean).slice(0,12):cleanText(p.tags,300).split(/[,;|]/).map(x=>x.trim()).filter(Boolean).slice(0,12),source:cleanText(p.source,100),stage:cleanText(p.stage,60)||'Nurture',temperature:temperatureManual&&['Cold','Warm','Hot'].includes(p.temperature)?p.temperature:defaults.temperature,sellingTimeframe,motivation:motivationManual?Math.max(1,Math.min(5,Number(p.motivation)||defaults.motivation)):defaults.motivation,temperatureManual,motivationManual,lastContact:validDateKey(p.lastContact)?p.lastContact:'',nextFollowUp:validDateKey(p.nextFollowUp)?p.nextFollowUp:'',notes:cleanText(p.notes,3000),archived:Boolean(p.archived),archivedAt:Number(p.archivedAt)||0,createdAt:Number(p.createdAt)||Date.now(),updatedAt:Number(p.updatedAt)||Date.now()}
+  return{id:cleanText(p.id,80)||prospectId(),name:cleanText(p.name,120)||'Unnamed contact',phone:cleanText(p.phone,50),email:cleanText(p.email,180),address:cleanText(p.address,240),company:cleanText(p.company,240),suburb:cleanText(p.suburb,100),tags:Array.isArray(p.tags)?p.tags.map(x=>cleanText(x,50)).filter(Boolean).slice(0,12):cleanText(p.tags,300).split(/[,;|]/).map(x=>x.trim()).filter(Boolean).slice(0,12),source:cleanText(p.source,100),stage:cleanText(p.stage,60)||'Nurture',temperature:temperatureManual&&['Cold','Warm','Hot'].includes(p.temperature)?p.temperature:defaults.temperature,sellingTimeframe,motivation:motivationManual?Math.max(1,Math.min(5,Number(p.motivation)||defaults.motivation)):defaults.motivation,temperatureManual,motivationManual,lastContact:validDateKey(p.lastContact)?p.lastContact:'',nextFollowUp:validDateKey(p.nextFollowUp)?p.nextFollowUp:'',notes:cleanText(p.notes,3000),archived:Boolean(p.archived),archivedAt:Number(p.archivedAt)||0,dataCreditedAt:Number(p.dataCreditedAt)||0,createdAt:Number(p.createdAt)||Date.now(),updatedAt:Number(p.updatedAt)||Date.now()}
 }
 function normaliseProspects(list){return(Array.isArray(list)?list:[]).map(normaliseProspect).filter((p,i,a)=>a.findIndex(x=>x.id===p.id)===i).slice(0,10000)}
 function normaliseProspectInteractions(list){return(Array.isArray(list)?list:[]).filter(x=>x&&typeof x==='object').map(x=>({id:cleanText(x.id,80)||prospectId(),prospectId:cleanText(x.prospectId,80),date:validDateKey(x.date)?x.date:todayKey(),at:Number(x.at)||Date.now(),type:cleanText(x.type,40)||'Note',outcome:cleanText(x.outcome,80),note:cleanText(x.note,2000),nextFollowUp:validDateKey(x.nextFollowUp)?x.nextFollowUp:'',marketEventId:cleanText(x.marketEventId,160)})).filter(x=>x.prospectId).slice(-20000)}
@@ -1796,7 +1891,11 @@ function prospectLastLoggedAt(id){return interactionsFor(id).reduce((latest,inte
 function prospectRecentlyLogged(id){const lastLoggedAt=prospectLastLoggedAt(id);return lastLoggedAt>0&&Date.now()-lastLoggedAt<PROSPECT_SESSION_COOLDOWN_MS}
 function prospectPipelineEligible(p){if(!p||!primaryProspectPhone(p))return false;if(interactionsFor(p.id).some(x=>x.outcome==='Do not contact'))return false;if(p.nextFollowUp&&p.nextFollowUp<=todayKey())return false;return !prospectRecentlyLogged(p.id)}
 function dailyProspectPipelineKey(){return`${storagePrefix(uid)}prospect-pipeline-v105-${todayKey()}`}
-function getDailyProspectPipeline(){let ids=[];try{const raw=safeJsonParse(localStorage.getItem(dailyProspectPipelineKey())||'[]',[]);if(Array.isArray(raw))ids=raw.filter(id=>typeof id==='string'&&prospectById(id)&&!prospectById(id).archived)}catch(err){console.warn('Daily pipeline could not be read',err)}if(!ids.length){ids=activeProspects().filter(prospectPipelineEligible).sort((a,b)=>{const aConnected=prospectLastConnectedDate(a.id)||'',bConnected=prospectLastConnectedDate(b.id)||'';if(!aConnected&&bConnected)return-1;if(aConnected&&!bConnected)return 1;return aConnected.localeCompare(bConnected)||({Hot:0,Warm:1,Cold:2}[a.temperature]-({Hot:0,Warm:1,Cold:2}[b.temperature]))||a.name.localeCompare(b.name)}).slice(0,50).map(p=>p.id);try{localStorage.setItem(dailyProspectPipelineKey(),JSON.stringify(ids))}catch(err){console.warn('Daily pipeline could not be saved',err)}}return ids}
+function dailyProspectServedKey(){return`${storagePrefix(uid)}prospect-pipeline-served-v1345-${todayKey()}`}
+function getDailyProspectServedIds(){try{const raw=safeJsonParse(localStorage.getItem(dailyProspectServedKey())||'[]',[]);return new Set(Array.isArray(raw)?raw.filter(id=>typeof id==='string'):[])}catch(err){console.warn('Daily served pipeline could not be read',err);return new Set()}}
+function addDailyProspectServedIds(ids=[]){const served=getDailyProspectServedIds();ids.forEach(id=>{if(typeof id==='string'&&id)served.add(id)});try{localStorage.setItem(dailyProspectServedKey(),JSON.stringify([...served]))}catch(err){console.warn('Daily served pipeline could not be saved',err)}return served}
+function sortedEligibleProspectPipeline(){return activeProspects().filter(prospectPipelineEligible).sort((a,b)=>{const aConnected=prospectLastConnectedDate(a.id)||'',bConnected=prospectLastConnectedDate(b.id)||'';if(!aConnected&&bConnected)return-1;if(aConnected&&!bConnected)return 1;return aConnected.localeCompare(bConnected)||({Hot:0,Warm:1,Cold:2}[a.temperature]-({Hot:0,Warm:1,Cold:2}[b.temperature]))||a.name.localeCompare(b.name)})}
+function getDailyProspectPipeline(){let ids=[];try{const raw=safeJsonParse(localStorage.getItem(dailyProspectPipelineKey())||'[]',[]);if(Array.isArray(raw))ids=raw.filter(id=>typeof id==='string'&&prospectById(id)&&!prospectById(id).archived)}catch(err){console.warn('Daily pipeline could not be read',err)}if(!ids.length){ids=sortedEligibleProspectPipeline().slice(0,50).map(p=>p.id);try{localStorage.setItem(dailyProspectPipelineKey(),JSON.stringify(ids))}catch(err){console.warn('Daily pipeline could not be saved',err)}}return ids}
 function dueProspectFollowUps(){const today=todayKey();return priorityProspects().filter(p=>p.nextFollowUp&&p.nextFollowUp<=today)}
 function prospectDueRank(p){const today=todayKey();if(p.nextFollowUp&&p.nextFollowUp<today)return 0;if(p.nextFollowUp===today)return 1;if(p.temperature==='Hot')return 2;if(!p.lastContact)return 3;return 4}
 function priorityProspects(){return activeProspects().sort((a,b)=>prospectDueRank(a)-prospectDueRank(b)||(a.nextFollowUp||'9999').localeCompare(b.nextFollowUp||'9999')||b.motivation-a.motivation||b.updatedAt-a.updatedAt)}
@@ -1872,7 +1971,7 @@ function renderSellerPipeline(){
 const MARKET_PULSE_TYPES={
   'JUST LISTED':'Just Listed','NEW LISTING':'Just Listed','LISTED':'Just Listed',
   'WITHDRAWN':'Withdrawn','PRICE UPDATE':'Price Update','PRICE CHANGE':'Price Update','PRICE REDUCTION':'Price Update',
-  'SOLD':'Sold','UNDER OFFER':'Under Offer','AUCTION RESULT':'Auction Result'
+  'SOLD':'Sold','Under offer':'Under Offer','AUCTION RESULT':'Auction Result'
 };
 const STREET_TYPES={rd:'road',road:'road',st:'street',street:'street',ave:'avenue',av:'avenue',avenue:'avenue',cres:'crescent',cr:'crescent',crescent:'crescent',pde:'parade',parade:'parade',cl:'close',close:'close',pl:'place',place:'place',dr:'drive',drive:'drive',ct:'court',court:'court',ln:'lane',lane:'lane',hwy:'highway',highway:'highway',tce:'terrace',terrace:'terrace',cct:'circuit',circuit:'circuit',way:'way',blvd:'boulevard',boulevard:'boulevard',gr:'grove',grv:'grove',grove:'grove',rde:'road',sq:'square',square:'square',mews:'mews',esp:'esplanade',esplanade:'esplanade',pkway:'parkway',pkwy:'parkway',parkway:'parkway',trl:'trail',trail:'trail',prom:'promenade',promenade:'promenade'};
 function cleanMarketLine(value=''){return cleanText(value,400).replace(/\u00a0/g,' ').replace(/[•·]/g,' · ').replace(/\s+/g,' ').trim()}
@@ -1905,7 +2004,7 @@ function marketStreetKey(address='',suburb=''){
   const street=marketStreetName(address),place=normalisePlace(suburb);
   return street&&place?`${street}|${place}`:'';
 }
-function normaliseMarketPulseEvents(list){return(Array.isArray(list)?list:[]).filter(x=>x&&typeof x==='object').map(x=>{const address=cleanText(x.address,240),suburb=cleanText(x.suburb,100);return{id:cleanText(x.id,160),eventType:cleanText(x.eventType,60),address,suburb,streetKey:marketStreetKey(address,suburb)||cleanText(x.streetKey,180),receivedDate:validDateKey(x.receivedDate)?x.receivedDate:todayKey(),createdAt:Number(x.createdAt)||Date.now(),daysOnMarket:cleanText(x.daysOnMarket,80),price:cleanText(x.price,120),guide:cleanText(x.guide,120),sessionStartedAt:Number(x.sessionStartedAt)||0,sessionCompletedAt:Number(x.sessionCompletedAt)||0,skippedProspectIds:[...new Set((Array.isArray(x.skippedProspectIds)?x.skippedProspectIds:[]).map(id=>cleanText(id,160)).filter(Boolean))]}}).filter(x=>x.id&&x.address&&x.streetKey).filter((x,i,a)=>a.findIndex(y=>y.id===x.id)===i).slice(-300)}
+function normaliseMarketPulseEvents(list){return(Array.isArray(list)?list:[]).filter(x=>x&&typeof x==='object').map(x=>{const address=cleanText(x.address,240),suburb=cleanText(x.suburb,100),junk=/^(?:property image|logo)$/i;let agency=cleanText(x.agency,160),agents=[...new Set((Array.isArray(x.agents)?x.agents:[]).map(value=>cleanText(value,120)).filter(value=>value&&!junk.test(value)))].slice(0,4);if(junk.test(agency)){agency=agents.at(-1)||'';agents=agency?agents.slice(0,-1):agents}return{id:cleanText(x.id,160),eventType:cleanText(x.eventType,60),address,suburb,streetKey:marketStreetKey(address,suburb)||cleanText(x.streetKey,180),receivedDate:validDateKey(x.receivedDate)?x.receivedDate:todayKey(),createdAt:Number(x.createdAt)||Date.now(),daysOnMarket:cleanText(x.daysOnMarket,80),price:cleanText(x.price,120),guide:cleanText(x.guide,120),propertyDetails:cleanText(x.propertyDetails,240),agency,agents,priceMovementAmount:cleanText(x.priceMovementAmount,80),priceMovementPercent:cleanText(x.priceMovementPercent,40),priceMovementDirection:['above','below'].includes(x.priceMovementDirection)?x.priceMovementDirection:'',priorPrice:cleanText(x.priorPrice,120),sessionStartedAt:Number(x.sessionStartedAt)||0,sessionCompletedAt:Number(x.sessionCompletedAt)||0,skippedProspectIds:[...new Set((Array.isArray(x.skippedProspectIds)?x.skippedProspectIds:[]).map(id=>cleanText(id,160)).filter(Boolean))]}}).filter(x=>x.id&&x.address&&x.streetKey).filter((x,i,a)=>a.findIndex(y=>y.id===x.id)===i).slice(-300)}
 function prospectMarketKey(p){
   const candidates=[p.address,p.company].map(value=>cleanText(value,300)).filter(Boolean);
   for(const value of candidates){
@@ -1919,44 +2018,60 @@ function marketMatches(event){
   return activeProspects().filter(p=>primaryProspectPhone(p)&&prospectMarketKey(p)===eventKey&&!interactionsFor(p.id).some(x=>x.outcome==='Do not contact')).sort((a,b)=>prospectDueRank(a)-prospectDueRank(b)||(a.lastContact||'').localeCompare(b.lastContact||'')||a.name.localeCompare(b.name,'en-AU'))
 }
 function marketEventId(eventType,address,suburb){return`${todayKey()}|${normalisePlace(eventType)}|${normalisePlace(address)}|${normalisePlace(suburb)}`}
+function parseMarketMoney(value=''){
+  const raw=cleanMarketLine(value).replace(/,/g,'').replace(/^\$\s*/,'').trim(),match=raw.match(/(-?\d+(?:\.\d+)?)\s*([kKmM])?/);if(!match)return 0;
+  const base=Number(match[1]);if(!Number.isFinite(base))return 0;const multiplier=(match[2]||'').toLowerCase()==='m'?1000000:(match[2]||'').toLowerCase()==='k'?1000:1;return Math.round(base*multiplier);
+}
+function formatMarketMoney(value){const amount=Math.round(Number(value)||0);if(!amount)return'';return amount>=1000000?`$${(amount/1000000).toFixed(amount%1000000?3:0).replace(/0+$/,'').replace(/\.$/,'')}M`:amount>=1000?`$${Math.round(amount/1000)}k`:`$${amount.toLocaleString('en-AU')}`}
+function parseMarketPriceLine(line='',eventType=''){
+  const clean=cleanMarketLine(line),main=(clean.match(/(?:Guide\s*:\s*)?(\$\s*[\d,.]+\s*[kKmM]?)/i)||[])[1]||'',movement=clean.match(/\(([+-])\s*\$?\s*([\d,.]+\s*[kKmM]?)\s*\/\s*([+-]?\d+(?:\.\d+)?)%\)/i),price=main?main.replace(/\s+/g,'').replace(/^\$(?=\d)/,'$'):'',isGuide=/\bguide\b/i.test(clean)||String(eventType).toLowerCase()==='price update';
+  let priceMovementAmount='',priceMovementPercent='',priceMovementDirection='',priorPrice='';
+  if(movement){const sign=movement[1],amountValue=parseMarketMoney(movement[2]),percent=Math.abs(Number(movement[3])||0);priceMovementAmount=formatMarketMoney(amountValue);priceMovementPercent=percent?`${percent}%`:'';priceMovementDirection=sign==='+'?'above':'below';const current=parseMarketMoney(price),prior=sign==='+'?current-amountValue:current+amountValue;priorPrice=formatMarketMoney(prior)}
+  return{price:isGuide?'':price,guide:isGuide?price:'',priceMovementAmount,priceMovementPercent,priceMovementDirection,priorPrice};
+}
 function parseMarketPulse(text=''){
   const lines=String(text||'').split(/\r?\n/).map(cleanMarketLine).filter(Boolean),events=[];
+  const isTypeLine=line=>{const upper=line.toUpperCase();return Object.keys(MARKET_PULSE_TYPES).some(key=>upper===key||upper.startsWith(key+' ')||upper.includes(' '+key+' '))};
   for(let i=0;i<lines.length;i++){
-    const upper=lines[i].toUpperCase(),typeKey=Object.keys(MARKET_PULSE_TYPES).find(key=>upper===key||upper.startsWith(key+' ')||upper.includes(' '+key+' '));
-    if(!typeKey)continue;
-    let addressLine='';
-    for(let j=i+1;j<Math.min(lines.length,i+6);j++){
-      const candidate=lines[j];
-      if(/\d/.test(candidate)&&candidate.includes(',')&&!/\b(?:bed|bath|car|land|days active|guide|price)\b/i.test(candidate)){addressLine=candidate;break}
-    }
-    if(!addressLine)continue;
-    const {address,suburb}=splitMarketAddress(addressLine),streetKey=marketStreetKey(address,suburb);if(!streetKey||!suburb)continue;
-    const detailLines=lines.slice(i+1,Math.min(lines.length,i+10));
-    const detailValue=(labels=[])=>{for(const line of detailLines){const lower=line.toLowerCase();if(labels.some(label=>lower.includes(label))){const parts=line.split(/[:·|]/).map(x=>x.trim()).filter(Boolean);return cleanText(parts.length>1?parts.slice(1).join(' · '):line,120)}}return''};
-    const daysOnMarket=detailValue(['days active','days on market','dom']);
-    const guide=detailValue(['price guide','guide']);
-    const price=detailValue(['asking price','listed price','sale price','price']);
-    events.push({id:marketEventId(MARKET_PULSE_TYPES[typeKey],address,suburb),eventType:MARKET_PULSE_TYPES[typeKey],address,suburb,streetKey,receivedDate:todayKey(),createdAt:Date.now(),daysOnMarket,guide,price});
+    const upper=lines[i].toUpperCase(),typeKey=Object.keys(MARKET_PULSE_TYPES).find(key=>upper===key||upper.startsWith(key+' ')||upper.includes(' '+key+' '));if(!typeKey)continue;
+    const eventType=MARKET_PULSE_TYPES[typeKey],nextTypeIndex=lines.findIndex((line,index)=>index>i&&isTypeLine(line)),blockEnd=nextTypeIndex>i?nextTypeIndex:lines.length,block=lines.slice(i+1,blockEnd);
+    const addressIndex=block.findIndex(candidate=>/\d/.test(candidate)&&candidate.includes(',')&&!/\b(?:bed|bath|car|land|days active|guide|price)\b/i.test(candidate));if(addressIndex<0)continue;
+    const addressLine=block[addressIndex],{address,suburb}=splitMarketAddress(addressLine),streetKey=marketStreetKey(address,suburb);if(!streetKey||!suburb)continue;
+    const afterAddress=block.slice(addressIndex+1),propertyDetails=afterAddress.find(line=>/\bbed\b/i.test(line)&&/\bbath\b/i.test(line))||'';
+    const priceIndex=afterAddress.findIndex(line=>/\$\s*[\d,.]+\s*[kKmM]?/i.test(line));const priceLine=priceIndex>=0?afterAddress[priceIndex]:'';const priceData=parseMarketPriceLine(priceLine,eventType);
+    const activeMatch=lines[i].match(/(\d+)\s+days?\s+active/i)||afterAddress.join(' ').match(/(\d+)\s+days?\s+active/i);const daysOnMarket=activeMatch?`${activeMatch[1]} days active`:'';
+    const peopleAndAgency=(priceIndex>=0?afterAddress.slice(priceIndex+1):[]).filter(line=>!/^(?:property image|logo)$/i.test(line));const agency=peopleAndAgency.length?peopleAndAgency.at(-1):'';const agents=peopleAndAgency.slice(0,-1);
+    events.push({id:marketEventId(eventType,address,suburb),eventType,address,suburb,streetKey,receivedDate:todayKey(),createdAt:Date.now(),daysOnMarket,propertyDetails,agency,agents,...priceData});
   }
   return normaliseMarketPulseEvents(events);
 }
 function marketTypeClass(type=''){return normalisePlace(type).replace(/\s+/g,'-')}
+
+function relativeEventRecency(event){const raw=validDateKey(event?.receivedDate)?parseKey(event.receivedDate):new Date(Number(event?.createdAt)||Date.now()),days=Math.max(0,Math.floor((parseKey(todayKey())-raw)/86400000));return{days,label:days===0?'Today':days===1?'Yesterday':`${days} days ago`}}
+function hotSpottingPriority(event,neighbourCount=0){const weights={'withdrawn':46,'just listed':42,'sold':38,'auction result':36,'price update':30,'price changed':30,'under offer':24},recency=relativeEventRecency(event),score=(weights[normalisePlace(event?.eventType)]||18)+Math.max(0,18-recency.days*3)+Math.min(24,neighbourCount*3);return{score,label:score>=72?'High':score>=50?'Medium':'Standard'}}
+function estimatedMinutes(count,secondsEach=150){return Math.max(0,Math.ceil(Math.max(0,count)*secondsEach/60))}
+function formatEstimatedTime(minutes){if(minutes<=0)return'< 1 min';if(minutes<60)return`~${minutes} min`;const h=Math.floor(minutes/60),m=minutes%60;return`~${h}h${m?` ${m}m`:''}`}
+={}){const todayCalls=prospectInteractions.filter(x=>x.type==='Call'&&x.date===todayKey()),connects=todayCalls.filter(x=>PROSPECT_CONNECTED_OUTCOMES.has(x.outcome)).length,rate=todayCalls.length?Math.round(connects/todayCalls.length*100):0;if(overdue)return`${overdue} overdue follow-up${overdue===1?' is':'s are'} the clearest risk. Clear ${Math.min(overdue,3)} before adding new work.`;if(hotSpottingReady)return`${hotSpottingReady} nearby contact${hotSpottingReady===1?' is':'s are'} tied to live market events. Work the highest-priority street first.`;if(remainingPipeline)return`${remainingPipeline} pipeline contact${remainingPipeline===1?' remains':'s remain'}. ${todayCalls.length?`Your live connect rate is ${rate}%.`:'Start with the hottest seller.'}`;if(hot)return`${hot} Hot prospect${hot===1?' is':'s are'} active. Protect the next action while momentum is high.`;if(due)return`${due} follow-up${due===1?' is':'s are'} due today. Complete them before the day closes.`;return todayCalls.length?`${todayCalls.length} calls logged with a ${rate}% connect rate. Keep the rhythm while the database is warm.`:'Start with one purposeful call. AGNT will refine the next move from the result.'}
+function streetConversationCount(events=[],ids=null){const prospectIds=ids instanceof Set?ids:new Set(events.flatMap(event=>marketMatches(event).map(p=>p.id)));return prospectInteractions.filter(x=>prospectIds.has(x.prospectId)&&x.type==='Call'&&!events.some(event=>x.marketEventId===event.id)).length}
+
 function marketSessionProgress(event,matches=marketMatches(event)){
-  const matchIds=new Set(matches.map(p=>p.id)),calls=prospectInteractions.filter(x=>x.type==='Call'&&x.marketEventId===event.id&&matchIds.has(x.prospectId));
-  const calledIds=new Set(calls.map(x=>x.prospectId)),skippedIds=new Set((event.skippedProspectIds||[]).filter(id=>matchIds.has(id))),workedIds=new Set([...calledIds,...skippedIds]),connectedIds=new Set(calls.filter(x=>PROSPECT_CONNECTED_OUTCOMES.has(x.outcome)).map(x=>x.prospectId)),followUpIds=new Set(calls.filter(x=>validDateKey(x.nextFollowUp)).map(x=>x.prospectId));
+  const matchIds=new Set(matches.map(p=>p.id)),calls=prospectInteractions.filter(x=>x.type==='Call'&&x.marketEventId===event.id&&matchIds.has(x.prospectId)),messages=prospectInteractions.filter(x=>x.type==='SMS'&&x.marketEventId===event.id&&matchIds.has(x.prospectId));
+  const calledIds=new Set(calls.map(x=>x.prospectId)),smsIds=new Set(messages.map(x=>x.prospectId)),skippedIds=new Set((event.skippedProspectIds||[]).filter(id=>matchIds.has(id))),workedIds=new Set([...calledIds,...smsIds,...skippedIds]),connectedIds=new Set(calls.filter(x=>PROSPECT_CONNECTED_OUTCOMES.has(x.outcome)).map(x=>x.prospectId)),followUpIds=new Set(calls.filter(x=>validDateKey(x.nextFollowUp)).map(x=>x.prospectId));
   const complete=Boolean(event.sessionCompletedAt),active=Boolean(event.sessionStartedAt)&&!complete;
-  return{total:matches.length,called:Math.min(calledIds.size,matches.length),connects:connectedIds.size,followUps:followUpIds.size,active,complete,workedIds};
+  return{total:matches.length,called:Math.min(calledIds.size,matches.length),sms:Math.min(smsIds.size,matches.length),connects:connectedIds.size,followUps:followUpIds.size,active,complete,workedIds};
 }
+function marketMovementLabel(event){if(!event?.priceMovementDirection)return'';const eventType=normalisePlace(event.eventType),amount=event.priceMovementAmount?`${event.priceMovementAmount} `:'',percent=event.priceMovementPercent?` · ${event.priceMovementPercent} ${event.priceMovementDirection}`:'';if(eventType==='price update')return`reduced ${amount}from prior guide${percent}`;return`sold ${amount}${event.priceMovementDirection} asking${percent}`}
+function marketEventDetailHtml(event){const primary=event.price||event.guide,movement=marketMovementLabel(event),prior=event.priorPrice?`${event.guide?'Prior guide':'Asking'} ${event.priorPrice}`:'',meta=[prior,event.daysOnMarket,event.agency].filter(Boolean);if(!primary&&!movement&&!event.propertyDetails&&!meta.length)return'';return`<div class="market-pulse-event-data">${primary?`<strong>${escapeHtml(primary)}${event.guide?' guide':' sold'}</strong>`:''}${movement?`<span class="market-price-movement market-price-${escapeHtml(event.priceMovementDirection)}">${escapeHtml(movement)}</span>`:''}${event.propertyDetails?`<small>${escapeHtml(event.propertyDetails)}</small>`:''}${meta.length?`<small>${meta.map(escapeHtml).join(' · ')}</small>`:''}</div>`}
 function renderMarketPulse(){
   const list=$('#marketPulseList');if(!list)return;
-  const events=normaliseMarketPulseEvents(marketPulseEvents).sort((a,b)=>{const matchDiff=marketMatches(b).length-marketMatches(a).length;return matchDiff||b.createdAt-a.createdAt}),matched=events.reduce((n,event)=>n+marketMatches(event).length,0);
+  const eventRows=normaliseMarketPulseEvents(marketPulseEvents).map(event=>{const matches=marketMatches(event);return{event,matches,priority:hotSpottingPriority(event,matches.length)}}).sort((a,b)=>b.priority.score-a.priority.score||b.event.createdAt-a.event.createdAt),events=eventRows.map(row=>row.event),matched=eventRows.reduce((n,row)=>n+row.matches.length,0),remaining=eventRows.reduce((n,row)=>{const progress=marketSessionProgress(row.event,row.matches);return n+Math.max(0,progress.total-progress.workedIds.size)},0);
   $('#marketPulseEventCount').textContent=events.length;
   $('#marketPulseMatchSummary').textContent=events.length?`${events.length} market event${events.length===1?'':'s'} · ${matched} matching contact${matched===1?'':'s'}`:'Paste an email to find matching contacts.';
-  const readyCount=$('#hotSpottingReadyCount'),readyLabel=$('#hotSpottingReadyLabel');if(readyCount)readyCount.textContent=matched;if(readyLabel)readyLabel.textContent=matched===1?'client ready':'clients ready';
-  list.innerHTML=events.length?events.map(event=>{const matches=marketMatches(event),progress=marketSessionProgress(event,matches),buttonLabel=progress.complete?'Session Complete':progress.active?'Active Session':'Start Session',buttonClass=progress.complete?'primary market-session-complete-btn':progress.active?'primary market-session-active-btn':'primary market-session-start-btn';return`<article class="market-pulse-card${progress.complete?' market-session-complete-card':''}"><div class="market-pulse-card-head"><span class="market-event-tag event-${marketTypeClass(event.eventType)}">${escapeHtml(event.eventType)}</span><button type="button" data-remove-market-event="${escapeHtml(event.id)}" aria-label="Remove event">×</button></div><h4>${escapeHtml(event.address)}</h4><p>${escapeHtml(event.suburb)}</p>${[event.daysOnMarket,event.guide,event.price].filter(Boolean).length?`<div class="market-pulse-details">${event.daysOnMarket?`<span>${escapeHtml(event.daysOnMarket)}</span>`:''}${event.guide?`<span>${escapeHtml(event.guide)}</span>`:''}${event.price?`<span>${escapeHtml(event.price)}</span>`:''}</div>`:''}<div class="market-pulse-match"><strong>${matches.length}</strong><span>Neighbours Found</span></div>${matches.length?`<div class="market-session-metrics"><span><strong>${progress.called}/${progress.total}</strong> called</span><span><strong>${progress.connects}</strong> connects</span><span><strong>${progress.followUps}</strong> follow-up${progress.followUps===1?'':'s'}</span></div>`:''}<button class="${buttonClass}" type="button" data-start-market-session="${escapeHtml(event.id)}" ${matches.length&&!progress.complete?'':'disabled'}>${matches.length?buttonLabel:'No Matching Contacts'}</button></article>`}).join(''):'<div class="prospect-empty"><strong>No hot spotting opportunities yet</strong><small>Paste today’s email below, then tap Find Opportunities.</small></div>';
+  const readyCount=$('#hotSpottingReadyCount'),readyLabel=$('#hotSpottingReadyLabel');if(readyCount)readyCount.textContent=remaining;if(readyLabel)readyLabel.textContent=remaining===1?'client ready':'clients ready';
+  list.innerHTML=events.length?eventRows.map(({event,matches,priority})=>{const progress=marketSessionProgress(event,matches),remaining=Math.max(0,progress.total-progress.workedIds.size),recency=relativeEventRecency(event),buttonLabel=progress.complete?'Session Complete':progress.active?'Active Session':'Start Session',buttonClass=progress.complete?'primary market-session-complete-btn':progress.active?'primary market-session-active-btn':'primary market-session-start-btn';return`<article class="market-pulse-card${progress.complete?' market-session-complete-card':''}"><div class="market-pulse-card-head"><span class="market-event-tag event-${marketTypeClass(event.eventType)}">${escapeHtml(event.eventType)}</span><button type="button" data-remove-market-event="${escapeHtml(event.id)}" aria-label="Remove event">×</button></div><h4>${escapeHtml(event.address)}</h4><p>${escapeHtml(event.suburb)}</p>${marketEventDetailHtml(event)}<div class="hotspot-opportunity-summary"><span><strong>${remaining}</strong> remaining</span><span><strong>${formatEstimatedTime(estimatedMinutes(remaining))}</strong> session</span><span class="priority-${priority.label.toLowerCase()}"><strong>${priority.label}</strong> priority</span><span><strong>${recency.label}</strong> event</span></div><button class="${buttonClass}" type="button" data-start-market-session="${escapeHtml(event.id)}" ${matches.length&&!progress.complete?'':'disabled'}>${matches.length?buttonLabel:'No Matching Contacts'}</button></article>`}).join(''):'<div class="prospect-empty"><strong>No hot spotting opportunities yet</strong><small>Paste today’s email below, then tap Find Opportunities.</small></div>';
 }
-async function importMarketPulse(){const input=$('#marketPulseInput'),parsed=parseMarketPulse(input?.value||'');if(!parsed.length){$('#marketPulseImportStatus').textContent='No supported property events were found. Paste the full email text, including event labels and addresses.';return toast('No market events found')}const existing=new Set(marketPulseEvents.map(x=>x.id)),fresh=parsed.filter(x=>!existing.has(x.id));marketPulseEvents=normaliseMarketPulseEvents([...marketPulseEvents,...fresh]);saveLocal();renderMarketPulse();$('#marketPulseImportStatus').textContent=fresh.length?`${fresh.length} new event${fresh.length===1?'':'s'} imported. ${parsed.length-fresh.length?`${parsed.length-fresh.length} duplicate${parsed.length-fresh.length===1?' was':'s were'} skipped.`:''}`:`All ${parsed.length} event${parsed.length===1?' was':'s were'} already imported.`;if(fresh.length){try{await queueProspectingSave()}catch(err){console.error('Hot Spotting sync failed',err)}}toast(fresh.length?'Hot Spotting imported':'No new events')}
-function startMarketPulseSession(eventId){const event=marketPulseEvents.find(x=>x.id===eventId);if(!event)return;if(event.sessionCompletedAt)return;if(prospectSessionActive&&prospectSessionContext?.eventId===eventId){setProspectorSection('today');showProspectingSession();return}const matches=marketMatches(event),progress=marketSessionProgress(event,matches),remainingIds=matches.map(p=>p.id).filter(id=>!progress.workedIds.has(id));if(!matches.length)return toast('No available contacts for this session');prospectSessionIds=remainingIds.length?remainingIds:matches.map(p=>p.id);prospectSessionIndex=remainingIds.length?0:prospectSessionIds.length;prospectSessionActive=true;prospectSessionStats={calls:0,connects:0,temperate:0,appointments:0};prospectSessionContext={eventId:event.id,eventType:event.eventType,address:event.address,suburb:event.suburb,daysOnMarket:event.daysOnMarket||'',guide:event.guide||'',price:event.price||''};if(!event.sessionStartedAt){event.sessionStartedAt=Date.now();marketPulseEvents=normaliseMarketPulseEvents(marketPulseEvents);saveLocal();renderMarketPulse();queueProspectingSave().catch(err=>console.error('Hot Spotting session sync failed',err))}saveProspectingSessionState();setProspectorSection('today');showProspectingSession();requestAnimationFrame(()=>requestAnimationFrame(()=>{const view=$('#prospectingView');if(view)view.scrollTop=0;window.scrollTo({top:0,behavior:'instant'})}));toast(`${event.eventType} session ready`)}
+async function importMarketPulse(){const input=$('#marketPulseInput'),parsed=parseMarketPulse(input?.value||'');if(!parsed.length){$('#marketPulseImportStatus').textContent='No supported property events were found. Paste the full email text, including event labels and addresses.';return toast('No market events found')}const existingById=new Map(marketPulseEvents.map(event=>[event.id,event])),fresh=parsed.filter(event=>!existingById.has(event.id));parsed.forEach(event=>{const existing=existingById.get(event.id);existingById.set(event.id,existing?{...existing,...event,sessionStartedAt:existing.sessionStartedAt,sessionCompletedAt:existing.sessionCompletedAt,skippedProspectIds:existing.skippedProspectIds}:event)});marketPulseEvents=normaliseMarketPulseEvents([...existingById.values()]);saveLocal();renderMarketPulse();const updated=parsed.length-fresh.length;$('#marketPulseImportStatus').textContent=`${fresh.length} new event${fresh.length===1?'':'s'} imported${updated?` · ${updated} existing event${updated===1?'':'s'} refreshed`:''}.`;try{await queueProspectingSave()}catch(err){console.error('Hot Spotting sync failed',err)}toast(fresh.length?'Hot Spotting imported':'Hot Spotting refreshed')}
+function startMarketPulseSession(eventId){const event=marketPulseEvents.find(x=>x.id===eventId);if(!event)return;if(event.sessionCompletedAt)return;if(prospectSessionActive&&prospectSessionContext?.eventId===eventId){setProspectorSection('today');showProspectingSession();return}const matches=marketMatches(event),progress=marketSessionProgress(event,matches),remainingIds=matches.map(p=>p.id).filter(id=>!progress.workedIds.has(id));if(!matches.length)return toast('No available contacts for this session');prospectSessionIds=remainingIds.length?remainingIds:matches.map(p=>p.id);prospectSessionIndex=remainingIds.length?0:prospectSessionIds.length;prospectSessionActive=true;prospectSessionStats={calls:0,connects:0,temperate:0,appointments:0,sms:0};prospectSessionContext={eventId:event.id,eventType:event.eventType,address:event.address,suburb:event.suburb,daysOnMarket:event.daysOnMarket||'',guide:event.guide||'',price:event.price||'',propertyDetails:event.propertyDetails||'',agency:event.agency||'',agents:event.agents||[],priceMovementAmount:event.priceMovementAmount||'',priceMovementPercent:event.priceMovementPercent||'',priceMovementDirection:event.priceMovementDirection||'',priorPrice:event.priorPrice||''};if(!event.sessionStartedAt){event.sessionStartedAt=Date.now();marketPulseEvents=normaliseMarketPulseEvents(marketPulseEvents);saveLocal();renderMarketPulse();queueProspectingSave().catch(err=>console.error('Hot Spotting session sync failed',err))}saveProspectingSessionState();setProspectorSection('today');showProspectingSession();requestAnimationFrame(()=>requestAnimationFrame(()=>{const view=$('#prospectingView');if(view)view.scrollTop=0;window.scrollTo({top:0,behavior:'instant'})}));toast(`${event.eventType} session ready`)}
 
 function findProspectForAppointment({contactName='',contactNumber='',address=''}){
   const digits=normalisedPhoneDigits(contactNumber);
@@ -1977,21 +2092,186 @@ function prospectActivityClass(p){if(p.nextFollowUp&&p.nextFollowUp<todayKey())r
 function prospectCard(p,{contactsView=false}={}){const initials=p.name.split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();if(contactsView){const selected=selectedProspectIds.has(p.id),phone=primaryProspectPhone(p),address=formatProspectAddress(p.address||p.company,p.suburb)||'No property address';return`<button class="prospect-card contact-card-v156 ${prospectBulkMode?'bulk-mode':''} ${selected?'selected':''}" type="button" ${prospectBulkMode?`data-select-prospect="${p.id}" aria-pressed="${selected}"`:`data-open-prospect="${p.id}"`}>
   ${prospectBulkMode?`<span class="prospect-select-mark" aria-hidden="true">${selected?'✓':''}</span>`:''}<span class="prospect-avatar">${escapeHtml(initials||'P')}</span><span class="prospect-card-copy"><strong>${escapeHtml(p.name)}</strong><small>${escapeHtml(address)}</small><em>${escapeHtml(phone||'No mobile number')}</em></span><span class="prospect-temp temp-${p.temperature.toLowerCase()}">${p.temperature}</span>${prospectBulkMode?'':'<b aria-hidden="true">›</b>'}</button>`}const activity=prospectActivityClass(p),property=p.address||[p.suburb,primaryProspectPhone(p),p.email].filter(Boolean).join(' · ')||'Contact details not added';return`<button class="prospect-card contact-card-v156" type="button" data-open-prospect="${p.id}"><span class="prospect-activity activity-${activity}" aria-hidden="true"></span><span class="prospect-avatar">${escapeHtml(initials||'P')}</span><span class="prospect-card-copy"><strong>${escapeHtml(p.name)}</strong><small>${escapeHtml(property)}</small><em class="${p.nextFollowUp&&p.nextFollowUp<=todayKey()?'due':''}">${escapeHtml(dueText(p))}</em></span><span class="prospect-temp temp-${p.temperature.toLowerCase()}">${p.temperature}</span><b aria-hidden="true">›</b></button>`}
 function setProspectorSection(section='today'){
-  prospectSection=['today','contacts','pipeline','market','insights'].includes(section)?section:'today';
+  prospectSection=['today','contacts','pipeline','market','broadcast','insights'].includes(section)?section:'today';
   $$('[data-prospector-section]').forEach(button=>{const active=button.dataset.prospectorSection===prospectSection;button.classList.toggle('active',active);if(active)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current')});
   $('#prospectorTodayPanel')?.classList.toggle('hidden',prospectSection!=='today');
   $('#prospectorContactsPanel')?.classList.toggle('hidden',prospectSection!=='contacts');
   $('#prospectorPipelinePanel')?.classList.toggle('hidden',prospectSection!=='pipeline');
   $('#prospectorMarketPanel')?.classList.toggle('hidden',prospectSection!=='market');
   $('#prospectorInsightsPanel')?.classList.toggle('hidden',prospectSection!=='insights');
+  $('#prospectorBroadcastPanel')?.classList.toggle('hidden',prospectSection!=='broadcast');
   if(document.querySelector('.view.active')?.id==='prospectingView')updateTopbar();
-  $('.prospecting-toolbar')?.classList.toggle('hidden',prospectSection==='insights'||prospectSection==='market');
+  $('.prospecting-toolbar')?.classList.toggle('hidden',prospectSection==='insights'||prospectSection==='market'||prospectSection==='broadcast');
   const input=$('#prospectSearch');if(input)input.placeholder=prospectSection==='contacts'?'Search name, street, suburb, phone etc.':prospectSection==='pipeline'?'Search seller pipeline':'Search name, address or phone';
-  if(prospectSection==='market')renderMarketPulse();if(prospectSessionActive&&prospectSection==='today')return;
+  if(prospectSection==='market')renderMarketPulse();if(prospectSection==='broadcast')renderBroadcastScreen();if(prospectSessionActive&&prospectSection==='today')return;
   $('#prospectDetail')?.classList.add('hidden');
   $('#prospectingSession')?.classList.add('hidden');
   $('#prospectingDashboard')?.classList.remove('hidden');
 }
+
+const BROADCAST_TYPES={
+  'end-of-month':{label:'End of month',name:'End of month update',description:'Share a local market update with your database.',message:`Hi {{FirstName}},
+
+Andrew Tour from McGrath here with a quick end-of-month market update for {{Suburb}}.
+
+If you have any questions or would like to know what the latest activity means for your property, please don’t hesitate to let me know.
+
+Thanks,
+Andrew Tour | McGrath`},
+  'just-listed':{label:'Just listed',name:'Just listed',description:'Let nearby contacts know about a new listing.',message:`Hi {{FirstName}},
+
+Andrew Tour from McGrath here. We’ve just listed a property nearby that I thought may interest you.
+
+If you would like the details or would like to know what this means for your property, please let me know.
+
+Thanks,
+Andrew Tour | McGrath`},
+  'just-sold':{label:'Just sold',name:'Just sold',description:'Share a recent result and start property conversations.',message:`Hi {{FirstName}},
+
+Andrew Tour from McGrath here. We’ve recently sold a property nearby and I wanted to keep you updated on the result.
+
+If you would like to know what this means for your property, please let me know.
+
+Thanks,
+Andrew Tour | McGrath`},
+  'coming-soon':{label:'Coming soon',name:'Coming soon',description:'Give selected contacts an early property heads-up.',message:`Hi {{FirstName}},
+
+Andrew Tour from McGrath here. We have a property coming to market soon that I thought may interest you.
+
+Please let me know if you would like some early information before it launches.
+
+Thanks,
+Andrew Tour | McGrath`},
+  'auction-reminder':{label:'Auction reminder',name:'Auction reminder',description:'Remind interested contacts about an upcoming auction.',message:`Hi {{FirstName}},
+
+Andrew Tour from McGrath here with a quick reminder about the upcoming auction.
+
+Please let me know if you need any further information before auction day.
+
+Thanks,
+Andrew Tour | McGrath`}
+};
+function broadcastLocationFor(p){
+  const candidates=[p.address,p.company].map(value=>cleanText(value,300)).filter(Boolean);
+  for(const value of candidates){
+    const parts=splitMarketAddress(value),suburb=cleanText(parts.suburb||p.suburb,100),street=marketStreetName(parts.address);
+    if(street&&suburb)return{streetKey:`${street}|${normalisePlace(suburb)}`,street:titleCaseMarketStreet(street),suburb:titleCaseMarketStreet(suburb)};
+  }
+  const suburb=cleanText(p.suburb,100);return{streetKey:'',street:'',suburb:titleCaseMarketStreet(suburb)};
+}
+function broadcastSuburbs({streetOnly=false}={}){
+  const map=new Map();activeProspects().forEach(p=>{const location=broadcastLocationFor(p);if(!location.suburb||(streetOnly&&!location.streetKey))return;const key=normalisePlace(location.suburb);if(!map.has(key))map.set(key,location.suburb)});
+  return[...map.entries()].sort((a,b)=>a[1].localeCompare(b[1],'en-AU'));
+}
+function broadcastStreets(suburbKey){
+  const map=new Map();activeProspects().forEach(p=>{const location=broadcastLocationFor(p);if(!location.streetKey||normalisePlace(location.suburb)!==suburbKey)return;if(!map.has(location.streetKey))map.set(location.streetKey,location.street)});
+  return[...map.entries()].sort((a,b)=>a[1].localeCompare(b[1],'en-AU'));
+}
+function broadcastStreetContacts(streetKey){return activeProspects().filter(p=>broadcastLocationFor(p).streetKey===streetKey).sort((a,b)=>a.address.localeCompare(b.address,'en-AU')||a.name.localeCompare(b.name,'en-AU'))}
+function setSelectOptions(select,items,emptyLabel,preferred=''){
+  if(!select)return'';const previous=select.value;
+  select.innerHTML=items.length?items.map(([value,label])=>`<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`).join(''):`<option value="">${escapeHtml(emptyLabel)}</option>`;
+  const preferredValue=items.some(([value])=>value===preferred)?preferred:'';
+  if(preferredValue)select.value=preferredValue;
+  else if(items.some(([value])=>value===previous))select.value=previous;
+  return select.value||'';
+}
+function renderBroadcastAudienceControls(){
+  const isLarge=selectedBroadcastType==='end-of-month',large=$('#campaignLargeAudience'),street=$('#campaignStreetAudience');
+  large?.classList.toggle('hidden',!isLarge);street?.classList.toggle('hidden',isLarge);
+  if(isLarge){
+    const select=$('#campaignSuburbSelect'),items=broadcastSuburbs();selectedBroadcastSuburb=setSelectOptions(select,items,'No suburbs found',selectedBroadcastSuburb||normalisePlace('Toongabbie'));
+    return;
+  }
+  const suburbSelect=$('#campaignStreetSuburb'),suburbs=broadcastSuburbs({streetOnly:true});selectedBroadcastSuburb=setSelectOptions(suburbSelect,suburbs,'No suburbs found',selectedBroadcastSuburb||normalisePlace('Toongabbie'));
+  const streetSelect=$('#campaignStreetSelect'),streets=broadcastStreets(selectedBroadcastSuburb),priorStreet=selectedBroadcastStreet;
+  selectedBroadcastStreet=setSelectOptions(streetSelect,streets,'No streets found');
+  if(priorStreet!==selectedBroadcastStreet)selectedBroadcastRecipientIds=new Set(broadcastStreetContacts(selectedBroadcastStreet).map(p=>p.id));
+  const contacts=broadcastStreetContacts(selectedBroadcastStreet),host=$('#campaignStreetRecipients');
+  if(host)host.innerHTML=contacts.length?contacts.map(p=>`<label><input type="checkbox" data-broadcast-recipient="${escapeHtml(p.id)}" ${selectedBroadcastRecipientIds.has(p.id)?'checked':''}><span><strong>${escapeHtml(p.address||p.name)}</strong><small>${escapeHtml(p.name)}${primaryProspectPhone(p)?` · ${escapeHtml(primaryProspectPhone(p))}`:''}</small></span></label>`).join(''):'<div class="empty">No contacts found on this street.</div>';
+}
+function broadcastHeaderState(){
+  if(prospectSection!=='broadcast')return null;
+  if(!selectedBroadcastType)return{title:'Broadcast',subtitle:'Build and review an SMS campaign.'};
+  const states={
+    1:{title:'Choose Recipients',subtitle:'Select the people who should receive this update.'},
+    2:{title:'Write Your Message',subtitle:'Write once. AGNT personalises each SMS before it reaches the recipient.'},
+    3:{title:'Review & Send',subtitle:'Check every detail before opening AGNT Bulk SMS.'},
+    4:{title:'Campaign Sent',subtitle:'Your broadcast details are saved below.'}
+  };
+  return states[broadcastStep]||states[1];
+}
+function syncBroadcastShell(){
+  const app=$('#app'),progress=$('.broadcast-step-progress'),builder=$('#broadcastBuilderFlow'),topActions=$('.top-actions');
+  const inBroadcast=prospectSection==='broadcast';
+  const building=inBroadcast&&Boolean(selectedBroadcastType&&BROADCAST_TYPES[selectedBroadcastType]);
+  app?.classList.toggle('broadcast-fullscreen',inBroadcast);
+  app?.classList.toggle('broadcast-building',building);
+  if(progress&&builder&&topActions){
+    if(building&&progress.parentElement!==topActions)topActions.insertBefore(progress,topActions.firstChild);
+    if(!building&&progress.parentElement!==builder)builder.insertBefore(progress,builder.firstChild);
+  }
+  updateTopbar(activeViewId());
+}
+function setBroadcastStep(step){
+  broadcastStep=Math.max(1,Math.min(4,Number(step)||1));
+  $$('.broadcast-step-page').forEach(page=>page.classList.toggle('hidden',Number(page.dataset.broadcastStep)!==broadcastStep));
+  $$('[data-broadcast-progress]').forEach(dot=>{const n=Number(dot.dataset.broadcastProgress);dot.classList.toggle('active',n===Math.min(broadcastStep,3));dot.classList.toggle('complete',n<Math.min(broadcastStep,4))});
+  const back=$('#broadcastBack');if(back)back.textContent=broadcastStep===1?'‹ Back to broadcasts':'‹ Back';
+  syncBroadcastShell();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function setBroadcastReviewMode(mode='live'){
+  broadcastReviewMode=mode==='test'?'test':'live';
+  $('#broadcastReviewLive')?.classList.toggle('active',broadcastReviewMode==='live');
+  $('#broadcastReviewTest')?.classList.toggle('active',broadcastReviewMode==='test');
+  $('#broadcastLiveReview')?.classList.toggle('hidden',broadcastReviewMode!=='live');
+  $('#broadcastTestReview')?.classList.toggle('hidden',broadcastReviewMode!=='test');
+}
+function renderBroadcastScreen(){
+  const menu=$('#broadcastMenu'),builder=$('#broadcastBuilderFlow');
+  if(!menu||!builder)return;
+  const building=Boolean(selectedBroadcastType&&BROADCAST_TYPES[selectedBroadcastType]);
+  menu.classList.toggle('hidden',building);builder.classList.toggle('hidden',!building);
+  syncBroadcastShell();
+  if(!building)return;
+  const type=BROADCAST_TYPES[selectedBroadcastType];
+  if($('#broadcastTypeEyebrow'))$('#broadcastTypeEyebrow').textContent=type.label.toUpperCase();
+  if($('#broadcastTypeDescription'))$('#broadcastTypeDescription').textContent=type.description;
+  renderBroadcastAudienceControls();renderCampaignBroadcast();setBroadcastStep(broadcastStep);setBroadcastReviewMode(broadcastReviewMode);
+}
+function openBroadcastBuilder(typeKey){
+  const type=BROADCAST_TYPES[typeKey];if(!type)return;
+  selectedBroadcastType=typeKey;selectedBroadcastSuburb=normalisePlace('Toongabbie');selectedBroadcastStreet='';selectedBroadcastRecipientIds=new Set();broadcastStep=1;broadcastReviewMode='live';broadcastLastLaunch=null;
+  const name=$('#campaignName'),message=$('#campaignMessage');
+  if(name)name.value=type.name;if(message)message.value=type.message;
+  renderBroadcastScreen();window.scrollTo({top:0,behavior:'smooth'});
+}
+function closeBroadcastBuilder(){selectedBroadcastType='';selectedBroadcastSuburb='';selectedBroadcastStreet='';selectedBroadcastRecipientIds=new Set();broadcastStep=1;broadcastReviewMode='live';broadcastLastLaunch=null;renderBroadcastScreen();window.scrollTo({top:0,behavior:'smooth'})}
+function campaignFirstName(p){const name=cleanText(p?.name,120);if(!name)return'there';if(/[&/]|\band\b/i.test(name))return name;return name.split(/\s+/)[0]||'there'}
+function campaignDaysSince(k){if(!validDateKey(k))return Infinity;return Math.floor((parseKey(todayKey())-parseKey(k))/86400000)}
+function campaignEligibleContacts(){
+  const recency=Number($('#campaignRecency')?.value)||0,excludeDnc=$('#campaignExcludeDnc')?.checked!==false,excludeToday=$('#campaignExcludeRecent')?.checked!==false,seen=new Set(),warnings={invalid:0,duplicates:0,dnc:0,recent:0},isLarge=selectedBroadcastType==='end-of-month';
+  const candidates=isLarge?activeProspects().filter(p=>normalisePlace(broadcastLocationFor(p).suburb)===selectedBroadcastSuburb):broadcastStreetContacts(selectedBroadcastStreet).filter(p=>selectedBroadcastRecipientIds.has(p.id));
+  const list=[];
+  candidates.forEach(p=>{const phone=primaryProspectPhone(p),digits=String(phone||'').replace(/\D/g,'');if(digits.length<9){warnings.invalid++;return}if(seen.has(digits)){warnings.duplicates++;return}const interactions=interactionsFor(p.id);if(excludeDnc&&interactions.some(x=>x.outcome==='Do not contact')){warnings.dnc++;return}if(excludeToday&&interactions.some(x=>x.date===todayKey())){warnings.recent++;return}if(recency&&campaignDaysSince(p.lastContact)<recency){warnings.recent++;return}seen.add(digits);list.push(p)});
+  return{list,warnings};
+}
+function campaignMessageFor(p,template){return String(template||'').replace(/{{\s*FirstName\s*}}/gi,campaignFirstName(p)).replace(/{{\s*FullName\s*}}/gi,cleanText(p.name,120)||'there').replace(/{{\s*Suburb\s*}}/gi,cleanText(p.suburb,80)||'your area').replace(/{{\s*AgentName\s*}}/gi,displayAgentName())}
+function campaignPayload(){const {list,warnings}=campaignEligibleContacts(),template=$('#campaignMessage')?.value||'',name=cleanText($('#campaignName')?.value,120)||`AGNT Campaign ${todayKey()}`,delay=Math.max(1,Number($('#campaignDelay')?.value)||2);return{name,delay,users:list.map(p=>({identifier:p.id,name:p.name,number:primaryProspectPhone(p),message:campaignMessageFor(p,template)})),warnings,createdAt:Date.now(),source:'AGNT'}}
+function renderCampaignBroadcast(){const panel=$('#prospectorBroadcastPanel');if(!panel||!selectedBroadcastType)return;const payload=campaignPayload(),total=payload.users.length,w=payload.warnings,messageReady=Boolean(cleanText($('#campaignMessage')?.value,2000)),nameReady=Boolean(cleanText($('#campaignName')?.value,120)),delay=Math.max(1,Number(payload.delay)||2),seconds=total?total*delay+15:0;$('#campaignEligibleCount').textContent=total;$('#campaignAudienceMeta').textContent=`${total} eligible contact${total===1?'':'s'}`;$('#campaignReviewMeta').textContent=total?`${total} personalised message${total===1?'':'s'} ready · ${formatEstimatedTime(Math.ceil(seconds/60))}`:'No eligible recipients';const checks=[['Audience',total>0,total?`${total} recipients ready`:'Select eligible recipients'],['Message',messageReady,messageReady?'Message complete':'Add a message'],['Campaign',nameReady,nameReady?'Name confirmed':'Add a campaign name'],['Send time',total>0,total?`${formatEstimatedTime(Math.ceil(seconds/60))} at ${delay}s delay`:'Calculated after audience selection']];if($('#campaignReadiness'))$('#campaignReadiness').innerHTML=checks.map(([label,ready,detail])=>`<div class="${ready?'ready':'not-ready'}"><span>${ready?'✓':'!'}</span><p><strong>${escapeHtml(label)}</strong><small>${escapeHtml(detail)}</small></p></div>`).join('');$('#campaignWarnings').innerHTML=[w.invalid?`${w.invalid} invalid/no mobile`:null,w.duplicates?`${w.duplicates} duplicate mobile${w.duplicates===1?'':'s'}`:null,w.dnc?`${w.dnc} do-not-contact`:null,w.recent?`${w.recent} recent contact${w.recent===1?'':'s'}`:null].filter(Boolean).map(x=>`<span>${escapeHtml(x)} excluded</span>`).join('');$('#campaignPreview').innerHTML=total?payload.users.slice(0,5).map((u,i)=>`<article><span>${i+1}</span><div><strong>${escapeHtml(u.name)}</strong><small>${escapeHtml(u.number)}</small><p>${escapeHtml(u.message).replace(/\n/g,'<br>')}</p></div></article>`).join('')+(total>5?`<div class="campaign-more">+${total-5} more recipients</div>`:''):'<div class="empty">No eligible contacts match these filters.</div>';$('#launchCampaignShortcut').disabled=!total||!messageReady||!nameReady;renderCampaignHistory();renderBulkSmsTest()}
+function renderCampaignHistory(){const host=$('#campaignHistory');if(!host)return;host.innerHTML=campaignHistory.length?campaignHistory.slice(0,8).map(c=>`<article><div><strong>${escapeHtml(c.name||'Campaign')}</strong><small>${new Date(c.createdAt).toLocaleString('en-AU',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}</small></div><span>${Number(c.count)||0} SMS</span></article>`).join(''):'<div class="empty">No campaigns launched from this device yet.</div>'}
+function renderBroadcastSuccess(){const item=broadcastLastLaunch||campaignHistory[0]||bulkSmsTestLaunches[0];if(!item)return;$('#broadcastSuccessName').textContent=item.name||'Campaign';$('#broadcastSuccessCount').textContent=`${Number(item.count)||0} SMS`;$('#broadcastSuccessTime').textContent=new Date(item.createdAt||Date.now()).toLocaleString('en-AU',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});renderCampaignHistory()}
+function agntBulkSmsShortcutUrl(payload){const input=encodeURIComponent(JSON.stringify(payload));return`shortcuts://run-shortcut?name=${encodeURIComponent(AGNT_BULK_SMS_SHORTCUT)}&input=text&text=${input}`}
+function launchCampaignShortcut(){const payload=campaignPayload();if(!payload.users.length)return toast('No eligible recipients');if(!confirm(`Open ${AGNT_BULK_SMS_SHORTCUT} with ${payload.users.length} personalised messages?`))return;broadcastLastLaunch={id:prospectId(),name:payload.name,count:payload.users.length,createdAt:Date.now(),test:false};campaignHistory.unshift(broadcastLastLaunch);saveLocal();renderCampaignHistory();renderBroadcastSuccess();setBroadcastStep(4);setTimeout(()=>{window.location.href=agntBulkSmsShortcutUrl(payload)},120)}
+function bulkSmsTestFirstName(name=''){return cleanText(name,100).split(/\s+/)[0]||'there'}
+function bulkSmsTestNumber(value=''){const digits=String(value||'').replace(/\D/g,'');if(/^614\d{8}$/.test(digits))return`0${digits.slice(2)}`;if(/^04\d{8}$/.test(digits))return digits;return''}
+function bulkSmsTestRecipients(){const raw=$('#bulkSmsTestRecipients')?.value||'',seen=new Set(),valid=[],invalid=[];raw.split(/\r?\n/).map(x=>x.trim()).filter(Boolean).forEach((line,index)=>{const match=line.match(/(?:\+?61|0)4(?:[\s-]*\d){8}/),number=bulkSmsTestNumber(match?.[0]||line);if(!number){invalid.push(line);return}if(seen.has(number)){invalid.push(`${line} · duplicate`);return}seen.add(number);let name=cleanText(line.replace(match?.[0]||number,'').replace(/^[\s,|;:\-]+|[\s,|;:\-]+$/g,''),100);if(!name)name=`Test ${index+1}`;valid.push({identifier:`test-${index+1}-${number}`,name,number})});return{valid,invalid}}
+function bulkSmsTestPayload(){const {valid,invalid}=bulkSmsTestRecipients(),template=$('#bulkSmsTestMessage')?.value||'',delay=Math.max(0,Math.min(10,Number($('#bulkSmsTestDelay')?.value)||0));return{name:`AGNT Bulk SMS Test ${todayKey()}`,delay,users:valid.map(item=>({...item,message:String(template).replace(/{{\s*FirstName\s*}}/gi,bulkSmsTestFirstName(item.name)).replace(/{{\s*FullName\s*}}/gi,item.name)})),invalid,createdAt:Date.now(),source:'AGNT Test Environment',test:true}}
+function renderBulkSmsTest(){const host=$('#bulkSmsTestPreview');if(!host)return;const payload=bulkSmsTestPayload(),count=payload.users.length;$('#bulkSmsTestMeta').textContent=count?`${count} test message${count===1?'':'s'} ready`:'Enter test recipients';$('#bulkSmsTestWarnings').innerHTML=payload.invalid.length?`<span>${payload.invalid.length} invalid or duplicate entr${payload.invalid.length===1?'y':'ies'}</span>`:'';host.innerHTML=count?payload.users.map((u,i)=>`<article><span>${i+1}</span><div><strong>${escapeHtml(u.name)}</strong><small>${escapeHtml(u.number)}</small><p>${escapeHtml(u.message).replace(/\n/g,'<br>')}</p></div></article>`).join(''):'<div class="empty">Add one recipient per line, such as Andrew, 0412 345 678.</div>';const json=$('#bulkSmsTestJson');if(json)json.textContent=JSON.stringify({...payload,invalid:undefined},null,2);const launch=$('#launchBulkSmsTest');if(launch)launch.disabled=!count||!cleanText($('#bulkSmsTestMessage')?.value,2000);renderBulkSmsTestHistory()}
+function renderBulkSmsTestHistory(){const host=$('#bulkSmsTestHistory');if(!host)return;host.innerHTML=bulkSmsTestLaunches.length?bulkSmsTestLaunches.slice(0,5).map(item=>`<article><div><strong>${escapeHtml(item.name||'Test launch')}</strong><small>${new Date(item.createdAt).toLocaleString('en-AU',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}</small></div><span>${Number(item.count)||0} SMS</span></article>`).join(''):'<div class="empty">No test payloads launched yet.</div>'}
+function launchBulkSmsTest(){const payload=bulkSmsTestPayload();if(!payload.users.length)return toast('Add a valid test mobile');if(!cleanText($('#bulkSmsTestMessage')?.value,2000))return toast('Add a test message');if(!confirm(`Open ${AGNT_BULK_SMS_SHORTCUT} with ${payload.users.length} test message${payload.users.length===1?'':'s'}?`))return;broadcastLastLaunch={id:prospectId(),name:payload.name,count:payload.users.length,createdAt:Date.now(),test:true};bulkSmsTestLaunches.unshift(broadcastLastLaunch);saveLocal();renderBulkSmsTestHistory();renderBroadcastSuccess();setBroadcastStep(4);setTimeout(()=>{window.location.href=agntBulkSmsShortcutUrl(payload)},120)}
+
 function followUpChecklistCard(p){const initials=p.name.split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase(),address=formatProspectAddress(p.address||p.company,p.suburb)||primaryProspectPhone(p)||'Contact details not added';return`<article class="prospect-followup-item"><button class="prospect-followup-check" type="button" data-complete-prospect-followup="${p.id}" aria-label="Complete follow-up for ${escapeHtml(p.name)}"><span aria-hidden="true">✓</span></button><button class="prospect-followup-open" type="button" data-open-prospect="${p.id}"><span class="prospect-avatar">${escapeHtml(initials||'P')}</span><span class="prospect-card-copy"><strong>${escapeHtml(p.name)}</strong><small>${escapeHtml(address)}</small><em class="due">${escapeHtml(dueText(p))}</em></span><span class="prospect-temp temp-${p.temperature.toLowerCase()}">${p.temperature}</span><b aria-hidden="true">›</b></button></article>`}
 async function completeProspectFollowUp(id){const p=prospectById(id);if(!p)return;const interactionId=prospectId();prospectInteractions.push({id:interactionId,prospectId:p.id,date:todayKey(),at:Date.now(),type:'Follow-up',outcome:'Follow-up completed',note:'',nextFollowUp:''});prospects=prospects.map(x=>x.id===p.id?normaliseProspect({...x,nextFollowUp:'',updatedAt:Date.now()}):x);await saveProspecting();haptic();toast('Follow-up completed')}
 function prospectInsightRange(period=prospectInsightPeriod){
@@ -2035,31 +2315,53 @@ function renderProspectorInsights(){
   $$('[data-prospect-insight-period]').forEach(b=>b.classList.toggle('active',b.dataset.prospectInsightPeriod===prospectInsightPeriod));
 }
 
-function renderProspecting(){
+function renderProspecting(){renderBuyerSessionHero();
   if(!$('#prospectingView'))return;
   const today=todayKey(),active=activeProspects(),overdue=active.filter(p=>p.nextFollowUp&&p.nextFollowUp<today).length,due=active.filter(p=>p.nextFollowUp===today).length,hot=active.filter(p=>p.temperature==='Hot').length,followUps=dueProspectFollowUps(),pipeline=getDailyProspectPipeline(),remainingPipeline=pipeline.filter(id=>!prospectContactedToday(id));
   $('#prospectingOverdue').textContent=overdue;$('#prospectingToday').textContent=due;$('#prospectingHot').textContent=hot;$('#prospectingDueCount').textContent=remainingPipeline.length;$('#prospectingDueLabel').textContent=remainingPipeline.length===1?'client ready':'clients ready';
   const pipelineSessionActive=prospectSessionActive&&!cleanText(prospectSessionContext?.eventId,160),pipelineSessionComplete=Boolean(pipeline.length)&&remainingPipeline.length===0,pipelineSessionButton=$('#startProspectingSession');if(pipelineSessionButton){pipelineSessionButton.textContent=pipelineSessionComplete?'Session Complete':pipelineSessionActive?'Active Session':'Start Session';pipelineSessionButton.classList.remove('market-session-start-btn','market-session-active-btn','market-session-complete-btn');pipelineSessionButton.classList.add(pipelineSessionComplete?'market-session-complete-btn':pipelineSessionActive?'market-session-active-btn':'market-session-start-btn');pipelineSessionButton.disabled=pipelineSessionComplete}
-  const hotSpottingEvents=normaliseMarketPulseEvents(marketPulseEvents).filter(event=>marketMatches(event).length),hotSpottingReady=hotSpottingEvents.reduce((total,event)=>total+marketMatches(event).length,0),hotSpottingActive=hotSpottingEvents.some(event=>Boolean(event.sessionStartedAt)&&!event.sessionCompletedAt),hotSpottingComplete=Boolean(hotSpottingEvents.length)&&hotSpottingEvents.every(event=>Boolean(event.sessionCompletedAt)),hotSpottingButton=$('#openHotSpotting');if($('#hotSpottingReadyCount'))$('#hotSpottingReadyCount').textContent=hotSpottingReady;if($('#hotSpottingReadyLabel'))$('#hotSpottingReadyLabel').textContent=hotSpottingReady===1?'client ready':'clients ready';if(hotSpottingButton){hotSpottingButton.textContent=hotSpottingComplete?'Session Complete':hotSpottingActive?'Active Session':'Start Session';hotSpottingButton.classList.remove('market-session-start-btn','market-session-active-btn','market-session-complete-btn');hotSpottingButton.classList.add(hotSpottingComplete?'market-session-complete-btn':hotSpottingActive?'market-session-active-btn':'market-session-start-btn')}
+  const hotSpottingRows=normaliseMarketPulseEvents(marketPulseEvents).map(event=>({event,matches:marketMatches(event)})).filter(row=>row.matches.length),hotSpottingEvents=hotSpottingRows.map(row=>row.event),hotSpottingRemaining=hotSpottingRows.map(row=>{const progress=marketSessionProgress(row.event,row.matches);return Math.max(0,progress.total-progress.workedIds.size)}),hotSpottingReady=hotSpottingRemaining.reduce((total,remaining)=>total+remaining,0),hotSpottingComplete=Boolean(hotSpottingEvents.length)&&hotSpottingRemaining.every(remaining=>remaining===0),hotSpottingActive=!hotSpottingComplete&&hotSpottingEvents.some(event=>Boolean(event.sessionStartedAt)&&!event.sessionCompletedAt),hotSpottingButton=$('#openHotSpotting');if($('#hotSpottingReadyCount'))$('#hotSpottingReadyCount').textContent=hotSpottingReady;if($('#hotSpottingReadyLabel'))$('#hotSpottingReadyLabel').textContent=hotSpottingReady===1?'client ready':'clients ready';if(hotSpottingButton){hotSpottingButton.textContent=hotSpottingComplete?'Session Complete':hotSpottingActive?'Active Session':'Start Session';hotSpottingButton.classList.remove('market-session-start-btn','market-session-active-btn','market-session-complete-btn');hotSpottingButton.classList.add(hotSpottingComplete?'market-session-complete-btn':hotSpottingActive?'market-session-active-btn':'market-session-start-btn')}
+  if($('#pipelineWorkState'))$('#pipelineWorkState').textContent=pipelineSessionActive?`${Math.max(0,prospectSessionIds.length-prospectSessionIndex)} remaining · session active`:pipelineSessionComplete?'Daily pipeline cleared':remainingPipeline.length?`${remainingPipeline.length} remaining · ${formatEstimatedTime(estimatedMinutes(remainingPipeline.length,180))}`:'No pipeline queue waiting';
+  if($('#hotSpottingWorkState'))$('#hotSpottingWorkState').textContent=hotSpottingActive?'Live street session in progress':hotSpottingComplete?'All current opportunities completed':hotSpottingReady?`${hotSpottingEvents.length} opportunit${hotSpottingEvents.length===1?'y':'ies'} · ${formatEstimatedTime(estimatedMinutes(hotSpottingReady))}`:'No matching neighbours yet';
+  const draftCount=selectedBroadcastRecipientIds.size;if($('#broadcastWorkState'))$('#broadcastWorkState').textContent=selectedBroadcastType?`${draftCount||'No'} recipient${draftCount===1?'':'s'} selected`:(campaignHistory.length?`${campaignHistory.length} campaign${campaignHistory.length===1?'':'s'} launched`:'Choose an audience to begin');
   $('#prospectQueue').innerHTML=followUps.length?followUps.map(followUpChecklistCard).join(''):'<div class="prospect-empty"><strong>Follow-ups cleared</strong><small>You’re up to date. New due and overdue follow-ups will appear here.</small></div>';
   const list=filteredProspects();$('#prospectContactList').innerHTML=list.length?list.map(p=>prospectCard(p,{contactsView:true})).join(''):'<div class="prospect-empty"><strong>No matching contacts</strong><small>Try another search, add a contact or import a CSV.</small></div>';
   const count=$('#prospectContactCount');if(count)count.textContent=`${list.length} contact${list.length===1?'':'s'} · Sorted A–Z`;
-  const archivedMode=prospectContactsMode==='archived',heading=$('#prospectContactsHeading'),eyebrow=$('#prospectContactsEyebrow'),archiveToggle=$('#toggleArchivedContacts'),importButton=$('.prospect-import-button'),archivedBack=$('#backFromArchivedContacts');if(heading)heading.textContent=archivedMode?'Archived contacts':'Your database';if(eyebrow)eyebrow.textContent=archivedMode?'ARCHIVED':'CONTACTS';if(archiveToggle)archiveToggle.textContent=archivedMode?'Contacts':`Archived (${archivedProspects().length})`;if(importButton)importButton.classList.toggle('hidden',archivedMode);if(archivedBack)archivedBack.classList.toggle('hidden',!archivedMode);
+  const archivedMode=prospectContactsMode==='archived',heading=$('#prospectContactsHeading'),eyebrow=$('#prospectContactsEyebrow'),archiveToggle=$('#toggleArchivedContacts'),importButton=$('.prospect-import-button');if(heading)heading.textContent=archivedMode?'Archived contacts':'Your database';if(eyebrow)eyebrow.textContent=archivedMode?'ARCHIVED':'CONTACTS';if(archiveToggle)archiveToggle.textContent=archivedMode?'Contacts':`Archived (${archivedProspects().length})`;if(importButton)importButton.classList.toggle('hidden',archivedMode);
   const selectedCount=$('#prospectSelectedCount');if(selectedCount)selectedCount.textContent=`${selectedProspectIds.size} selected`;const deleteButton=$('#deleteSelectedProspects'),restoreButton=$('#restoreSelectedProspects');if(deleteButton)deleteButton.disabled=!selectedProspectIds.size;if(restoreButton){restoreButton.disabled=!selectedProspectIds.size;restoreButton.classList.toggle('hidden',!archivedMode)}const selectAll=$('#selectAllProspects');if(selectAll)selectAll.textContent=list.length&&list.every(p=>selectedProspectIds.has(p.id))?'Deselect All':'Select All';const bulkBar=$('.prospect-bulk-bar');if(bulkBar)bulkBar.classList.toggle('hidden',!prospectBulkMode);const bulkToggle=$('#toggleProspectBulk');if(bulkToggle)bulkToggle.textContent=prospectBulkMode?'Done':'Manage Contacts';
   renderSellerPipeline();
   renderProspectorInsights();
   const sessionLogOpen=prospectSessionActive&&$('#prospectLogForm')?.dataset.fromSession==='1'&&!$('#prospectDetail').classList.contains('hidden');
   setProspectorSection(prospectSection);
-  if(prospectSessionActive&&prospectSection==='today'){
-    if(sessionLogOpen){$('#prospectingDashboard')?.classList.add('hidden');$('#prospectingSession')?.classList.add('hidden');$('#prospectDetail')?.classList.remove('hidden')}
-    else showProspectingSession();
-  }else if(!prospectSessionActive&&activeProspectId&&!$('#prospectDetail').classList.contains('hidden'))renderProspectDetail(activeProspectId);
+  if(sessionLogOpen){
+    $('#prospectingDashboard')?.classList.add('hidden');
+    $('#prospectingSession')?.classList.add('hidden');
+    $('#prospectDetail')?.classList.remove('hidden');
+  }else if(prospectSessionActive&&prospectSection==='today'&&$('#prospectingSession')?.dataset.sessionView==='1'){
+    showProspectingSession();
+  }else{
+    $('#prospectingSession')?.classList.add('hidden');
+    $('#prospectDetail')?.classList.add('hidden');
+    $('#prospectingDashboard')?.classList.remove('hidden');
+    if(!prospectSessionActive&&activeProspectId&&!$('#prospectDetail').classList.contains('hidden'))renderProspectDetail(activeProspectId);
+  }
 }
 function prospectForm(p={}){return`<form id="prospectEditor" class="prospect-editor glass"><div class="prospect-detail-nav"><button type="button" data-close-prospect>‹ Back</button><strong>${p.id?'Edit Contact':'New Contact'}</strong><span></span></div><label>Name<input name="name" value="${escapeHtml(p.name||'')}" required></label><div class="prospect-form-grid"><label>Phone<input name="phone" type="tel" value="${escapeHtml(p.phone||'')}"></label><label>Email<input name="email" type="email" value="${escapeHtml(p.email||'')}"></label></div><label>Address<input name="address" value="${escapeHtml(p.address||'')}"></label><div class="prospect-form-grid"><label>Source<input name="source" value="${escapeHtml(p.source||'')}" placeholder="Door knock, database…"></label><label>Stage<select name="stage">${['New Lead','Nurture','Appraisal Opportunity','Appointment Booked','Pipeline','Past Client'].map(x=>`<option ${p.stage===x?'selected':''}>${x}</option>`).join('')}</select></label></div><div class="prospect-form-grid"><label>Temperature<select name="temperature" data-pipeline-temperature-field>${['Cold','Warm','Hot'].map(x=>`<option ${p.temperature===x?'selected':''}>${x}</option>`).join('')}</select></label><label>Motivation<select name="motivation" data-pipeline-motivation-field>${[1,2,3,4,5].map(x=>`<option value="${x}" ${Number(p.motivation)===x?'selected':''}>${x} / 5</option>`).join('')}</select></label></div><label>Selling timeframe<select name="sellingTimeframe" data-pipeline-timeframe-field><option value="">Not currently selling</option>${SELLING_TIMEFRAMES.map(x=>`<option value="${x}" ${p.sellingTimeframe===x?'selected':''}>${x}</option>`).join('')}</select></label><label>Tags<input name="tags" value="${escapeHtml((p.tags||[]).join(', '))}" placeholder="Vendor, Toongabbie, Past client"></label><label>Next follow-up<input name="nextFollowUp" type="date" value="${p.nextFollowUp||''}"></label><label>Background notes<textarea name="notes" rows="4" placeholder="Long-term context, plans and personal details">${escapeHtml(p.notes||'')}</textarea></label><button class="primary" type="submit">${p.id?'Save Contact':'Add Contact'}</button></form>`}
 function openProspectEditor(id=''){const p=id?prospectById(id):{};activeProspectId=id||null;$('#prospectingDashboard').classList.add('hidden');$('#prospectingSession').classList.add('hidden');$('#prospectDetail').classList.remove('hidden');$('#prospectDetail').innerHTML=prospectForm(p)}
 function renderProspectDetail(id){const p=prospectById(id);if(!p)return closeProspectDetail();activeProspectId=id;const history=interactionsFor(id),phone=primaryProspectPhone(p),tel=prospectTel(p),sms=phone?`sms:${phone.replace(/[^+\d]/g,'')}`:'#';$('#prospectDetail').innerHTML=`<div class="prospect-detail-nav"><button type="button" data-close-prospect>‹ Back</button><button type="button" data-edit-prospect="${p.id}">Edit</button></div><section class="prospect-profile glass"><div class="prospect-profile-top"><span class="prospect-avatar large">${escapeHtml(p.name.split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase())}</span><div><span>${escapeHtml(p.stage)}</span><h2>${escapeHtml(p.name)}</h2><small>${escapeHtml(formatProspectAddress(p.address||p.company,p.suburb)||'No address added')}</small></div><span class="prospect-temp temp-${p.temperature.toLowerCase()}">${p.temperature}</span></div><div class="prospect-quick-actions"><a href="${tel}" class="${phone?'':'disabled'}" data-prospect-call="${p.id}" data-call-from-session="0">Call</a><a href="${sms}" class="${phone?'':'disabled'}">Message</a><button type="button" data-log-prospect="${p.id}">Log Contact</button></div><div class="prospect-profile-grid"><div><span>NEXT FOLLOW-UP</span><strong>${p.nextFollowUp?fmtDate(p.nextFollowUp):'Not set'}</strong></div><div><span>LAST CONTACT</span><strong>${p.lastContact?fmtDate(p.lastContact):'Never'}</strong></div><div><span>MOTIVATION</span><strong>${p.motivation}/5</strong></div><div><span>CONTACTS</span><strong>${history.length}</strong></div></div>${pipelineTimeframeForProspect(p)?`<div class="prospect-selling-status"><span>SELLING TIMEFRAME</span><strong>${escapeHtml(pipelineTimeframeForProspect(p))}</strong>${pipelineAppointmentLabel(p)?`<small>${escapeHtml(pipelineAppointmentLabel(p))}</small>`:''}</div>`:''}${p.tags.length?`<div class="prospect-tags">${p.tags.map(t=>`<span>${escapeHtml(t)}</span>`).join('')}</div>`:''}${p.notes?`<p class="prospect-background">${escapeHtml(p.notes)}</p>`:''}</section><section class="prospecting-section glass"><div class="prospecting-section-head"><div><span>CONTACT HISTORY</span><h3>Every conversation</h3></div></div><div class="prospect-history">${history.length?history.map(x=>`<article><i></i><div><strong>${escapeHtml(x.outcome||x.type)}</strong><small>${fmtDate(x.date)} · ${new Date(x.at).toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'})}</small>${x.note?`<p>${escapeHtml(x.note)}</p>`:''}${x.nextFollowUp?`<em>Follow-up: ${fmtDate(x.nextFollowUp)}</em>`:''}</div></article>`).join(''):'<div class="prospect-empty"><strong>No contact history yet</strong><small>Log the first conversation to start building context.</small></div>'}</div></section><button class="prospect-delete" type="button" data-delete-prospect="${p.id}">Delete Contact</button>`}
 function closeProspectDetail(){activeProspectId=null;$('#prospectDetail').classList.add('hidden');$('#prospectDetail').innerHTML='';$('#prospectingSession').classList.add('hidden');$('#prospectingDashboard').classList.remove('hidden');renderProspecting()}
 function prospectingSignature(prospectList=prospects,interactionList=prospectInteractions,marketEvents=marketPulseEvents){return JSON.stringify({prospects:prospectList,interactions:interactionList,marketPulseEvents:normaliseMarketPulseEvents(marketEvents)})}
+function saveProspectingLocal(){
+  const prefix=storagePrefix(uid);
+  try{
+    localStorage.setItem(prefix+'prospects',JSON.stringify(prospects));
+    localStorage.setItem(prefix+'prospect-interactions',JSON.stringify(prospectInteractions));
+    localStorage.setItem(prefix+'market-pulse-events',JSON.stringify(marketPulseEvents));
+    localStorage.setItem(prefix+'campaign-history',JSON.stringify(campaignHistory.slice(0,20)));
+    localStorage.setItem(prefix+'bulk-sms-test-launches',JSON.stringify(bulkSmsTestLaunches.slice(0,10)));
+    return true
+  }catch(err){console.error('Prospecting local save failed',err);return false}
+}
 async function flushProspectingSave(){
   clearTimeout(prospectingSaveTimer);prospectingSaveTimer=null;
   if(!cloud||!db||!uid||prospectingWriteInFlight||!pendingProspectingPayload)return;
@@ -2080,19 +2382,49 @@ function queueProspectingSave(){
   clearTimeout(prospectingSaveTimer);prospectingSaveTimer=setTimeout(flushProspectingSave,160);
   return promise;
 }
-async function saveProspecting({render=true}={}){saveLocal();if(render)renderProspecting();await queueProspectingSave()}
-function upsertProspect(data,id=''){const existing=id?prospectById(id):null;const record=normaliseProspect({...existing,...data,id:id||prospectId(),createdAt:existing?.createdAt||Date.now(),updatedAt:Date.now()});if(existing)prospects=prospects.map(p=>p.id===id?record:p);else prospects.unshift(record);if(existing&&existing.sellingTimeframe!==record.sellingTimeframe)prospectInteractions.push({id:prospectId(),prospectId:record.id,date:todayKey(),at:Date.now(),type:'Pipeline',outcome:'Selling timeframe updated',note:`Selling timeframe changed from ${existing.sellingTimeframe||'Not set'} to ${record.sellingTimeframe||'Not currently selling'}.`,nextFollowUp:''});activeProspectId=record.id;return saveProspecting().then(()=>renderProspectDetail(record.id))}
-function openProspectLog(id,fromSession=false){const p=prospectById(id);if(!p)return;$('#prospectDetail').classList.remove('hidden');$('#prospectingDashboard').classList.add('hidden');$('#prospectingSession').classList.add('hidden');activeProspectId=id;$('#prospectDetail').innerHTML=`<form id="prospectLogForm" class="prospect-editor glass" data-from-session="${fromSession?'1':'0'}"><div class="prospect-detail-nav"><button type="button" data-cancel-log>‹ Back</button><strong>Log Contact</strong><button type="button" data-edit-prospect="${p.id}">Edit</button></div><div class="prospect-log-person"><span>${escapeHtml(p.name)}</span><small>${escapeHtml(primaryProspectPhone(p)||p.address||'')}</small></div><label>Outcome<select name="outcome"><option>Connected</option><option>No answer</option><option>Left voicemail</option><option>Sent SMS</option><option>Appraisal opportunity</option><option>Appointment booked</option><option>Not interested</option><option>Do not contact</option><option>Archive</option></select></label><label>Conversation note<textarea name="note" rows="5" placeholder="What changed? What matters next?"></textarea></label><div class="prospect-form-grid"><label>Temperature<select name="temperature" data-pipeline-temperature-field>${['Cold','Warm','Hot'].map(x=>`<option ${p.temperature===x?'selected':''}>${x}</option>`).join('')}</select></label><label>Next follow-up<input name="nextFollowUp" type="date" value="${p.nextFollowUp||''}"></label></div><label>Selling timeframe<select name="sellingTimeframe" data-pipeline-timeframe-field><option value="">Leave unchanged</option>${SELLING_TIMEFRAMES.map(x=>`<option value="${x}">${x}</option>`).join('')}<option value="Not currently selling">Not currently selling</option></select></label><button class="primary" type="submit">Save & ${fromSession?'Next':'Finish'}</button></form>`}
+async function saveProspecting({render=true,awaitCloud=true}={}){
+  saveProspectingLocal();if(render)renderProspecting();
+  const sync=queueProspectingSave();
+  if(!awaitCloud){sync.catch(err=>console.error('Deferred prospecting sync failed',err));return}
+  await sync
+}
+async function creditNewProspectData(record){const at=Number(record?.dataCreditedAt)||Number(record?.createdAt)||Date.now(),k=dateKey(new Date(at)),d=dayData(k);if(d.events.some(event=>event?.type==='data'&&String(event?.sourceProspectId||'')===String(record.id)))return;d.data=Math.max(0,(Number(d.data)||0)+1);d.events.push({id:uuid(),type:'data',label:`New Contact · ${record.name||'Contact'}`,delta:1,at,sourceProspectId:record.id});d.events=d.events.slice(-500);days[k]=d;haptic();await saveDay(k)}
+async function upsertProspect(data,id=''){const existing=id?prospectById(id):null,createdAt=existing?.createdAt||Date.now(),dataCreditedAt=existing?.dataCreditedAt||(!existing?createdAt:0),record=normaliseProspect({...existing,...data,id:id||prospectId(),dataCreditedAt,createdAt,updatedAt:Date.now()});if(existing)prospects=prospects.map(p=>p.id===id?record:p);else prospects.unshift(record);if(existing&&existing.sellingTimeframe!==record.sellingTimeframe)prospectInteractions.push({id:prospectId(),prospectId:record.id,date:todayKey(),at:Date.now(),type:'Pipeline',outcome:'Selling timeframe updated',note:`Selling timeframe changed from ${existing.sellingTimeframe||'Not set'} to ${record.sellingTimeframe||'Not currently selling'}.`,nextFollowUp:''});activeProspectId=record.id;await saveProspecting();if(!existing)await creditNewProspectData(record);renderProspectDetail(record.id)}
+function openProspectLog(id,fromSession=false){const p=prospectById(id);if(!p)return;$('#prospectDetail').classList.remove('hidden');$('#prospectingDashboard').classList.add('hidden');$('#prospectingSession').classList.add('hidden');activeProspectId=id;$('#prospectDetail').innerHTML=`<form id="prospectLogForm" class="prospect-editor glass" data-from-session="${fromSession?'1':'0'}"><div class="prospect-detail-nav"><button type="button" data-cancel-log aria-label="Back">‹</button><strong>Log Contact</strong><button type="button" data-edit-prospect="${p.id}">Edit</button></div><div class="prospect-log-person"><span>${escapeHtml(p.name)}</span><small>${escapeHtml(primaryProspectPhone(p)||p.address||'')}</small></div><label>Outcome<select name="outcome"><option>Connected</option><option>No answer</option><option>Left voicemail</option><option>Sent SMS</option><option>Appraisal opportunity</option><option>Appointment booked</option><option>Not interested</option><option>Do not contact</option><option>Archive</option></select></label><label>Conversation note<textarea name="note" rows="5" placeholder="What changed? What matters next?"></textarea></label><div class="prospect-form-grid"><label>Temperature<select name="temperature" data-pipeline-temperature-field>${['Cold','Warm','Hot'].map(x=>`<option ${p.temperature===x?'selected':''}>${x}</option>`).join('')}</select></label><label>Next follow-up<input name="nextFollowUp" type="date" value="${p.nextFollowUp||''}"></label></div><label>Selling timeframe<select name="sellingTimeframe" data-pipeline-timeframe-field><option value="">Leave unchanged</option>${SELLING_TIMEFRAMES.map(x=>`<option value="${x}">${x}</option>`).join('')}<option value="Not currently selling">Not currently selling</option></select></label><button class="primary" type="submit">Save & ${fromSession?'Next':'Finish'}</button></form>`}
 function prospectSessionStorageKey(){return`agnt-prospect-session-v105-${uid||currentUser?.uid||'device'}`}
+function nextProspectPipelineBatch(){
+  const served=getDailyProspectServedIds();
+  prospectSessionIds.forEach(id=>served.add(id));
+  return sortedEligibleProspectPipeline().filter(p=>!served.has(p.id)&&!prospectContactedToday(p.id)).slice(0,50).map(p=>p.id);
+}
+function closePipelineRefreshConfirm(){document.querySelectorAll('.pipeline-refresh-overlay').forEach(node=>node.remove())}
+function openPipelineRefreshConfirm(){
+  if(!prospectSessionActive||cleanText(prospectSessionContext?.eventId,160))return;
+  closePipelineRefreshConfirm();
+  const next=nextProspectPipelineBatch();
+  if(!next.length)return toast('No new eligible clients are available right now');
+  const overlay=document.createElement('div');overlay.className='pipeline-refresh-overlay';
+  overlay.innerHTML=`<section class="pipeline-refresh-card glass" role="dialog" aria-modal="true" aria-labelledby="pipelineRefreshTitle"><span class="eyebrow">REFRESH SESSION</span><h2 id="pipelineRefreshTitle">Load a new client queue?</h2><p>This will replace the current queue with ${next.length} new eligible client${next.length===1?'':'s'} using the same pipeline criteria. Anyone already served in today’s session stays excluded, and activity you’ve already logged remains unchanged.</p><div class="pipeline-refresh-actions"><button class="secondary" type="button" data-cancel-pipeline-refresh>Keep Current</button><button class="primary" type="button" data-confirm-pipeline-refresh>Refresh ${next.length}</button></div></section>`;
+  const mount=$('#prospectingView')||document.body;mount.append(overlay);
+}
+function confirmPipelineRefresh(){
+  const next=nextProspectPipelineBatch();
+  if(!next.length){closePipelineRefreshConfirm();return toast('No new eligible clients are available right now')}
+  addDailyProspectServedIds(prospectSessionIds);addDailyProspectServedIds(next);
+  prospectSessionIds=next;prospectSessionIndex=0;
+  try{localStorage.setItem(dailyProspectPipelineKey(),JSON.stringify(next))}catch(err){console.warn('Refreshed pipeline could not be saved',err)}
+  saveProspectingSessionState();closePipelineRefreshConfirm();showProspectingSession();renderProspecting();toast(`${next.length} new clients loaded`);
+}
 function saveProspectingSessionState(){try{localStorage.setItem(prospectSessionStorageKey(),JSON.stringify({active:prospectSessionActive,ids:prospectSessionIds,index:prospectSessionIndex,stats:prospectSessionStats,context:prospectSessionContext,updatedAt:Date.now()}))}catch(err){console.warn('Session state could not be saved',err)}}
 function clearProspectingSessionState(){try{localStorage.removeItem(prospectSessionStorageKey())}catch(err){console.warn('Session state could not be cleared',err)}}
-function restoreProspectingSessionState(){try{const raw=JSON.parse(localStorage.getItem(prospectSessionStorageKey())||'null');if(!raw?.active||!Array.isArray(raw.ids)||!raw.ids.length)return;prospectSessionIds=raw.ids.filter(id=>typeof id==='string');prospectSessionIndex=Math.max(0,Math.min(Number(raw.index)||0,prospectSessionIds.length));prospectSessionStats={calls:Number(raw.stats?.calls)||0,connects:Number(raw.stats?.connects)||0,temperate:Number(raw.stats?.temperate)||0,appointments:Number(raw.stats?.appointments)||0};prospectSessionContext=raw.context&&typeof raw.context==='object'?raw.context:null;prospectSessionActive=prospectSessionIds.length>0}catch(err){console.warn('Session state could not be restored',err);clearProspectingSessionState()}}
-function startProspectingSession(){if(prospectSessionActive){showProspectingSession();return}prospectSessionIds=getDailyProspectPipeline().filter(id=>!prospectContactedToday(id));prospectSessionIndex=0;prospectSessionActive=true;prospectSessionStats={calls:0,connects:0,temperate:0,appointments:0};prospectSessionContext=null;if(!prospectSessionIds.length){prospectSessionActive=false;return toast('Today’s pipeline is complete')}saveProspectingSessionState();showProspectingSession()}
+function restoreProspectingSessionState(){try{const raw=JSON.parse(localStorage.getItem(prospectSessionStorageKey())||'null');if(!raw?.active||!Array.isArray(raw.ids)||!raw.ids.length)return;prospectSessionIds=raw.ids.filter(id=>typeof id==='string');prospectSessionIndex=Math.max(0,Math.min(Number(raw.index)||0,prospectSessionIds.length));prospectSessionStats={calls:Number(raw.stats?.calls)||0,connects:Number(raw.stats?.connects)||0,temperate:Number(raw.stats?.temperate)||0,appointments:Number(raw.stats?.appointments)||0,sms:Number(raw.stats?.sms)||0};prospectSessionContext=raw.context&&typeof raw.context==='object'?raw.context:null;prospectSessionActive=prospectSessionIds.length>0}catch(err){console.warn('Session state could not be restored',err);clearProspectingSessionState()}}
+function startProspectingSession(){if(prospectSessionActive){showProspectingSession();return}prospectSessionIds=getDailyProspectPipeline().filter(id=>!prospectContactedToday(id));prospectSessionIndex=0;prospectSessionActive=true;prospectSessionStats={calls:0,connects:0,temperate:0,appointments:0,sms:0};prospectSessionContext=null;if(!prospectSessionIds.length){prospectSessionActive=false;return toast('Today’s pipeline is complete')}addDailyProspectServedIds(prospectSessionIds);saveProspectingSessionState();showProspectingSession()}
 function prospectOutcomeMetricDelta(outcome){
   const connectedOutcomes=new Set(['Connected','Appraisal opportunity','Appointment booked','Not interested','Do not contact']);
-  return{calls:1,connects:connectedOutcomes.has(outcome)?1:0};
+  const isSms=outcome==='Sent SMS';
+  return{calls:isSms?0:1,connects:!isSms&&connectedOutcomes.has(outcome)?1:0};
 }
-async function applyProspectingOutcomeMetrics(outcome,interactionId){
+async function applyProspectingOutcomeMetrics(outcome,interactionId,{awaitCloud=true}={}){
   const key=todayKey(),d=dayData(key);
   if(d.events.some(event=>event?.sourceInteractionId===interactionId))return;
   const delta=prospectOutcomeMetricDelta(outcome),at=Date.now();
@@ -2102,24 +2434,48 @@ async function applyProspectingOutcomeMetrics(outcome,interactionId){
     d.connects=Math.max(0,d.connects+delta.connects);
     d.events.push({id:uuid(),type:'connects',label:`Prospector · ${outcome}`,delta:delta.connects,at,sourceInteractionId:interactionId});
   }
-  d.events=d.events.slice(-500);days[key]=d;haptic();await saveDay(key);
+  d.events=d.events.slice(-500);days[key]=d;haptic();await saveDay(key,{quiet:true,awaitCloud});
 }
 
-function prospectSessionContextStrip(){if(!prospectSessionContext)return'';const c=prospectSessionContext,details=[c.eventType,c.daysOnMarket,c.guide,c.price].filter(Boolean);return`<aside class="market-session-context"><span>WHY YOU’RE CALLING</span><strong>${escapeHtml([c.address,c.suburb].filter(Boolean).join(', '))}</strong><small>${details.map(escapeHtml).join(' · ')}</small></aside>`}
-function showProspectingSession(){if(!prospectSessionActive)return closeProspectDetail();if(prospectSection!=='today')return;$('#prospectingDashboard').classList.add('hidden');$('#prospectDetail').classList.add('hidden');$('#prospectingSession').classList.remove('hidden');while(prospectSessionIndex<prospectSessionIds.length){const current=prospectById(prospectSessionIds[prospectSessionIndex]);if(current&&!current.archived)break;prospectSessionIndex++}saveProspectingSessionState();if(prospectSessionIndex>=prospectSessionIds.length){$('#prospectingSession').innerHTML=`<div class="prospect-session-head"><button type="button" data-end-session>End Session</button><span>${prospectSessionIds.length} completed</span></div><section class="prospect-session-card glass prospect-session-complete"><span class="prospect-avatar session-avatar">✓</span><h2>Queue complete</h2><p>You’ve worked through every contact in this session.</p><button class="primary" type="button" data-complete-market-session>Review & End Session</button></section>`;return}const id=prospectSessionIds[prospectSessionIndex],p=prospectById(id);const phone=primaryProspectPhone(p),tel=prospectTel(p);$('#prospectingSession').innerHTML=`<div class="prospect-session-head"><button type="button" data-end-session>End Session</button><span>${prospectSessionIndex+1} of ${prospectSessionIds.length}</span></div>${prospectSessionContextStrip()}<section class="prospect-session-card glass"><span class="prospect-avatar session-avatar">${escapeHtml(p.name.split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase())}</span><span>${escapeHtml(p.stage)} · ${p.temperature}</span><h2>${escapeHtml(p.name)}</h2><p>${escapeHtml(formatProspectAddress(p.address||p.company,p.suburb)||p.phone||'No contact detail added')}</p><div class="prospect-session-context"><div><span>LAST CONTACT</span><strong>${p.lastContact?fmtDate(p.lastContact):'Never'}</strong></div><div><span>NEXT FOLLOW-UP</span><strong>${p.nextFollowUp?fmtDate(p.nextFollowUp):'Not set'}</strong></div></div>${p.notes?`<blockquote>${escapeHtml(p.notes)}</blockquote>`:''}<a class="primary ${phone?'':'disabled'}" href="${tel}" data-prospect-call="${p.id}" data-call-from-session="1">Call ${escapeHtml(p.name.split(' ')[0])}</a><button class="secondary" type="button" data-session-log="${p.id}">Log Outcome</button><button class="text-btn" type="button" data-session-skip>Skip for now</button></section>`}
+function hotSpotSmsFirstName(p){const name=cleanText(p?.name,120);if(!name)return'there';if(/\s(?:&|and)\s/i.test(name))return name;return name.split(/\s+/)[0]||'there'}
+function hotSpotSmsPricePhrase(c){const raw=cleanText(c?.price||c?.guide,120);if(!raw||/^(?:n\/?a|contact agent|undisclosed|price withheld)$/i.test(raw))return'';const value=raw.replace(/^price\s*[:\-]?\s*/i,'').trim();if(!value)return'';const type=cleanText(c?.eventType,60).toLowerCase();if(type==='sold'||type==='auction result')return` for ${value}`;if(type==='price update')return` to ${value}`;if(type==='just listed'||type==='under offer')return` at ${value}`;return''}
+function hotSpotSmsEventPhrase(c){const type=cleanText(c?.eventType,60).toLowerCase();if(type==='just listed')return'has just been listed for sale';if(type==='sold')return'has recently sold';if(type==='price update')return'has had its advertised price updated';if(type==='withdrawn')return'has been withdrawn from the market';if(type==='under offer')return'is now under offer';if(type==='auction result')return'has had an auction result recorded';return'has had a recent market update'}
+function hotSpotSmsMovementPhrase(c){if(!c?.priceMovementDirection)return'';const type=normalisePlace(c.eventType),amount=c.priceMovementAmount?`${c.priceMovementAmount} `:'',percent=c.priceMovementPercent?` (${c.priceMovementPercent} ${c.priceMovementDirection})`:'';if(type==='sold'||type==='auction result')return`, which was ${amount}${c.priceMovementDirection} the asking price${percent}`;if(type==='price update')return`, a ${amount}reduction${percent}`;return''}
+function hotSpotSmsAgentName(){const activeUid=currentUser?.uid||uid;let savedName='';try{if(activeUid)savedName=localStorage.getItem(storagePrefix(activeUid)+'agent-name')||''}catch(err){console.warn('Agent profile name could not be read for SMS',err)}const profileName=cleanText(savedName||agentName||currentUser?.displayName||'',120);if(profileName)return profileName;const emailName=cleanText(currentUser?.email?.split('@')[0]||'',120).replace(/[._-]+/g,' ').replace(/\b\w/g,char=>char.toUpperCase());return emailName||'Agent'}
+function hotSpotSmsMessage(p){const c=prospectSessionContext||{},property=[c.address,c.suburb].filter(Boolean).join(', '),name=hotSpotSmsAgentName();return`Hi ${hotSpotSmsFirstName(p)},\n\n${name} from McGrath here. Just a quick heads up that ${property} ${hotSpotSmsEventPhrase(c)}${hotSpotSmsPricePhrase(c)}${hotSpotSmsMovementPhrase(c)}.\n\nIf you have any questions or would like to know what this means for your property, please don’t hesitate to let me know.\n\nThanks,\n${name} | McGrath`}
+function hotSpotSmsPendingKey(){return`agnt-hotspot-sms-pending-${uid||currentUser?.uid||'device'}`}
+function saveHotSpotSmsPending(value){try{if(value)localStorage.setItem(hotSpotSmsPendingKey(),JSON.stringify(value));else localStorage.removeItem(hotSpotSmsPendingKey())}catch(err){console.warn('SMS confirmation state could not be saved',err)}}
+function loadHotSpotSmsPending(){try{return JSON.parse(localStorage.getItem(hotSpotSmsPendingKey())||'null')}catch{return null}}
+function smsHref(number,body){const clean=String(number||'').replace(/[^+\d]/g,'');return`sms:${clean}${/iPhone|iPad|iPod/i.test(navigator.userAgent)?'&':'?'}body=${encodeURIComponent(body)}`}
+function openHotSpotSmsComposer(prospectId){const p=prospectById(prospectId),phone=primaryProspectPhone(p);if(!p||!phone)return toast('A mobile number is required');if(!prospectSessionContext?.eventId){window.location.href=smsHref(phone,'');return}const host=$('#prospectingSession');host.innerHTML=`<div class="prospect-session-head"><button type="button" data-cancel-sms>‹ Back</button><span>SMS Preview</span></div>${prospectSessionContextStrip()}<section class="prospect-session-card glass hotspot-sms-preview"><span class="eyebrow">MESSAGE ${escapeHtml(hotSpotSmsFirstName(p).toUpperCase())}</span><h2>Review SMS</h2><textarea data-hotspot-sms-body rows="12">${escapeHtml(hotSpotSmsMessage(p))}</textarea><button class="primary" type="button" data-open-hotspot-messages="${escapeHtml(p.id)}">Open Messages</button><button class="text-btn" type="button" data-cancel-sms>Cancel</button></section>`}
+function showHotSpotSmsConfirmation(pending=loadHotSpotSmsPending()){if(!pending||!prospectSessionActive||pending.eventId!==cleanText(prospectSessionContext?.eventId,160))return;const p=prospectById(pending.prospectId);if(!p)return saveHotSpotSmsPending(null);const host=$('#prospectingSession');if(!host)return;$('#prospectingDashboard')?.classList.add('hidden');$('#prospectDetail')?.classList.add('hidden');host.classList.remove('hidden');host.innerHTML=`<div class="prospect-session-head"><button type="button" data-sms-not-sent aria-label="Back">‹</button><span>Confirm SMS</span></div>${prospectSessionContextStrip()}<section class="prospect-session-card glass hotspot-sms-confirm"><span class="prospect-avatar session-avatar">✓</span><h2>Was the SMS sent?</h2><p>Confirm only after sending it in Messages.</p><button class="primary" type="button" data-sms-sent>SMS Sent</button><button class="secondary" type="button" data-sms-not-sent>Not Sent</button></section>`}
+function resumeHotSpotSmsReturn(){const pending=loadHotSpotSmsPending();if(!pending||!prospectSessionActive||pending.eventId!==cleanText(prospectSessionContext?.eventId,160))return;const age=Date.now()-(Number(pending.openedAt)||0);if(age<350||age>10*60*1000){if(age>10*60*1000)saveHotSpotSmsPending(null);return}switchView('prospectingView');setProspectorSection('today');showHotSpotSmsConfirmation(pending)}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(resumeHotSpotSmsReturn,420)});window.addEventListener('pageshow',()=>setTimeout(resumeHotSpotSmsReturn,420));window.addEventListener('focus',()=>setTimeout(resumeHotSpotSmsReturn,420));
+async function confirmHotSpotSmsSent(){const pending=loadHotSpotSmsPending();if(!pending)return;const p=prospectById(pending.prospectId);if(!p)return saveHotSpotSmsPending(null);const interactionId=prospectId(),at=Date.now();prospectInteractions.push({id:interactionId,prospectId:p.id,date:todayKey(),at,type:'SMS',outcome:'Sent SMS',note:cleanText(pending.message,2000),nextFollowUp:'',marketEventId:cleanText(pending.eventId,160)});prospects=prospects.map(x=>x.id===p.id?normaliseProspect({...x,lastContact:todayKey(),updatedAt:at}):x);prospectSessionStats.sms=(Number(prospectSessionStats.sms)||0)+1;prospectSessionIndex++;saveHotSpotSmsPending(null);saveProspectingSessionState();try{await saveProspecting({render:false,awaitCloud:false})}catch(err){console.error('Hot Spotting SMS save failed',err);toast('SMS was saved locally. Please check sync.')}toast('SMS logged');showProspectingSession()}
+function prospectSessionContextStrip(){if(!prospectSessionContext)return'';const c=prospectSessionContext,primary=c.price||c.guide,movement=marketMovementLabel(c),prior=c.priorPrice?`${c.guide?'Prior guide':'Asking'} ${c.priorPrice}`:'',details=[c.eventType,primary,prior,c.daysOnMarket,c.agency].filter(Boolean);return`<aside class="market-session-context"><span>WHY YOU’RE CALLING</span><strong>${escapeHtml([c.address,c.suburb].filter(Boolean).join(', '))}</strong><small>${details.map(escapeHtml).join(' · ')}</small>${movement?`<em class="market-price-movement market-price-${escapeHtml(c.priceMovementDirection)}">${escapeHtml(movement)}</em>`:''}${c.propertyDetails?`<small>${escapeHtml(c.propertyDetails)}</small>`:''}</aside>`}
+function prospectSessionHeaderStatus(remaining){return `<div class="prospect-session-head-status"><span>${remaining} remaining</span><span>${formatEstimatedTime(estimatedMinutes(remaining))} left</span></div>`}
+function showProspectingSession(){if(!prospectSessionActive)return closeProspectDetail();if(prospectSection!=='today')return;const sessionHost=$('#prospectingSession');if(sessionHost)sessionHost.dataset.sessionView='1';$('#prospectingDashboard').classList.add('hidden');$('#prospectDetail').classList.add('hidden');sessionHost?.classList.remove('hidden');while(prospectSessionIndex<prospectSessionIds.length){const current=prospectById(prospectSessionIds[prospectSessionIndex]);if(current&&!current.archived)break;prospectSessionIndex++}saveProspectingSessionState();const remaining=Math.max(0,prospectSessionIds.length-prospectSessionIndex);if(prospectSessionIndex>=prospectSessionIds.length){$('#prospectingSession').innerHTML=`<div class="prospect-session-head"><button type="button" data-session-back aria-label="Back">‹</button>${prospectSessionHeaderStatus(0)}<button type="button" data-end-session>End Session</button></div><section class="prospect-session-card glass prospect-session-complete"><span class="prospect-avatar session-avatar">✓</span><h2>Queue complete</h2><p>You’ve worked through every contact in this session.</p><button class="primary" type="button" data-complete-market-session>Review & End Session</button>${!cleanText(prospectSessionContext?.eventId,160)?'<button class="prospect-session-refresh-bottom" type="button" data-refresh-pipeline-session><span aria-hidden="true">↻</span> Refresh Session</button>':''}</section>`;return}const id=prospectSessionIds[prospectSessionIndex],p=prospectById(id);const phone=primaryProspectPhone(p),tel=prospectTel(p);$('#prospectingSession').innerHTML=`<div class="prospect-session-head"><button type="button" data-session-back aria-label="Back">‹</button>${prospectSessionHeaderStatus(remaining)}<button type="button" data-end-session>End Session</button></div>${prospectSessionContextStrip()}<section class="prospect-session-card glass"><span class="prospect-avatar session-avatar">${escapeHtml(p.name.split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase())}</span><span>${escapeHtml(p.stage)} · ${p.temperature}</span><h2>${escapeHtml(p.name)}</h2><p>${escapeHtml(formatProspectAddress(p.address||p.company,p.suburb)||p.phone||'No contact detail added')}</p><div class="prospect-session-context"><div><span>LAST CONTACT</span><strong>${p.lastContact?fmtDate(p.lastContact):'Never'}</strong></div><div><span>NEXT FOLLOW-UP</span><strong>${p.nextFollowUp?fmtDate(p.nextFollowUp):'Not set'}</strong></div></div>${p.notes?`<blockquote>${escapeHtml(p.notes)}</blockquote>`:''}<div class="prospect-session-actions"><a class="primary ${phone?'':'disabled'}" href="${tel}" data-prospect-call="${p.id}" data-call-from-session="1">Call ${escapeHtml(p.name.split(' ')[0])}</a><button class="primary hotspot-sms-btn ${phone?'':'disabled'}" type="button" data-session-sms="${p.id}" ${phone?'':'disabled'}>SMS ${escapeHtml(hotSpotSmsFirstName(p))}</button></div><button class="secondary" type="button" data-session-log="${p.id}">Log Outcome</button><button class="text-btn" type="button" data-session-skip>Skip for now</button>${!cleanText(prospectSessionContext?.eventId,160)?'<button class="prospect-session-refresh-bottom" type="button" data-refresh-pipeline-session><span aria-hidden="true">↻</span> Refresh Session</button>':''}</section>`}
 
 function endProspectingSession({completeMarketSession=false}={}){
   if(!prospectSessionActive)return closeProspectDetail();
-  const stats={...prospectSessionStats},marketEventId=cleanText(prospectSessionContext?.eventId,160),returnToHotSpotting=Boolean(marketEventId);
-  if(completeMarketSession&&marketEventId){marketPulseEvents=normaliseMarketPulseEvents(marketPulseEvents.map(event=>event.id===marketEventId?{...event,sessionStartedAt:event.sessionStartedAt||Date.now(),sessionCompletedAt:Date.now()}:event));saveLocal();queueProspectingSave().catch(err=>console.error('Hot Spotting completion sync failed',err))}
+  if(document.querySelector('.prospect-session-review-overlay'))return;
+  const stats={...prospectSessionStats},marketEventId=cleanText(prospectSessionContext?.eventId,160),returnToHotSpotting=Boolean(marketEventId),marketEvent=marketPulseEvents.find(event=>event.id===marketEventId),marketProgress=marketEvent?marketSessionProgress(marketEvent,marketMatches(marketEvent)):null;
+  if(marketEventId){
+    marketPulseEvents=normaliseMarketPulseEvents(marketPulseEvents.map(event=>event.id===marketEventId?{
+      ...event,
+      sessionStartedAt:completeMarketSession?(event.sessionStartedAt||Date.now()):0,
+      sessionCompletedAt:completeMarketSession?Date.now():0
+    }:event));
+    saveLocal();
+    queueProspectingSave().catch(err=>console.error(completeMarketSession?'Hot Spotting completion sync failed':'Hot Spotting session reset sync failed',err));
+  }
   prospectSessionActive=false;prospectSessionIds=[];prospectSessionIndex=0;prospectSessionContext=null;clearProspectingSessionState();
-  $('#prospectingSession').classList.add('hidden');
-  $('#prospectDetail').classList.add('hidden');
-  $('#prospectingDashboard').classList.remove('hidden');
-  setProspectorSection(returnToHotSpotting?'market':'today');
-  renderProspecting();
-  if(returnToHotSpotting)requestAnimationFrame(()=>{const view=$('#prospectingView');if(view)view.scrollTop=0});
-  const overlay=document.createElement('div');overlay.className='prospect-session-review-overlay';overlay.innerHTML=`<section class="prospect-session-review glass" role="dialog" aria-modal="true" aria-label="Session review"><span class="eyebrow">SESSION REVIEW</span><h2>Strong work.</h2><p>Here’s what you completed.</p><div class="prospect-session-review-grid"><div><strong>${stats.calls}</strong><span>Calls</span></div><div><strong>${stats.connects}</strong><span>Connects</span></div><div><strong>${stats.temperate}</strong><span>Warm / Hot</span></div><div><strong>${stats.appointments}</strong><span>Appointments</span></div></div><button class="primary" type="button" data-close-session-review>Done</button></section>`;document.body.append(overlay);overlay.querySelector('[data-close-session-review]').onclick=()=>overlay.remove();
+  if($('#prospectingSession'))delete $('#prospectingSession').dataset.sessionView;
+  $('#prospectingSession').classList.add('hidden');$('#prospectDetail').classList.add('hidden');$('#prospectingDashboard').classList.remove('hidden');
+  const overlay=document.createElement('div');overlay.className='prospect-session-review-overlay';overlay.innerHTML=`<section class="prospect-session-review glass" role="dialog" aria-modal="true" aria-label="Session review"><span class="eyebrow">SESSION REVIEW</span><h2>Strong work.</h2><p>Here’s what you completed.</p><div class="prospect-session-review-grid ${returnToHotSpotting?'expanded':''}">${returnToHotSpotting?`<div><strong>${marketProgress?.total||0}</strong><span>Neighbours</span></div>`:''}<div><strong>${stats.calls}</strong><span>Calls</span></div><div><strong>${Number(stats.sms)||0}</strong><span>SMS</span></div><div><strong>${stats.connects}</strong><span>Connects</span></div>${returnToHotSpotting?`<div><strong>${marketEvent?.skippedProspectIds?.length||0}</strong><span>Skips</span></div><div><strong>${marketProgress?.followUps||0}</strong><span>Follow-ups</span></div>`:`<div><strong>${stats.temperate}</strong><span>Warm / Hot</span></div><div><strong>${stats.appointments}</strong><span>Appointments</span></div>`}</div><button class="primary" type="button" data-close-session-review>Done</button></section>`;document.body.append(overlay);
+  overlay.querySelector('[data-close-session-review]').onclick=()=>{
+    overlay.remove();setProspectorSection(returnToHotSpotting?'market':'today');renderProspecting();if(returnToHotSpotting)requestAnimationFrame(()=>{const view=$('#prospectingView');if(view)view.scrollTop=0});
+  };
 }
 
 
@@ -2138,20 +2494,19 @@ function knockingLogMeta(entry){const appointment=entry.type==='MAP'||entry.type
 function renderKnockingSessionLog(){const host=$('#knockingSessionLog');if(!host)return;const log=dailyKnockingLog(todayKey());if(!log.length){host.innerHTML='<div class="knocking-log-empty">No data or appointments captured yet.</div>';return}host.innerHTML=[...log].reverse().map(entry=>`<article class="knocking-log-item"><div><span>${escapeHtml(entry.type)}</span><strong>${escapeHtml(entry.name||'Unnamed contact')}</strong><small>${escapeHtml(knockingLogMeta(entry)||'Details captured')}</small></div><div class="knocking-log-actions"><button type="button" data-edit-knock-log="${escapeHtml(entry.id)}">Edit</button><button type="button" data-delete-knock-log="${escapeHtml(entry.id)}">Delete</button></div></article>`).join('')}
 function titleCaseMarketStreet(value=''){return String(value||'').split(/\s+/).filter(Boolean).map(word=>word.charAt(0).toUpperCase()+word.slice(1)).join(' ')}
 function knockingHotSpottingRecommendations(){
-  const rank={withdrawn:6,'just listed':5,listed:5,sold:4,'price changed':3,'price change':3,'under offer':2};
   const grouped=new Map();
   for(const event of normaliseMarketPulseEvents(marketPulseEvents)){
     const key=marketStreetKey(event.address,event.suburb)||event.streetKey;if(!key)continue;
-    const [street,suburb]=key.split('|'),type=cleanText(event.eventType,60),score=rank[normalisePlace(type)]||1;
-    const existing=grouped.get(key)||{key,street:titleCaseMarketStreet(street),suburb:titleCaseMarketStreet(suburb),score:0,events:[]};
-    existing.score=Math.max(existing.score,score);existing.events.push(event);grouped.set(key,existing);
+    const [street,suburb]=key.split('|'),matches=marketMatches(event),priority=hotSpottingPriority(event,matches.length),recency=relativeEventRecency(event);
+    const existing=grouped.get(key)||{key,street:titleCaseMarketStreet(street),suburb:titleCaseMarketStreet(suburb),score:0,events:[],neighbours:new Set(),newestDays:Infinity};
+    existing.score=Math.max(existing.score,priority.score);existing.events.push(event);matches.forEach(p=>existing.neighbours.add(p.id));existing.newestDays=Math.min(existing.newestDays,recency.days);grouped.set(key,existing);
   }
-  return [...grouped.values()].sort((a,b)=>b.score-a.score||b.events.length-a.events.length||b.events.at(-1).createdAt-a.events.at(-1).createdAt).slice(0,5);
+  return [...grouped.values()].map(item=>({...item,neighbourCount:item.neighbours.size,priority:item.score>=72?'High':item.score>=50?'Medium':'Standard',recency:item.newestDays===0?'Today':item.newestDays===1?'Yesterday':`${item.newestDays} days ago`,conversations:streetConversationCount(item.events,item.neighbours)})).sort((a,b)=>b.score-a.score||b.neighbourCount-a.neighbourCount||a.newestDays-b.newestDays).slice(0,5);
 }
 function renderKnockingHotSpotting(){
   const section=$('#knockingHotSpottingRecommendations'),host=$('#knockingHotSpottingList'),count=$('#knockingHotSpottingCount');if(!section||!host)return;
   const streets=knockingHotSpottingRecommendations();section.classList.toggle('hidden',!streets.length);if(count)count.textContent=streets.length;
-  host.innerHTML=streets.map(item=>{const reasons=[...new Set(item.events.map(event=>cleanText(event.eventType,60)).filter(Boolean))];const properties=item.events.map(event=>event.address).filter(Boolean);return `<article class="knocking-hotspot-item"><div><strong>${escapeHtml(item.street)}</strong><small>${escapeHtml(item.suburb)}</small></div><div class="knocking-hotspot-reasons">${reasons.map(reason=>`<span class="market-event-tag event-${marketTypeClass(reason)}">${escapeHtml(reason)}</span>`).join('')}</div><p>${escapeHtml(properties.slice(0,2).join(' · '))}${properties.length>2?` · +${properties.length-2} more`:''}</p></article>`}).join('');
+  host.innerHTML=streets.map(item=>{const reasons=[...new Set(item.events.map(event=>cleanText(event.eventType,60)).filter(Boolean))],properties=item.events.map(event=>event.address).filter(Boolean),context=`${item.neighbourCount} neighbour${item.neighbourCount===1?'':'s'} · ${item.recency} · ${item.conversations} previous street conversation${item.conversations===1?'':'s'}`;return `<article class="knocking-hotspot-item"><div><strong>${escapeHtml(item.street)}</strong><small>${escapeHtml(item.suburb)}</small></div><div class="knocking-hotspot-reasons">${reasons.map(reason=>`<span class="market-event-tag event-${marketTypeClass(reason)}">${escapeHtml(reason)}</span>`).join('')}</div><div class="knocking-recommendation-context"><span class="priority-${item.priority.toLowerCase()}">${item.priority} priority</span><span>${formatEstimatedTime(estimatedMinutes(item.neighbourCount,150))}</span></div><p><strong>${escapeHtml(context)}</strong><br>${escapeHtml(properties.slice(0,2).join(' · '))}${properties.length>2?` · +${properties.length-2} more`:''}</p></article>`}).join('');
 }
 function renderKnockingSession(){
   const session=$('#knockingSession');if(!session)return;
@@ -2235,13 +2590,404 @@ async function endKnockingSession(){
 function parseCsv(text){const rows=[];let row=[],cell='',quoted=false;for(let i=0;i<text.length;i++){const c=text[i],n=text[i+1];if(c==='"'&&quoted&&n==='"'){cell+='"';i++;continue}if(c==='"'){quoted=!quoted;continue}if(c===','&&!quoted){row.push(cell);cell='';continue}if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&n==='\n')i++;row.push(cell);if(row.some(x=>x.trim()))rows.push(row);row=[];cell='';continue}cell+=c}row.push(cell);if(row.some(x=>x.trim()))rows.push(row);return rows}
 async function importProspectCsv(file){const rows=parseCsv(await file.text());if(rows.length<2)throw new Error('No contact rows found');const headers=rows.shift().map(x=>x.trim().toLowerCase());const findExact=(obj,names)=>{for(const n of names){const key=headers.findIndex(h=>h===n);if(key>=0&&obj[key])return obj[key]}return''};const find=(obj,names)=>{const exact=findExact(obj,names);if(exact)return exact;for(const n of names){const key=headers.findIndex(h=>h.includes(n));if(key>=0&&obj[key])return obj[key]}return''};let added=0;for(const r of rows){const name=find(r,['name','contact name','full name'])||[find(r,['first name']),find(r,['last name'])].filter(Boolean).join(' ');const phone=find(r,['mobile','phone','telephone']);const email=find(r,['email']);const organisation=findExact(r,['organisation','organization']);const company=findExact(r,['company']);const suburb=find(r,['suburb']);const rawAddress=organisation||findExact(r,['address'])||find(r,['property address','street address'])||company;const address=formatProspectAddress(rawAddress,suburb);if(!name&&!phone&&!email&&!address&&!company)continue;prospects.push(normaliseProspect({name:name||'Unnamed contact',phone,email,address,company:organisation||company,suburb,source:find(r,['source']),tags:find(r,['tags','category']),stage:find(r,['stage'])||'Nurture',temperature:find(r,['temperature'])||'Cold',nextFollowUp:find(r,['next follow up','follow up date'])}));added++}prospects=normaliseProspects(prospects);await saveProspecting();toast(`${added} contact${added===1?'':'s'} imported`)}
 
-function renderSettings(){const name=displayAgentName();$('#agentName').value=name;$('#callsTarget').value=targets.calls;$('#connectsTarget').value=targets.connects;$('#dataTarget').value=targets.data;$('#weeklyKnockTarget').value=targets.weeklyKnock;$$('[name=workDay]').forEach(el=>el.checked=workDays.includes(Number(el.value)));$$('[name=calendarPreference]').forEach(el=>el.checked=el.value===calendarPreference);$('#accountEmail').textContent=currentUser?.email||'Device-only mode';$('#modeNote').textContent=cloud?'Live sync is active. Use the same login on every device.':'Data is stored only on this device.';const initials=name.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]?.toUpperCase()||'').join('')||'A';if($('#profileAvatar'))$('#profileAvatar').textContent=initials;if($('#profileSyncState'))$('#profileSyncState').textContent=cloud?'Live sync active':'Device-only profile';if($('#profileTodayScore'))$('#profileTodayScore').textContent=`${completion(todayKey())}%`;if($('#profileWeekScore'))$('#profileWeekScore').textContent=`${weekSummary().score}%`;if($('#profileWorkDays'))$('#profileWorkDays').textContent=workDays.length;renderPasskeySettings()}
+const TEAM_SCHEMA_VERSION=2;
+function normaliseTeamCode(value){return String(value||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,10)}
+function makeTeamCode(){const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',bytes=new Uint8Array(10);crypto.getRandomValues(bytes);return Array.from(bytes,b=>chars[b%chars.length]).join('')}
+function makeTeamId(){return `team_${crypto.randomUUID?.()||uuid()}`.replace(/[^A-Za-z0-9_-]/g,'_')}
+function setTeamLayerStatus(status,error=''){teamLayerStatus=status;teamLayerError=error||'';renderTeamSettings();renderLeaderboardStatus()}
+function clearVerifiedTeamState({forgetCached=false}={}){unsubLeaderboard?.();unsubLeaderboard=null;subscribedTeamId='';teamLeaderboardDataSignature='';lastTeamLeaderboardSignature='';if(forgetCached)forgetCachedTeamState();accountMode='unconfigured';teamId=null;teamRole=null;teamName='';teamJoinCode='';stopTeamMembershipSubscriptions();leaderboardEntries=[leaderboardPayload()];renderLeaderboard()}
+function setVerifiedTeamState({mode='unconfigured',id=null,role=null,name='',joinCode=''}={}, {cache=true}={}){accountMode=mode;teamId=id;teamRole=role;teamName=name;teamJoinCode=joinCode;if(cache)cacheVerifiedTeamState()}
+function restoreCachedTeamState(){const cached=readCachedTeamState(uid);if(!cached)return false;setVerifiedTeamState(cached,{cache:false});return true}
+function teamLeaderboardEntriesSignature(entries){return JSON.stringify((entries||[]).map(entry=>[String(entry.uid||''),leaderboardSignature(entry)]).sort((a,b)=>a[0].localeCompare(b[0])))}
+function isTransientTeamError(error){return['aborted','cancelled','deadline-exceeded','network-request-failed','resource-exhausted','unavailable','unknown'].includes(String(error?.code||'').replace(/^firestore\//,''))}
+function teamSetupMessage(message,state='info'){
+  const node=$('#teamSetupMessage');if(!node)return;
+  node.textContent=message||'';node.dataset.state=message?state:'';
+}
+function setTeamSetupBusy(busy,{button=null,label=''}={}){
+  teamSetupBusy=Boolean(busy);
+  const card=$('.team-onboarding-card');card?.setAttribute('aria-busy',String(teamSetupBusy));
+  $$('#teamOnboarding button,#teamOnboarding input').forEach(control=>{control.disabled=teamSetupBusy&&control.id!=='closeTeamSetup'});
+  if(button){
+    const control=$(button);if(control)control.textContent=teamSetupBusy?(label||control.textContent):(control.dataset.idleLabel||control.textContent);
+  }
+}
+function showTeamSetupPanel(panel='choices'){
+  if(teamSetupBusy)return;
+  const titles={choices:'teamOnboardingTitle',create:'teamCreateTitle',join:'teamJoinTitle','join-confirm':'teamJoinConfirmTitle',created:'teamCreatedTitle'};
+  $$('[data-team-panel]').forEach(el=>el.classList.toggle('hidden',el.dataset.teamPanel!==panel));
+  $('.team-onboarding-card')?.setAttribute('aria-labelledby',titles[panel]||titles.choices);
+  const close=$('#closeTeamSetup');if(close)close.textContent=panel==='created'?'Done':'Later';
+  teamSetupMessage('');
+  requestAnimationFrame(()=>{
+    const focusTarget=panel==='create'?$('#newTeamName'):panel==='join'?$('#teamCodeInput'):panel==='join-confirm'?$('#confirmJoinTeam'):panel==='created'?$('#shareCreatedTeamInvite'):$('#teamChoiceSolo');
+    focusTarget?.focus({preventScroll:true});
+  });
+}
+function showTeamOnboarding(){
+  if(!cloud||!currentUser)return;
+  if(accountMode==='team'&&teamId)return toast(teamRole==='owner'?'Use Team Management for your current team':'Leave your current team before choosing another setup');
+  pendingTeamJoin=null;
+  teamSetupReturnFocus=document.activeElement instanceof HTMLElement?document.activeElement:null;
+  teamOnboardingActive=true;$('#teamOnboardingEmail').textContent=currentUser.email||'';
+  $('#teamOnboarding').classList.remove('hidden');$('#teamOnboarding').setAttribute('aria-hidden','false');document.body.classList.add('team-setup-open');
+  showTeamSetupPanel('choices');
+}
+function hideTeamOnboarding(){
+  pendingTeamJoin=null;teamOnboardingActive=false;$('#teamOnboarding').classList.add('hidden');$('#teamOnboarding').setAttribute('aria-hidden','true');document.body.classList.remove('team-setup-open');if($('#closeTeamSetup'))$('#closeTeamSetup').textContent='Later';
+  const returnFocus=teamSetupReturnFocus;teamSetupReturnFocus=null;if(returnFocus?.isConnected)requestAnimationFrame(()=>returnFocus.focus({preventScroll:true}));
+}
+async function verifyMembership(profile={}){
+  const id=String(profile.teamId||'');
+  if(profile.accountMode!=='team'||!id)return null;
+  const [memberSnap,teamSnap]=await Promise.all([getDoc(doc(db,'teams',id,'members',uid)),getDoc(doc(db,'teams',id))]);
+  if(!memberSnap.exists())return null;
+  const member=memberSnap.data();
+  if(!teamSnap.exists())return null;
+  const team=teamSnap.data();
+  return{id,role:String(member.role||profile.teamRole||'member'),name:String(team.name||profile.teamName||'Team'),joinCode:String(team.joinCode||'')};
+}
+function clearTeamMembersSubscription(){
+  unsubTeamMembers?.();unsubTeamMembers=null;subscribedMembersTeamId='';teamMembers=[];teamMembersStatus='idle';teamMembersError='';teamMembersDataSignature='';renderTeamManager();renderTeamSettings();
+}
+function stopTeamMembershipSubscriptions(){
+  unsubTeamMembership?.();unsubTeamMembership=null;subscribedMembershipTeamId='';stopTeamAppointmentLayer();clearTeamMembersSubscription();hideTeamManager({restoreFocus:false});closeTeamMemberRemoval({force:true});hideTeamCodeRefreshConfirmation({force:true,restoreFocus:false});hideTeamDeleteConfirmation({force:true,restoreFocus:false});
+}
+function teamMembersSignature(entries){
+  return JSON.stringify((entries||[]).map(member=>[String(member.uid||''),String(member.role||''),String(member.name||''),String(member.email||''),Number(member.joinedAt?.seconds)||Number(member.joinedAt)||0]).sort((a,b)=>a[0].localeCompare(b[0])));
+}
+function teamMemberDisplayName(member){
+  const live=leaderboardEntries.find(entry=>String(entry.uid||'')===String(member.uid||''));
+  return String(live?.name||member.name||member.email?.split('@')[0]||'Team member').trim()||'Team member';
+}
+function teamMemberInitials(member){return teamMemberDisplayName(member).split(/\s+/).filter(Boolean).slice(0,2).map(part=>part[0]?.toUpperCase()||'').join('')||'A'}
+function teamMemberActivityLabel(member){
+  const live=leaderboardEntries.find(entry=>String(entry.uid||'')===String(member.uid||''));
+  if(live){const score=Math.max(0,Math.min(100,Number(live.score)||0));return live.date===todayKey()?`${score}% today`:`${score}% latest score`}
+  const raw=member.joinedAt,ms=typeof raw?.toMillis==='function'?raw.toMillis():Number(raw?.seconds)?Number(raw.seconds)*1000:Number(raw)||0;
+  return ms?`Joined ${new Intl.DateTimeFormat('en-AU',{day:'numeric',month:'short'}).format(new Date(ms))}`:'Waiting for activity';
+}
+function teamManagerMessage(message='',state=''){
+  const node=$('#teamManagerStatus');if(!node)return;node.textContent=message;node.dataset.state=message?state:'';
+}
+function renderTeamManager(){
+  const list=$('#teamMemberList');if(!list)return;
+  $('#teamManagerTitle').textContent=teamName||'Your team';
+  $('#teamManagerCode').textContent=teamRole==='owner'?teamJoinCode:'';
+  const count=teamMembers.length;$('#teamManagerMemberCount').textContent=`${count} member${count===1?'':'s'}`;
+  $('#teamManagerSummary').textContent=count?`${count} verified member${count===1?'':'s'} can access this private leaderboard.`:'Manage access to your private leaderboard.';
+  if(teamMembers.length){
+    list.innerHTML=teamMembers.map(member=>{
+      const memberId=String(member.uid||''),isOwner=member.role==='owner',isCurrent=memberId===uid,name=teamMemberDisplayName(member),email=String(member.email||'');
+      const action=isOwner||isCurrent?`<span class="team-member-you">${isCurrent?'You':'Owner'}</span>`:`<button class="team-member-action" type="button" data-remove-team-member="${escapeHtml(memberId)}" aria-label="Remove ${escapeHtml(name)} from ${escapeHtml(teamName||'team')}">Remove</button>`;
+      return `<article class="team-member-row" role="listitem"><span class="team-member-avatar" aria-hidden="true">${escapeHtml(teamMemberInitials(member))}</span><div class="team-member-copy"><div class="team-member-name-line"><strong>${escapeHtml(name)}</strong><span class="team-member-role">${isOwner?'Owner':'Member'}</span></div><small>${escapeHtml(email||'No email shown')}</small><em>${escapeHtml(teamMemberActivityLabel(member))}</em></div>${action}</article>`;
+    }).join('');
+  }else if(teamMembersStatus==='connecting'||teamMembersStatus==='cached')list.innerHTML='<div class="team-member-empty"><strong>Loading members…</strong><small>Confirming the latest team access.</small></div>';
+  else list.innerHTML='<div class="team-member-empty"><strong>No members found</strong><small>Share the invite code to add your first team member.</small></div>';
+  if(!navigator.onLine)teamManagerMessage('Offline. The last confirmed member list is shown.');
+  else if(teamMembersStatus==='error')teamManagerMessage(teamMembersError||'The member list could not be loaded.','error');
+  else if(teamMembersStatus==='connecting')teamManagerMessage('Updating the member list…');
+  else if($('#teamManagerStatus')?.dataset.state!=='success')teamManagerMessage('');
+}
+function showTeamManager(){
+  if(!cloud||accountMode!=='team'||teamRole!=='owner'||!teamId)return toast('Only the team owner can manage members');
+  subscribeTeamMembersForOwner();teamManagerReturnFocus=document.activeElement instanceof HTMLElement?document.activeElement:null;teamManagerOpen=true;teamManagerMessage('');renderTeamManager();
+  $('#teamManager').classList.remove('hidden');$('#teamManager').setAttribute('aria-hidden','false');document.body.classList.add('team-manager-open');requestAnimationFrame(()=>$('#closeTeamManager')?.focus({preventScroll:true}));
+}
+function hideTeamManager({restoreFocus=true}={}){
+  teamManagerOpen=false;$('#teamManager')?.classList.add('hidden');$('#teamManager')?.setAttribute('aria-hidden','true');document.body.classList.remove('team-manager-open');closeTeamMemberRemoval();
+  const returnFocus=teamManagerReturnFocus;teamManagerReturnFocus=null;if(restoreFocus&&returnFocus?.isConnected)requestAnimationFrame(()=>returnFocus.focus({preventScroll:true}));
+}
+function openTeamMemberRemoval(memberId){
+  if(teamMemberActionBusy||accountMode!=='team'||teamRole!=='owner')return;
+  const member=teamMembers.find(entry=>String(entry.uid||'')===String(memberId||''));if(!member||member.role==='owner'||member.uid===uid)return;
+  pendingTeamMemberRemoval=member;const name=teamMemberDisplayName(member);$('#teamRemoveTitle').textContent=`Remove ${name}?`;$('#teamRemoveDescription').textContent=`${name} will lose access to ${teamName||'this team'} and its leaderboard. Their contacts, notes and personal AGNT data will not be deleted. The invite code will refresh so the old code cannot be reused.`;$('#teamRemoveStatus').textContent='';
+  $('#teamRemoveConfirm').classList.remove('hidden');$('#teamRemoveConfirm').setAttribute('aria-hidden','false');requestAnimationFrame(()=>$('#cancelTeamMemberRemoval')?.focus({preventScroll:true}));
+}
+function closeTeamMemberRemoval({force=false}={}){
+  if(teamMemberActionBusy&&!force)return;if(force)teamMemberActionBusy=false;pendingTeamMemberRemoval=null;$('#teamRemoveConfirm')?.classList.add('hidden');$('#teamRemoveConfirm')?.setAttribute('aria-hidden','true');if(teamManagerOpen)requestAnimationFrame(()=>$('#closeTeamManager')?.focus({preventScroll:true}));
+}
+async function confirmTeamMemberRemoval(){
+  if(teamMemberActionBusy||!pendingTeamMemberRemoval||accountMode!=='team'||teamRole!=='owner'||!teamId)return;
+  if(!navigator.onLine){$('#teamRemoveStatus').textContent='Connect to the internet to remove this member.';return}
+  const member={...pendingTeamMemberRemoval},removalTeamId=teamId,name=teamMemberDisplayName(member),previousCode=String(teamJoinCode||''),nextCode=makeTeamCode();if(member.role==='owner'||member.uid===uid)return;
+  teamMemberActionBusy=true;$('#cancelTeamMemberRemoval').disabled=true;$('#confirmTeamMemberRemoval').disabled=true;$('#confirmTeamMemberRemoval').textContent='Removing…';$('#teamRemoveStatus').textContent='Updating team access…';
+  try{
+    const batch=writeBatch(db),now=serverTimestamp();batch.delete(doc(db,'teams',removalTeamId,'members',member.uid));batch.delete(doc(db,'teams',removalTeamId,'leaderboard',member.uid));batch.set(doc(db,'teams',removalTeamId),{joinCode:nextCode,updatedAt:now},{merge:true});batch.set(doc(db,'teamCodes',nextCode),{code:nextCode,teamId:removalTeamId,teamName:teamName||'Team',ownerUid:uid,createdAt:now});if(previousCode)batch.delete(doc(db,'teamCodes',previousCode));await batch.commit();
+    teamJoinCode=nextCode;cacheVerifiedTeamState();teamMembers=teamMembers.filter(entry=>String(entry.uid||'')!==String(member.uid));teamMembersDataSignature=teamMembersSignature(teamMembers);pendingTeamMemberRemoval=null;teamMemberActionBusy=false;$('#teamRemoveConfirm').classList.add('hidden');$('#teamRemoveConfirm').setAttribute('aria-hidden','true');renderTeamManager();renderTeamSettings();teamManagerMessage(`${name} was removed. Their personal AGNT data is unchanged and the invite code was refreshed.`,'success');toast(`${name} removed from ${teamName||'team'}`);
+  }catch(err){console.error('Remove team member failed',err);$('#teamRemoveStatus').textContent='This member could not be removed. No personal data was changed.'}
+  finally{teamMemberActionBusy=false;$('#cancelTeamMemberRemoval').disabled=false;$('#confirmTeamMemberRemoval').disabled=false;$('#confirmTeamMemberRemoval').textContent='Remove member'}
+}
+function showTeamCodeRefreshConfirmation(){
+  if(!cloud||accountMode!=='team'||teamRole!=='owner'||!teamId||teamInviteRefreshBusy)return;
+  teamInviteRefreshReturnFocus=document.activeElement instanceof HTMLElement?document.activeElement:null;
+  $('#teamCodeRefreshDescription').textContent=`The current code${teamJoinCode?` ${teamJoinCode}`:''} will stop working immediately and a new code will be created for ${teamName||'your team'}.`;
+  $('#teamCodeRefreshStatus').textContent='';$('#teamCodeRefreshConfirm').classList.remove('hidden');$('#teamCodeRefreshConfirm').setAttribute('aria-hidden','false');document.body.classList.add('team-code-refresh-open');requestAnimationFrame(()=>$('#cancelTeamCodeRefresh')?.focus({preventScroll:true}));
+}
+function hideTeamCodeRefreshConfirmation({force=false,restoreFocus=true}={}){
+  if(teamInviteRefreshBusy&&!force)return;if(force)teamInviteRefreshBusy=false;
+  $('#teamCodeRefreshConfirm')?.classList.add('hidden');$('#teamCodeRefreshConfirm')?.setAttribute('aria-hidden','true');document.body.classList.remove('team-code-refresh-open');
+  const cancel=$('#cancelTeamCodeRefresh'),confirm=$('#confirmTeamCodeRefresh'),status=$('#teamCodeRefreshStatus');if(cancel)cancel.disabled=false;if(confirm){confirm.disabled=false;confirm.textContent='Refresh code'}if(status)status.textContent='';
+  const returnFocus=teamInviteRefreshReturnFocus;teamInviteRefreshReturnFocus=null;if(restoreFocus&&returnFocus?.isConnected)requestAnimationFrame(()=>returnFocus.focus({preventScroll:true}));
+}
+async function confirmTeamCodeRefresh(){
+  if(teamInviteRefreshBusy||!cloud||!db||!uid||accountMode!=='team'||teamRole!=='owner'||!teamId)return;
+  if(!navigator.onLine){$('#teamCodeRefreshStatus').textContent='Connect to the internet to refresh the invite code.';return}
+  const refreshTeamId=String(teamId),refreshTeamName=String(teamName||'Team'),previousCode=String(teamJoinCode||''),nextCode=makeTeamCode();teamInviteRefreshBusy=true;$('#cancelTeamCodeRefresh').disabled=true;$('#confirmTeamCodeRefresh').disabled=true;$('#confirmTeamCodeRefresh').textContent='Refreshing…';$('#teamCodeRefreshStatus').textContent='Creating a secure new invite code…';
+  try{
+    const batch=writeBatch(db),now=serverTimestamp();batch.set(doc(db,'teams',refreshTeamId),{joinCode:nextCode,updatedAt:now},{merge:true});batch.set(doc(db,'teamCodes',nextCode),{code:nextCode,teamId:refreshTeamId,teamName:refreshTeamName,ownerUid:uid,createdAt:now});if(previousCode)batch.delete(doc(db,'teamCodes',previousCode));await batch.commit();
+    teamJoinCode=nextCode;cacheVerifiedTeamState();teamInviteRefreshBusy=false;renderTeamManager();renderTeamSettings();hideTeamCodeRefreshConfirmation({force:true,restoreFocus:false});teamManagerMessage('Invite code refreshed. Existing members stay connected.','success');toast('New team invite code ready');requestAnimationFrame(()=>$('#shareTeamManagerInvite')?.focus({preventScroll:true}));
+  }catch(err){console.error('Refresh team invite code failed',err);teamInviteRefreshBusy=false;$('#teamCodeRefreshStatus').textContent='The invite code was not changed. Please try again.';$('#cancelTeamCodeRefresh').disabled=false;$('#confirmTeamCodeRefresh').disabled=false;$('#confirmTeamCodeRefresh').textContent='Refresh code'}
+}
+function showTeamDeleteConfirmation(){
+  if(teamDeleteBusy||!cloud||!db||!uid||accountMode!=='team'||teamRole!=='owner'||!teamId)return;
+  teamDeleteReturnFocus=document.activeElement instanceof HTMLElement?document.activeElement:null;
+  $('#teamDeleteTitle').textContent=`Delete ${teamName||'this team'}?`;
+  $('#teamDeleteDescription').textContent=`This permanently removes ${teamName||'this team'}, its invite code, memberships and team leaderboard. Everyone’s contacts, notes, appointments, activity history and personal AGNT data stay with their own accounts.`;
+  $('#teamDeleteStatus').textContent='';$('#teamDeleteConfirm').classList.remove('hidden');$('#teamDeleteConfirm').setAttribute('aria-hidden','false');document.body.classList.add('team-leave-open');requestAnimationFrame(()=>$('#cancelTeamDelete')?.focus({preventScroll:true}));
+}
+function hideTeamDeleteConfirmation({force=false,restoreFocus=true}={}){
+  if(teamDeleteBusy&&!force)return;if(force)teamDeleteBusy=false;
+  $('#teamDeleteConfirm')?.classList.add('hidden');$('#teamDeleteConfirm')?.setAttribute('aria-hidden','true');document.body.classList.remove('team-leave-open');
+  const cancel=$('#cancelTeamDelete'),confirm=$('#confirmTeamDelete'),status=$('#teamDeleteStatus');if(cancel)cancel.disabled=false;if(confirm){confirm.disabled=false;confirm.textContent='Delete team'}if(status)status.textContent='';
+  const returnFocus=teamDeleteReturnFocus;teamDeleteReturnFocus=null;if(restoreFocus&&returnFocus?.isConnected)requestAnimationFrame(()=>returnFocus.focus({preventScroll:true}));
+}
+async function confirmTeamDelete(){
+  if(teamDeleteBusy||!cloud||!db||!uid||accountMode!=='team'||teamRole!=='owner'||!teamId)return;
+  if(!navigator.onLine){$('#teamDeleteStatus').textContent='Connect to the internet before deleting this team.';return}
+  const deletingTeamId=String(teamId),deletingTeamName=String(teamName||'your team'),deletingJoinCode=String(teamJoinCode||'');teamDeleteBusy=true;$('#cancelTeamDelete').disabled=true;$('#confirmTeamDelete').disabled=true;$('#confirmTeamDelete').textContent='Deleting…';$('#teamDeleteStatus').textContent='Removing team access while keeping personal data safe…';
+  try{
+    const [membersSnap,leaderboardSnap,appointmentsSnap]=await Promise.all([getDocs(collection(db,'teams',deletingTeamId,'members')),getDocs(collection(db,'teams',deletingTeamId,'leaderboard')),getDocs(collection(db,'teams',deletingTeamId,'appointments'))]);
+    const batch=writeBatch(db),now=serverTimestamp();
+    membersSnap.docs.forEach(item=>batch.delete(item.ref));leaderboardSnap.docs.forEach(item=>batch.delete(item.ref));appointmentsSnap.docs.forEach(item=>batch.delete(item.ref));
+    if(deletingJoinCode)batch.delete(doc(db,'teamCodes',deletingJoinCode));
+    batch.delete(doc(db,'teams',deletingTeamId));
+    batch.set(doc(db,'users',uid),{accountMode:'unconfigured',teamId:null,teamRole:null,teamName:null,teamSchemaVersion:TEAM_SCHEMA_VERSION,teamOnboardingSuggested:true,updatedAt:now},{merge:true});
+    await batch.commit();
+    clearVerifiedTeamState({forgetCached:true});setTeamLayerStatus('deleted',`${deletingTeamName} was deleted. Personal AGNT data was not changed.`);hideTeamDeleteConfirmation({force:true,restoreFocus:false});hideTeamManager({restoreFocus:false});renderSettings();showTeamOnboarding();teamSetupReturnFocus=null;requestAnimationFrame(()=>teamSetupMessage(`${deletingTeamName} was deleted. Choose Solo, create a team or join another team. Everyone’s personal data is unchanged.`,'success'));toast(`${deletingTeamName} deleted`);
+  }catch(err){console.error('Delete team failed',err);teamDeleteBusy=false;$('#teamDeleteStatus').textContent='The team was not deleted. No personal data was changed.';$('#cancelTeamDelete').disabled=false;$('#confirmTeamDelete').disabled=false;$('#confirmTeamDelete').textContent='Delete team'}
+}
+function showTeamLeaveConfirmation(){
+  if(!cloud||accountMode!=='team'||teamRole==='owner'||!teamId)return;
+  teamLeaveReturnFocus=document.activeElement instanceof HTMLElement?document.activeElement:null;
+  $('#teamLeaveTitle').textContent=`Leave ${teamName||'your team'}?`;
+  $('#teamLeaveDescription').textContent=`You will leave ${teamName||'this team'} and be removed from its leaderboard. Your contacts, notes, appointments, activity history and account data will stay with you.`;
+  $('#teamLeaveStatus').textContent='';
+  $('#teamLeaveConfirm').classList.remove('hidden');$('#teamLeaveConfirm').setAttribute('aria-hidden','false');document.body.classList.add('team-leave-open');
+  requestAnimationFrame(()=>$('#cancelTeamLeave')?.focus({preventScroll:true}));
+}
+function hideTeamLeaveConfirmation({force=false,restoreFocus=true}={}){
+  if(teamLeaveBusy&&!force)return;
+  if(force)teamLeaveBusy=false;
+  $('#teamLeaveConfirm')?.classList.add('hidden');$('#teamLeaveConfirm')?.setAttribute('aria-hidden','true');document.body.classList.remove('team-leave-open');
+  const cancel=$('#cancelTeamLeave'),confirm=$('#confirmTeamLeave'),status=$('#teamLeaveStatus');if(cancel)cancel.disabled=false;if(confirm){confirm.disabled=false;confirm.textContent='Leave team'}if(status)status.textContent='';
+  const returnFocus=teamLeaveReturnFocus;teamLeaveReturnFocus=null;if(restoreFocus&&returnFocus?.isConnected)requestAnimationFrame(()=>returnFocus.focus({preventScroll:true}));
+}
+function completeTeamLeaveTransition(previousTeamName='your previous team'){
+  const safeName=String(previousTeamName||'your previous team');teamLeaveBusy=false;clearVerifiedTeamState({forgetCached:true});setTeamLayerStatus('left',`You left ${safeName}. Your personal AGNT data is safe.`);hideTeamLeaveConfirmation({force:true,restoreFocus:false});
+  if(document.activeElement instanceof HTMLElement)document.activeElement.blur();
+  renderSettings();showTeamOnboarding();teamSetupReturnFocus=null;
+  requestAnimationFrame(()=>teamSetupMessage(`You left ${safeName}. Choose Solo, create a team or join another team. Your personal data is unchanged.`,'success'));
+}
+async function confirmTeamLeave(){
+  if(teamLeaveBusy||!cloud||!db||!uid||accountMode!=='team'||teamRole==='owner'||!teamId)return;
+  if(!navigator.onLine){$('#teamLeaveStatus').textContent='Connect to the internet before leaving your team.';return}
+  const leavingTeamId=String(teamId),leavingTeamName=String(teamName||'your team');teamLeaveBusy=true;$('#cancelTeamLeave').disabled=true;$('#confirmTeamLeave').disabled=true;$('#confirmTeamLeave').textContent='Leaving…';$('#teamLeaveStatus').textContent='Protecting your data and updating team access…';
+  try{
+    const batch=writeBatch(db),now=serverTimestamp();
+    batch.delete(doc(db,'teams',leavingTeamId,'members',uid));
+    batch.delete(doc(db,'teams',leavingTeamId,'leaderboard',uid));
+    batch.set(doc(db,'users',uid),{accountMode:'unconfigured',teamId:null,teamRole:null,teamName:null,teamSchemaVersion:TEAM_SCHEMA_VERSION,teamOnboardingSuggested:true,updatedAt:now},{merge:true});
+    await batch.commit();completeTeamLeaveTransition(leavingTeamName);
+  }catch(err){
+    console.error('Leave team failed',err);teamLeaveBusy=false;$('#teamLeaveStatus').textContent='You are still in the team. No personal data was changed.';$('#cancelTeamLeave').disabled=false;$('#confirmTeamLeave').disabled=false;$('#confirmTeamLeave').textContent='Leave team';
+  }
+}
+function handleTeamAccessRemoved(removedTeamId,removedTeamName=''){
+  if(teamId&&removedTeamId&&teamId!==removedTeamId)return;
+  const previousName=String(removedTeamName||teamName||'your previous team');clearVerifiedTeamState({forgetCached:true});setTeamLayerStatus('removed',`You no longer have access to ${previousName}. Your personal AGNT data is safe.`);renderSettings();showTeamOnboarding();requestAnimationFrame(()=>teamSetupMessage(`Your access to ${previousName} was removed. Choose Solo, create a team or join another team. Your personal data is unchanged.`,'info'));
+}
+function subscribeOwnTeamMembership(){
+  if(accountMode!=='team'||!teamId){unsubTeamMembership?.();unsubTeamMembership=null;subscribedMembershipTeamId='';return}
+  if(unsubTeamMembership&&subscribedMembershipTeamId===teamId)return;
+  unsubTeamMembership?.();unsubTeamMembership=null;subscribedMembershipTeamId=teamId;const listeningTeamId=teamId,listeningTeamName=teamName;
+  unsubTeamMembership=onSnapshot(doc(db,'teams',listeningTeamId,'members',uid),{includeMetadataChanges:true},snap=>{
+    if(accountMode!=='team'||teamId!==listeningTeamId||subscribedMembershipTeamId!==listeningTeamId)return;
+    if(!snap.exists()){if(snap.metadata.fromCache||teamLeaveBusy)return;handleTeamAccessRemoved(listeningTeamId,listeningTeamName);return}
+    const nextRole=String(snap.data().role||teamRole||'member');if(nextRole!==teamRole){teamRole=nextRole;cacheVerifiedTeamState();subscribeTeamMembersForOwner();renderSettings()}
+  },err=>{if(teamId!==listeningTeamId)return;console.error('Team membership listener failed',err);if(String(err?.code||'').includes('permission-denied'))handleTeamAccessRemoved(listeningTeamId,listeningTeamName)});
+}
+function subscribeTeamMembersForOwner(){
+  if(accountMode!=='team'||teamRole!=='owner'||!teamId){clearTeamMembersSubscription();return}
+  if(unsubTeamMembers&&subscribedMembersTeamId===teamId)return;
+  unsubTeamMembers?.();unsubTeamMembers=null;subscribedMembersTeamId=teamId;teamMembersStatus='connecting';teamMembersError='';renderTeamManager();renderTeamSettings();const listeningTeamId=teamId;
+  unsubTeamMembers=onSnapshot(collection(db,'teams',listeningTeamId,'members'),{includeMetadataChanges:true},snap=>{
+    if(accountMode!=='team'||teamRole!=='owner'||teamId!==listeningTeamId||subscribedMembersTeamId!==listeningTeamId)return;
+    const next=snap.docs.map(item=>({...item.data(),uid:item.id})).sort((a,b)=>(a.role==='owner'?-1:b.role==='owner'?1:0)||teamMemberDisplayName(a).localeCompare(teamMemberDisplayName(b))),signature=teamMembersSignature(next),changed=signature!==teamMembersDataSignature;
+    if(changed){teamMembers=next;teamMembersDataSignature=signature}teamMembersStatus=snap.metadata.fromCache?'cached':'live';teamMembersError='';renderTeamManager();renderTeamSettings();
+  },err=>{if(teamId!==listeningTeamId)return;console.error('Team member list failed',err);teamMembersStatus='error';teamMembersError=err.message||'Member list unavailable';renderTeamManager();renderTeamSettings()});
+}
+function subscribeTeamMembershipLayer(){subscribeOwnTeamMembership();subscribeTeamMembersForOwner();subscribeTeamAppointmentLayer()}
+function subscribeSecureLeaderboard(){
+  if(accountMode!=='team'||!teamId){stopTeamMembershipSubscriptions();unsubLeaderboard?.();unsubLeaderboard=null;subscribedTeamId='';teamLeaderboardDataSignature='';leaderboardEntries=[leaderboardPayload()];renderLeaderboard();return}
+  subscribeTeamMembershipLayer();
+  if(unsubLeaderboard&&subscribedTeamId===teamId)return;
+  unsubLeaderboard?.();unsubLeaderboard=null;subscribedTeamId=teamId;teamLeaderboardDataSignature='';
+  const listeningTeamId=teamId;
+  setTeamLayerStatus('connecting');
+  unsubLeaderboard=onSnapshot(collection(db,'teams',listeningTeamId,'leaderboard'),{includeMetadataChanges:true},snap=>{
+    if(accountMode!=='team'||teamId!==listeningTeamId||subscribedTeamId!==listeningTeamId)return;
+    const documents=snap.docs.map(d=>({uid:d.id,...d.data()})),next=documents.length?documents:[leaderboardPayload()],signature=teamLeaderboardEntriesSignature(next),dataChanged=signature!==teamLeaderboardDataSignature;
+    if(dataChanged){leaderboardEntries=next;teamLeaderboardDataSignature=signature}
+    const own=documents.find(entry=>entry.uid===uid);if(own)lastTeamLeaderboardSignature=leaderboardSignature(own);
+    setTeamLayerStatus(snap.metadata.fromCache?'cached':'live');if(dataChanged){renderLeaderboard();renderTeamManager();if(!$('#appointmentAssignmentModal')?.classList.contains('hidden'))renderAppointmentAssignmentPopup($('#appointmentAssignmentSelect')?.value||uid);refreshReturningSnapshotIfVisible()}
+  },err=>{if(teamId!==listeningTeamId)return;console.error('Team leaderboard read failed',err);unsubLeaderboard=null;subscribedTeamId='';teamLeaderboardDataSignature='';leaderboardEntries=[leaderboardPayload()];setTeamLayerStatus('error',err.message||'Team leaderboard unavailable');renderLeaderboard()});
+}
+async function initialiseTeamLayer(profile={}, {promptNew=false}={}){
+  const initialisationId=++teamInitialisationToken,initialUid=uid,requestedTeamId=String(profile.teamId||'');
+  const stillCurrent=()=>initialisationId===teamInitialisationToken&&initialUid===uid&&currentUser?.uid===initialUid;
+  try{
+    if(profile.accountMode==='solo'){
+      if(!stillCurrent())return;
+      setVerifiedTeamState({mode:'solo'});setTeamLayerStatus('solo');subscribeSecureLeaderboard();scheduleLeaderboardPublish();return;
+    }
+    if(profile.accountMode==='team'&&requestedTeamId){
+      if(accountMode==='team'&&teamId&&teamId!==requestedTeamId){clearVerifiedTeamState();setTeamLayerStatus('connecting')}
+      const verified=await verifyMembership(profile);
+      if(!stillCurrent())return;
+      if(!verified){handleTeamAccessRemoved(requestedTeamId,profile.teamName||'your previous team');return}
+      setVerifiedTeamState({mode:'team',...verified});subscribeSecureLeaderboard();scheduleLeaderboardPublish();return;
+    }
+    if(!stillCurrent())return;
+    clearVerifiedTeamState({forgetCached:true});setTeamLayerStatus('unconfigured');
+    if(promptNew||profile.teamOnboardingSuggested===true)showTeamOnboarding();
+  }catch(err){
+    if(!stillCurrent())return;
+    console.error('Team layer initialisation failed',err);
+    if(isTransientTeamError(err)&&accountMode==='team'&&teamId===requestedTeamId){setTeamLayerStatus('cached','Team confirmation is waiting for a stable connection. Core sync is unaffected.');return}
+    clearVerifiedTeamState({forgetCached:!isTransientTeamError(err)});setTeamLayerStatus('error',err.message||'Team setup unavailable. Core sync is unaffected.');
+  }
+}
+async function publishTeamLeaderboard(){
+  if(!cloud||!db||!uid||accountMode!=='team'||!teamId)return;
+  const payload=leaderboardPayload(),signature=leaderboardSignature(payload);if(signature===lastTeamLeaderboardSignature)return;
+  beginSyncOperation();
+  try{await setDoc(doc(db,'teams',teamId,'leaderboard',uid),payload,{merge:true});lastTeamLeaderboardSignature=signature;if(teamLayerStatus==='error')setTeamLayerStatus('live');endSyncOperation()}
+  catch(err){console.error('Team leaderboard publish failed',err);endSyncOperation();setTeamLayerStatus('error',err.message||'Team leaderboard could not update')}
+}
+async function completeSoloSetup(){
+  if(!cloud||!uid||teamSetupBusy)return;if(accountMode==='team'&&teamId)return teamSetupMessage('Leave your current team before continuing Solo.','error');if(!navigator.onLine)return teamSetupMessage('Connect to the internet to save your setup.','error');
+  setTeamSetupBusy(true);teamSetupMessage('Saving your private setup…');
+  try{
+    await setDoc(doc(db,'users',uid),{accountMode:'solo',teamId:null,teamRole:null,teamName:null,teamSchemaVersion:TEAM_SCHEMA_VERSION,teamOnboardingSuggested:false,updatedAt:serverTimestamp()},{merge:true});
+    setVerifiedTeamState({mode:'solo'});setTeamLayerStatus('solo');subscribeSecureLeaderboard();scheduleLeaderboardPublish();hideTeamOnboarding();renderSettings();
+  }catch(err){console.error('Solo setup failed',err);teamSetupMessage('Could not save your setup. Your AGNT data is safe.','error')}
+  finally{setTeamSetupBusy(false)}
+}
+async function completeCreateTeam(){
+  if(teamSetupBusy)return;if(accountMode==='team'&&teamId)return teamSetupMessage('Leave your current team before creating another team.','error');if(!navigator.onLine)return teamSetupMessage('Connect to the internet to create a team.','error');
+  const name=$('#newTeamName').value.trim();if(!name){teamSetupMessage('Add a team name to continue.','error');$('#newTeamName').focus();return}
+  let created=false;setTeamSetupBusy(true,{button:'#createTeamSubmit',label:'Creating team…'});teamSetupMessage('Creating your private leaderboard…');
+  try{
+    const id=makeTeamId(),code=makeTeamCode(),batch=writeBatch(db),now=serverTimestamp();
+    const teamRef=doc(db,'teams',id),memberRef=doc(db,'teams',id,'members',uid),codeRef=doc(db,'teamCodes',code),userRef=doc(db,'users',uid);
+    batch.set(teamRef,{name,ownerUid:uid,joinCode:code,joinEnabled:true,schemaVersion:TEAM_SCHEMA_VERSION,createdAt:now,updatedAt:now});
+    batch.set(memberRef,{uid,role:'owner',name:displayAgentName(),email:currentUser?.email||'',teamId:id,joinedAt:now});
+    batch.set(codeRef,{code,teamId:id,teamName:name,ownerUid:uid,createdAt:now});
+    batch.set(userRef,{accountMode:'team',teamId:id,teamRole:'owner',teamName:name,teamSchemaVersion:TEAM_SCHEMA_VERSION,teamOnboardingSuggested:false,updatedAt:now},{merge:true});
+    await batch.commit();const verified=await verifyMembership({accountMode:'team',teamId:id,teamRole:'owner',teamName:name});
+    if(!verified)throw new Error('Team records were not confirmed.');
+    setVerifiedTeamState({mode:'team',...verified});subscribeSecureLeaderboard();scheduleLeaderboardPublish();renderSettings();created=true;
+  }catch(err){console.error('Create team failed',err);teamSetupMessage('Team setup could not be completed. Your AGNT data is safe.','error')}
+  finally{setTeamSetupBusy(false,{button:'#createTeamSubmit'})}
+  if(created){$('#teamCreatedName').textContent=teamName||name;$('#teamCreatedCode').textContent=teamJoinCode;showTeamSetupPanel('created')}
+}
+async function completeJoinTeam(){
+  if(teamSetupBusy)return;if(accountMode==='team'&&teamId)return teamSetupMessage('Leave your current team before joining another team.','error');if(!navigator.onLine)return teamSetupMessage('Connect to the internet to join your team.','error');
+  const code=normaliseTeamCode($('#teamCodeInput').value);if(!code){teamSetupMessage('Enter your team code to continue.','error');$('#teamCodeInput').focus();return}
+  let ready=false;$('#teamCodeInput').value=code;pendingTeamJoin=null;setTeamSetupBusy(true,{button:'#joinTeamCode',label:'Checking team…'});teamSetupMessage('Confirming your invite code…');
+  try{
+    const codeSnap=await getDoc(doc(db,'teamCodes',code));if(!codeSnap.exists())throw new Error('Team code not found.');
+    const codeData=codeSnap.data(),id=String(codeData.teamId||'');if(!id)throw new Error('Team code is invalid.');
+    pendingTeamJoin={id,name:String(codeData.teamName||'Team'),code};$('#teamJoinConfirmName').textContent=pendingTeamJoin.name;$('#teamJoinConfirmCode').textContent=code;ready=true;
+  }catch(err){console.error('Team code confirmation failed',err);teamSetupMessage(err.message||'Could not confirm that team code.','error')}
+  finally{setTeamSetupBusy(false,{button:'#joinTeamCode'})}
+  if(ready)showTeamSetupPanel('join-confirm');
+}
+async function confirmJoinTeam(){
+  if(teamSetupBusy||!pendingTeamJoin)return;if(accountMode==='team'&&teamId)return teamSetupMessage('Leave your current team before joining another team.','error');if(!navigator.onLine)return teamSetupMessage('Connect to the internet to join your team.','error');
+  const requested={...pendingTeamJoin};setTeamSetupBusy(true,{button:'#confirmJoinTeam',label:'Joining team…'});teamSetupMessage('Joining your private team leaderboard…');
+  try{
+    const codeSnap=await getDoc(doc(db,'teamCodes',requested.code));if(!codeSnap.exists()||String(codeSnap.data().teamId||'')!==requested.id)throw new Error('This invite code is no longer active. Ask the team owner for the new code.');
+    const batch=writeBatch(db),now=serverTimestamp();batch.set(doc(db,'teams',requested.id,'members',uid),{uid,role:'member',name:displayAgentName(),email:currentUser?.email||'',teamId:requested.id,joinCodeUsed:requested.code,joinedAt:now},{merge:true});batch.set(doc(db,'users',uid),{accountMode:'team',teamId:requested.id,teamRole:'member',teamName:requested.name,teamSchemaVersion:TEAM_SCHEMA_VERSION,teamOnboardingSuggested:false,updatedAt:now},{merge:true});
+    await batch.commit();const verified=await verifyMembership({accountMode:'team',teamId:requested.id,teamRole:'member',teamName:requested.name});if(!verified)throw new Error('Membership could not be confirmed.');
+    pendingTeamJoin=null;setVerifiedTeamState({mode:'team',...verified});subscribeSecureLeaderboard();scheduleLeaderboardPublish();renderSettings();hideTeamOnboarding();
+  }catch(err){console.error('Join team failed',err);teamSetupMessage(err.message||'Could not join that team. Your AGNT data is safe.','error')}
+  finally{setTeamSetupBusy(false,{button:'#confirmJoinTeam'})}
+}
+function renderTeamSettings(){
+  const card=$('#teamAccountCard');if(!card)return;
+  const mode=$('#teamAccountMode'),name=$('#teamAccountName'),role=$('#teamAccountRole'),code=$('#teamAccountCode'),codePanel=$('#teamJoinCodePanel'),status=$('#teamAccountStatus'),setup=$('#openTeamSetup'),manage=$('#manageTeamMembers'),leave=$('#leaveCurrentTeam');
+  const setStatus=(message,state='offline')=>{status.textContent=message||'';status.dataset.state=state};
+  code.textContent='';codePanel?.classList.add('hidden');role.textContent='';setup?.classList.remove('hidden');manage?.classList.add('hidden');leave?.classList.add('hidden');
+  if(!cloud){mode.textContent='DEVICE ONLY';name.textContent='No cloud team';setStatus('Accountability is stored on this device.','offline');setup?.classList.add('hidden');return}
+  if(accountMode==='team'&&teamId){
+    mode.textContent='TEAM ACCOUNT';name.textContent=teamName||'Team';role.textContent=teamRole==='owner'?'Owner':'Member';setup?.classList.add('hidden');
+    if(teamRole==='owner'){
+      if(teamJoinCode){code.textContent=teamJoinCode;codePanel?.classList.remove('hidden')}
+      if(manage){manage.textContent=teamMembers.length?`Manage ${teamMembers.length} member${teamMembers.length===1?'':'s'}`:'Manage members';manage.classList.remove('hidden')}
+    }else leave?.classList.remove('hidden');
+    if(!navigator.onLine)setStatus('Offline. Saved team results remain available.','offline');
+    else if(teamLayerStatus==='error')setStatus(teamLayerError||'The team leaderboard needs attention.','error');
+    else if(teamLayerStatus==='live')setStatus('Leaderboard is live across your team.','live');
+    else setStatus('Updating the team leaderboard…','connecting');
+    return;
+  }
+  if(accountMode==='solo'){mode.textContent='PRIVATE ACCOUNT';name.textContent='Just me';role.textContent='Solo';setStatus('Your leaderboard is private to this account.','solo');setup.textContent='Change setup';return}
+  if(teamLayerStatus==='left'){mode.textContent='TEAM LEFT';name.textContent='Choose what’s next';setStatus(teamLayerError||'Your personal data is safe. Choose Solo or another team.','solo');setup.textContent='Choose setup';return}
+  if(teamLayerStatus==='removed'){mode.textContent='TEAM ACCESS UPDATED';name.textContent='Choose a new setup';setStatus(teamLayerError||'Your previous team access was removed. Your personal data is safe.','error');setup.textContent='Choose setup';return}
+  if(teamLayerStatus==='connecting'){mode.textContent='ACCOUNT SETUP';name.textContent='Checking your team…';setStatus('Confirming your account and membership.','connecting');setup.textContent='Choose setup';return}
+  mode.textContent='ACCOUNT SETUP';name.textContent='Choose Solo or Team';setStatus(teamLayerError||'Choose how you want to use the leaderboard.',teamLayerError?'error':'offline');setup.textContent='Choose setup';
+}
+function setTeamActionButtonLabel(button,label){
+  if(!button)return;if(!button.dataset.idleLabel)button.dataset.idleLabel=button.textContent||'';button.textContent=label;clearTimeout(button._teamActionTimer);button._teamActionTimer=setTimeout(()=>button.textContent=button.dataset.idleLabel||'Copy',1400);
+}
+async function copyTeamJoinCode(buttonSelector='#copyTeamCode',codeValue=teamJoinCode){
+  const value=String(codeValue||'');if(!value)return;
+  const button=$(buttonSelector);
+  try{
+    if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(value);
+    else{
+      const field=document.createElement('textarea');field.value=value;field.setAttribute('readonly','');field.style.position='fixed';field.style.opacity='0';document.body.appendChild(field);field.select();
+      const copied=document.execCommand?.('copy');field.remove();if(!copied)throw new Error('Copy unavailable');
+    }
+    setTeamActionButtonLabel(button,'Copied');
+    toast('Team code copied');
+  }catch(err){console.error('Team code copy failed',err);toast('Could not copy the team code')}
+}
+async function shareTeamInvite(buttonSelector,{name=teamName,code=teamJoinCode}={}){
+  const safeName=String(name||'your team'),safeCode=String(code||'');if(!safeCode)return;
+  const button=$(buttonSelector),payload={title:`Join ${safeName} on AGNT`,text:`Join ${safeName} on AGNT using invite code ${safeCode}.`,url:new URL('./',window.location.href).href};
+  if(typeof navigator.share!=='function')return copyTeamJoinCode(buttonSelector,safeCode);
+  try{await navigator.share(payload);setTeamActionButtonLabel(button,'Shared');toast('Team invite shared')}
+  catch(err){if(err?.name==='AbortError')return;console.warn('Team invite share unavailable, copying code instead',err);await copyTeamJoinCode(buttonSelector,safeCode)}
+}
+
+
+function renderSettings(){const name=displayAgentName();$('#agentName').value=name;$('#callsTarget').value=targets.calls;$('#connectsTarget').value=targets.connects;$('#dataTarget').value=targets.data;$('#weeklyKnockTarget').value=targets.weeklyKnock;$$('[name=workDay]').forEach(el=>el.checked=workDays.includes(Number(el.value)));$$('[name=calendarPreference]').forEach(el=>el.checked=el.value===calendarPreference);$$('[name=appearancePreference]').forEach(el=>el.checked=el.value===appearancePreference);$('#accountEmail').textContent=currentUser?.email||'Device-only mode';$('#modeNote').textContent=cloud?'Live sync is active. Use the same login on every device.':'Data is stored only on this device.';const initials=name.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]?.toUpperCase()||'').join('')||'A';if($('#profileAvatar'))$('#profileAvatar').textContent=initials;if($('#profileSyncState'))$('#profileSyncState').textContent=cloud?'Live sync active':'Device-only profile';if($('#profileTodayScore'))$('#profileTodayScore').textContent=`${completion(todayKey())}%`;if($('#profileWeekScore'))$('#profileWeekScore').textContent=`${weekSummary().score}%`;if($('#profileWorkDays'))$('#profileWorkDays').textContent=workDays.length;renderTeamSettings()}
 function renderDayViews(){renderToday();renderTimeline();renderAppointments();renderInsights();renderSettings()}
 function renderAll(){renderDayViews();renderProspecting();const reviewButton=$('#openDayReview');if(reviewButton)reviewButton.classList.toggle('hidden',new Date().getHours()<17||selectedDate!==todayKey()||!isWorkDayKey(todayKey()));maybeShowDayReview()}
 
-async function startCloud(user){
-  unsubDays?.();unsubProfile?.();unsubLeaderboard?.();currentUser=user;uid=user.uid;cloud=true;loadLocal(uid);await finaliseExpiredTimers();
+async function startCloud(user,{promptTeamSetup=false}={}){
+  teamInitialisationToken++;unsubDays?.();unsubProfile?.();unsubLeaderboard?.();unsubProspecting?.();unsubTeamMembership?.();unsubTeamMembers?.();unsubAppointmentAssignees?.();unsubAssignedTeamAppointments?.();unsubDays=unsubProfile=unsubLeaderboard=unsubProspecting=unsubTeamMembership=unsubTeamMembers=unsubAppointmentAssignees=unsubAssignedTeamAppointments=null;currentUser=user;uid=user.uid;loadBuyerSession();cloud=true;loadLocal(uid);
+  const restoredTeamState=restoreCachedTeamState();
+  leaderboardEntries=restoredTeamState&&accountMode==='team'?[]:[leaderboardPayload()];
+  if(restoredTeamState&&accountMode==='team'){setTeamLayerStatus('connecting');subscribeSecureLeaderboard()}
+  else if(restoredTeamState&&accountMode==='solo')setTeamLayerStatus('solo');
+  else setTeamLayerStatus('connecting');
+  await finaliseExpiredTimers();
   syncHasError=false;pendingSyncOperations=0;setSync('','Connecting');clearTimeout(syncTimer);syncTimer=setTimeout(()=>{if($('#syncBadge').dataset.label==='Connecting')refreshSyncStatus()},3500);
+  renderLeaderboard();
   unsubDays=onSnapshot(collection(db,'users',uid,'days'),{includeMetadataChanges:true},snap=>{
     let dataChanged=false;
     snap.docChanges().forEach(ch=>{
@@ -2252,16 +2998,29 @@ async function startCloud(user){
       if(JSON.stringify(local)!==JSON.stringify(next)){days[ch.doc.id]=next;dataChanged=true}
       if(!useLocal&&incoming.clientUpdatedAt>=local.clientUpdatedAt)dirtyDayKeys.delete(ch.doc.id);
     });
-    if(dataChanged){saveLocal();renderDayViews();ensureTick()}else saveDirtyDays();
+    if(dataChanged){saveLocal();renderDayViews();ensureTick();refreshReturningSnapshotIfVisible()}else saveDirtyDays();
     clearTimeout(syncTimer);if(!snap.metadata.hasPendingWrites&&!snap.metadata.fromCache)syncHasError=false;refreshSyncStatus();
   },err=>{console.error(err);syncHasError=true;refreshSyncStatus();toast('Firestore access failed. Check rules and login.');showAuthMessage(err.message)});
-  unsubProfile=onSnapshot(doc(db,'users',uid),snap=>{if(snap.exists()){const profile=snap.data();let changed=false;if(profile.targets&&JSON.stringify({...DEFAULTS,...profile.targets})!==JSON.stringify(targets)){targets={...DEFAULTS,...profile.targets};changed=true}if(Array.isArray(profile.workDays)&&profile.workDays.length&&JSON.stringify(normaliseWorkDays(profile.workDays))!==JSON.stringify(workDays)){workDays=normaliseWorkDays(profile.workDays);changed=true}if(profile.name&&profile.name!==agentName){agentName=profile.name;changed=true}if(changed){saveLocal();renderAll();scheduleLeaderboardPublish()}}},err=>console.error(err));
-  unsubProspecting=onSnapshot(doc(db,'users',uid,'prospecting','state'),{includeMetadataChanges:true},snap=>{if(snap.exists()){const data=snap.data(),nextProspects=normaliseProspects(data.prospects),nextInteractions=normaliseProspectInteractions(data.interactions),hasMarketEvents=Object.prototype.hasOwnProperty.call(data,'marketPulseEvents'),cloudMarketEvents=hasMarketEvents?normaliseMarketPulseEvents(data.marketPulseEvents):[],cloudSignature=prospectingSignature(nextProspects,nextInteractions,cloudMarketEvents);if(!snap.metadata.hasPendingWrites)lastProspectingSignature=cloudSignature;const nextMarketEvents=hasMarketEvents?cloudMarketEvents:normaliseMarketPulseEvents(marketPulseEvents),nextSignature=prospectingSignature(nextProspects,nextInteractions,nextMarketEvents);if(nextSignature!==prospectingSignature()){prospects=nextProspects;prospectInteractions=nextInteractions;marketPulseEvents=nextMarketEvents;saveLocal();renderProspecting();renderMarketPulse()}if(!hasMarketEvents&&nextMarketEvents.length&&!snap.metadata.hasPendingWrites&&!snap.metadata.fromCache){queueProspectingSave().catch(err=>console.error('Hot Spotting migration failed',err))}}},err=>{console.error('Prospecting sync failed',err);toast('Prospecting data is saved locally. Cloud sync needs attention.')});
-  unsubLeaderboard=onSnapshot(collection(db,'leaderboard'),{includeMetadataChanges:true},snap=>{const next=snap.docs.map(d=>({uid:d.id,...d.data()}));if(JSON.stringify(next)!==JSON.stringify(leaderboardEntries)){leaderboardEntries=next;renderLeaderboard()}const own=next.find(entry=>entry.uid===uid);if(own)lastLeaderboardSignature=leaderboardSignature(own)},err=>{console.error('Leaderboard read failed',err);$('#leaderboardStatus').textContent='SYNC ERROR'});
-  refreshSyncStatus();showApp();scheduleLeaderboardPublish();refreshPasskeyCredentials({quiet:true}).catch(err=>console.error('Passkey status failed',err));
+  let observedTeamProfileSignature=null,teamProfileBootstrapComplete=false;
+  unsubProfile=onSnapshot(doc(db,'users',uid),{includeMetadataChanges:true},snap=>{
+    const profile=snap.exists()?snap.data():{};let changed=false;
+    if(profile.targets&&JSON.stringify({...DEFAULTS,...profile.targets})!==JSON.stringify(targets)){targets={...DEFAULTS,...profile.targets};changed=true}
+    if(Array.isArray(profile.workDays)&&profile.workDays.length&&JSON.stringify(normaliseWorkDays(profile.workDays))!==JSON.stringify(workDays)){workDays=normaliseWorkDays(profile.workDays);changed=true}
+    if(profile.name&&profile.name!==agentName){agentName=profile.name;changed=true}
+    const profileTeamSignature=JSON.stringify({accountMode:String(profile.accountMode||''),teamId:String(profile.teamId||''),teamRole:String(profile.teamRole||''),teamName:String(profile.teamName||''),teamOnboardingSuggested:profile.teamOnboardingSuggested===true});
+    const cachedProfileMatchesRestored=snap.exists()&&profile.accountMode===accountMode&&(accountMode!=='team'||String(profile.teamId||'')===String(teamId||''));
+    const waitForServerProfile=Boolean(restoredTeamState&&snap.metadata.fromCache&&!cachedProfileMatchesRestored);
+    if(!waitForServerProfile&&profileTeamSignature!==observedTeamProfileSignature){
+      const firstTeamProfile=!teamProfileBootstrapComplete;teamProfileBootstrapComplete=true;observedTeamProfileSignature=profileTeamSignature;
+      initialiseTeamLayer(profile,{promptNew:promptTeamSetup&&firstTeamProfile}).catch(err=>console.error('Team profile update failed',err));
+    }
+    if(changed){saveLocal();renderAll();scheduleLeaderboardPublish();refreshReturningSnapshotIfVisible()}
+  },err=>{console.error('Profile sync failed',err);if(isTransientTeamError(err)&&accountMode==='team'&&teamId)setTeamLayerStatus('cached','Team confirmation is waiting for a stable connection. Core sync is unaffected.');else setTeamLayerStatus('error','Team setup could not load. Core sync is unaffected.')});
+  unsubProspecting=onSnapshot(doc(db,'users',uid,'prospecting','state'),{includeMetadataChanges:true},snap=>{if(snap.exists()){const data=snap.data(),nextProspects=normaliseProspects(data.prospects),nextInteractions=normaliseProspectInteractions(data.interactions),hasMarketEvents=Object.prototype.hasOwnProperty.call(data,'marketPulseEvents'),cloudMarketEvents=hasMarketEvents?normaliseMarketPulseEvents(data.marketPulseEvents):[],cloudSignature=prospectingSignature(nextProspects,nextInteractions,cloudMarketEvents);if(!snap.metadata.hasPendingWrites)lastProspectingSignature=cloudSignature;const nextMarketEvents=hasMarketEvents?cloudMarketEvents:normaliseMarketPulseEvents(marketPulseEvents),nextSignature=prospectingSignature(nextProspects,nextInteractions,nextMarketEvents);if(nextSignature!==prospectingSignature()){prospects=nextProspects;prospectInteractions=nextInteractions;marketPulseEvents=nextMarketEvents;saveLocal();renderProspecting();renderMarketPulse();refreshReturningSnapshotIfVisible()}if(!hasMarketEvents&&nextMarketEvents.length&&!snap.metadata.hasPendingWrites&&!snap.metadata.fromCache){queueProspectingSave().catch(err=>console.error('Hot Spotting migration failed',err))}}},err=>{console.error('Prospecting sync failed',err);toast('Prospecting data is saved locally. Cloud sync needs attention.')});
+  refreshSyncStatus();showApp();scheduleLeaderboardPublish();
 }
 
-function showApp(){$('#authGate').classList.add('hidden');$('#app').classList.remove('hidden');$('#appointmentDatePicker').value=appointmentDate;restoreProspectingSessionState();restoreKnockingSessionState();renderKnockingSession();renderAll();ensureTick();showLaunchExperience()}
+function showApp(){setAuthScreenActive(false);$('#bootGate')?.classList.add('hidden');$('#authGate').classList.add('hidden');$('#app').classList.remove('hidden');$('#appointmentDatePicker').value=appointmentDate;restoreProspectingSessionState();restoreKnockingSessionState();renderKnockingSession();renderAll();ensureTick();showLaunchExperience();requestAnimationFrame(()=>maybeShowTeamAppointmentNotice())}
 let viewportFrame=0;
 function updateAppViewport(){
   cancelAnimationFrame(viewportFrame);
@@ -2284,10 +3043,19 @@ function bindViewport(){
   window.visualViewport?.addEventListener('scroll',updateAppViewport,{passive:true});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden){updateAppViewport();finaliseExpiredTimers().then(()=>renderAll())}});
 }
-function configurePasskeyLogin(){const button=$('#passkeySignIn'),note=$('#passkeySupportNote');if(!button||!note)return;const supported=passkeysSupported(),ready=passkeyApiConfigured();button.disabled=!supported||!ready;if(!supported)note.textContent='Passkeys require a supported browser and HTTPS.';else if(!ready)note.textContent='The passkey service has not been configured.';else note.textContent='Use Face ID, fingerprint or your device passcode.'}
-async function init(){bindViewport();configurePasskeyLogin();loadLocal('local');await finaliseExpiredTimers();if(!configured()){showAuthMessage('Firebase is not configured. You can still use device-only mode.');return}try{const fb=initializeApp(firebaseConfig);auth=getAuth(fb);await setPersistence(auth,browserLocalPersistence);db=initializeFirestore(fb,{experimentalAutoDetectLongPolling:true,localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});onAuthStateChanged(auth,u=>{if(u){startCloud(u)}else{clearActiveSession();$('#app').classList.add('hidden');$('#authGate').classList.remove('hidden');configurePasskeyLogin()}})}catch(err){console.error(err);showAuthMessage(err.message)}}
+function consumerAuthError(error,action='sign in'){
+  const code=String(error?.code||'');
+  if(code==='auth/invalid-credential'||code==='auth/user-not-found'||code==='auth/wrong-password')return 'Email or password is incorrect.';
+  if(code==='auth/invalid-email')return 'Enter a valid email address.';
+  if(code==='auth/email-already-in-use')return 'An account already exists for this email. Sign in instead.';
+  if(code==='auth/weak-password')return 'Choose a password with at least 6 characters.';
+  if(code==='auth/too-many-requests')return 'Too many attempts. Please try again shortly.';
+  if(code==='auth/network-request-failed')return 'You appear to be offline. Check your connection and try again.';
+  return action==='create'?'We couldn’t create your account. Please try again.':'We couldn’t sign you in. Please try again.';
+}
+async function init(){bindViewport();loadLocal('local');await finaliseExpiredTimers();if(!configured()){$('#bootGate')?.classList.add('hidden');setAuthScreenActive(true);$('#authGate').classList.remove('hidden');showAuthMessage('AGNT is temporarily unavailable. Please try again shortly.');return}try{const fb=initializeApp(firebaseConfig);auth=getAuth(fb);await setPersistence(auth,browserLocalPersistence);db=initializeFirestore(fb,{experimentalAutoDetectLongPolling:true,localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});onAuthStateChanged(auth,u=>{if(u){if(creatingAccount){currentUser=u;return}startCloud(u)}else{clearActiveSession();$('#bootGate')?.classList.add('hidden');setAuthScreenActive(true);$('#app').classList.add('hidden');$('#authGate').classList.remove('hidden')}})}catch(err){console.error(err);$('#bootGate')?.classList.add('hidden');setAuthScreenActive(true);$('#authGate').classList.remove('hidden');showAuthMessage('AGNT is temporarily unavailable. Please try again shortly.')}}
 function showAuthMessage(msg){$('#authMessage').textContent=msg}
-function switchView(id){if(id!=='appointmentsView'&&appointmentHistoryMode)setAppointmentHistoryScreen(null);$$('.tabbar button').forEach(b=>b.classList.toggle('active',b.dataset.view===id));$$('.view').forEach(v=>v.classList.toggle('active',v.id===id));updateTopbar(id);if(id==='scheduleView'){renderTimeline();setTodayPage(todayPage);}if(id==='appointmentsView')renderAppointments();if(id==='prospectingView')renderProspecting();if(id==='insightsView')renderInsights();if(id==='settingsView'&&!passkeyCredentialsLoaded)refreshPasskeyCredentials().catch(err=>console.error('Passkey status failed',err))}
+function switchView(id){if(id!=='appointmentsView'&&appointmentHistoryMode)setAppointmentHistoryScreen(null);$$('.tabbar button').forEach(b=>b.classList.toggle('active',b.dataset.view===id));$$('.view').forEach(v=>v.classList.toggle('active',v.id===id));updateTopbar(id);if(id==='scheduleView'){renderTimeline();setTodayPage(todayPage);}if(id==='appointmentsView')renderAppointments();if(id==='prospectingView')renderProspecting();if(id==='insightsView')renderInsights()}
 
 function shiftHeaderDate(delta){
   const id=activeViewId();
@@ -2301,13 +3069,46 @@ function shiftHeaderDate(delta){
   }
 }
 
-function openCalendar(){$('#calendarModal').classList.add('open');renderCalendar()}
 
-$('#authForm').addEventListener('submit',async e=>{e.preventDefault();showAuthMessage('');try{await signInWithEmailAndPassword(auth,$('#email').value,$('#password').value)}catch(err){showAuthMessage(err.message)}});
-$('#createAccount').onclick=async()=>{try{await createUserWithEmailAndPassword(auth,$('#email').value,$('#password').value)}catch(err){showAuthMessage(err.message)}};
-$('#passkeySignIn').onclick=signInWithPasskey;
-$('#addPasskey').onclick=registerPasskey;
-$('#passkeyCredentialList').onclick=e=>{const button=e.target.closest('[data-remove-passkey]');if(button)removePasskey(button.dataset.removePasskey)};
+$('#authForm').addEventListener('submit',async e=>{e.preventDefault();showAuthMessage('Signing in…');try{await signInWithEmailAndPassword(auth,$('#email').value,$('#password').value)}catch(err){console.error('Sign in failed',err);showAuthMessage(consumerAuthError(err,'sign in'))}});
+$('#createAccount').onclick=async()=>{showAuthMessage('Creating account…');creatingAccount=true;try{const credential=await createUserWithEmailAndPassword(auth,$('#email').value,$('#password').value);try{await setDoc(doc(db,'users',credential.user.uid),{teamOnboardingSuggested:true,teamSchemaVersion:TEAM_SCHEMA_VERSION,email:credential.user.email||'',createdAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true})}catch(err){console.error('Team onboarding marker failed',err)}creatingAccount=false;await startCloud(credential.user,{promptTeamSetup:true})}catch(err){creatingAccount=false;showAuthMessage(consumerAuthError(err,'create'))}};
+
+$('#teamChoiceSolo')?.addEventListener('click',()=>completeSoloSetup());
+$('#teamChoiceCreate')?.addEventListener('click',()=>showTeamSetupPanel('create'));
+$('#teamChoiceJoin')?.addEventListener('click',()=>showTeamSetupPanel('join'));
+$$('[data-team-back]').forEach(button=>button.addEventListener('click',()=>showTeamSetupPanel(button.dataset.teamBack||'choices')));
+$('#createTeamSubmit')?.addEventListener('click',()=>completeCreateTeam());
+$('#joinTeamCode')?.addEventListener('click',()=>completeJoinTeam());
+$('#confirmJoinTeam')?.addEventListener('click',()=>confirmJoinTeam());
+$('#shareCreatedTeamInvite')?.addEventListener('click',()=>shareTeamInvite('#shareCreatedTeamInvite'));
+$('#copyCreatedTeamCode')?.addEventListener('click',()=>copyTeamJoinCode('#copyCreatedTeamCode'));
+$('#finishTeamCreation')?.addEventListener('click',()=>hideTeamOnboarding());
+$('#openTeamSetup')?.addEventListener('click',()=>showTeamOnboarding());
+$('#closeTeamSetup')?.addEventListener('click',()=>hideTeamOnboarding());
+$('#copyTeamCode')?.addEventListener('click',()=>copyTeamJoinCode());
+$('#manageTeamMembers')?.addEventListener('click',()=>showTeamManager());
+$('#leaveCurrentTeam')?.addEventListener('click',()=>showTeamLeaveConfirmation());
+$('#closeTeamManager')?.addEventListener('click',()=>hideTeamManager());
+$('#copyTeamManagerCode')?.addEventListener('click',()=>copyTeamJoinCode('#copyTeamManagerCode'));
+$('#shareTeamManagerInvite')?.addEventListener('click',()=>shareTeamInvite('#shareTeamManagerInvite'));
+$('#refreshTeamInviteCode')?.addEventListener('click',()=>showTeamCodeRefreshConfirmation());
+$('#deleteTeam')?.addEventListener('click',()=>showTeamDeleteConfirmation());
+$('#teamMemberList')?.addEventListener('click',event=>{const button=event.target.closest('[data-remove-team-member]');if(button)openTeamMemberRemoval(button.dataset.removeTeamMember)});
+$('#cancelTeamMemberRemoval')?.addEventListener('click',()=>closeTeamMemberRemoval());
+$('#confirmTeamMemberRemoval')?.addEventListener('click',()=>confirmTeamMemberRemoval());
+$('#cancelTeamLeave')?.addEventListener('click',()=>hideTeamLeaveConfirmation());
+$('#confirmTeamLeave')?.addEventListener('click',()=>confirmTeamLeave());
+$('#cancelTeamCodeRefresh')?.addEventListener('click',()=>hideTeamCodeRefreshConfirmation());
+$('#confirmTeamCodeRefresh')?.addEventListener('click',()=>confirmTeamCodeRefresh());
+$('#cancelTeamDelete')?.addEventListener('click',()=>hideTeamDeleteConfirmation());
+$('#confirmTeamDelete')?.addEventListener('click',()=>confirmTeamDelete());
+$('#teamCodeInput')?.addEventListener('input',event=>{pendingTeamJoin=null;event.target.value=normaliseTeamCode(event.target.value);teamSetupMessage('')});
+$('#teamCodeInput')?.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();completeJoinTeam()}});
+$('#newTeamName')?.addEventListener('input',()=>teamSetupMessage(''));
+$('#newTeamName')?.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();completeCreateTeam()}});
+document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;if(!$('#teamRemoveConfirm')?.classList.contains('hidden')){closeTeamMemberRemoval();return}if(!$('#teamDeleteConfirm')?.classList.contains('hidden')){hideTeamDeleteConfirmation();return}if(!$('#teamLeaveConfirm')?.classList.contains('hidden')){hideTeamLeaveConfirmation();return}if(!$('#teamCodeRefreshConfirm')?.classList.contains('hidden')){hideTeamCodeRefreshConfirmation();return}if(teamManagerOpen){hideTeamManager();return}if(teamOnboardingActive)hideTeamOnboarding()});
+
+$('#returningSnapshotScreen')?.addEventListener('click',dismissReturningSnapshot);
 $('#startDayButton').onclick=dismissDailyWelcome;
 $('#openAgntButton').onclick=dismissOffDayReview;
 $('#localMode').onclick=()=>{clearActiveSession();uid='local';loadLocal('local');setSync('offline','This device');showApp()};
@@ -2320,7 +3121,7 @@ $('#knockingSession').addEventListener('click',async e=>{const adjust=e.target.c
 $('#knockingSession').addEventListener('submit',async e=>{if(e.target.id!=='knockingCaptureForm')return;e.preventDefault();await submitKnockingCapture(e.target)});
 document.querySelector('.today-page-tabs')?.addEventListener('click',e=>{const button=e.target.closest('[data-today-page]');if(button)setTodayPage(button.dataset.todayPage)});
 let todaySwipeStartX=0,todaySwipeStartY=0;$('#scheduleView')?.addEventListener('touchstart',e=>{const touch=e.changedTouches?.[0];if(!touch)return;todaySwipeStartX=touch.clientX;todaySwipeStartY=touch.clientY},{passive:true});$('#scheduleView')?.addEventListener('touchend',e=>{const touch=e.changedTouches?.[0];if(!touch)return;const dx=touch.clientX-todaySwipeStartX,dy=touch.clientY-todaySwipeStartY;if(Math.abs(dx)<60||Math.abs(dx)<=Math.abs(dy)*1.25)return;const pages=['overview','insights','log'],index=pages.indexOf(todayPage),next=dx<0?Math.min(pages.length-1,index+1):Math.max(0,index-1);if(next!==index)setTodayPage(pages[next])},{passive:true});
-$('#openTodayTimeline').onclick=()=>switchView('scheduleView');$('#resetKnock').onclick=resetKnock;$('#knockingMetricCard').onclick=e=>{if(e.target.closest('button'))return;openKnockingHistory()};$('#knockingMetricCard').onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.closest('button')){e.preventDefault();openKnockingHistory()}};$('#closeKnockingHistory').onclick=closeKnockingHistory;$('#previousDay').onclick=()=>shiftHeaderDate(-1);$('#nextDay').onclick=()=>shiftHeaderDate(1);$('#settingsShortcut').onclick=()=>switchView('settingsView');$('#homeShortcut').onclick=()=>switchView('todayView');$('#backToday').onclick=()=>{selectedDate=todayKey();appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()};
+$('#openTodayTimeline').onclick=()=>switchView('scheduleView');$('#resetKnock').onclick=resetKnock;$('#knockingMetricCard').onclick=e=>{if(e.target.closest('button'))return;openKnockingHistory()};$('#knockingMetricCard').onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.closest('button')){e.preventDefault();openKnockingHistory()}};$('#closeKnockingHistory').onclick=closeKnockingHistory;$('#previousDay').onclick=()=>shiftHeaderDate(-1);$('#nextDay').onclick=()=>shiftHeaderDate(1);$('#leaderboardModeShortcut').onclick=()=>{leaderboardMode=leaderboardMode==='week'?'day':'week';renderUnifiedLeaderboard()};$('#homeShortcut').onclick=()=>switchView('todayView');$('#backToday').onclick=()=>{selectedDate=todayKey();appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()};
 $('.tabbar').onclick=e=>{const b=e.target.closest('button[data-view]');if(b)switchView(b.dataset.view)};
 $('#dailyTimeline').onclick=e=>{
   const prospectCheck=e.target.closest('[data-followup-prospect]');if(prospectCheck){switchView('prospectingView');openProspectLog(prospectCheck.dataset.followupProspect,false);return}
@@ -2342,6 +3143,21 @@ $('.appointment-types').onchange=updateOfiFormState;$('#appointmentTime').addEve
 $('#appointmentContactName').addEventListener('input',e=>{const selected=appointmentLinkedProspectId?prospectById(appointmentLinkedProspectId):null;if(selected&&e.target.value.trim()!==selected.name)appointmentLinkedProspectId='';renderAppointmentContactSuggestions()});$('#appointmentContactName').addEventListener('focus',renderAppointmentContactSuggestions);$('#appointmentContactSuggestions').addEventListener('click',e=>{const b=e.target.closest('[data-appointment-contact]');if(!b)return;selectAppointmentContact(b.dataset.appointmentContact)});$('#cancelProspectAppointmentFlow').onclick=cancelProspectAppointmentFlow;document.addEventListener('pointerdown',e=>{if(!e.target.closest('.appointment-contact-picker'))hideAppointmentContactSuggestions()});
 document.querySelector('.appointment-destination-grid').onclick=e=>{const b=e.target.closest('[data-open-appointment-history]');if(!b)return;setAppointmentHistoryScreen(b.dataset.openAppointmentHistory)};
 $('#closeAppointmentHistory').onclick=()=>setAppointmentHistoryScreen(null);
+async function finishAppointmentFormSubmission(context,assignedToUid=uid){
+  const {form,viewedDate,returnState,contactName,contactNumber,address,date,time,type,auction,wasEditing,wasProspectFlow}=context;
+  const appointment=wasEditing?await editAppointment({contactName,contactNumber,address,date,time,type,auction,assignedToUid}):await addAppointment({contactName,contactNumber,address,date,time,type,auction,assignedToUid,prospectId:appointmentLinkedProspectId});
+  if(!appointment)return;
+  if(wasProspectFlow){
+    await completePendingProspectAppointmentFlow();
+    form.reset();$('#appointmentDatePicker').value=appointmentDate;$('#appointmentTime').value='12:00';$('#appointmentAuction').checked=false;updateOfiFormState();
+    if(confirm(`Add to ${calendarPreference==='apple'?'Apple':'Outlook'} Calendar?`))exportAppointmentToCalendar(appointment,appointment.createdDate);
+    return;
+  }
+  if(!wasEditing&&confirm(`Add to ${calendarPreference==='apple'?'Apple':'Outlook'} Calendar?`))exportAppointmentToCalendar(appointment,appointment.createdDate);
+  form.reset();editingAppointment=null;appointmentEditReturnState=null;appointmentLinkedProspectId='';hideAppointmentContactSuggestions();
+  if(wasEditing&&returnState){appointmentDate=returnState.date;appointmentHistoryMode=returnState.historyMode;$('#appointmentMainContent')?.classList.toggle('hidden',Boolean(appointmentHistoryMode));$('#appointmentHistoryScreen')?.classList.toggle('hidden',!appointmentHistoryMode);}else{appointmentDate=viewedDate;}
+  $('#appointmentDatePicker').value=appointmentDate;$('#appointmentTime').value='12:00';$('#appointmentAuction').checked=false;updateOfiFormState();renderAppointments();updateTopbar('appointmentsView');if(wasEditing)requestAnimationFrame(()=>window.scrollTo({top:returnState?.scrollY||0,behavior:'instant'}));
+}
 $('#appointmentForm').onsubmit=async e=>{
   e.preventDefault();
   const viewedDate=appointmentDate,returnState=appointmentEditReturnState;
@@ -2350,20 +3166,21 @@ $('#appointmentForm').onsubmit=async e=>{
   if(missing.length){error.textContent=`Add ${missing.join(', ')}`;error.classList.remove('hidden');return}
   error.textContent='';error.classList.add('hidden');
   const wasEditing=Boolean(editingAppointment),wasProspectFlow=Boolean(pendingProspectAppointmentFlow);
-  const appointment=wasEditing?await editAppointment({contactName,contactNumber,address,date,time,type,auction}):await addAppointment({contactName,contactNumber,address,date,time,type,auction,prospectId:appointmentLinkedProspectId});
-  if(!appointment)return;
-  if(wasProspectFlow){
-    await completePendingProspectAppointmentFlow();
-    e.target.reset();$('#appointmentDatePicker').value=appointmentDate;$('#appointmentTime').value='12:00';$('#appointmentAuction').checked=false;updateOfiFormState();
-    if(confirm(`Add to ${calendarPreference==='apple'?'Apple':'Outlook'} Calendar?`))exportAppointmentToCalendar(appointment,appointment.createdDate);
-    return
+  const existingAssignedToUid=wasEditing?String(dayData(editingAppointment.sourceDate).appointments.find(a=>String(a.id)===String(editingAppointment.id))?.assignedToUid||uid):uid;
+  const context={form:e.target,viewedDate,returnState,contactName,contactNumber,address,date,time,type,auction,wasEditing,wasProspectFlow};
+  if(!wasEditing&&cloud&&accountMode==='team'&&teamId&&appointmentAssignees.length>1){
+    pendingAppointmentAssignment=context;showAppointmentAssignmentPopup();return;
   }
-  if(!wasEditing&&confirm(`Add to ${calendarPreference==='apple'?'Apple':'Outlook'} Calendar?`))exportAppointmentToCalendar(appointment,appointment.createdDate);
-  e.target.reset();editingAppointment=null;appointmentEditReturnState=null;appointmentLinkedProspectId='';hideAppointmentContactSuggestions();
-  if(wasEditing&&returnState){appointmentDate=returnState.date;appointmentHistoryMode=returnState.historyMode;$('#appointmentMainContent')?.classList.toggle('hidden',Boolean(appointmentHistoryMode));$('#appointmentHistoryScreen')?.classList.toggle('hidden',!appointmentHistoryMode);}else{appointmentDate=viewedDate;}
-  $('#appointmentDatePicker').value=appointmentDate;$('#appointmentTime').value='12:00';$('#appointmentAuction').checked=false;updateOfiFormState();renderAppointments();updateTopbar('appointmentsView');if(wasEditing)requestAnimationFrame(()=>window.scrollTo({top:returnState?.scrollY||0,behavior:'instant'}));
+  await finishAppointmentFormSubmission(context,existingAssignedToUid);
 };
 $('#closeAppointmentEditor').onclick=closeAppointmentEditor;
+$('#cancelAppointmentAssignment')?.addEventListener('click',()=>hideAppointmentAssignmentPopup());
+$('#confirmAppointmentAssignment')?.addEventListener('click',async()=>{if(!pendingAppointmentAssignment)return;const context=pendingAppointmentAssignment,assignedToUid=$('#appointmentAssignmentSelect')?.value||uid;hideAppointmentAssignmentPopup({clear:false});pendingAppointmentAssignment=null;await finishAppointmentFormSubmission(context,assignedToUid)});
+$('#appointmentAssignmentModal')?.addEventListener('click',e=>{if(e.target.id==='appointmentAssignmentModal')hideAppointmentAssignmentPopup()});
+
+if($('#teamAppointmentGotIt'))$('#teamAppointmentGotIt').onclick=e=>{e.preventDefault();e.stopPropagation();hideTeamAppointmentNotice({acknowledge:true})};
+if($('#teamAppointmentAddCalendar'))$('#teamAppointmentAddCalendar').onclick=e=>{e.preventDefault();e.stopPropagation();const a=pendingTeamAppointmentNotice;if(!a)return;hideTeamAppointmentNotice({acknowledge:true,calendar:true});requestAnimationFrame(()=>exportAppointmentToCalendar(a,a.createdDate||todayKey()))};
+if($('#teamAppointmentNotice'))$('#teamAppointmentNotice').onclick=e=>{if(e.target.id==='teamAppointmentNotice')hideTeamAppointmentNotice({acknowledge:true})};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&editingAppointment)closeAppointmentEditor();});
 $('#saveFollowUpDate').onclick=saveAppointmentFollowUp;
 $$('[data-close-followup]').forEach(button=>button.onclick=()=>{closeActionModal('#followUpModal');pendingFollowUpAppointment=null;});
@@ -2374,6 +3191,8 @@ $('#followUpModal').onclick=e=>{if(e.target.id==='followUpModal'){closeActionMod
 $('#outcomeModal').onclick=e=>{if(e.target.id==='outcomeModal'){closeActionModal('#outcomeModal');pendingOutcomeAppointment=null;selectedAppointmentOutcome='';}};
 
 $('#appointmentsView').onclick=e=>{
+  const teamCalendarButton=e.target.closest('[data-calendar-team-appointment]');
+  if(teamCalendarButton){const a=assignedTeamAppointments.find(item=>String(item.teamAppointmentId||item.id)===String(teamCalendarButton.dataset.calendarTeamAppointment));if(!a)return toast('Appointment could not be found');if(appointmentAddedToCalendar(a,a.createdDate||todayKey()))return toast('Already added to calendar');exportAppointmentToCalendar(a,a.createdDate||todayKey());acknowledgeTeamAppointment(a,{calendar:true});return;}
   const calendarButton=e.target.closest('[data-calendar-appointment]');
   if(calendarButton){
     const sourceDate=calendarButton.dataset.sourceDate||appointmentDate;
@@ -2409,12 +3228,13 @@ $('#closeManualCallOutcome').onclick=()=>closeManualCallOutcome();
 $('#manualCallOutcomeModal').onclick=e=>{if(e.target.id==='manualCallOutcomeModal')closeManualCallOutcome()};
 $('#manualCallSaveContact').onclick=saveManualCallAsContact;
 $('#manualCallBookAppointment').onclick=bookManualCallAppointment;
-$('#manualCallDone').onclick=()=>closeManualCallOutcome();
+$('#manualCallDone').onclick=()=>{const pending=readPendingManualCall();closeManualCallOutcome();if(pending?.source==='buyer-session')showBuyerSession();else openManualDialler()};
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')setTimeout(maybeShowManualCallOutcome,180)});
 window.addEventListener('focus',()=>setTimeout(maybeShowManualCallOutcome,180));
 window.addEventListener('pageshow',()=>setTimeout(maybeShowManualCallOutcome,180));
 $('#startProspectingSession').onclick=startProspectingSession;
 $('#openHotSpotting')&&($('#openHotSpotting').onclick=()=>{setProspectorSection('market');renderProspecting()});
+$('#openBroadcast')&&($('#openBroadcast').onclick=()=>{selectedBroadcastType='';setProspectorSection('broadcast');renderProspecting()});
 $('#backFromMarketPulse')&&($('#backFromMarketPulse').onclick=()=>{setProspectorSection('today');renderProspecting()});
 $('#importMarketPulse')&&($('#importMarketPulse').onclick=importMarketPulse);
 $('#clearMarketPulseInput')&&($('#clearMarketPulseInput').onclick=()=>{const input=$('#marketPulseInput');if(input)input.value='';$('#marketPulseImportStatus').textContent='Nothing imported yet.'});
@@ -2422,16 +3242,35 @@ $('#clearMarketPulseEvents')&&($('#clearMarketPulseEvents').onclick=async()=>{if
 
 $('#clearProspectFilter').onclick=()=>{prospectFilter='priority';renderProspecting()};
 $('#prospectCsvImport').onchange=async e=>{try{if(e.target.files[0])await importProspectCsv(e.target.files[0])}catch(err){console.error(err);toast('CSV could not be imported')}finally{e.target.value=''}};
+$('#buyerPdfImport')&&($('#buyerPdfImport').onchange=async e=>{const file=e.target.files?.[0];e.target.value='';if(file)await importBuyerPdf(file)});
+$('#openBuyerListSession')&&($('#openBuyerListSession').onclick=openBuyerListSession);
 $('#prospectingView').onclick=async e=>{
+  if(e.target.closest('[data-buyer-import-back],[data-buyer-import-clear]')){$('#prospectingSession').classList.add('hidden');$('#prospectingDashboard').classList.remove('hidden');renderBuyerSessionHero();return}
+  const removeBuyer=e.target.closest('[data-remove-buyer]');if(removeBuyer){const host=$('#prospectingSession'),state=host._buyerImport,index=Number(removeBuyer.dataset.removeBuyer);state.contacts.splice(index,1);showBuyerImportReview(state.contacts,state.fileName);return}
+  if(e.target.closest('[data-confirm-buyer-import]')){const host=$('#prospectingSession'),state=host._buyerImport,rows=[...host.querySelectorAll('[data-buyer-review-row]')];const contacts=rows.map((row,i)=>({id:state.contacts[i]?.id||`buyer_${Date.now()}_${i}`,name:cleanText(row.querySelector('[data-buyer-name]').value,120)||'Unknown buyer',phone:normaliseDialNumber(row.querySelector('[data-buyer-phone]').value),address:cleanText(row.querySelector('[data-buyer-address]').value,240),doNotSms:Boolean(state.contacts[i]?.doNotSms),status:''})).filter(c=>c.phone.replace(/\D/g,'').length>=9);if(!contacts.length)return toast('Add at least one valid mobile number');buyerSession={contacts,index:0,active:true,fileName:state.fileName,importedAt:Date.now()};saveBuyerSession();renderBuyerSessionHero();showBuyerSession();return}
+  if(e.target.closest('[data-call-buyer-session]')){launchBuyerSessionCall();return}
+  if(e.target.closest('[data-skip-buyer-session]')){const buyer=buyerSession.contacts[buyerSession.index];if(buyer){buyerSession.contacts.push({...buyer,id:buyer.id});buyerSession.contacts.splice(buyerSession.index,1)}saveBuyerSession();showBuyerSession();return}
+  if(e.target.closest('[data-buyer-session-back]')){buyerSession.active=true;saveBuyerSession();$('#prospectingSession').classList.add('hidden');$('#prospectingDashboard').classList.remove('hidden');renderBuyerSessionHero();return}
+  if(e.target.closest('[data-end-buyer-session]')){if(confirm('End and clear this buyer list session?')){clearBuyerSession();$('#prospectingSession').classList.add('hidden');$('#prospectingDashboard').classList.remove('hidden')}return}
   const marketSession=e.target.closest('[data-start-market-session]');if(marketSession){startMarketPulseSession(marketSession.dataset.startMarketSession);return}
   const removeMarket=e.target.closest('[data-remove-market-event]');if(removeMarket){marketPulseEvents=marketPulseEvents.filter(x=>x.id!==removeMarket.dataset.removeMarketEvent);saveLocal();renderMarketPulse();try{await queueProspectingSave()}catch(err){console.error('Hot Spotting removal sync failed',err)}return}
   const prospectCall=e.target.closest('[data-prospect-call]');if(prospectCall){rememberProspectCallReturn(prospectCall.dataset.prospectCall,prospectCall.dataset.callFromSession==='1');return}
   const section=e.target.closest('[data-prospector-section]');if(section){e.preventDefault();e.stopPropagation();setProspectorSection(section.dataset.prospectorSection);renderProspecting();return}
+  const broadcastTypeButton=e.target.closest('[data-broadcast-type]');if(broadcastTypeButton){openBroadcastBuilder(broadcastTypeButton.dataset.broadcastType);return}
+  if(e.target.closest('#broadcastBack')){if(selectedBroadcastType){if(broadcastStep>1)setBroadcastStep(broadcastStep-1);else closeBroadcastBuilder()}else{setProspectorSection('today');renderProspecting()}return}
+  if(e.target.closest('#broadcastNextToMessage')){if(!campaignPayload().users.length){toast('Choose at least one eligible recipient');return}setBroadcastStep(2);return}
+  if(e.target.closest('#broadcastNextToReview')){if(!cleanText($('#campaignMessage')?.value,2000)){toast('Add a message body');return}renderCampaignBroadcast();setBroadcastStep(3);return}
+  if(e.target.closest('#broadcastReviewLive')){setBroadcastReviewMode('live');return}
+  if(e.target.closest('#broadcastReviewTest')){setBroadcastReviewMode('test');renderBulkSmsTest();return}
+  if(e.target.closest('#broadcastStartAnother')){closeBroadcastBuilder();return}
+  if(e.target.closest('#broadcastReturnProspector')){closeBroadcastBuilder();setProspectorSection('today');renderProspecting();return}
+  if(e.target.closest('#refreshCampaignPreview')){renderCampaignBroadcast();return}
+  if(e.target.closest('#launchCampaignShortcut')){launchCampaignShortcut();return}
+  if(e.target.closest('#launchBulkSmsTest')){launchBulkSmsTest();return}
   const insightPeriod=e.target.closest('[data-prospect-insight-period]');if(insightPeriod){prospectInsightPeriod=insightPeriod.dataset.prospectInsightPeriod;renderProspectorInsights();return}
   const insightOpen=e.target.closest('[data-insight-open]');if(insightOpen){const target=insightOpen.dataset.insightOpen;if(target==='appointments'){switchView('appointmentsView');return}setProspectorSection(target==='contacts'?'contacts':target==='pipeline'?'pipeline':'today');renderProspecting();return}
   const filter=e.target.closest('[data-prospect-filter]');if(filter){prospectFilter=filter.dataset.prospectFilter;renderProspecting();return}
   const pipelineTemp=e.target.closest('[data-pipeline-temperature]');if(pipelineTemp){pipelineTemperature=pipelineTemp.dataset.pipelineTemperature;$$('[data-pipeline-temperature]').forEach(b=>b.classList.toggle('active',b===pipelineTemp));renderSellerPipeline();return}
-  if(e.target.closest('#backFromArchivedContacts')){prospectContactsMode='active';prospectBulkMode=false;selectedProspectIds.clear();renderProspecting();return}
   if(e.target.closest('#toggleArchivedContacts')){prospectContactsMode=prospectContactsMode==='archived'?'active':'archived';prospectBulkMode=false;selectedProspectIds.clear();renderProspecting();return}
   if(e.target.closest('#toggleProspectBulk')){prospectBulkMode=!prospectBulkMode;selectedProspectIds.clear();renderProspecting();return}
   if(e.target.closest('#selectAllProspects')){const visible=filteredProspects(),allSelected=visible.length&&visible.every(p=>selectedProspectIds.has(p.id));visible.forEach(p=>allSelected?selectedProspectIds.delete(p.id):selectedProspectIds.add(p.id));renderProspecting();return}
@@ -2446,11 +3285,27 @@ $('#prospectingView').onclick=async e=>{
   if(e.target.closest('[data-cancel-log]')){const form=$('#prospectLogForm');if(prospectSessionActive&&form?.dataset.fromSession==='1')showProspectingSession();else renderProspectDetail(activeProspectId);return}
   const del=e.target.closest('[data-delete-prospect]');if(del&&confirm('Delete this contact and their interaction history?')){prospects=prospects.filter(p=>p.id!==del.dataset.deleteProspect);prospectInteractions=prospectInteractions.filter(x=>x.prospectId!==del.dataset.deleteProspect);saveProspecting();closeProspectDetail();return}
   if(e.target.closest('[data-complete-market-session]')){endProspectingSession({completeMarketSession:true});return}
+  if(e.target.closest('[data-session-back]')){if($('#prospectingSession'))delete $('#prospectingSession').dataset.sessionView;$('#prospectingSession').classList.add('hidden');$('#prospectDetail').classList.add('hidden');$('#prospectingDashboard').classList.remove('hidden');if(cleanText(prospectSessionContext?.eventId,160))setProspectorSection('market');renderProspecting();return}
   if(e.target.closest('[data-end-session]')){endProspectingSession();return}
   const slog=e.target.closest('[data-session-log]');if(slog){openProspectLog(slog.dataset.sessionLog,true);return}
-  if(e.target.closest('[data-session-skip]')){const skippedId=prospectSessionIds[prospectSessionIndex],marketEventId=cleanText(prospectSessionContext?.eventId,160);if(skippedId&&marketEventId){marketPulseEvents=normaliseMarketPulseEvents(marketPulseEvents.map(event=>event.id===marketEventId?{...event,sessionStartedAt:event.sessionStartedAt||Date.now(),skippedProspectIds:[...(event.skippedProspectIds||[]),skippedId]}:event));saveLocal();queueProspectingSave().catch(err=>console.error('Hot Spotting skip sync failed',err))}prospectSessionIndex++;saveProspectingSessionState();showProspectingSession();return}
+  const sms=e.target.closest('[data-session-sms]');if(sms){openHotSpotSmsComposer(sms.dataset.sessionSms);return}
+  if(e.target.closest('[data-cancel-sms]')){showProspectingSession();return}
+  const openMessages=e.target.closest('[data-open-hotspot-messages]');if(openMessages){const p=prospectById(openMessages.dataset.openHotspotMessages),body=cleanText($('#prospectingSession [data-hotspot-sms-body]')?.value,2000);if(!p||!body)return toast('Add a message first');const pending={prospectId:p.id,eventId:cleanText(prospectSessionContext?.eventId,160),message:body,openedAt:Date.now()};saveHotSpotSmsPending(pending);showHotSpotSmsConfirmation(pending);window.location.href=smsHref(primaryProspectPhone(p),body);return}
+  if(e.target.closest('[data-sms-sent]')){confirmHotSpotSmsSent();return}
+  if(e.target.closest('[data-sms-not-sent]')){saveHotSpotSmsPending(null);showProspectingSession();return}
+  if(e.target.closest('[data-refresh-pipeline-session]')){openPipelineRefreshConfirm();return}
+  if(e.target.closest('[data-cancel-pipeline-refresh]')){closePipelineRefreshConfirm();return}
+  if(e.target.closest('[data-confirm-pipeline-refresh]')){confirmPipelineRefresh();return}
+  if(e.target.closest('[data-session-skip]')){const skippedId=prospectSessionIds[prospectSessionIndex],marketEventId=cleanText(prospectSessionContext?.eventId,160);if(skippedId&&marketEventId){marketPulseEvents=normaliseMarketPulseEvents(marketPulseEvents.map(event=>event.id===marketEventId?{...event,sessionStartedAt:event.sessionStartedAt||Date.now(),skippedProspectIds:[...(event.skippedProspectIds||[]),skippedId]}:event));saveLocal();queueProspectingSave().catch(err=>console.error('Hot Spotting skip sync failed',err))}else if(skippedId){const pipeline=getDailyProspectPipeline().filter(id=>id!==skippedId);try{localStorage.setItem(dailyProspectPipelineKey(),JSON.stringify(pipeline))}catch(err){console.warn('Skipped pipeline contact could not be removed',err)}}prospectSessionIndex++;saveProspectingSessionState();showProspectingSession();return}
 };
+$('#prospectingView').addEventListener('input',e=>{if(e.target.closest('#prospectorBroadcastPanel'))renderCampaignBroadcast()});
 $('#prospectingView').addEventListener('change',e=>{
+  if(e.target.closest('#prospectorBroadcastPanel')){
+    if(e.target.id==='campaignSuburbSelect')selectedBroadcastSuburb=e.target.value;
+    if(e.target.id==='campaignStreetSuburb'){selectedBroadcastSuburb=e.target.value;selectedBroadcastStreet='';selectedBroadcastRecipientIds=new Set();renderBroadcastAudienceControls()}
+    if(e.target.id==='campaignStreetSelect'){selectedBroadcastStreet=e.target.value;selectedBroadcastRecipientIds=new Set(broadcastStreetContacts(selectedBroadcastStreet).map(p=>p.id));renderBroadcastAudienceControls()}
+    if(e.target.matches('[data-broadcast-recipient]')){e.target.checked?selectedBroadcastRecipientIds.add(e.target.dataset.broadcastRecipient):selectedBroadcastRecipientIds.delete(e.target.dataset.broadcastRecipient)}
+    renderCampaignBroadcast();return}
   const form=e.target.closest('#prospectEditor,#prospectLogForm');if(!form)return;
   if(e.target.matches('[data-pipeline-temperature-field]'))form.dataset.temperatureManual='1';
   if(e.target.matches('[data-pipeline-motivation-field]'))form.dataset.motivationManual='1';
@@ -2462,31 +3317,30 @@ $('#prospectingView').addEventListener('change',e=>{
 });
 $('#prospectingView').onsubmit=async e=>{
   if(e.target.id==='prospectEditor'){e.preventDefault();const f=new FormData(e.target),existing=prospectById(activeProspectId);await upsertProspect({name:f.get('name'),phone:f.get('phone'),email:f.get('email'),address:f.get('address'),source:f.get('source'),stage:f.get('stage'),temperature:f.get('temperature'),motivation:f.get('motivation'),temperatureManual:e.target.dataset.temperatureManual==='1'||Boolean(existing?.temperatureManual),motivationManual:e.target.dataset.motivationManual==='1'||Boolean(existing?.motivationManual),tags:f.get('tags'),sellingTimeframe:f.get('sellingTimeframe'),nextFollowUp:f.get('nextFollowUp'),notes:f.get('notes'),archived:Boolean(existing?.archived),archivedAt:existing?.archivedAt||0},activeProspectId||'');toast(activeProspectId?'Contact saved':'Contact added');return}
-  if(e.target.id==='prospectLogForm'){e.preventDefault();const form=e.target,submit=form.querySelector('button[type=submit]');if(submit?.disabled)return;if(submit){submit.disabled=true;submit.textContent='Saving…'}const f=new FormData(form),p=prospectById(activeProspectId),next=f.get('nextFollowUp'),outcome=cleanText(f.get('outcome'),80),fromSession=form.dataset.fromSession==='1',interactionId=prospectId(),temperature=cleanText(f.get('temperature'),20)||'Cold',timeframeChoice=cleanText(f.get('sellingTimeframe'),40),archiveRequested=outcome==='Archive',sellingTimeframe=timeframeChoice==='Not currently selling'?'':SELLING_TIMEFRAMES.includes(timeframeChoice)?timeframeChoice:p?.sellingTimeframe||'',temperatureManual=form.dataset.temperatureManual==='1'||Boolean(p?.temperatureManual),defaults=pipelineDefaultsForTimeframe(sellingTimeframe),motivation=p?.motivationManual?p.motivation:defaults.motivation;if(!p){toast('Contact could not be found');if(submit)submit.disabled=false;return}if(outcome==='Appointment booked'){openAppointmentBookingFromProspect({prospectId:p.id,fromSession,interactionId,temperature,sellingTimeframe,temperatureManual,motivation,nextFollowUp:validDateKey(next)?next:'',note:cleanText(f.get('note'),2000),marketEventId:fromSession?cleanText(prospectSessionContext?.eventId,160):''});return}prospectInteractions.push({id:interactionId,prospectId:p.id,date:todayKey(),at:Date.now(),type:'Call',outcome,note:cleanText(f.get('note'),2000),nextFollowUp:validDateKey(next)?next:'',marketEventId:fromSession?cleanText(prospectSessionContext?.eventId,160):'',metricsApplied:false});if(!archiveRequested&&p.sellingTimeframe!==sellingTimeframe)prospectInteractions.push({id:prospectId(),prospectId:p.id,date:todayKey(),at:Date.now()+1,type:'Pipeline',outcome:'Selling timeframe updated',note:`Selling timeframe changed from ${p.sellingTimeframe||'Not set'} to ${sellingTimeframe||'Not currently selling'}.`,nextFollowUp:''});if(archiveRequested)prospectInteractions.push({id:prospectId(),prospectId:p.id,date:todayKey(),at:Date.now()+2,type:'Archive',outcome:'Contact archived',note:'Moved from active contacts to Archived.',nextFollowUp:''});prospects=prospects.map(x=>x.id===p.id?normaliseProspect({...x,temperature:temperatureManual?temperature:defaults.temperature,motivation,temperatureManual,sellingTimeframe,lastContact:todayKey(),nextFollowUp:validDateKey(next)?next:'',archived:archiveRequested||x.archived,archivedAt:archiveRequested?Date.now():x.archivedAt,stage:outcome==='Appointment booked'?'Appointment Booked':outcome==='Appraisal opportunity'?'Appraisal Opportunity':x.stage,updatedAt:Date.now()}):x);
+  if(e.target.id==='prospectLogForm'){e.preventDefault();const form=e.target,submit=form.querySelector('button[type=submit]');if(submit?.disabled)return;if(submit){submit.disabled=true;submit.textContent='Saving…'}const f=new FormData(form),p=prospectById(activeProspectId),next=f.get('nextFollowUp'),outcome=cleanText(f.get('outcome'),80),fromSession=form.dataset.fromSession==='1'||(prospectSessionActive&&prospectSessionIds[prospectSessionIndex]===activeProspectId),interactionId=prospectId(),temperature=cleanText(f.get('temperature'),20)||'Cold',timeframeChoice=cleanText(f.get('sellingTimeframe'),40),archiveRequested=outcome==='Archive',sellingTimeframe=timeframeChoice==='Not currently selling'?'':SELLING_TIMEFRAMES.includes(timeframeChoice)?timeframeChoice:p?.sellingTimeframe||'',temperatureManual=form.dataset.temperatureManual==='1'||Boolean(p?.temperatureManual),defaults=pipelineDefaultsForTimeframe(sellingTimeframe),motivation=p?.motivationManual?p.motivation:defaults.motivation;if(!p){toast('Contact could not be found');if(submit)submit.disabled=false;return}if(outcome==='Appointment booked'){openAppointmentBookingFromProspect({prospectId:p.id,fromSession,interactionId,temperature,sellingTimeframe,temperatureManual,motivation,nextFollowUp:validDateKey(next)?next:'',note:cleanText(f.get('note'),2000),marketEventId:fromSession?cleanText(prospectSessionContext?.eventId,160):''});return}prospectInteractions.push({id:interactionId,prospectId:p.id,date:todayKey(),at:Date.now(),type:'Call',outcome,note:cleanText(f.get('note'),2000),nextFollowUp:validDateKey(next)?next:'',marketEventId:fromSession?cleanText(prospectSessionContext?.eventId,160):'',metricsApplied:false});if(!archiveRequested&&p.sellingTimeframe!==sellingTimeframe)prospectInteractions.push({id:prospectId(),prospectId:p.id,date:todayKey(),at:Date.now()+1,type:'Pipeline',outcome:'Selling timeframe updated',note:`Selling timeframe changed from ${p.sellingTimeframe||'Not set'} to ${sellingTimeframe||'Not currently selling'}.`,nextFollowUp:''});if(archiveRequested)prospectInteractions.push({id:prospectId(),prospectId:p.id,date:todayKey(),at:Date.now()+2,type:'Archive',outcome:'Contact archived',note:'Moved from active contacts to Archived.',nextFollowUp:''});prospects=prospects.map(x=>x.id===p.id?normaliseProspect({...x,temperature:temperatureManual?temperature:defaults.temperature,motivation,temperatureManual,sellingTimeframe,lastContact:todayKey(),nextFollowUp:validDateKey(next)?next:'',archived:archiveRequested||x.archived,archivedAt:archiveRequested?Date.now():x.archivedAt,stage:outcome==='Appointment booked'?'Appointment Booked':outcome==='Appraisal opportunity'?'Appraisal Opportunity':x.stage,updatedAt:Date.now()}):x);
     const delta=prospectOutcomeMetricDelta(outcome);
-    try{await applyProspectingOutcomeMetrics(outcome,interactionId)}catch(err){console.error('Prospector metric save failed',err);toast('Log saved. Metrics are pending sync.')}
+    try{await applyProspectingOutcomeMetrics(outcome,interactionId,{awaitCloud:!fromSession})}catch(err){console.error('Prospector metric save failed',err);toast('Log saved. Metrics are pending sync.')}
     prospectInteractions=prospectInteractions.map(x=>x.id===interactionId?{...x,metricsApplied:true}:x);
-    try{await saveProspecting({render:false})}catch(err){console.error('Prospecting log save failed',err);toast('The log was saved locally. Please check sync.')}
-    if(fromSession&&prospectSessionActive){prospectSessionStats.calls+=delta.calls;prospectSessionStats.connects+=delta.connects;if(temperature==='Warm'||temperature==='Hot')prospectSessionStats.temperate++;if(outcome==='Appointment booked')prospectSessionStats.appointments++;prospectSessionIndex++;saveProspectingSessionState();toast(archiveRequested?'Contact archived':'Contact logged');showProspectingSession()}else if(archiveRequested){prospectContactsMode='active';toast('Contact archived');closeProspectDetail()}else{toast('Contact logged');renderProspectDetail(p.id)}return}
+    try{await saveProspecting({render:false,awaitCloud:!fromSession})}catch(err){console.error('Prospecting log save failed',err);toast('The log was saved locally. Please check sync.')}
+    if(fromSession&&prospectSessionActive){prospectSessionStats.calls+=delta.calls;prospectSessionStats.connects+=delta.connects;if(temperature==='Warm'||temperature==='Hot')prospectSessionStats.temperate++;if(outcome==='Appointment booked')prospectSessionStats.appointments++;prospectSessionIndex++;activeProspectId=null;saveProspectingSessionState();toast(archiveRequested?'Contact archived':'Contact logged');showProspectingSession()}else if(archiveRequested){prospectContactsMode='active';toast('Contact archived');closeProspectDetail()}else{toast('Contact logged');renderProspectDetail(p.id)}return}
 };
 
 $('#openDayReview')&&($('#openDayReview').onclick=()=>showDayReview());
 $('#closeDayReview')&&($('#closeDayReview').onclick=closeDayReview);
 $('#dayReviewOverlay')&&($('#dayReviewOverlay').onclick=e=>{if(e.target.id==='dayReviewOverlay')closeDayReview()});
-$('#saveSettings').onclick=async()=>{const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;calendarPreference=$('[name=calendarPreference]:checked')?.value==='apple'?'apple':'outlook';saveLocal();await saveTargets();renderAll();toast('Settings saved')};
+$$('[name=appearancePreference]').forEach(el=>el.addEventListener('change',()=>{if(el.checked)applyAppearance(el.value)}));
+$('#saveSettings').onclick=async()=>{const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;calendarPreference=$('[name=calendarPreference]:checked')?.value==='apple'?'apple':'outlook';appearancePreference=normaliseAppearance($('[name=appearancePreference]:checked')?.value);applyAppearance(appearancePreference);saveLocal();await saveTargets();if(cloud&&accountMode==='team'&&teamId&&uid){try{await setDoc(doc(db,'teams',teamId,'members',uid),{name:agentName,updatedAt:serverTimestamp()},{merge:true})}catch(err){console.error('Team profile name sync failed',err)}}renderAll();toast('Settings saved')};
 $('#signOut').onclick=async()=>{clearActiveSession();if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
 $('#exportData').onclick=()=>{const blob=new Blob([JSON.stringify({targets,workDays,days},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`daily-accountability-${todayKey()}.json`;a.click();URL.revokeObjectURL(a.href)};
 $('#importData').onchange=async e=>{try{const raw=JSON.parse(await e.target.files[0].text());targets={...DEFAULTS,...raw.targets};if(Array.isArray(raw.workDays)&&raw.workDays.length)workDays=normaliseWorkDays(raw.workDays);days={...days,...raw.days};saveLocal();if(cloud){await saveTargets();for(const k of Object.keys(raw.days||{}))await saveDay(k,{quiet:true})}renderAll();toast('Backup imported')}catch{toast('Backup could not be read')}};
-$('#openCalendarFromInsights')&&($('#openCalendarFromInsights').onclick=openCalendar);$('#closeCalendar').onclick=()=>$('#calendarModal').classList.remove('open');$('#calendarPrev').onclick=()=>{year--;renderCalendar();renderInsights()};$('#calendarNext').onclick=()=>{year++;renderCalendar();renderInsights()};$('#prevYear')&&($('#prevYear').onclick=()=>{year--;renderCalendar();renderInsights()});$('#nextYear')&&($('#nextYear').onclick=()=>{year++;renderCalendar();renderInsights()});
+$('#closeCalendar').onclick=()=>$('#calendarModal').classList.remove('open');$('#calendarPrev').onclick=()=>{year--;renderCalendar();renderInsights()};$('#calendarNext').onclick=()=>{year++;renderCalendar();renderInsights()};
 $('#calendarGrid').onclick=e=>{const b=e.target.closest('[data-date]');if(!b)return;selectedDate=b.dataset.date;appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;$('#calendarModal').classList.remove('open');switchView('todayView');renderAll();ensureTick()};
-$('#yearHeatmap')&&($('#yearHeatmap').onclick=e=>{const b=e.target.closest('[data-date]');if(!b)return;selectedDate=b.dataset.date;appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;switchView('todayView');renderAll();ensureTick()});
-$('#prevMonth')&&($('#prevMonth').onclick=()=>{monthCursor.setMonth(monthCursor.getMonth()-1);renderMonth()});$('#nextMonth')&&($('#nextMonth').onclick=()=>{monthCursor.setMonth(monthCursor.getMonth()+1);renderMonth()});
 function closeSyncPopover(){const p=$('#syncPopover'),b=$('#syncBadge');p?.classList.add('hidden');b?.setAttribute('aria-expanded','false');document.body.classList.remove('sync-popover-open')}
 $('#syncBadge').onclick=e=>{e.stopPropagation();const p=$('#syncPopover'),opening=p.classList.contains('hidden');if(p&&p.parentElement!==document.body)document.body.append(p);p.classList.toggle('hidden',!opening);$('#syncBadge').setAttribute('aria-expanded',String(opening));document.body.classList.toggle('sync-popover-open',opening)};
 $('#syncPopover').onclick=e=>e.stopPropagation();
 document.addEventListener('click',closeSyncPopover);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSyncPopover()});
-window.addEventListener('online',()=>{if(cloud){clearSyncError();setSync('','Connecting');scheduleLeaderboardPublish();for(const k of [...dirtyDayKeys]){const clean=dayData(k);if(clean.clientUpdatedAt)persistDayToCloud(k,clean,{quiet:true}).catch(()=>{})}}});window.addEventListener('offline',()=>refreshSyncStatus());
+window.addEventListener('online',()=>{if(cloud){clearSyncError();setSync('','Connecting');renderLeaderboardStatus();renderTeamSettings();renderTeamManager();scheduleLeaderboardPublish();for(const k of [...dirtyDayKeys]){const clean=dayData(k);if(clean.clientUpdatedAt)persistDayToCloud(k,clean,{quiet:true}).catch(()=>{})}}});window.addEventListener('offline',()=>{refreshSyncStatus();renderLeaderboardStatus();renderTeamSettings();renderTeamManager()});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&pendingProspectingPayload)flushProspectingSave()});
 window.addEventListener('pagehide',()=>{if(pendingProspectingPayload)flushProspectingSave()});
 window.addEventListener('error',event=>console.error('Unhandled app error',event.error||event.message));
@@ -2495,3 +3349,5 @@ renderProspecting();
 if('serviceWorker'in navigator)window.addEventListener('load',async()=>{const reg=await navigator.serviceWorker.register('./service-worker.js');reg.update()});
 setInterval(()=>{finaliseExpiredTimers().then(()=>{if(selectedDate<todayKey())renderAll()});maybeShowDayReview();updateAppViewport();if(cloud)scheduleLeaderboardPublish()},30000);
 init();
+
+loadBuyerSession();

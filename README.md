@@ -1,155 +1,71 @@
-# AGNT OG Passkey Proof-of-Concept
+# AGNT BETA v1.36.6 — Team Appointment Assignment Release
 
-This isolated test build adds optional Apple/Android WebAuthn passkeys to the uploaded OG package. Existing email/password authentication, Firebase UIDs, Firestore paths, rules, local data and application behaviour are preserved.
+Consumer-ready BETA promotion of the confirmed working AGNT Staging v1.36.6 application into the existing functioning BETA environment.
 
-The included Firebase Function must be deployed before passkey registration or sign-in can work. See `PASSKEY-SETUP.md` for the isolated test deployment and acceptance process. Do not replace the current BETA with this package.
+## Release baseline
 
-## Passkey POC changes
+- Application/UI source: confirmed working `AGNT Staging v1.36.6 — Targeted Appointment Contrast`.
+- Firebase environment: existing BETA project `daily-accountability-be0ac`.
+- Existing Firebase Authentication accounts and UIDs are retained.
+- Existing personal data remains under the current `users/{uid}` paths.
+- Existing Team membership, invite-code and Team leaderboard paths are retained.
+- No user-data migration is required.
 
-- Added `Continue with passkey` to the login screen.
-- Added passkey registration, status and removal in Settings.
-- Added a server-side WebAuthn verification function using SimpleWebAuthn.
-- Successful verification mints a Firebase custom token for the user's existing UID.
-- Retained email/password and device-only recovery paths.
-- Added the `icons/` directory already referenced by the manifest and service worker.
-- No existing Firestore paths, rules, UID separation, local cache, sync or business logic were changed.
+## Included functionality
 
----
+- Complete Team create/join/leave/owner-management workflow, including Team deletion.
+- Daily and current-week Team leaderboard sync.
+- Persistent Pipeline Session refresh with per-user/per-day served-contact exclusion.
+- Broadcast contrast and viewport refinements.
+- Universal nested/session navigation polish.
+- Returning Daily Snapshot for four seconds on every second returning app open.
+- Consumer-ready login with persistent Firebase authentication restore.
+- Team appointment assignment after Book Appointment, defaulting to Me.
+- Assignment choices use the live Team leaderboard display name and show first name only.
+- The original setter keeps the appointment statistic and personal source appointment.
+- The assigned teammate receives a Team-owned appointment mirror without another user writing into their private `users/{uid}` records.
+- Recipient sees the appointment in their appointment/timeline surfaces without receiving the setter's appointment statistic.
+- Live/next-open appointment notification with Got it and Add to Calendar.
+- Setter-facing appointment/log/leaderboard context shows `Booked for [First name]` where applicable.
+- Targeted dark-mode contrast fixes for appointment contact suggestions and Editing Appointment.
 
-# Previous release history
+## Firebase
 
-## AGNT V91 — Booking / Editor Header Separation
+The frontend is connected to the existing BETA Firebase project:
 
-Incremental update built from V90.
+`daily-accountability-be0ac`
 
-## Changed
-- Removed the APPOINTMENTS, Editing Appointment and close controls from the normal new-appointment booking form.
-- Kept those controls visible only inside the isolated editor when an existing appointment is being edited.
-- Preserved the embedded yellow follow-up metric in the Past Appointments card.
+The bundled `firestore.rules` retains the current Team/private-data permission model and adds the Team appointment-assignment path:
 
-## Unchanged
-Firebase, authentication, Firestore paths and rules, UID separation, local cache, sync, appointment data and save logic, navigation, scoring and unrelated UI.
+`teams/{teamId}/appointments/{appointmentId}`
 
-## V95.9
-- Follow-up controls now use a single empty circle until an outcome is saved.
-- Time-based timeline items remain active until the next timed item begins.
+Deploy the bundled rules to the BETA Firebase project as part of this release. No data migration is required.
 
-## V103.1.1
-- Active prospecting session UI remains on Today while Contacts, Pipeline and Insights stay usable.
-- Session progress uses lowercase ‘of’.
-- Contacts with any logged event in the previous 21 days are excluded from session rotation.
+## Protected systems retained
 
-## V105
-- Uses one fresh, shared 50-contact daily prospecting queue for both the Today dashboard and session.
-- Applies the 21-day interaction exclusion before selecting the daily 50.
-- Dashboard remaining count reduces from the same queue as session outcomes are logged.
-- Preserves lowercase “of” in the session progress counter.
+- Existing BETA Firebase project and Authentication accounts.
+- Existing Firebase UIDs.
+- `users/{uid}` personal data and child paths.
+- Existing days, contacts, prospecting, appointments, notes and history.
+- Existing Team membership and Team leaderboard data.
+- UID-scoped local storage/cache data shapes.
+- Offline Firestore persistence and sync architecture.
+- PWA manifest and icon identity.
+- Service-worker behaviour; only release cache/asset version identifiers were bumped.
 
+## Deployment
 
-## V106 — Appointment contact search and session hand-off
-- Appointment contact name searches existing AGNT contacts and can prefill name, number and address.
-- Selected appointments retain the linked prospect ID when available.
-- Session outcome ‘Appointment booked’ opens the appointment form prefilled for that contact.
-- The prospecting outcome is only saved after the appointment booking is successfully completed.
-- Cancelling the booking returns safely to the active prospecting session.
-- No Firebase paths, rules, authentication, sync, daily queue or unrelated UI were changed.
-
-## V107 — Appointment history and session workflow refinement
-
-- OFI appointments are excluded from Past Appointments while remaining available everywhere else they already appear.
-- The appointment contact dropdown now uses native momentum scrolling and selects contacts only on a genuine tap.
-- Session-created appointments now save and advance to the next client before the optional calendar hand-off, so returning from Calendar resumes the active session immediately.
-- Firebase, authentication, Firestore paths/rules, UID separation, daily queue, 21-day exclusion and unrelated UI remain unchanged.
-
-## v119.5 — Market Pulse Prototype
-- Added a manual Market Pulse text importer inside Prospector.
-- Parses supported property event labels and full addresses.
-- Matches active callable contacts by normalised same street and suburb.
-- Creates calling queues through the existing Prospector session workflow.
-- Stores imported events per user in local storage with duplicate protection.
-- No Outlook access, Cloud Functions, Firestore path changes or Firebase configuration changes.
-
-## v119.10 — Hot Spotting address matching audit
-- Rebuilt same-street keys from the stored event address on load so previously imported opportunities use the improved matcher.
-- Normalises road type abbreviations and expanded common Australian street types.
-- Handles unit, lot, shop, suite, apartment, villa, level and flat prefixes.
-- Handles slash addresses, number ranges, alphanumeric street numbers, commas, semicolons and postcode/state formatting.
-- Matches against all active callable Prospector contacts while continuing to exclude archived and Do Not Contact records.
+1. Deploy the bundled `firestore.rules` to Firebase project `daily-accountability-be0ac`.
+2. Publish the complete web package to the `AndrewTour/AGNT-beta` GitHub Pages workspace.
+3. Reopen the installed PWA so the v1.36.6 service worker/cache activates.
+4. Existing users sign in with their existing accounts; no account recreation or Team rejoin is required.
+5. Complete the checks in `BETA-ROLLOUT.md` and `BETA-TEAM-APPOINTMENTS-VALIDATION.md`.
 
 
-## v119.12 — Hot Spotting dropdown and Day Log cleanup
-- Collapsed Streets worth knocking into a compact expandable first card.
-- Applied one event-status colour palette across Hot Spotting cards and knocking recommendations.
-- Increased Day Log time-column spacing so time ranges and icons do not overlap.
-- No Firebase, data-model, session-logic or sync changes.
-
-
-## v119.13 — Hot Spotting cloud persistence
-- Added each user’s Hot Spotting events to their existing private Firestore prospecting state.
-- Retained the UID-specific local copy as the offline cache.
-- Existing local-only Hot Spotting imports migrate to Firestore after the user’s first confirmed cloud load.
-- Imports, individual removals and Clear All now sync across that user’s devices.
-- No UI, matching, session, Firebase path, rule or unrelated functionality changes.
-
-
-## v119.14 — Day Log session cleanup
-
-- Day Log remains scoped to the signed-in user's UID-backed day and prospecting data.
-- Completed knocking sessions under 60 seconds with no knocks, connects, data, MAP or LAP activity are excluded from the Day Log and its session total.
-- No Firebase paths, rules, metrics, session storage, Hot Spotting, Pipeline or UI behaviour changed.
-
-
-## v125.1 — Quick Call keypad
-
-- Added a compact phone button to the Prospector toolbar.
-- Added an in-app keypad for manually entered, unsaved numbers.
-- Calls hand off to the native iPhone dialler through `tel:`.
-- Returning to AGNT opens an outcome sheet.
-- Connected adds one call and one connect. Voicemail, no answer and wrong/disconnected add one call only. Cancelled adds no metrics.
-- The post-call screen can prefill a new contact or appointment with the dialled number.
-- Firebase configuration, paths, rules, UID separation, existing prospecting data and all unrelated features are unchanged.
-
-
-## v125.2 — Quick Call presentation refinement
-- Formats Australian mobile numbers as 4-3-3 while dialling.
-- Enlarges the centred keypad and call control by approximately 10%.
-- Removes metric explanations from the outcome choices while retaining the result summary after selection.
-- No other application behaviour changed.
-
-
-## v125.3 — Hot Spotting street session progress
-- Hot Spotting street tiles now show called, connects and follow-up progress.
-- Session buttons progress from Start Session to Active Session to Session Complete.
-- Completed Hot Spotting session buttons display in green while preserving the existing summary.
-- No Firebase configuration or rules changes are required.
-
-## v125.4 — Hot Spotting session state correction
-
-- Starting a Hot Spotting street session immediately persists the Active Session state.
-- Renamed the matching-contact label to Neighbours Found.
-- Skipped contacts count toward street-session progress without adding call or connect metrics.
-- Session Complete is now applied only when Review & End Session is selected.
-- Early session exit leaves the street in Active Session so it can be resumed.
-
-
-## v125.5 — Hot Spotting call summary and button colours
-
-- Skipped contacts continue to count as processed for session completion, but are excluded from the visible called total.
-- A session with 14 logged calls and 3 skipped contacts across 17 neighbours displays 14/17 called.
-- Restored Hot Spotting session button colours: black for Start Session, blue for Active Session and green for Session Complete.
-- No other application behaviour changed.
-
-
-## V125.6 — Prospector Today session states
-- Keeps Today’s Pipeline independent from Hot Spotting totals.
-- A Hot Spotting interaction only affects Today’s Pipeline when it belongs to the same contact already in that pipeline, through the existing contacted-today rules.
-- Prospector Today buttons now mirror Smart Hot Spotting states: black Start Session, blue Active Session and green Session Complete.
-
-
-## V125.7 — Session-state colour specificity fix
-
-- Corrected CSS specificity so session state colours display over the global primary-button style.
-- Start Session remains black.
-- Active Session displays blue.
-- Session Complete displays green, including disabled completed buttons.
-- No session logic, metrics, Firebase or pipeline behaviour changed.
+## v1.36.7 — Safe cleanup candidate
+- Removed definition-only legacy JavaScript and no-op bindings for UI that no longer exists.
+- Removed obsolete hidden prospecting calculations that were still running on every Prospector render.
+- Reused Market Pulse / Hot Spotting match results within the same render instead of recalculating identical street matches repeatedly.
+- Removed CSS comments and rules anchored exclusively to retired UI components; live cascade order and declarations were otherwise left intact.
+- No Firebase configuration, Firestore rules, authentication, paths, UID separation, local cache/data shapes, sync, Team logic, appointment attribution, leaderboard calculations, session logic, navigation or PWA fetch strategy changed.
+- Candidate only: not deployed to GitHub or Firebase.
