@@ -1,6 +1,6 @@
-# AGNT BETA v1.36.22 — Daily MarketPulse Refresh
+# AGNT BETA v1.36.23 — Daily MarketPulse Briefing
 
-Incremental BETA update built directly on the supplied AGNT BETA v1.36.21 MarketPulse automation package, which extends the `AndrewTour/AGNT-beta` GitHub `main` baseline (`b8f6d0e187b00a1eca0d1dc5aeb9d960be83c8ff`, AGNT BETA v1.36.20).
+Incremental BETA update built directly on AGNT BETA v1.36.22 Daily MarketPulse Refresh, which extends the supplied MarketPulse automation package and the `AndrewTour/AGNT-beta` GitHub `main` baseline (`b8f6d0e187b00a1eca0d1dc5aeb9d960be83c8ff`, AGNT BETA v1.36.20).
 
 ## Release baseline
 - Application/UI source: current `AndrewTour/AGNT-beta` GitHub `main` baseline at the commit above.
@@ -16,7 +16,7 @@ Incremental BETA update built directly on the supplied AGNT BETA v1.36.21 Market
 - Persistent Pipeline Session refresh with per-user/per-day served-contact exclusion.
 - Broadcast contrast and viewport refinements.
 - Universal nested/session navigation polish.
-- Returning Daily Snapshot for four seconds on every second returning app open.
+- Once-daily decision-first briefing covering MarketPulse, appointments, follow-ups and pipeline.
 - Consumer-ready login with persistent Firebase authentication restore.
 - Team appointment assignment after Book Appointment, defaulting to Me.
 - Assignment choices use the live Team leaderboard display name and show first name only.
@@ -26,6 +26,18 @@ Incremental BETA update built directly on the supplied AGNT BETA v1.36.21 Market
 - Live/next-open appointment notification with Got it and Add to Calendar.
 - Setter-facing appointment/log/leaderboard context shows `Booked for [First name]` where applicable.
 - Targeted dark-mode contrast fixes for appointment contact suggestions and Editing Appointment.
+
+## Daily briefing added in v1.36.23
+- The old rotating returning snapshot is replaced with a clean once-daily AGNT briefing for each signed-in agent on a scheduled workday; the existing off-day review remains unchanged.
+- The briefing waits for authoritative account and MarketPulse inbox snapshots before calculating priorities, with a short local-data fallback when the connection is slow.
+- MarketPulse is summarised as event totals, unique unworked clients and estimated focused calling time. Clients already called today, completed event sessions and event contacts already worked are excluded.
+- Just Listed/Listed and Sold activity is ranked ahead of other MarketPulse event types, with the top three properties shown as direct Hot Spotting shortcuts.
+- The priority plan protects an appointment due within 60 minutes, resumes an active session, then recommends the best Listed/Sold session. It accounts for a 20-minute appointment preparation window when estimating what fits.
+- When no current MarketPulse work is ready, AGNT falls back in order to overdue follow-ups, today’s follow-ups, remaining appointments and the existing eligible pipeline.
+- Appointment, follow-up and pipeline summaries open the corresponding existing AGNT surfaces. The primary recommendation can start or resume the correct session directly.
+- Waiting, no-match and connection-error states retain previous Hot Spotting data for context without presenting it as today’s new priority.
+- The briefing is shown once for the current MarketPulse state each day. If an agent opens before the new email arrives, the valid fresh import can receive its own briefing on the next open.
+- Firebase configuration, Authentication, UIDs, private user paths, Team data, Firestore rules and the daily 6:00 am MarketPulse bridge remain unchanged. No migration or Blaze plan is required.
 
 ## Daily MarketPulse refresh added in v1.36.22
 - The collective inbox bridge now runs once daily at approximately 6:00 am in `Australia/Sydney`, after the expected 4:30 am MarketPulse delivery window.
