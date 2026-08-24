@@ -1,4 +1,13 @@
-# AGNT BETA v1.36.26 — Rollout Check
+# AGNT BETA v1.36.28 — Rollout Check
+
+## Appointment and follow-up polish acceptance
+
+1. On Today, select **View appointment** for a personal appointment and confirm its edit form opens immediately with the correct record populated.
+2. Confirm a team-assigned appointment remains read-only and opens the appointments view without exposing edit controls.
+3. In a qualifying Hot Spotting contact log, confirm the follow-up control matches Outcome in height, padding and corner radius and its heading is blue.
+4. Confirm the menu includes **Withdrawn** and that a later Withdrawn event for the exact property fulfils that watch once.
+5. Confirm **All Updates** fulfils on Sold/Auction Result, Price Change, Auction Date, Withdrawn or any other later MarketPulse update for the exact property.
+6. In light and dark mode, confirm the vertical timeline rail passes through the centre of the active blue marker and every inactive status marker.
 
 ## Timeline and knocking cleanup acceptance
 

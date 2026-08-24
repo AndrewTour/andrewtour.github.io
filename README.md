@@ -1,6 +1,14 @@
-# AGNT BETA v1.36.26 — Timeline & Knocking Cleanup
+# AGNT BETA v1.36.28 — Appointment & Follow-Up Polish
 
-Incremental BETA update built directly on the working AGNT BETA v1.36.25 Market Follow-Ups package.
+Incremental BETA update built directly on the accepted AGNT BETA v1.36.26 package. The rejected v1.36.27 Home-page experiment is not included.
+
+## Appointment and follow-up polish added in v1.36.28
+- **View appointment** on Today opens that exact personal appointment directly in edit mode. Team-assigned appointments retain their existing read-only route.
+- The **Hot Spotting Follow-Up** control now exactly matches the height, padding and corner radius of the Outcome control, with a blue field heading.
+- **Withdrawn** is available as an intentional property-lifecycle follow-up.
+- **All Updates** continues to respond to every later MarketPulse change for the property, now explicitly including Withdrawn.
+- The Today timeline rail and every status marker now share one fixed centreline, including the wider active blue marker in light and dark mode.
+- Existing Firebase configuration, Authentication, UIDs, Firestore paths/rules, Team data and MarketPulse email automation remain unchanged.
 
 ## Timeline and knocking cleanup added in v1.36.26
 - Visible Appointment Prep and Field Prep cards have been removed from Today. The shared focus headline now takes over 30 minutes before an appointment, while that handover window remains clear in the underlying schedule.

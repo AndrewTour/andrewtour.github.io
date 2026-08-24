@@ -11497,6 +11497,8 @@ html[data-theme="dark"] #marketPulseAutomationDetail,html[data-theme="dark"] .ma
   transform:translateX(-.5px)!important;
 }
 .timeline-item.plan-item{min-height:76px;padding:16px 0;align-items:start}
+/* Keep the highlighted row on the same grid origin so its marker remains centred on the rail. */
+#scheduleView .today-overview-panel .timeline-item.plan-item.current{margin-left:0;margin-right:0}
 .timeline-item.plan-item time{display:grid;gap:2px;padding-top:1px;text-align:right;white-space:nowrap}
 .timeline-item.plan-item time b{color:var(--agnt-ink,#111318);font-size:.62rem;font-weight:760;line-height:1.15}
 .timeline-item.plan-item time i{color:var(--agnt-faint,#a4a9b1);font-size:.51rem;font-style:normal;font-weight:650;line-height:1.15}
@@ -11555,10 +11557,10 @@ html[data-theme="dark"] .timeline-street-list span>b{background:#20242b;color:#a
   .timeline-command-action{width:100%}
 }
 
-/* AGNT BETA v1.36.26 — cohesive Hot Spotting follow-up field. */
+/* AGNT BETA v1.36.28 — cohesive Hot Spotting follow-up field. */
 .market-followup-field{display:grid;gap:6px;padding:0;border:0;border-radius:0;background:transparent}
-.market-followup-field>span{display:block;color:#626a75;font-size:12px;font-weight:750;letter-spacing:0;text-transform:none}
-.market-followup-field select{width:100%;min-height:50px;margin:0;padding:0 12px;border:1px solid rgba(0,0,0,.1)!important;border-radius:12px;background:#f8f9fb!important;color:#111!important;font:inherit;font-weight:650!important;box-sizing:border-box}
+.market-followup-field>span{display:block;color:#1769d8;font-size:12px;font-weight:750;letter-spacing:0;text-transform:none}
+.market-followup-field select{width:100%;min-height:48px;margin:0;padding:12px;border:1px solid rgba(0,0,0,.1)!important;border-radius:14px!important;background:#f8f9fb!important;color:#111!important;font:inherit;box-sizing:border-box}
 .market-followup-ready{display:flex;align-items:center;gap:8px;margin-top:11px;padding:9px 11px;border-radius:13px;background:#edf5ff;color:#1769d8}
 .market-followup-ready strong{display:grid;place-items:center;min-width:23px;height:23px;border-radius:50%;background:#1769d8;color:#fff;font-size:11px}
 .market-followup-ready span{font-size:10px;font-weight:760}
@@ -11569,7 +11571,8 @@ html[data-theme="dark"] .timeline-street-list span>b{background:#20242b;color:#a
 .prospect-history .market-followup-history{margin-top:5px;padding:5px 7px;border-radius:8px;background:#eef5ff;color:#1769d8;font-weight:700}
 .prospect-history .market-followup-history.triggered{background:#eaf8f2;color:#087d58}
 html[data-theme="dark"] .market-followup-prompt,html[data-theme="dark"] .market-followup-ready{background:#142239!important;border-color:#284467!important}
-html[data-theme="dark"] .market-followup-field>span,html[data-theme="dark"] .market-followup-prompt span,html[data-theme="dark"] .market-followup-ready{color:#b5bbc5!important}
+html[data-theme="dark"] .market-followup-field>span{color:#82bdff!important}
+html[data-theme="dark"] .market-followup-prompt span,html[data-theme="dark"] .market-followup-ready{color:#b5bbc5!important}
 html[data-theme="dark"] .market-followup-prompt p{color:#9eabbc!important}
 html[data-theme="dark"] .market-followup-field select{background:#191d23!important;border-color:#343a44!important;color:#f5f6f7!important}
 html[data-theme="dark"] .market-followup-prompt strong{color:#f5f6f7!important}

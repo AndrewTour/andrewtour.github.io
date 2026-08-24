@@ -285,6 +285,7 @@ function showReturningSnapshot(){
 }
 function navigateDailyPlanAction(action='open',eventId=''){
   if(action==='open')return;
+  if(action==='edit-appointment'&&eventId){openAppointmentEditorFromToday(eventId);return}
   if(action==='view-appointments'){switchView('appointmentsView');return}
   if(action==='view-today'){switchView('scheduleView');return}
   if(action==='view-log'){switchView('scheduleView');setTodayPage('log');return}
@@ -1138,12 +1139,12 @@ function dailyPlanNextFreeStart(start,end,duration,busy=[]){
 }
 function dailyPlanAppointmentModel(viewDate){
   const items=[],busy=[];
-  appointmentEntriesForDate(viewDate).forEach(({appointment:a,sourceDate})=>{
+  appointmentEntriesForDate(viewDate).forEach(({appointment:a,sourceDate,isTeamAssigned})=>{
     if(appointmentScheduledDate(a,sourceDate)!==viewDate)return;
     const start=timelineMinutes(a.time),duration=appointmentDurationMinutes(a),end=start+duration,focusStart=Math.max(0,start-30),rawPhone=String(a.contactNumber||a.phone||'').trim(),dial=rawPhone.replace(/[^+\d]/g,''),type=isOfiAppointment(a)?'OFI':appointmentType(a),address=a.address||'Address not recorded',contact=a.contactName||a.name||'';
     // Keep the 30-minute focus handover clear without rendering a duplicate prep block.
     busy.push({start:focusStart,end});
-    items.push({id:`appointment-${calendarExportId(a,sourceDate)}`,minutes:start,duration,title:isOfiAppointment(a)?`OFI · ${address}`:`${type} · ${address}`,meta:isOfiAppointment(a)?`${timelineTimeLabel(start)}–${timelineTimeLabel(end)}${appointmentHasAuction(a)?` · Auction ${timelineTimeLabel(appointmentAuctionMinutes(a))}`:''}`:`${contact||'Contact not recorded'}${rawPhone?` · ${rawPhone}`:''}`,kicker:isOfiAppointment(a)?'OPEN HOME':'APPOINTMENT',kind:isOfiAppointment(a)?'ofi':'appointment',plan:true,clockComplete:true,actionable:true,action:'view-appointments',label:'View appointment',commandTitle:isOfiAppointment(a)?`Open home · ${address}`:`Appointment window · ${contact||type}`,commandMeta:`${timelineTimeLabel(start)}–${timelineTimeLabel(end)} · Keep this time protected.`,dial,appointment:a,sourceDate});
+    items.push({id:`appointment-${calendarExportId(a,sourceDate)}`,minutes:start,duration,title:isOfiAppointment(a)?`OFI · ${address}`:`${type} · ${address}`,meta:isOfiAppointment(a)?`${timelineTimeLabel(start)}–${timelineTimeLabel(end)}${appointmentHasAuction(a)?` · Auction ${timelineTimeLabel(appointmentAuctionMinutes(a))}`:''}`:`${contact||'Contact not recorded'}${rawPhone?` · ${rawPhone}`:''}`,kicker:isOfiAppointment(a)?'OPEN HOME':'APPOINTMENT',kind:isOfiAppointment(a)?'ofi':'appointment',plan:true,clockComplete:true,actionable:true,action:isTeamAssigned?'view-appointments':'edit-appointment',eventId:isTeamAssigned?'':calendarExportId(a,sourceDate),label:'View appointment',commandTitle:isOfiAppointment(a)?`Open home · ${address}`:`Appointment window · ${contact||type}`,commandMeta:`${timelineTimeLabel(start)}–${timelineTimeLabel(end)} · Keep this time protected.`,dial,appointment:a,sourceDate});
   });
   return{items,busy:dailyPlanMergeIntervals(busy)};
 }
@@ -1464,6 +1465,12 @@ function allAppointmentEntries(){
   const entries=[];
   Object.entries(days).forEach(([sourceDate,day])=>(day?.appointments||[]).forEach(appointment=>entries.push({appointment,sourceDate,scheduled:appointmentScheduledDate(appointment,sourceDate)})));
   return entries.sort((x,y)=>appointmentTimestamp(x.appointment,x.sourceDate)-appointmentTimestamp(y.appointment,y.sourceDate));
+}
+function openAppointmentEditorFromToday(exportId=''){
+  const entry=allAppointmentEntries().find(({appointment,sourceDate})=>calendarExportId(appointment,sourceDate)===exportId);
+  switchView('appointmentsView');
+  if(!entry){toast('Appointment could not be found');return}
+  requestAnimationFrame(()=>beginEditAppointment(entry.appointment.id,entry.sourceDate));
 }
 function appointmentLifecycle(a,sourceDate=''){
   const ts=appointmentTimestamp(a,sourceDate),now=Date.now();
@@ -2165,7 +2172,7 @@ function normaliseProspect(raw={}){
 }
 function normaliseProspects(list){return(Array.isArray(list)?list:[]).map(normaliseProspect).filter((p,i,a)=>a.findIndex(x=>x.id===p.id)===i).slice(0,10000)}
 function normaliseProspectInteractions(list){
-  const triggers=new Set(['sold','price','auction','any']),statuses=new Set(['pending','triggered']);
+  const triggers=new Set(['sold','price','auction','withdrawn','any']),statuses=new Set(['pending','triggered']);
   return(Array.isArray(list)?list:[]).filter(x=>x&&typeof x==='object').map(x=>({
     id:cleanText(x.id,80)||prospectId(),prospectId:cleanText(x.prospectId,80),date:validDateKey(x.date)?x.date:todayKey(),at:Number(x.at)||Date.now(),type:cleanText(x.type,40)||'Note',outcome:cleanText(x.outcome,80),note:cleanText(x.note,2000),nextFollowUp:validDateKey(x.nextFollowUp)?x.nextFollowUp:'',marketEventId:cleanText(x.marketEventId,160),
     marketFollowUpTrigger:triggers.has(x.marketFollowUpTrigger)?x.marketFollowUpTrigger:'',marketFollowUpStatus:statuses.has(x.marketFollowUpStatus)?x.marketFollowUpStatus:'',marketPropertyKey:cleanText(x.marketPropertyKey,320),marketFollowUpSourceEventId:cleanText(x.marketFollowUpSourceEventId,160),marketFollowUpSourceEventType:cleanText(x.marketFollowUpSourceEventType,60),marketFollowUpAddress:cleanText(x.marketFollowUpAddress,240),marketFollowUpSuburb:cleanText(x.marketFollowUpSuburb,100),marketFollowUpOriginalPrice:cleanText(x.marketFollowUpOriginalPrice,120),marketFollowUpOriginalAuctionDate:validDateKey(x.marketFollowUpOriginalAuctionDate)?x.marketFollowUpOriginalAuctionDate:'',marketFollowUpTriggeredEventId:cleanText(x.marketFollowUpTriggeredEventId,160),marketFollowUpTriggeredAt:Number(x.marketFollowUpTriggeredAt)||0,marketFollowUpTriggeredReason:cleanText(x.marketFollowUpTriggeredReason,320)
@@ -2395,7 +2402,7 @@ function normaliseForwardedMarketPulseText(value=''){
   return lines.join('\n');
 }
 function latestMarketPulseEventDate(events=[]){return normaliseMarketPulseEvents(events).reduce((latest,event)=>event.receivedDate>latest?event.receivedDate:latest,'')}
-function marketFollowUpTriggerLabel(trigger=''){return{sold:'Sold',price:'Price change',auction:'Auction date',any:'All updates'}[trigger]||''}
+function marketFollowUpTriggerLabel(trigger=''){return{sold:'Sold',price:'Price change',auction:'Auction date',withdrawn:'Withdrawn',any:'All updates'}[trigger]||''}
 function marketFollowUpEventReason(event={}){
   const type=normalisePlace(event.eventType),value=event.price||event.guide,movement=marketMovementLabel(event),auction=marketAuctionLabel(event);
   if(type==='price update')return[`Price updated${value?` to ${value}`:''}`,movement,auction].filter(Boolean).join(' · ');
@@ -2407,8 +2414,11 @@ function marketFollowUpEventMatches(interaction,event){
   const type=normalisePlace(event.eventType),trigger=interaction.marketFollowUpTrigger;
   if(trigger==='sold')return type==='sold'||type==='auction result';
   if(trigger==='price')return type==='price update';
-  if(trigger==='auction')return Boolean(event.auctionDate&&event.auctionDate!==interaction.marketFollowUpOriginalAuctionDate);
-  return trigger==='any'
+  const auctionChanged=Boolean(event.auctionDate&&event.auctionDate!==interaction.marketFollowUpOriginalAuctionDate);
+  if(trigger==='auction')return auctionChanged;
+  if(trigger==='withdrawn')return type==='withdrawn';
+  if(trigger==='any')return true; // Every later MarketPulse update, including Withdrawn.
+  return false
 }
 function applyMarketFollowUpTriggers(events=[]){
   const incoming=normaliseMarketPulseEvents(events);let count=0;
@@ -2950,13 +2960,13 @@ async function upsertProspect(data,id=''){const existing=id?prospectById(id):nul
 function marketFollowUpDefaultTrigger(event={}){const type=normalisePlace(event.eventType);if(type==='just listed'||type==='price update'||type==='under offer')return'sold';if(type==='withdrawn')return'any';return''}
 function marketFollowUpFieldMarkup(event,prospectId){
   const eventType=normalisePlace(event?.eventType);if(!event?.eventId||eventType==='sold'||eventType==='auction result')return'';const propertyKey=event.propertyKey||marketPropertyKey(event.address,event.suburb),existing=prospectInteractions.find(item=>item.prospectId===prospectId&&item.marketPropertyKey===propertyKey&&item.marketFollowUpStatus==='pending'),selected=existing?.marketFollowUpTrigger||marketFollowUpDefaultTrigger(event);
-  const options=[['','No follow-up'],['sold','Sold'],['price','Price change'],['auction','Auction date'],['any','All updates']];
+  const options=[['','No follow-up'],['sold','Sold'],['price','Price change'],['auction','Auction date'],['withdrawn','Withdrawn'],['any','All updates']];
   return`<label class="market-followup-field" data-market-followup-field><span>Hot Spotting Follow-Up</span><select name="marketFollowUpTrigger">${options.map(([value,label])=>`<option value="${value}" ${selected===value?'selected':''}>${label}</option>`).join('')}</select></label>`
 }
 function marketFollowUpOutcomeEligible(outcome=''){return['Connected','Appraisal opportunity','Appointment booked','Not interested'].includes(outcome)}
 function syncMarketFollowUpField(form){const field=form?.querySelector('[data-market-followup-field]'),select=field?.querySelector('select');if(!field||!select)return;const eligible=marketFollowUpOutcomeEligible(form.querySelector('[name="outcome"]')?.value||'');field.classList.toggle('hidden',!eligible);select.disabled=!eligible}
 function marketFollowUpFieldsFromForm(formData,outcome,fromSession){
-  const context=fromSession&&prospectSessionContext?.eventId?prospectSessionContext:null,trigger=marketFollowUpOutcomeEligible(outcome)?cleanText(formData.get('marketFollowUpTrigger'),20):'';if(!context||!['sold','price','auction','any'].includes(trigger))return{};
+  const context=fromSession&&prospectSessionContext?.eventId?prospectSessionContext:null,trigger=marketFollowUpOutcomeEligible(outcome)?cleanText(formData.get('marketFollowUpTrigger'),20):'';if(!context||!['sold','price','auction','withdrawn','any'].includes(trigger))return{};
   const propertyKey=context.propertyKey||marketPropertyKey(context.address,context.suburb);return{marketFollowUpTrigger:trigger,marketFollowUpStatus:'pending',marketPropertyKey:propertyKey,marketFollowUpSourceEventId:cleanText(context.eventId,160),marketFollowUpSourceEventType:cleanText(context.eventType,60),marketFollowUpAddress:cleanText(context.address,240),marketFollowUpSuburb:cleanText(context.suburb,100),marketFollowUpOriginalPrice:cleanText(context.price||context.guide,120),marketFollowUpOriginalAuctionDate:validDateKey(context.auctionDate)?context.auctionDate:''}
 }
 function marketFollowUpHistoryMarkup(interaction){
