@@ -1,6 +1,6 @@
-# AGNT BETA v1.36.21 — MarketPulse Automation
+# AGNT BETA v1.36.22 — Daily MarketPulse Refresh
 
-Incremental BETA update built directly on the current `AndrewTour/AGNT-beta` GitHub `main` baseline (`b8f6d0e187b00a1eca0d1dc5aeb9d960be83c8ff`, AGNT BETA v1.36.20).
+Incremental BETA update built directly on the supplied AGNT BETA v1.36.21 MarketPulse automation package, which extends the `AndrewTour/AGNT-beta` GitHub `main` baseline (`b8f6d0e187b00a1eca0d1dc5aeb9d960be83c8ff`, AGNT BETA v1.36.20).
 
 ## Release baseline
 - Application/UI source: current `AndrewTour/AGNT-beta` GitHub `main` baseline at the commit above.
@@ -27,10 +27,20 @@ Incremental BETA update built directly on the current `AndrewTour/AGNT-beta` Git
 - Setter-facing appointment/log/leaderboard context shows `Booked for [First name]` where applicable.
 - Targeted dark-mode contrast fixes for appointment contact suggestions and Editing Appointment.
 
+## Daily MarketPulse refresh added in v1.36.22
+- The collective inbox bridge now runs once daily at approximately 6:00 am in `Australia/Sydney`, after the expected 4:30 am MarketPulse delivery window.
+- Running the updated `setupMarketPulseBridge` removes the earlier five-minute trigger and installs exactly one daily trigger. Manual `runMarketPulseBridgeNow` remains available.
+- A valid newer MarketPulse email replaces the prior active Hot Spotting event deck instead of accumulating old daily cards.
+- If a prior-day Hot Spotting session was left open, rollover closes that obsolete session safely before presenting the new deck; already logged activity remains in history.
+- Yesterday's active Hot Spotting remains available when today's email is missing, delayed, unauthenticated or cannot be parsed. Settings shows **Awaiting today's MarketPulse** until a valid new import succeeds.
+- Same-day duplicate or corrected emails refresh matching events while preserving session started/completed/skipped progress. Delayed older emails cannot roll the active deck backwards.
+- Contacts, notes, call outcomes, follow-ups and interaction history are preserved. Only the active `marketPulseEvents` deck rolls forward.
+- Firebase configuration, Authentication, UID-scoped paths, Team data, Firestore rules and the service-account arrangement remain unchanged. No migration or Blaze plan is required.
+
 ## MarketPulse automation added in v1.36.21
 - One collective inbox, `agnt.marketpulse@gmail.com`, can receive MarketPulse forwards for multiple AGNT users.
 - Each AGNT account registers its normalized login email on the existing private `users/{uid}` profile. The bridge allocates a forward only when the forwarding address, embedded original recipient and AGNT login email all match.
-- A bundled Google Apps Script bridge polls the dedicated Gmail inbox every five minutes, validates the approved original sender and subject plus McGrath DKIM/DMARC authentication, and writes an idempotent pending item to `users/{uid}/marketPulseInbox/{gmailMessageId}`.
+- A bundled Google Apps Script bridge checks the dedicated Gmail inbox on the configured daily schedule, validates the approved original sender and subject plus McGrath DKIM/DMARC authentication, and writes an idempotent pending item to `users/{uid}/marketPulseInbox/{gmailMessageId}`.
 - AGNT waits for the authoritative Prospector cloud snapshot, imports pending MarketPulse data directly into Hot Spotting, merges by deterministic event ID, and preserves existing session progress.
 - Successful intake removes the raw email body from Firestore and retains only processing metadata. Manual paste remains available as a fallback.
 - Settings now shows the forwarding address, connection state and latest successful import.

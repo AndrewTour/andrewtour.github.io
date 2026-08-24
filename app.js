@@ -2162,11 +2162,17 @@ function normaliseForwardedMarketPulseText(value=''){
   }
   return lines.join('\n');
 }
+function latestMarketPulseEventDate(events=[]){return normaliseMarketPulseEvents(events).reduce((latest,event)=>event.receivedDate>latest?event.receivedDate:latest,'')}
+function closeReplacedMarketPulseSession(){const eventId=cleanText(prospectSessionContext?.eventId,160);if(!eventId||marketPulseEvents.some(event=>event.id===eventId))return false;prospectSessionActive=false;prospectSessionIds=[];prospectSessionIndex=0;prospectSessionStats={calls:0,connects:0,temperate:0,appointments:0,sms:0};prospectSessionContext=null;clearProspectingSessionState();saveHotSpotSmsPending(null);return true}
 function mergeParsedMarketPulseEvents(parsed=[]){
-  const incoming=normaliseMarketPulseEvents(parsed),existingById=new Map(marketPulseEvents.map(event=>[event.id,event])),fresh=incoming.filter(event=>!existingById.has(event.id));
-  incoming.forEach(event=>{const existing=existingById.get(event.id);existingById.set(event.id,existing?{...existing,...event,sessionStartedAt:existing.sessionStartedAt,sessionCompletedAt:existing.sessionCompletedAt,skippedProspectIds:existing.skippedProspectIds}:event)});
+  const incoming=normaliseMarketPulseEvents(parsed),existing=normaliseMarketPulseEvents(marketPulseEvents),incomingDate=latestMarketPulseEventDate(incoming),existingDate=latestMarketPulseEventDate(existing);
+  if(!incoming.length)return{incomingCount:0,appliedCount:0,newCount:0,refreshedCount:0,replacedCount:0,activeDate:existingDate,ignoredAsStale:false};
+  if(existingDate&&incomingDate<existingDate)return{incomingCount:incoming.length,appliedCount:0,newCount:0,refreshedCount:0,replacedCount:0,activeDate:existingDate,ignoredAsStale:true};
+  const activeDate=incomingDate||existingDate,activeExisting=existing.filter(event=>event.receivedDate===activeDate),applicable=incoming.filter(event=>event.receivedDate===activeDate),existingById=new Map(activeExisting.map(event=>[event.id,event])),fresh=applicable.filter(event=>!existingById.has(event.id));
+  applicable.forEach(event=>{const current=existingById.get(event.id);existingById.set(event.id,current?{...current,...event,sessionStartedAt:current.sessionStartedAt,sessionCompletedAt:current.sessionCompletedAt,skippedProspectIds:current.skippedProspectIds}:event)});
   marketPulseEvents=normaliseMarketPulseEvents([...existingById.values()]);
-  return{incomingCount:incoming.length,newCount:fresh.length,refreshedCount:incoming.length-fresh.length};
+  const closedPreviousSession=closeReplacedMarketPulseSession();
+  return{incomingCount:incoming.length,appliedCount:applicable.length,newCount:fresh.length,refreshedCount:applicable.length-fresh.length,replacedCount:Math.max(0,existing.length-activeExisting.length),activeDate,ignoredAsStale:false,closedPreviousSession};
 }
 function marketTypeClass(type=''){return normalisePlace(type).replace(/\s+/g,'-')}
 
@@ -2206,14 +2212,14 @@ function applyMarketPulseAutomationProfile(profile={}){
 }
 function renderMarketPulseAutomationSettings(){
   const status=$('#marketPulseAutomationStatus'),email=$('#marketPulseAutomationEmail'),detail=$('#marketPulseAutomationDetail'),destination=$('#marketPulseAutomationDestination');if(!status||!email||!detail||!destination)return;
-  const accountEmail=normaliseMarketPulseEmail(currentUser?.email),state=marketPulseAutomation.state;
+  const accountEmail=normaliseMarketPulseEmail(currentUser?.email),state=marketPulseAutomation.state,awaitingToday=Boolean(marketPulseAutomation.lastImportedAt&&marketPulseAutomation.lastImportedDate&&marketPulseAutomation.lastImportedDate<todayKey()),visualState=state==='live'&&awaitingToday?'waiting':state;
   email.textContent=accountEmail||'Sign in to connect';destination.textContent=MARKET_PULSE_INBOX_ADDRESS;
-  status.dataset.state=state;
+  status.dataset.state=visualState;
   if(!cloud){status.textContent='Unavailable in device-only mode';detail.textContent='Sign in to receive automatic Hot Spotting updates.';return}
   if(state==='processing'){status.textContent='Importing MarketPulse';detail.textContent='Matching today’s market activity to your contacts…';return}
   if(state==='error'){status.textContent='Import needs attention';detail.textContent=marketPulseAutomation.error||'The last forwarded email could not be imported.';return}
-  if(marketPulseAutomation.lastImportedAt){const when=formatMarketPulseImportTime(marketPulseAutomation.lastImportedAt),count=marketPulseAutomation.lastImportedCount;status.textContent='Connected';detail.textContent=`Last import ${when||'recently'} · ${count} event${count===1?'':'s'}.`;return}
-  status.textContent='Ready';detail.textContent='Waiting for the first forwarded MarketPulse email.';
+  if(marketPulseAutomation.lastImportedAt){const when=formatMarketPulseImportTime(marketPulseAutomation.lastImportedAt),count=marketPulseAutomation.lastImportedCount;if(awaitingToday){status.textContent='Awaiting today’s MarketPulse';detail.textContent=`Last successful import ${when||'previously'} · previous Hot Spotting remains available until a valid new email arrives.`;return}status.textContent='Connected';detail.textContent=`Last import ${when||'recently'} · ${count} event${count===1?'':'s'}.`;return}
+  status.textContent='Ready';detail.textContent='Waiting for the first forwarded MarketPulse email. Daily check runs around 6:00 am Sydney time.';
 }
 async function registerMarketPulseForwardingIdentity(profile={}){
   const email=normaliseMarketPulseEmail(currentUser?.email);if(!cloud||!db||!uid||!email||marketPulseIdentityRegistrationPending)return;
@@ -2237,10 +2243,12 @@ async function processMarketPulseInboxDocument(item){
   if(!cloud||!db||!uid||uid==='local')return;const processingUid=uid,data=item.data(),identityError=marketPulseInboxIdentityError(data);if(identityError){await failMarketPulseInboxImport(item,identityError,{clearBody:true,userUid:processingUid});return}
   const receivedDate=validDateKey(data.receivedDate)?data.receivedDate:todayKey(),text=normaliseForwardedMarketPulseText(data.plainText||''),parsed=parseMarketPulse(text,receivedDate);if(!parsed.length){await failMarketPulseInboxImport(item,'No supported property events were found in the forwarded email.',{userUid:processingUid});return}
   marketPulseAutomation={...marketPulseAutomation,state:'processing',email:normaliseMarketPulseEmail(currentUser?.email),error:''};renderMarketPulseAutomationSettings();
-  const merged=mergeParsedMarketPulseEvents(parsed);saveLocal();renderMarketPulse();renderProspecting();await saveProspecting({render:false});
+  const merged=mergeParsedMarketPulseEvents(parsed);
+  if(merged.ignoredAsStale){const batch=writeBatch(db);batch.set(item.ref,{status:'processed',plainText:'',error:'',processedAt:serverTimestamp(),eventCount:merged.incomingCount,newEventCount:0,refreshedEventCount:0,replacedEventCount:0,ignoredAsStale:true,activeDate:merged.activeDate},{merge:true});await batch.commit();marketPulseAutomation={...marketPulseAutomation,state:marketPulseAutomation.lastImportedAt?'live':'waiting',error:''};renderMarketPulseAutomationSettings();return}
+  saveLocal();renderMarketPulse();renderProspecting();await saveProspecting({render:false});
   if(!cloud||uid!==processingUid||currentUser?.uid!==processingUid)return;
-  const batch=writeBatch(db);batch.set(item.ref,{status:'processed',plainText:'',error:'',processedAt:serverTimestamp(),eventCount:merged.incomingCount,newEventCount:merged.newCount,refreshedEventCount:merged.refreshedCount},{merge:true});batch.set(doc(db,'users',processingUid),{marketPulseLastImportState:'success',marketPulseLastImportError:'',marketPulseLastImportedAt:serverTimestamp(),marketPulseLastImportedDate:receivedDate,marketPulseLastImportedCount:merged.incomingCount,marketPulseLastImportedNewCount:merged.newCount,marketPulseLastMessageId:cleanText(data.messageId||item.id,180),updatedAt:serverTimestamp()},{merge:true});await batch.commit();
-  marketPulseAutomation={state:'live',email:normaliseMarketPulseEmail(currentUser?.email),lastImportedAt:Date.now(),lastImportedDate:receivedDate,lastImportedCount:merged.incomingCount,lastImportedNewCount:merged.newCount,error:''};renderMarketPulseAutomationSettings();refreshReturningSnapshotIfVisible();if(merged.newCount)toast(`Hot Spotting updated · ${merged.newCount} new event${merged.newCount===1?'':'s'}`);
+  const batch=writeBatch(db);batch.set(item.ref,{status:'processed',plainText:'',error:'',processedAt:serverTimestamp(),eventCount:merged.appliedCount,newEventCount:merged.newCount,refreshedEventCount:merged.refreshedCount,replacedEventCount:merged.replacedCount,ignoredAsStale:false,activeDate:merged.activeDate},{merge:true});batch.set(doc(db,'users',processingUid),{marketPulseLastImportState:'success',marketPulseLastImportError:'',marketPulseLastImportedAt:serverTimestamp(),marketPulseLastImportedDate:merged.activeDate,marketPulseLastImportedCount:merged.appliedCount,marketPulseLastImportedNewCount:merged.newCount,marketPulseLastMessageId:cleanText(data.messageId||item.id,180),updatedAt:serverTimestamp()},{merge:true});await batch.commit();
+  marketPulseAutomation={state:'live',email:normaliseMarketPulseEmail(currentUser?.email),lastImportedAt:Date.now(),lastImportedDate:merged.activeDate,lastImportedCount:merged.appliedCount,lastImportedNewCount:merged.newCount,error:''};renderMarketPulseAutomationSettings();refreshReturningSnapshotIfVisible();if(merged.newCount)toast(`Hot Spotting updated · ${merged.newCount} new event${merged.newCount===1?'':'s'}`);
 }
 function enqueueMarketPulseInboxDocuments(items=[]){
   const pending=items.filter(item=>!marketPulseInboxQueuedIds.has(item.id)).sort((a,b)=>marketPulseTimestampMillis(a.data().receivedAt)-marketPulseTimestampMillis(b.data().receivedAt));if(!pending.length)return;

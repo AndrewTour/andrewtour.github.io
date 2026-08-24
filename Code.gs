@@ -8,7 +8,8 @@ const AGNT_MARKETPULSE_CONFIG = Object.freeze({
   initialLookbackHours: 36,
   maxThreadsPerRun: 100,
   maxPlainTextCharacters: 180000,
-  triggerMinutes: 5,
+  dailyTriggerHour: 6,
+  dailyTriggerMinute: 0,
   schemaVersion: 1,
 });
 
@@ -26,7 +27,13 @@ function setupMarketPulseBridge() {
   ScriptApp.getProjectTriggers()
     .filter(trigger => trigger.getHandlerFunction() === 'processMarketPulseInbox')
     .forEach(trigger => ScriptApp.deleteTrigger(trigger));
-  ScriptApp.newTrigger('processMarketPulseInbox').timeBased().everyMinutes(AGNT_MARKETPULSE_CONFIG.triggerMinutes).create();
+  ScriptApp.newTrigger('processMarketPulseInbox')
+    .timeBased()
+    .atHour(AGNT_MARKETPULSE_CONFIG.dailyTriggerHour)
+    .nearMinute(AGNT_MARKETPULSE_CONFIG.dailyTriggerMinute)
+    .everyDays(1)
+    .inTimezone(AGNT_MARKETPULSE_CONFIG.timezone)
+    .create();
   properties.setProperties({
     BRIDGE_INSTALLED_AT: new Date().toISOString(),
     BRIDGE_LAST_ERROR: '',
@@ -57,12 +64,13 @@ function getMarketPulseBridgeStatus() {
     lastSuccessAt: properties.getProperty('BRIDGE_LAST_SUCCESS_AT') || '',
     lastSummary: properties.getProperty('BRIDGE_LAST_SUMMARY') || '',
     lastError: properties.getProperty('BRIDGE_LAST_ERROR') || '',
+    recurringSchedule: 'Daily at approximately 6:00 am Australia/Sydney',
     recurringTriggerCount: triggers.length,
     serviceAccountConfigured: Boolean(properties.getProperty('FIREBASE_SERVICE_ACCOUNT_JSON')),
   };
 }
 
-/** Main five-minute intake task. */
+/** Main daily intake task. The installed trigger runs at approximately 6:00 am Sydney time. */
 function processMarketPulseInbox() {
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(1000)) return { skipped: true, reason: 'Another MarketPulse run is active.' };
