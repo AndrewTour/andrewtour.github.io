@@ -1,6 +1,16 @@
-# AGNT BETA v1.36.24 — Today Command Centre
+# AGNT BETA v1.36.25 — Market Follow-Ups
 
-Incremental BETA update built directly on the current AGNT BETA v1.36.23 Daily MarketPulse Briefing package from the GitHub BETA line.
+Incremental BETA update built directly on the current AGNT BETA v1.36.24 Today Command Centre package.
+
+## Market follow-ups added in v1.36.25
+- Connected MarketPulse outcomes now include one intentional **Bring back when** control: Sold, Price Update, Auction Date, Any Update or Don't Bring Back.
+- The selection is stored with the original interaction and exact property identity. Free-text notes remain conversation context and never silently create a trigger.
+- A later matching MarketPulse event fulfils the watch once, promotes that client ahead of general street matches and carries the prior conversation note into the call screen.
+- Follow-up prompts include the new guide or sale price, price movement and auction date/time whenever those fields are available in MarketPulse.
+- Auction dates are parsed from supported MarketPulse property lines without changing the existing eight-event parser result for the supplied live email.
+- Explicit market follow-ups are promoted into the existing shared Daily Plan Engine; no additional dashboard or task collection is added.
+- Archived contacts, Do Not Contact records, clients already worked today and fulfilled watches are not recycled.
+- Existing Firebase configuration, Authentication, UIDs, Firestore paths/rules, Team data, MarketPulse bridge and Today command-centre scheduling remain unchanged. No migration or Blaze plan is required.
 
 ## Release baseline
 - Application/UI source: current `AndrewTour/AGNT-beta` GitHub `main` baseline at the commit above.

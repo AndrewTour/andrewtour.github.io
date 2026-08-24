@@ -1,4 +1,14 @@
-# AGNT BETA v1.36.24 — Rollout Check
+# AGNT BETA v1.36.25 — Rollout Check
+
+## Market follow-up acceptance
+
+1. Start a Just Listed Hot Spotting session, log a connected outcome and confirm **Bring back when** appears with Sold selected by default.
+2. Change the outcome to No Answer and confirm the market-follow-up selector is removed from the active form flow.
+3. Save a Sold, Price Update, Auction Date or Any Update watch and confirm it appears in the contact's existing history with the property address.
+4. Import a later matching event for the exact property and confirm the requested client appears first with the previous note and latest market detail.
+5. Where MarketPulse supplies them, confirm the prompt shows the new price/guide, movement and auction date/time.
+6. Confirm the same fulfilled watch does not trigger again on a duplicate import.
+7. Confirm archived and Do Not Contact records are never promoted.
 
 ## Before release verification
 1. Confirm the existing `firestore.rules` remain active in Firebase project `daily-accountability-be0ac`; this release does not change them.
