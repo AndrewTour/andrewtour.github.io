@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.36.7-safe-cleanup">
+<link rel="stylesheet" href="styles.css?v=1.36.21-beta-marketpulse-automation">
 <title>AGNT</title>
 </head>
 <body>
@@ -575,6 +575,7 @@
       <nav class="prospector-sections glass" aria-label="Prospector sections">
         <button class="active" type="button" data-prospector-section="today" aria-current="page">Today</button>
         <button type="button" data-prospector-section="contacts">Contacts</button>
+        <button type="button" data-prospector-section="buyers">Buyers</button>
         <button type="button" data-prospector-section="pipeline">Pipeline</button>
         <button type="button" data-prospector-section="insights">Insights</button>
       </nav>
@@ -622,6 +623,41 @@
           <div class="prospecting-section-head contacts-head"><div><span id="prospectContactsEyebrow">CONTACTS</span><h3 id="prospectContactsHeading">Your database</h3><small id="prospectContactCount">0 contacts · Sorted A–Z</small></div><div class="contacts-head-actions"><label class="prospect-import-button">Import CSV<input id="prospectCsvImport" type="file" accept=".csv,text/csv"></label><button id="toggleProspectBulk" class="text-btn manage-contacts-btn" type="button">Manage Contacts</button><button id="toggleArchivedContacts" class="text-btn manage-contacts-btn" type="button">Archived</button></div></div>
           <div class="prospect-bulk-bar"><span id="prospectSelectedCount">0 selected</span><button id="selectAllProspects" class="text-btn" type="button">Select All</button><button id="restoreSelectedProspects" class="primary hidden" type="button" disabled>Restore</button><button id="deleteSelectedProspects" class="danger-btn" type="button" disabled>Delete</button></div>
           <div id="prospectContactList" class="prospect-list contacts-list"></div>
+        </section>
+        <section id="prospectorBuyersPanel" class="prospector-buyers-panel hidden" aria-live="polite">
+          <section class="buyer-overview">
+            <div class="buyer-browse-controls">
+              <div class="buyer-quick-filters" aria-label="Quick buyer filters">
+                <button class="active" type="button" data-buyer-quick-filter="All">All</button>
+                <button type="button" data-buyer-quick-filter="Hot">Hot</button>
+                <button type="button" data-buyer-quick-filter="Warm">Warm</button>
+                <button id="toggleBuyerFilters" class="buyer-filter-toggle" type="button" aria-expanded="false" aria-controls="buyerAdvancedFilters">Filters <span id="buyerFilterCount">0</span></button>
+              </div>
+            </div>
+          </section>
+          <section id="buyerAdvancedFilters" class="buyer-advanced-filters glass hidden">
+            <div class="buyer-filter-heading"><div><span>REFINE BUYERS</span><h3>Match the property</h3></div><div class="buyer-filter-heading-actions"><button id="clearBuyerFilters" class="text-btn hidden" type="button">Clear</button><button id="closeBuyerFilters" class="text-btn" type="button">Done</button></div></div>
+            <label>Suburb<input id="buyerFilterSuburb" type="search" list="buyerSydneySuburbs" placeholder="Suburb" autocomplete="off"></label>
+            <div class="buyer-filter-budget buyer-filter-budget-single">
+              <div><span>Buyer budget at least</span><strong id="buyerFilterBudgetMinLabel">Any</strong><input id="buyerFilterBudgetMin" type="range" min="0" max="5000000" step="50000" value="0"></div>
+            </div>
+            <div class="buyer-filter-grid">
+              <label>Bedrooms<select id="buyerFilterBedrooms"><option value="0">Any</option><option value="1">1+</option><option value="2">2+</option><option value="3">3+</option><option value="4">4+</option><option value="5">5+</option></select></label>
+              <label>Bathrooms<select id="buyerFilterBathrooms"><option value="0">Any</option><option value="1">1+</option><option value="2">2+</option><option value="3">3+</option><option value="4">4+</option></select></label>
+              <label>Cars<select id="buyerFilterCars"><option value="0">Any</option><option value="1">1+</option><option value="2">2+</option><option value="3">3+</option></select></label>
+              <label>Property type<select id="buyerFilterPropertyType"><option value="">Any</option><option>House</option><option>Duplex</option><option>Townhouse</option><option>Unit</option><option>Land</option></select></label>
+              <label>Stage<select id="buyerFilterStage"><option value="">Any</option><option>Looking</option><option>Inspecting</option><option>Negotiating</option></select></label>
+              <label>Temperature<select id="buyerFilterTemperature"><option value="">Any</option><option>Hot</option><option>Warm</option><option>Cold</option></select></label>
+              <label>Position<select id="buyerFilterPosition"><option value="">Any</option><option>Buyer Seller</option><option>Upsizing</option><option>Downsizing</option><option>Builder</option><option>Investor</option><option>First Home Buyer</option></select></label>
+              <label>Follow-up<select id="buyerFilterFollowUp"><option value="">Any</option><option value="overdue">Overdue</option><option value="today">Due today</option><option value="scheduled">Scheduled</option><option value="none">Not set</option></select></label>
+            </div>
+            <div class="buyer-filter-features"><span>Requirements</span><div><button type="button" data-buyer-filter-feature="Granny Flat">Granny Flat</button><button type="button" data-buyer-filter-feature="Pool">Pool</button><button type="button" data-buyer-filter-feature="Ensuite">Ensuite</button><button type="button" data-buyer-filter-feature="Study">Study</button><button type="button" data-buyer-filter-feature="Single Level">Single Level</button><button type="button" data-buyer-filter-feature="Renovated">Renovated</button><button type="button" data-buyer-filter-feature="Development">Development</button><button type="button" data-buyer-filter-feature="Large Yard">Large Yard</button></div></div>
+          </section>
+          <section class="buyer-list-shell glass">
+            <div class="buyer-results-head"><span id="buyerListMeta">0 buyers · A–Z</span><button id="toggleArchivedBuyers" class="text-btn" type="button" aria-pressed="false">Archived</button></div>
+            <div id="buyerProfileList" class="buyer-profile-list"></div>
+          </section>
+          <datalist id="buyerSydneySuburbs"></datalist>
         </section>
         <section id="prospectorPipelinePanel" class="prospector-pipeline-panel hidden">
           <section class="pipeline-overview glass">
@@ -854,6 +890,17 @@ Andrew Tour | McGrath</textarea></label>
           <button id="leaveCurrentTeam" class="secondary team-leave-button hidden" type="button">Leave team</button>
           <button id="openTeamSetup" class="secondary" type="button">Choose setup</button>
         </fieldset>
+        <fieldset class="marketpulse-automation-settings">
+          <legend>MarketPulse Automation</legend>
+          <div class="marketpulse-automation-card">
+            <div class="marketpulse-automation-heading">
+              <div><span id="marketPulseAutomationStatus" data-state="unavailable">Connecting</span><strong id="marketPulseAutomationEmail">Sign in to connect</strong></div>
+              <span class="marketpulse-automation-badge">AUTO</span>
+            </div>
+            <p id="marketPulseAutomationDetail">Checking your automatic Hot Spotting connection.</p>
+            <div class="marketpulse-automation-route"><span>FORWARD MARKETPULSE TO</span><strong id="marketPulseAutomationDestination">agnt.marketpulse@gmail.com</strong><small>Use Outlook Forward from the same email used to sign in to AGNT.</small></div>
+          </div>
+        </fieldset>
         <label>Agent name<input id="agentName" type="text" maxlength="40" placeholder="Your name"></label>
         <label>Calls target<input id="callsTarget" type="number" min="1"></label>
         <label>Connects target<input id="connectsTarget" type="number" min="1"></label>
@@ -1025,6 +1072,7 @@ Andrew Tour | McGrath</textarea></label>
     <div id="manualCallPostActions" class="manual-call-post-actions hidden">
       <div class="manual-call-result"><span id="manualCallResultIcon">✓</span><div><strong id="manualCallResultTitle">Call logged</strong><small id="manualCallResultMeta"></small></div></div>
       <button id="manualCallSaveContact" type="button" class="secondary">Save as a contact</button>
+      <button id="manualCallSaveBuyer" type="button" class="secondary buyer-post-action">Add as buyer</button>
       <button id="manualCallBookAppointment" type="button" class="primary">Book appointment</button>
       <button id="manualCallDone" type="button" class="text-btn">Done</button>
     </div>
@@ -1035,6 +1083,6 @@ Andrew Tour | McGrath</textarea></label>
 
 
 
-<script type="module" src="app.js?v=1.36.7-safe-cleanup"></script>
+<script type="module" src="app.js?v=1.36.21-beta-marketpulse-automation"></script>
 </body>
 </html>

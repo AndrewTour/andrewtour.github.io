@@ -1,0 +1,573 @@
+/*
+ * AGNT BETA v1.37.0 — UI System Consolidation
+ * Presentation-only layer. No workflow, persistence or Firebase behaviour changes.
+ */
+
+:root{
+  --ui-page:#ffffff;
+  --ui-surface:#ffffff;
+  --ui-surface-soft:#f5f6f8;
+  --ui-surface-blue:#eef5ff;
+  --ui-field:#f4f6f8;
+  --ui-border:#dfe3e8;
+  --ui-rule:#eceef1;
+  --ui-text:#141820;
+  --ui-text-soft:#424b57;
+  --ui-muted:#6d7581;
+  --ui-label:#69717d;
+  --ui-faint:#9ba1aa;
+  --ui-blue:#1769d2;
+  --ui-blue-strong:#0a69d8;
+  --ui-green:#16845b;
+  --ui-amber:#946000;
+  --ui-red:#c13b50;
+  --ui-radius-control:14px;
+  --ui-radius-card:18px;
+  --ui-radius-sheet:28px;
+  --ui-shadow-card:0 8px 24px rgba(22,28,45,.045);
+  --ui-shadow-sheet:0 24px 70px rgba(20,28,45,.22);
+  --ui-control-height:48px;
+  --ui-section-gap:18px;
+  color-scheme:light;
+}
+
+html[data-theme="dark"]{
+  --ui-page:#0b0d11;
+  --ui-surface:#11141a;
+  --ui-surface-soft:#171a20;
+  --ui-surface-blue:#101c2d;
+  --ui-field:#191d23;
+  --ui-border:#2d323b;
+  --ui-rule:#242830;
+  --ui-text:#f5f6f7;
+  --ui-text-soft:#d3d7dd;
+  --ui-muted:#9ca3ae;
+  --ui-label:#8f97a2;
+  --ui-faint:#727a86;
+  --ui-blue:#82bdff;
+  --ui-blue-strong:#69a9ff;
+  --ui-green:#65d6a8;
+  --ui-amber:#ffd46e;
+  --ui-red:#ff8fa1;
+  --ui-shadow-card:none;
+  --ui-shadow-sheet:0 24px 70px rgba(0,0,0,.55);
+  color-scheme:dark;
+}
+
+html,body,.app{
+  background:var(--ui-page)!important;
+  color:var(--ui-text)!important;
+}
+
+body{background-image:none!important}
+
+/* One surface language: opaque, quiet and readable in both themes. */
+.glass{
+  background:var(--ui-surface)!important;
+  border-color:var(--ui-border)!important;
+  box-shadow:var(--ui-shadow-card)!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+
+/* Global screen shell and header hierarchy. */
+.app{gap:8px}
+.topbar{
+  min-height:82px;
+  padding:4px 4px 10px;
+  transform:none!important;
+}
+.topbar>div:first-child{min-width:0}
+.topbar h1{
+  margin:0 0 5px;
+  color:var(--ui-text)!important;
+  font-size:1.72rem;
+  font-weight:780;
+  line-height:1.02;
+  letter-spacing:-.045em;
+}
+.view-subtitle,.date{
+  color:var(--ui-muted)!important;
+  font-size:.78rem;
+  font-weight:520;
+  line-height:1.35;
+  letter-spacing:0;
+}
+.date-line{gap:8px}
+.top-actions{gap:8px}
+.icon-btn,.back-today,.settings-shortcut-icon{
+  min-width:44px;
+  height:44px;
+  padding:0 12px;
+  border:1px solid var(--ui-border)!important;
+  border-radius:var(--ui-radius-control)!important;
+  background:var(--ui-surface-soft)!important;
+  color:var(--ui-text)!important;
+  box-shadow:none!important;
+}
+.view-head,.timeline-view-head,.leaderboard-head,.prospecting-heading{
+  margin-block:14px 16px;
+}
+.view-head>div>span,.leaderboard-head span,.prospecting-heading>span,
+.section-label>span,.prospecting-section-head span,.day-log-head span,
+.scorecard-head span,.buyer-detail-section-head>span{
+  color:var(--ui-label)!important;
+  font-size:.64rem!important;
+  font-weight:800!important;
+  line-height:1.15;
+  letter-spacing:.14em!important;
+}
+.view-head h2,.timeline-view-head h2,.leaderboard-head h2,.prospecting-heading h2{
+  margin-top:5px;
+  color:var(--ui-text)!important;
+  font-size:1.55rem;
+  font-weight:750;
+  line-height:1.08;
+  letter-spacing:-.035em;
+}
+
+/* Shared type hierarchy. */
+:is(.timeline-overview,.scorecard-focus,.prospecting-section-head,.pipeline-overview-head,
+     .market-pulse-hero,.campaign-hero,.prospect-intelligence-hero,
+     .prospect-weekly-focus,.day-log-head) :is(h3,strong){
+  color:var(--ui-text);
+}
+:is(.timeline-overview,.scorecard-focus,.prospecting-section-head,.pipeline-overview-head,
+     .market-pulse-hero,.campaign-hero,.prospect-intelligence-hero,
+     .prospect-weekly-focus,.day-log-head) :is(p,small){
+  color:var(--ui-muted);
+}
+.empty{
+  padding:30px 18px;
+  color:var(--ui-muted)!important;
+  font-size:.78rem;
+  font-weight:550;
+  line-height:1.45;
+}
+
+/* Buttons: black primary in light, blue primary in dark; blue secondary everywhere. */
+.primary,.secondary,.danger,.file-btn{
+  min-height:var(--ui-control-height);
+  margin-top:8px;
+  padding:0 16px;
+  border-radius:15px!important;
+  box-shadow:none!important;
+  font-size:.82rem;
+  font-weight:760;
+  letter-spacing:0;
+}
+.primary{
+  border:1px solid #111318!important;
+  background:#111318!important;
+  color:#fff!important;
+}
+.secondary,.file-btn{
+  border:1px solid #cdddf3!important;
+  background:#f3f7fd!important;
+  color:var(--ui-blue)!important;
+}
+.danger{
+  border:1px solid rgba(193,59,80,.18)!important;
+  background:rgba(193,59,80,.07)!important;
+  color:var(--ui-red)!important;
+}
+.text-btn{color:var(--ui-blue)!important;font-size:.74rem;font-weight:720}
+html[data-theme="dark"] .primary{
+  border-color:#397dff!important;
+  background:#397dff!important;
+  color:#fff!important;
+}
+html[data-theme="dark"] .secondary,
+html[data-theme="dark"] .file-btn{
+  border-color:rgba(112,182,255,.28)!important;
+  background:rgba(57,125,255,.11)!important;
+  color:var(--ui-blue)!important;
+}
+
+/* Form controls share one height, radius and text weight. */
+:is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),select,textarea){
+  min-height:var(--ui-control-height);
+  border:1px solid var(--ui-border)!important;
+  border-radius:var(--ui-radius-control)!important;
+  background:var(--ui-field)!important;
+  color:var(--ui-text)!important;
+  -webkit-text-fill-color:var(--ui-text)!important;
+  box-shadow:none!important;
+  font-size:.92rem!important;
+  font-weight:520!important;
+  letter-spacing:0!important;
+}
+textarea{padding:13px 14px!important;line-height:1.45}
+input::placeholder,textarea::placeholder{color:var(--ui-faint)!important;opacity:1}
+:is(input,select,textarea):focus{
+  border-color:#91bdf8!important;
+  outline:0!important;
+  box-shadow:0 0 0 3px rgba(23,105,210,.11)!important;
+}
+:is(.appointment-form,.settings,.prospect-editor,.campaign-builder,.pipeline-controls,.buyer-editor) label{
+  color:var(--ui-label)!important;
+  font-size:.72rem;
+  font-weight:680;
+}
+
+/* One segmented-control language. */
+:is(.today-page-tabs,.prospector-sections,.leaderboard-mode-tabs,.insight-period-switch,
+     .appointment-filter,.broadcast-review-switch,.appearance-options){
+  gap:4px!important;
+  padding:4px!important;
+  border:1px solid var(--ui-border)!important;
+  border-radius:16px!important;
+  background:var(--ui-surface-soft)!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+:is(.today-page-tabs,.prospector-sections,.leaderboard-mode-tabs,.insight-period-switch,
+     .appointment-filter,.broadcast-review-switch) button{
+  min-height:40px;
+  border:0!important;
+  border-radius:12px!important;
+  background:transparent!important;
+  color:var(--ui-muted)!important;
+  box-shadow:none!important;
+  font-size:.71rem;
+  font-weight:720;
+}
+:is(.today-page-tabs,.prospector-sections,.leaderboard-mode-tabs,.insight-period-switch,
+     .appointment-filter,.broadcast-review-switch) button.active{
+  background:var(--ui-text)!important;
+  color:var(--ui-page)!important;
+  box-shadow:none!important;
+}
+html[data-theme="dark"] :is(.today-page-tabs,.prospector-sections,.leaderboard-mode-tabs,
+     .insight-period-switch,.appointment-filter,.broadcast-review-switch) button.active{
+  background:#f4f5f7!important;
+  color:#111318!important;
+}
+
+/* Bottom navigation remains familiar but gains a consistent selected capsule. */
+.tabbar{
+  border-top:1px solid var(--ui-rule)!important;
+  background:var(--ui-surface)!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+.tabbar button{
+  min-height:54px;
+  border-radius:18px!important;
+  color:var(--ui-faint)!important;
+}
+.tabbar button.active{
+  background:var(--ui-surface-soft)!important;
+  color:var(--ui-text)!important;
+}
+html[data-theme="dark"] .tabbar button.active{
+  background:var(--ui-surface-soft)!important;
+  color:var(--ui-text)!important;
+}
+.tabbar button.active::before{display:none!important}
+.tabbar .tab-icon,.tabbar .tab-icon svg{width:21px;height:21px}
+.tabbar span{font-size:.5rem;font-weight:620}
+
+/* Home: one dominant focus, followed by clean working rows. */
+.dashboard .score-week{
+  padding:8px 2px 14px!important;
+  border:0!important;
+  border-bottom:1px solid var(--ui-rule)!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.score-copy strong{color:var(--ui-text)!important;font-weight:700}
+.score-copy .momentum-whisper,.leaderboard-position small{color:var(--ui-muted)!important}
+.leaderboard-position{border-bottom-color:var(--ui-rule)!important}
+.now-card{
+  border:1px solid #d8e6f9!important;
+  border-radius:var(--ui-radius-card)!important;
+  background:var(--ui-surface-blue)!important;
+  box-shadow:none!important;
+}
+.now-card-label,.now-card svg{color:var(--ui-blue)!important;stroke:var(--ui-blue)!important}
+.now-card-copy strong{color:var(--ui-text)!important}
+.now-card-copy small{color:var(--ui-muted)!important}
+.dashboard .metrics{
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.dashboard .metrics>.metric{
+  border-bottom:1px solid var(--ui-rule)!important;
+  border-radius:0!important;
+  background:transparent!important;
+}
+.dashboard .metric-copy>span{color:var(--ui-label)!important}
+.dashboard .metric-copy>small{color:var(--ui-muted)!important}
+.dashboard .metric-copy>strong,.dashboard .knock #knockValue{color:var(--ui-text)!important}
+.dashboard .actions:not(.knock-actions)>button,.knock-actions>button{
+  border:1px solid var(--ui-border)!important;
+  background:var(--ui-surface-soft)!important;
+  color:var(--ui-text)!important;
+}
+.dashboard .actions:not(.knock-actions)>button:last-child,.knock-actions .timer{
+  border-color:var(--ui-text)!important;
+  background:var(--ui-text)!important;
+  color:var(--ui-page)!important;
+}
+
+/* Today, Insights and Log use matching contained sections. */
+.timeline-overview,.daily-timeline,.day-log-summary,.today-wins,.day-log-card,
+.scorecard-hero,.scorecard-metrics,.scorecard-focus,.scorecard-trends,
+.scorecard-productivity,.scorecard-momentum,.scorecard-personal-bests,
+.scorecard-recommendations,.scorecard-achievements{
+  border:1px solid var(--ui-border)!important;
+  border-radius:var(--ui-radius-card)!important;
+  background:var(--ui-surface)!important;
+  box-shadow:none!important;
+}
+.timeline-overview{padding:16px!important}
+.daily-timeline{padding:4px 14px!important}
+.timeline-item{border-bottom-color:var(--ui-rule)!important}
+.timeline-item.current{background:var(--ui-surface-blue)!important}
+.day-log-summary{padding:12px!important}
+.day-log-card,.today-wins{padding:16px!important}
+.scorecard-hero,.scorecard-metrics,.scorecard-focus,
+.scorecard-trends,.scorecard-productivity,.scorecard-momentum,
+.scorecard-personal-bests,.scorecard-recommendations,.scorecard-achievements{
+  padding:16px!important;
+  margin-bottom:12px!important;
+}
+:is(.scorecard-trend-grid,.scorecard-productivity-grid,.scorecard-momentum-grid,
+     .scorecard-best-grid,.scorecard-achievement-grid) article{
+  border-color:var(--ui-border)!important;
+  background:var(--ui-surface-soft)!important;
+  box-shadow:none!important;
+}
+
+/* Appointments: destination, editor and history share the same hierarchy. */
+.appointment-destination-grid{gap:9px}
+.appointment-destination-card{
+  min-height:88px;
+  padding:15px 46px 15px 15px;
+  border:1px solid var(--ui-border)!important;
+  border-radius:var(--ui-radius-card)!important;
+  background:var(--ui-surface-soft)!important;
+  box-shadow:none!important;
+}
+.appointment-destination-card span{color:var(--ui-label)!important}
+.appointment-destination-card strong{color:var(--ui-text)!important}
+.appointment-destination-card small{color:var(--ui-muted)!important}
+.appointment-form{
+  padding:16px!important;
+  border:1px solid var(--ui-border)!important;
+  border-radius:var(--ui-radius-card)!important;
+  background:var(--ui-surface)!important;
+  box-shadow:none!important;
+}
+.appointment-types label,.appointment-card,.appointment-card-premium{
+  border-color:var(--ui-border)!important;
+  background:var(--ui-surface-soft)!important;
+  box-shadow:none!important;
+}
+.appointment-card strong,.appointment-card-premium strong{color:var(--ui-text)!important}
+.appointment-card small,.appointment-card-premium small{color:var(--ui-muted)!important}
+
+/* Prospector: Buyers becomes the reference hierarchy for every database mode. */
+.prospecting-toolbar{
+  padding:6px 0 10px!important;
+  border-bottom:1px solid var(--ui-rule)!important;
+  background:var(--ui-surface)!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+.prospecting-search-wrap{
+  border:1px solid var(--ui-border)!important;
+  background:var(--ui-field)!important;
+  box-shadow:none!important;
+}
+.prospecting-call-button{
+  border:1px solid var(--ui-border)!important;
+  background:var(--ui-surface-soft)!important;
+  color:var(--ui-text)!important;
+  box-shadow:none!important;
+}
+.prospecting-add{background:#347ff2!important;color:#fff!important;box-shadow:none!important}
+.prospecting-hero,.prospecting-section,.pipeline-overview,.pipeline-timeframe,
+.market-pulse-hero,.market-pulse-results,.market-pulse-import,.campaign-hero,
+.prospect-intelligence-hero,.prospect-intelligence-card,.prospect-weekly-focus,
+.broadcast-step-surface,#broadcastMenu .broadcast-type-list{
+  border:1px solid var(--ui-border)!important;
+  border-radius:var(--ui-radius-card)!important;
+  background:var(--ui-surface)!important;
+  box-shadow:none!important;
+}
+.prospecting-hero,.campaign-hero,.market-pulse-hero{padding:17px!important}
+.prospecting-section,.pipeline-overview,.pipeline-timeframe,
+.market-pulse-results,.market-pulse-import,.prospect-intelligence-card,
+.prospect-weekly-focus,.broadcast-step-surface{padding:15px!important}
+.prospect-card,.buyer-card,.pipeline-seller-card{border-color:var(--ui-rule)!important}
+.prospect-card-copy strong,.pipeline-seller-card strong{color:var(--ui-text)!important}
+.prospect-card-copy small,.prospect-card-copy em,.pipeline-seller-card small{color:var(--ui-muted)!important}
+.prospect-tags span,.prospect-background,.buyer-position-tag{
+  background:var(--ui-surface-blue)!important;
+  color:var(--ui-blue)!important;
+}
+.prospect-quick-actions a,.prospect-quick-actions button,
+.prospect-card-actions a,.prospect-card-actions button{
+  border:1px solid #d3e2f8!important;
+  border-radius:var(--ui-radius-control)!important;
+  background:#f4f8fd!important;
+  color:var(--ui-blue)!important;
+  box-shadow:none!important;
+}
+html[data-theme="dark"] .prospect-quick-actions a,
+html[data-theme="dark"] .prospect-quick-actions button,
+html[data-theme="dark"] .prospect-card-actions a,
+html[data-theme="dark"] .prospect-card-actions button{
+  border-color:rgba(112,182,255,.26)!important;
+  background:rgba(57,125,255,.11)!important;
+}
+
+/* Leaderboard: open data presentation with one contained overview. */
+.leaderboard-dashboard{
+  padding:16px!important;
+  border:1px solid var(--ui-border)!important;
+  border-radius:var(--ui-radius-card)!important;
+  background:var(--ui-surface)!important;
+  box-shadow:none!important;
+}
+.leaderboard-card,.leaderboard-unified-card{
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.leaderboard-row{border-bottom-color:var(--ui-rule)!important}
+.leaderboard-row:first-child{
+  border:1px solid #d8e6f9!important;
+  border-radius:var(--ui-radius-control)!important;
+  background:var(--ui-surface-blue)!important;
+}
+.leaderboard-row strong,.leaderboard-kpis strong{color:var(--ui-text)!important}
+.leaderboard-row small,.leaderboard-metric-cell span{color:var(--ui-muted)!important}
+
+/* Settings: clear grouped sections and a quiet destructive zone. */
+.settings{
+  padding:0 0 20px!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.profile-hero{padding:4px 2px 14px;border-bottom:1px solid var(--ui-rule)}
+.profile-hero-copy h2{color:var(--ui-text)!important;font-weight:750;letter-spacing:-.03em}
+.account-email,.profile-hero-copy span{color:var(--ui-muted)!important}
+.profile-kpis{
+  gap:8px;
+  margin:14px 0 18px;
+}
+.profile-kpis article{
+  padding:13px;
+  border:1px solid var(--ui-border)!important;
+  border-radius:var(--ui-radius-control)!important;
+  background:var(--ui-surface-soft)!important;
+  box-shadow:none!important;
+}
+.profile-kpis span{color:var(--ui-label)!important}
+.profile-kpis strong{color:var(--ui-text)!important}
+.settings>fieldset{
+  margin:18px 0!important;
+  padding:16px!important;
+  border:1px solid var(--ui-border)!important;
+  border-radius:var(--ui-radius-card)!important;
+  background:var(--ui-surface)!important;
+}
+.settings>fieldset legend{
+  padding:0 6px;
+  color:var(--ui-text)!important;
+  font-size:.82rem;
+  font-weight:740;
+}
+.workday-options span,.calendar-preference-options label,.calendar-option-content{
+  border-color:var(--ui-border)!important;
+  background:var(--ui-surface-soft)!important;
+  color:var(--ui-muted)!important;
+}
+.workday-options input:checked+span,.calendar-preference-options label:has(input:checked){
+  border-color:#aac9f2!important;
+  background:var(--ui-surface-blue)!important;
+  color:var(--ui-blue)!important;
+}
+#signOut{margin-top:18px}
+
+/* One modal/sheet system: opaque surface, no background blur, predictable actions. */
+.modal,.action-sheet-modal,.team-appointment-notice,.appointment-assignment-modal,
+.pipeline-refresh-overlay,.buyer-followup-overlay,
+.knocking-capture-overlay,.manual-dialler-overlay{
+  background:rgba(20,24,32,.42)!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+.modal .glass,.action-sheet.glass,.manual-dialler.glass,.calendar-shell.glass,
+.day-review-card,.team-appointment-notice-card,.appointment-assignment-card,
+.pipeline-refresh-card,.buyer-followup-sheet{
+  border:1px solid var(--ui-border)!important;
+  border-radius:var(--ui-radius-sheet)!important;
+  background:var(--ui-surface)!important;
+  color:var(--ui-text)!important;
+  box-shadow:var(--ui-shadow-sheet)!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+.action-sheet-close,.team-manager-close,.team-close{
+  min-width:44px;
+  min-height:44px;
+  border:1px solid var(--ui-border)!important;
+  border-radius:var(--ui-radius-control)!important;
+  background:var(--ui-surface-soft)!important;
+  color:var(--ui-muted)!important;
+}
+.action-sheet-actions,.team-appointment-notice-actions,.pipeline-refresh-actions,
+.buyer-followup-actions{gap:10px}
+
+/* Universal secondary-screen navigation. */
+:is(.prospect-session-head,.prospect-detail-nav,.knocking-history-head)>button:first-child,
+[data-team-back],#backFromArchivedContacts,#backFromMarketPulse,#broadcastBack{
+  color:var(--ui-blue)!important;
+}
+:is(.prospect-session-head,.prospect-detail-nav,.knocking-history-head){
+  border-bottom-color:var(--ui-rule)!important;
+}
+
+/* Accessible feedback without adding visual noise. */
+:is(button,a,input,select,textarea):focus-visible{
+  outline:3px solid rgba(23,105,210,.2)!important;
+  outline-offset:2px;
+}
+button:active:not(:disabled){transform:scale(.985)}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
+
+@media(display-mode:standalone){
+  html,body,.app{background:var(--ui-page)!important}
+}
+
+@media(max-width:430px){
+  .topbar{min-height:76px;padding-bottom:8px}
+  .topbar h1{font-size:1.6rem}
+  .view-head h2,.timeline-view-head h2,.leaderboard-head h2,.prospecting-heading h2{font-size:1.45rem}
+  .tabbar{padding-inline:6px}
+  .tabbar button{border-radius:16px!important}
+  .settings>fieldset{padding:14px!important}
+}
+
+@media(max-width:390px){
+  .topbar h1{font-size:1.5rem}
+  .view-subtitle,.date{font-size:.72rem}
+  :is(.today-page-tabs,.prospector-sections,.leaderboard-mode-tabs,.insight-period-switch,
+       .appointment-filter,.broadcast-review-switch) button{font-size:.66rem;padding-inline:3px!important}
+  .tabbar span{font-size:.46rem}
+}
