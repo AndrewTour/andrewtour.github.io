@@ -1,4 +1,11 @@
-# AGNT BETA v1.36.28 — Rollout Check
+# AGNT BETA v1.36.29 — Rollout Check
+
+## Timeline theme-parity acceptance
+
+1. Open Today in Light mode and confirm the rail runs continuously through the centre of every status marker.
+2. Switch to Dark mode and confirm the timeline retains the exact same columns, spacing, card dimensions, marker positions and rail position.
+3. Confirm the rail begins and ends at the same timeline points in both themes and remains uninterrupted through the active block.
+4. Confirm switching themes changes colour only and causes no horizontal movement or layout reflow.
 
 ## Appointment and follow-up polish acceptance
 

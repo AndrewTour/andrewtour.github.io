@@ -1,6 +1,13 @@
-# AGNT BETA v1.36.28 — Appointment & Follow-Up Polish
+# AGNT BETA v1.36.29 — Timeline Theme Parity
 
-Incremental BETA update built directly on the accepted AGNT BETA v1.36.26 package. The rejected v1.36.27 Home-page experiment is not included.
+Incremental BETA update built directly on the working AGNT BETA v1.36.28 package. The rejected v1.36.27 Home-page experiment is not included.
+
+## Timeline theme parity added in v1.36.29
+- Light and Dark mode now use the same timeline columns, spacing, marker placement and rail coordinates.
+- The correctly aligned Light-mode centreline is now the canonical position in both themes.
+- One continuous rail runs from the start to the finish of the timeline behind every status marker.
+- Theme rules change colour only; they no longer change timeline geometry.
+- No timeline content, scheduling logic, Firebase paths, Team data or MarketPulse automation has changed.
 
 ## Appointment and follow-up polish added in v1.36.28
 - **View appointment** on Today opens that exact personal appointment directly in edit mode. Team-assigned appointments retain their existing read-only route.

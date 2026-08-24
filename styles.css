@@ -11593,3 +11593,59 @@ html[data-theme="dark"] .knocking-street-picker select{background:#191d23;border
 html[data-theme="dark"] .knocking-street-picker small{color:#969ca7}
 html[data-theme="dark"] .knocking-hotspot-toggle{border-top-color:#292d35}
 html[data-theme="dark"] .knocking-hotspot-detail-label{color:#d9dde3}
+
+/* AGNT BETA v1.36.29 — one timeline geometry for light and dark mode. */
+#scheduleView .today-overview-panel .daily-timeline{
+  --timeline-time-col:58px;
+  --timeline-marker-col:20px;
+  --timeline-gap:8px;
+  --timeline-axis-x:calc(var(--timeline-time-col) + var(--timeline-gap) + (var(--timeline-marker-col) / 2));
+  position:relative!important;
+  padding:8px 15px!important;
+}
+#scheduleView .today-overview-panel .timeline-item.plan-item{
+  grid-template-columns:var(--timeline-time-col) var(--timeline-marker-col) minmax(0,1fr)!important;
+  column-gap:var(--timeline-gap)!important;
+  min-height:76px;
+  padding:16px 0;
+  align-items:start;
+  margin-left:0!important;
+  margin-right:0!important;
+}
+#scheduleView .today-overview-panel .timeline-item.plan-item .timeline-marker{
+  justify-self:center!important;
+  margin-left:0!important;
+  margin-right:0!important;
+  transform:none!important;
+}
+#scheduleView .today-overview-panel .daily-timeline::before,
+html:not([data-theme="dark"]) #scheduleView .today-overview-panel .daily-timeline::before,
+html[data-theme="light"] #scheduleView .today-overview-panel .daily-timeline::before,
+html[data-theme="dark"] #scheduleView .today-overview-panel .daily-timeline::before{
+  content:''!important;
+  display:block!important;
+  position:absolute!important;
+  left:calc(15px + var(--timeline-axis-x))!important;
+  top:39px!important;
+  bottom:39px!important;
+  width:1px!important;
+  transform:translateX(-.5px)!important;
+  z-index:0!important;
+  opacity:1!important;
+  pointer-events:none!important;
+}
+html:not([data-theme="dark"]) #scheduleView .today-overview-panel .daily-timeline::before,
+html[data-theme="light"] #scheduleView .today-overview-panel .daily-timeline::before{
+  background:#d7dce4!important;
+}
+html[data-theme="dark"] #scheduleView .today-overview-panel .daily-timeline::before{
+  background:#343b45!important;
+}
+@media(max-width:380px){
+  #scheduleView .today-overview-panel .daily-timeline{
+    --timeline-time-col:51px;
+    --timeline-marker-col:18px;
+    --timeline-gap:7px;
+  }
+  #scheduleView .today-overview-panel .timeline-item.plan-item{padding:14px 0}
+}
