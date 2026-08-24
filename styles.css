@@ -1755,6 +1755,194 @@ button:not(:disabled):active,a.appointment-call:active{transform:scale(.965)}
   .appointment-reminder-footer .appointment-confirm-note{font-size:.6rem}
 }
 
+/* AGNT BETA v1.36.30 — passive morning live update. */
+.returning-snapshot-screen{
+  --morning-bg:#f5f6f8;
+  --morning-surface:#ffffff;
+  --morning-ink:#171b25;
+  --morning-muted:#8b93a1;
+  --morning-border:#dfe3ea;
+  --morning-blue:#346df5;
+  --morning-blue-soft:#edf3ff;
+  position:fixed;
+  inset:0;
+  width:100%;
+  height:var(--app-height,100dvh);
+  padding:max(18px,env(safe-area-inset-top)) 18px max(17px,env(safe-area-inset-bottom));
+  overflow:hidden!important;
+  box-sizing:border-box;
+  background:var(--morning-bg)!important;
+  color:var(--morning-ink);
+}
+.morning-live-shell{
+  width:min(100%,540px);
+  height:100%;
+  min-height:0;
+  margin:0 auto;
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr) auto;
+  gap:0;
+  outline:none;
+}
+.morning-live-shell .returning-snapshot-top{
+  min-height:38px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+}
+.morning-live-shell .returning-snapshot-brand{color:var(--morning-ink)}
+.morning-live-shell .returning-snapshot-date{color:var(--morning-muted)}
+.morning-live-content{
+  min-height:0;
+  display:grid;
+  align-content:center;
+  gap:clamp(10px,1.65vh,16px);
+  overflow:hidden;
+}
+.morning-live-hero{display:grid;gap:clamp(4px,.65vh,7px)}
+.morning-live-hero .returning-snapshot-kicker{
+  color:#647ca9;
+  font-size:.66rem;
+  font-weight:850;
+  letter-spacing:.18em;
+}
+.morning-live-score{display:flex;align-items:flex-end;gap:10px;line-height:.82}
+.morning-live-score strong{
+  color:var(--morning-ink);
+  font-size:clamp(3.75rem,18vw,5.4rem);
+  font-weight:850;
+  letter-spacing:-.075em;
+}
+.morning-live-score span{
+  padding-bottom:7px;
+  color:var(--morning-muted);
+  font-size:.72rem;
+  font-weight:850;
+  letter-spacing:.16em;
+}
+.morning-live-hero h1{
+  margin:3px 0 0;
+  color:var(--morning-ink);
+  font-size:clamp(1.45rem,6.3vw,2rem);
+  line-height:1.03;
+  letter-spacing:-.035em;
+}
+.morning-live-hero p{
+  margin:0;
+  color:var(--morning-muted);
+  font-size:clamp(.76rem,3.3vw,.9rem);
+  font-weight:570;
+  line-height:1.36;
+}
+.morning-live-market{
+  display:grid;
+  gap:10px;
+  padding:clamp(13px,2vh,17px);
+  border:1px solid var(--morning-border);
+  border-radius:22px;
+  background:var(--morning-surface);
+  box-shadow:0 10px 26px rgba(31,43,64,.04);
+}
+.morning-live-market .daily-briefing-section-head{margin:0}
+.morning-live-market .daily-briefing-section-head>span:first-child{color:#68717f}
+.morning-live-market-impact{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:14px}
+.morning-live-market-impact>div{display:grid;min-width:64px}
+.morning-live-market-impact strong{
+  color:var(--morning-blue);
+  font-size:clamp(2rem,8vw,2.7rem);
+  line-height:.9;
+  letter-spacing:-.055em;
+}
+.morning-live-market-impact span{margin-top:5px;color:var(--morning-muted);font-size:.56rem;font-weight:760;line-height:1.1}
+.morning-live-market-impact p{margin:0;color:var(--morning-ink);font-size:.75rem;font-weight:680;line-height:1.35}
+.morning-live-market .daily-briefing-market-counts{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:6px;
+  margin:0;
+}
+.morning-live-market .daily-briefing-market-counts span{
+  min-width:0;
+  padding:8px 5px;
+  border:0;
+  border-radius:10px;
+  background:var(--morning-blue-soft);
+  color:#697386;
+  text-align:center;
+  font-size:.52rem;
+  font-weight:760;
+}
+.morning-live-market .daily-briefing-market-counts strong{display:block;margin-bottom:2px;color:var(--morning-ink);font-size:.88rem}
+.morning-live-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.morning-live-metrics article{
+  min-width:0;
+  min-height:86px;
+  padding:13px 14px;
+  display:grid;
+  align-content:center;
+  gap:5px;
+  border:1px solid var(--morning-border);
+  border-radius:20px;
+  background:var(--morning-surface);
+  box-sizing:border-box;
+}
+.morning-live-metrics span{color:#7d8593;font-size:.55rem;font-weight:850;letter-spacing:.14em}
+.morning-live-metrics strong{overflow:hidden;color:var(--morning-ink);font-size:clamp(1.15rem,5.4vw,1.55rem);line-height:1.05;letter-spacing:-.035em;text-overflow:ellipsis;white-space:nowrap}
+.morning-live-metrics small{overflow:hidden;color:var(--morning-muted);font-size:.61rem;font-weight:570;line-height:1.25;text-overflow:ellipsis;white-space:nowrap}
+.morning-live-footer{
+  padding-top:12px;
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:8px 14px;
+  align-items:end;
+  color:#73809b;
+  font-size:.59rem;
+  font-weight:800;
+  letter-spacing:.08em;
+}
+.morning-live-footer>strong{color:#647ca9;font-size:.59rem;letter-spacing:0}
+.morning-live-footer>i{
+  grid-column:1/-1;
+  height:3px;
+  overflow:hidden;
+  border-radius:99px;
+  background:var(--morning-border);
+}
+.morning-live-footer>i>b{display:block;width:100%;height:100%;border-radius:inherit;background:var(--morning-blue);transform:scaleX(0);transform-origin:left center}
+.returning-snapshot-screen.is-running .morning-live-footer>i>b{animation:morning-live-progress 4s linear forwards}
+@keyframes morning-live-progress{to{transform:scaleX(1)}}
+html[data-theme="dark"] .returning-snapshot-screen{
+  --morning-bg:#0b0d11;
+  --morning-surface:#13161b;
+  --morning-ink:#f5f6f7;
+  --morning-muted:#969daa;
+  --morning-border:#2b3038;
+  --morning-blue:#4b86ff;
+  --morning-blue-soft:#162338;
+}
+html[data-theme="dark"] .morning-live-market,
+html[data-theme="dark"] .morning-live-metrics article{box-shadow:none}
+html[data-theme="dark"] .morning-live-market .daily-briefing-section-head>span:first-child{color:#9aa2ae}
+@media(max-height:720px){
+  .returning-snapshot-screen{padding-top:max(12px,env(safe-area-inset-top));padding-bottom:max(12px,env(safe-area-inset-bottom))}
+  .morning-live-shell .returning-snapshot-top{min-height:30px}
+  .morning-live-content{gap:8px}
+  .morning-live-score strong{font-size:3.45rem}
+  .morning-live-hero h1{font-size:1.35rem}
+  .morning-live-market{gap:7px;padding:11px 13px;border-radius:18px}
+  .morning-live-market-impact strong{font-size:1.9rem}
+  .morning-live-market .daily-briefing-market-counts span{padding:6px 4px}
+  .morning-live-metrics{gap:8px}
+  .morning-live-metrics article{min-height:72px;padding:10px 12px;border-radius:17px}
+  .morning-live-footer{padding-top:8px}
+}
+@media(max-width:380px){
+  .returning-snapshot-screen{padding-left:14px;padding-right:14px}
+  .morning-live-market-impact{gap:10px}
+  .morning-live-metrics article{padding-left:11px;padding-right:11px}
+  .morning-live-metrics small{font-size:.56rem}
+}
+
 /* v1.27.0 — AGNT UI refresh + dual-layer pacing rings.
    Visual refinement only. Existing data, pacing, status and control logic remain authoritative. */
 :root{
@@ -11649,3 +11837,46 @@ html[data-theme="dark"] #scheduleView .today-overview-panel .daily-timeline::bef
   }
   #scheduleView .today-overview-panel .timeline-item.plan-item{padding:14px 0}
 }
+
+/* v1.36.30 final cascade — keep the morning update geometry theme-independent. */
+.returning-snapshot-screen{
+  height:var(--app-height,100dvh)!important;
+  padding:max(18px,env(safe-area-inset-top)) 18px max(17px,env(safe-area-inset-bottom))!important;
+  overflow:hidden!important;
+}
+.returning-snapshot-screen .morning-live-shell{
+  height:100%!important;
+  min-height:0!important;
+  padding-bottom:0!important;
+  display:grid!important;
+  grid-template-rows:auto minmax(0,1fr) auto!important;
+}
+.returning-snapshot-screen .morning-live-content{display:grid!important;overflow:hidden!important}
+.returning-snapshot-screen .morning-live-market{
+  padding:clamp(13px,2vh,17px)!important;
+  border-color:var(--morning-border)!important;
+  background:var(--morning-surface)!important;
+  color:var(--morning-ink)!important;
+}
+.returning-snapshot-screen .morning-live-market .daily-briefing-market-counts{display:grid!important;margin:0!important}
+.returning-snapshot-screen .morning-live-market .daily-briefing-market-counts span{
+  display:block!important;
+  padding:8px 5px!important;
+  border:0!important;
+  background:var(--morning-blue-soft)!important;
+  color:#697386!important;
+}
+.returning-snapshot-screen .morning-live-market .daily-briefing-market-counts strong{color:var(--morning-ink)!important}
+.returning-snapshot-screen .morning-live-metrics{display:grid!important}
+html[data-theme="dark"] .returning-snapshot-screen .morning-live-market,
+html[data-theme="dark"] .returning-snapshot-screen .morning-live-metrics article{
+  border-color:var(--morning-border)!important;
+  background:var(--morning-surface)!important;
+  color:var(--morning-ink)!important;
+}
+@media(max-height:720px){
+  .returning-snapshot-screen{padding-top:max(12px,env(safe-area-inset-top))!important;padding-bottom:max(12px,env(safe-area-inset-bottom))!important}
+  .returning-snapshot-screen .morning-live-market{padding:11px 13px!important}
+  .returning-snapshot-screen .morning-live-market .daily-briefing-market-counts span{padding:6px 4px!important}
+}
+@media(max-width:380px){.returning-snapshot-screen{padding-left:14px!important;padding-right:14px!important}}

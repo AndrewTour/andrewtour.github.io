@@ -1,4 +1,17 @@
-# AGNT BETA v1.36.29 — Rollout Check
+# AGNT BETA v1.36.30 — Rollout Check
+
+## Morning live-update acceptance
+
+1. Before 11:00 am, launch AGNT twice and confirm launch one opens normally while launch two shows the live update for four seconds.
+2. Continue launching and confirm the screen appears only on even-numbered launches for that user and day.
+3. At or after 11:00 am, confirm no launch shows the morning update.
+4. Confirm the screen fits inside one phone viewport with no vertical or horizontal scrolling.
+5. Confirm Light and Dark mode use identical spacing, card dimensions and hierarchy; only colour changes.
+6. Confirm the hero percentage matches Today completion and the MarketPulse debrief shows Listed, Sold, Price and Other counts.
+7. Confirm the influenced-client figure de-duplicates saved clients who match more than one property update.
+8. Confirm Activity Left, Appointments, Pipeline and Knocking remain visible and the screen contains no action buttons.
+9. Confirm the countdown and progress rail complete after four seconds and AGNT opens automatically.
+10. Confirm a pending Team appointment notice waits until the live update has closed.
 
 ## Timeline theme-parity acceptance
 

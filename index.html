@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.36.29-beta-timeline-theme-parity">
+<link rel="stylesheet" href="styles.css?v=1.36.30-beta-morning-live-update">
 <title>AGNT</title>
 </head>
 <body>
@@ -134,77 +134,61 @@
 </div>
 
 <div id="returningSnapshotScreen" class="returning-snapshot-screen hidden" aria-hidden="true">
-  <section class="returning-snapshot-shell" role="dialog" aria-modal="true" aria-labelledby="returningSnapshotTitle" aria-describedby="returningSnapshotPriority">
+  <section class="returning-snapshot-shell morning-live-shell" role="dialog" aria-modal="true" aria-labelledby="returningSnapshotTitle" aria-describedby="returningSnapshotPriority" tabindex="-1">
     <div class="returning-snapshot-top">
       <span class="returning-snapshot-brand">AGNT<span aria-hidden="true">.</span></span>
-      <div class="daily-briefing-top-actions">
-        <span id="returningSnapshotDate" class="returning-snapshot-date"></span>
-        <button id="returningSnapshotClose" class="daily-briefing-close" type="button" aria-label="Close daily briefing">×</button>
-      </div>
+      <span id="returningSnapshotDate" class="returning-snapshot-date"></span>
     </div>
 
-    <header class="daily-briefing-heading">
-      <span id="returningSnapshotKicker" class="returning-snapshot-kicker">YOUR DAILY BRIEF</span>
-      <h1 id="returningSnapshotTitle"><span id="returningSnapshotGreeting">Good morning</span>, <strong id="returningSnapshotName">Agent</strong>.</h1>
-      <p id="returningSnapshotPriority">Loading your current priorities…</p>
-    </header>
+    <div id="returningSnapshotContent" class="morning-live-content" aria-live="polite">
+      <header class="morning-live-hero">
+        <span id="returningSnapshotKicker" class="returning-snapshot-kicker">GOOD MORNING</span>
+        <div class="morning-live-score"><strong id="returningSnapshotScore">0%</strong><span>TODAY</span></div>
+        <h1 id="returningSnapshotTitle">Your morning is taking shape.</h1>
+        <p id="returningSnapshotPriority">AGNT is reading the latest activity.</p>
+      </header>
 
-    <div id="returningSnapshotLoading" class="daily-briefing-loading" role="status" aria-live="polite">
-      <span class="daily-briefing-spinner" aria-hidden="true"></span>
-      <div><strong>Preparing your morning</strong><small>Checking MarketPulse, appointments and follow-ups.</small></div>
-    </div>
-
-    <div id="returningSnapshotContent" class="daily-briefing-content hidden">
-      <section class="daily-briefing-market" aria-labelledby="dailyBriefingMarketTitle">
+      <section class="morning-live-market" aria-labelledby="dailyBriefingMarketTitle">
         <div class="daily-briefing-section-head">
           <span id="dailyBriefingMarketTitle">MARKETPULSE</span>
           <span id="returningSnapshotMarketStatus" class="daily-briefing-status" data-state="waiting">Awaiting today</span>
         </div>
-        <div class="daily-briefing-opportunity">
-          <strong id="returningSnapshotClientCount">0</strong>
-          <div><span id="returningSnapshotClientLabel">clients to speak to</span><small id="returningSnapshotMarketTime">No matched calling time</small></div>
+        <div class="morning-live-market-impact">
+          <div><strong id="returningSnapshotClientCount">0</strong><span id="returningSnapshotClientLabel">clients influenced</span></div>
+          <p id="returningSnapshotMarketDebrief">Today’s MarketPulse has not arrived yet.</p>
         </div>
         <div id="returningSnapshotMarketCounts" class="daily-briefing-market-counts" aria-label="MarketPulse event counts"></div>
-        <p id="returningSnapshotMarketDebrief">Today’s MarketPulse has not arrived yet.</p>
       </section>
 
-      <section class="daily-briefing-focus" aria-labelledby="dailyBriefingFocusTitle">
-        <div class="daily-briefing-section-head">
-          <span id="dailyBriefingFocusTitle">FOCUS FIRST</span>
-          <small id="returningSnapshotFocusMeta">Listed and Sold ranked first</small>
-        </div>
-        <div id="returningSnapshotFocusList" class="daily-briefing-focus-list"></div>
-      </section>
-
-      <section class="daily-briefing-commitments" aria-label="Today at a glance">
-        <button type="button" data-briefing-view="appointments">
+      <section class="morning-live-metrics" aria-label="Today at a glance">
+        <article>
+          <span>ACTIVITY LEFT</span>
+          <strong id="returningSnapshotActivity">—</strong>
+          <small>Calls · Connects · Data</small>
+        </article>
+        <article>
           <span>APPOINTMENTS</span>
           <strong id="returningSnapshotAppointments">—</strong>
           <small id="returningSnapshotAppointmentMeta">Today</small>
-        </button>
-        <button type="button" data-briefing-view="followups">
-          <span>FOLLOW-UPS</span>
-          <strong id="returningSnapshotFollowUps">—</strong>
-          <small id="returningSnapshotFollowUpMeta">Today</small>
-        </button>
-        <button type="button" data-briefing-view="pipeline">
+        </article>
+        <article>
           <span>PIPELINE</span>
           <strong id="returningSnapshotPipeline">—</strong>
           <small id="returningSnapshotPipelineMeta">Ready to work</small>
-        </button>
+        </article>
+        <article>
+          <span>KNOCKING</span>
+          <strong id="returningSnapshotKnocking">—</strong>
+          <small id="returningSnapshotKnockingMeta">Remaining today</small>
+        </article>
       </section>
-
-      <section class="returning-snapshot-next" aria-labelledby="returningSnapshotNextBlock">
-        <span>AGNT RECOMMENDS</span>
-        <strong id="returningSnapshotNextBlock">Keep moving.</strong>
-        <small id="returningSnapshotNextBlockMeta">AGNT is lining up the first priority.</small>
-      </section>
-
-      <div class="daily-briefing-actions">
-        <button id="returningSnapshotPrimaryAction" class="primary" type="button" data-briefing-action="open">Open AGNT</button>
-        <button id="returningSnapshotSecondaryAction" class="secondary" type="button">Open AGNT instead</button>
-      </div>
     </div>
+
+    <footer class="morning-live-footer">
+      <span>LIVE UPDATE</span>
+      <strong id="returningSnapshotCountdown">Opening AGNT in 4s</strong>
+      <i aria-hidden="true"><b id="returningSnapshotProgress"></b></i>
+    </footer>
   </section>
 </div>
 
@@ -1131,6 +1115,6 @@ Andrew Tour | McGrath</textarea></label>
 
 
 
-<script type="module" src="app.js?v=1.36.29-beta-timeline-theme-parity"></script>
+<script type="module" src="app.js?v=1.36.30-beta-morning-live-update"></script>
 </body>
 </html>

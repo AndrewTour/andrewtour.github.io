@@ -1,6 +1,15 @@
-# AGNT BETA v1.36.29 — Timeline Theme Parity
+# AGNT BETA v1.36.30 — Morning Live Update
 
-Incremental BETA update built directly on the working AGNT BETA v1.36.28 package. The rejected v1.36.27 Home-page experiment is not included.
+Incremental BETA update built directly on the working AGNT BETA v1.36.29 package. The rejected v1.36.27 Home-page experiment is not included.
+
+## Morning live update added in v1.36.30
+- Before 11:00 am, every second genuine app launch opens a passive four-second live update. The first launch opens normally, the second shows the update, and the pattern repeats per user each day.
+- The fixed one-page screen never scrolls and has identical geometry in Light and Dark mode.
+- Today’s completion percentage remains the hero, followed by a concise MarketPulse debrief and the number of unique saved clients influenced by today’s property activity.
+- Listed, Sold, Price and Other event totals are shown as information only; the screen has no task buttons or competing calls to action.
+- Existing Activity Left, Appointments, Pipeline and Knocking summaries remain visible in a compact two-by-two grid.
+- The update renders immediately from current local state, refreshes when cloud/MarketPulse data arrives and opens AGNT automatically after four seconds.
+- Existing Home, Today, Prospector, Appointments, Team, Firebase and MarketPulse automation behaviour remains unchanged.
 
 ## Timeline theme parity added in v1.36.29
 - Light and Dark mode now use the same timeline columns, spacing, marker placement and rail coordinates.
