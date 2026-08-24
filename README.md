@@ -1,6 +1,16 @@
-# AGNT BETA v1.36.26 — Timeline & Knocking Cleanup
+# AGNT BETA v1.36.27 — Fixed Home Scoreboard
 
-Incremental BETA update built directly on the working AGNT BETA v1.36.25 Market Follow-Ups package.
+Incremental BETA update built directly on the working AGNT BETA v1.36.26 Timeline & Knocking Cleanup package.
+
+## Fixed Home scoreboard added in v1.36.27
+- Home remains the accountability scoreboard while Today remains the detailed command centre.
+- Daily completion stays as the fixed hero percentage with a schedule-aware status and the established completion bar.
+- The Day-on-Day graph is removed from Home and replaced by a compact percentage-point comparison with the last scheduled workday.
+- Team position occupies an equal, fixed comparison cell. It shows the gap to the next rank when meaningful and a stable no-comparison state when fewer than two agents are ranked.
+- Focus remains a single fixed-height pointer into Today. Its label can change between Right Now, Up Next, Needs Attention, Upcoming and Day Complete without changing the layout.
+- Score, comparison and Focus regions reserve the same dimensions across all data states; long copy truncates rather than wrapping or moving the Calls stack.
+- The Calls, Connects, Data and Knocking cards, controls and navigation below the Home header are unchanged.
+- Existing Firebase configuration, Authentication, UIDs, Firestore paths/rules, Team data, MarketPulse automation and daily planning logic remain unchanged.
 
 ## Timeline and knocking cleanup added in v1.36.26
 - Visible Appointment Prep and Field Prep cards have been removed from Today. The shared focus headline now takes over 30 minutes before an appointment, while that handover window remains clear in the underlying schedule.
