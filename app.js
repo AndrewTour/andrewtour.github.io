@@ -629,35 +629,19 @@ function dayTrackState(k=selectedDate){
   return 'on';
 }
 function isDayOnTrack(k=selectedDate){return dayTrackState(k)==='on'}
-function dailyCompletionStatus(k=selectedDate,score=completion(k)){
-  const today=todayKey();
-  if(k>today)return{label:'UPCOMING',state:'neutral'};
-  if(k<today)return{label:'FINAL SCORE',state:score>=100?'complete':'neutral'};
-  if(!isWorkDayKey(k))return{label:'REST DAY',state:'neutral'};
-  if(score>=100)return{label:'COMPLETE',state:'complete'};
-  const now=new Date();
-  if(score===0&&now<workdayStart(now))return{label:'NOT STARTED',state:'neutral'};
-  return dayTrackState(k)==='on'?{label:'ON TRACK',state:'on'}:{label:'NEEDS ATTENTION',state:'attention'};
-}
-function renderDayOnDay(k=selectedDate){
-  const value=$('#dayOnDayValue'),meta=$('#dayOnDayMeta');
-  if(!value||!meta)return;
-  value.classList.remove('comparison-up','comparison-down','comparison-flat');
-  if(k>todayKey()){
-    value.textContent='—';meta.textContent='Future workday';value.setAttribute('aria-label','No day-on-day comparison for a future workday');return;
+function momentumWhisper(){
+  if(selectedDate!==todayKey()){
+    const previous=previousScheduledKey(selectedDate),change=previous?completion(selectedDate)-completion(previous):0;
+    if(!previous)return `${completion(selectedDate)}% recorded`;
+    if(change===0)return 'Level with the previous workday';
+    return `${change>0?'▲':'▼'} ${Math.abs(change)}% vs previous workday`;
   }
-  if(!isWorkDayKey(k)){
-    value.textContent='—';meta.textContent='No daily target';value.setAttribute('aria-label','No day-on-day comparison for a rest day');return;
-  }
-  const previous=previousScheduledKey(k);
-  if(!previous){
-    value.textContent='—';meta.textContent='No earlier workday';value.setAttribute('aria-label','No earlier workday available');return;
-  }
-  const change=completion(k)-completion(previous),amount=Math.abs(change),unit=amount===1?'pt':'pts';
-  value.textContent=change>0?`+${amount} ${unit}`:change<0?`−${amount} ${unit}`:`0 ${unit}`;
-  meta.textContent='vs last workday';
-  value.classList.add(change>0?'comparison-up':change<0?'comparison-down':'comparison-flat');
-  value.setAttribute('aria-label',`${change>0?'Up':change<0?'Down':'Level'} ${amount} percentage point${amount===1?'':'s'} compared with the last workday`);
+  if(!isWorkDayKey(selectedDate))return 'Recovery day · next scheduled day is ready';
+  const run=streak(),previous=previousScheduledKey(todayKey()),change=previous?completion(todayKey())-completion(previous):0;
+  if(run>=2)return `${run}-day run · protect the momentum`;
+  if(change>0)return `▲ ${change}% ahead of your last workday`;
+  if(change<0)return `▼ ${Math.abs(change)}% below your last workday · time to respond`;
+  return completion(todayKey())>0?'Momentum building today':'First action starts the momentum';
 }
 function todayGuidance(){
   if(selectedDate!==todayKey())return `${fmtDate(selectedDate)} · ${completion(selectedDate)}% complete`;
@@ -906,12 +890,12 @@ function renderToday(){
   $('#lockBadge').classList.toggle('hidden',!locked);$('#lockBadge').textContent=past?'LOCKED':'NOT SCHEDULED';
   $('#todayView').classList.toggle('date-locked',locked);
   if($('#welcomeMessage')){
-    const status=dailyCompletionStatus(selectedDate,score),statusNode=$('#welcomeMessage');
-    statusNode.textContent=status.label;
-    statusNode.classList.toggle('track-on',status.state==='on'||status.state==='complete');
-    statusNode.classList.toggle('track-risk',status.state==='attention');
-    statusNode.classList.toggle('track-off',false);
-    statusNode.classList.toggle('track-neutral',status.state==='neutral');
+    const trackState=dayTrackState(selectedDate);
+    const labels={on:'ON TRACK',risk:'AT RISK',off:'OFF TRACK'};
+    $('#welcomeMessage').textContent=labels[trackState];
+    $('#welcomeMessage').classList.toggle('track-on',trackState==='on');
+    $('#welcomeMessage').classList.toggle('track-risk',trackState==='risk');
+    $('#welcomeMessage').classList.toggle('track-off',trackState==='off');
   }
   $('#dailyScore').textContent=`${score}%`;
   $('#scoreBar').style.width=`${score}%`;
@@ -955,9 +939,31 @@ function renderToday(){
   if(!timerRunning&&knockingSessionActive)timerButton.setAttribute('aria-label','Resume knocking session');
   timerButton.classList.toggle('running',timerRunning);
   $$('[data-action], #timerButton, #resetKnock').forEach(el=>{el.disabled=locked;el.setAttribute('aria-disabled',String(locked))});
-  renderDayOnDay(selectedDate);
+  renderDayTrend();
   renderLeaderboardPosition();
+  if($('#momentumWhisper'))$('#momentumWhisper').textContent=momentumWhisper();
   renderNowCard();
+}
+function recentWorkKeys(endKey=selectedDate,count=8){
+  const out=[],d=parseKey(endKey);
+  for(let i=0;i<40&&out.length<count;i++){
+    if(workDays.includes(d.getDay()))out.unshift(dateKey(d));
+    d.setDate(d.getDate()-1);
+  }
+  return out
+}
+function renderDayTrend(){
+  const svg=$('#dayTrend');if(!svg)return;
+  const keys=recentWorkKeys(selectedDate,8),w=180,h=62,pad={l:7,r:7,t:8,b:15};
+  const usableW=w-pad.l-pad.r,usableH=h-pad.t-pad.b;
+  const values=keys.map(k=>Math.max(0,Math.min(100,completion(k))));
+  const pts=values.map((v,i)=>({x:pad.l+(keys.length===1?usableW/2:i*usableW/(keys.length-1)),y:pad.t+(100-v)*usableH/100,v,k:keys[i]}));
+  const path=pts.map((p,i)=>`${i?'L':'M'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+  const area=pts.length?`${path} L ${pts[pts.length-1].x.toFixed(1)} ${(pad.t+usableH).toFixed(1)} L ${pts[0].x.toFixed(1)} ${(pad.t+usableH).toFixed(1)} Z`:'';
+  const grid=[0,50,100].map(v=>{const y=pad.t+(100-v)*usableH/100;return `<line x1="${pad.l}" y1="${y}" x2="${w-pad.r}" y2="${y}" class="trend-grid"/>`}).join('');
+  const circles=pts.map(p=>`<circle cx="${p.x}" cy="${p.y}" r="${p.k===selectedDate?3.8:2.5}" class="trend-point ${p.k===selectedDate?'selected':''}"><title>${fmtDate(p.k)} · ${p.v}%</title></circle>`).join('');
+  const labels=pts.map((p,i)=>{if(i%2&&i!==pts.length-1)return'';const d=parseKey(p.k);return `<text x="${p.x}" y="${h-2}" text-anchor="middle" class="trend-label">${d.getDate()}</text>`}).join('');
+  svg.innerHTML=`<defs><linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#69dbf2" stop-opacity=".28"/><stop offset="100%" stop-color="#5e8fff" stop-opacity="0"/></linearGradient></defs>${grid}${area?`<path d="${area}" fill="url(#trendFill)"/>`:''}${path?`<path d="${path}" class="trend-line"/>`:''}${circles}${labels}`;
 }
 function renderWeekDays(){if(!$('#weekDays'))return;$('#weekDays').innerHTML=weekKeys().map(k=>{const p=completion(k),d=parseKey(k);return `<button class="week-day ${k===selectedDate?'selected':''} ${p>=100?'complete':''}" data-date="${k}"><b>${workDayName(d.getDay()).slice(0,3).toUpperCase()}</b><small>${d.getDate()} · ${p}%</small></button>`}).join('')}
 
@@ -1415,12 +1421,9 @@ function timelinePriority(viewDate=selectedDate){
 }
 function renderNowCard(){
   const priority=timelinePriority(selectedDate);
-  const rawKicker=String(priority.kicker||'').toUpperCase(),futureInstruction=/^Starts\s/i.test(String(priority.meta||''));
-  const label=rawKicker.includes('NEEDS ATTENTION')?'NEEDS ATTENTION':rawKicker.includes('DAY COMPLETE')?'DAY COMPLETE':selectedDate>todayKey()||rawKicker.includes('UPCOMING')?'UPCOMING':futureInstruction?'UP NEXT':'RIGHT NOW';
-  if($('#nowCardLabel'))$('#nowCardLabel').textContent=label;
+  if($('#nowCardLabel'))$('#nowCardLabel').textContent='RIGHT NOW';
   if($('#nowCardTitle'))$('#nowCardTitle').textContent=priority.title;
   if($('#nowCardMeta'))$('#nowCardMeta').textContent=[priority.timeLabel,priority.meta].filter(Boolean).join(' · ');
-  if($('#openTodayTimeline'))$('#openTodayTimeline').setAttribute('aria-label',`${label}: ${priority.title}. Open today timeline`);
 }
 function timelinePlanStreetsMarkup(streets=[]){
   if(!streets.length)return'';
@@ -1821,15 +1824,12 @@ function sortLeaderboardRows(a,b){return (b.score||0)-(a.score||0)||(b.calls||0)
 function renderLeaderboardPosition(){
   const position=$('#leaderboardPosition'),meta=$('#leaderboardPositionMeta');
   if(!position||!meta)return;
-  if(!cloud){position.textContent='—';meta.textContent='Sign in to compare';return;}
+  if(!cloud){position.textContent='—';meta.textContent='Sign in to view live ranking';return;}
   const rows=sortedTodayLeaderboard(),index=rows.findIndex(r=>r.uid===uid);
-  if(rows.length<2){position.textContent='—';meta.textContent='No team comparison yet';return;}
-  if(index<0){position.textContent='—';meta.textContent=`${rows.length} agents ranked today`;return;}
+  if(index<0){position.textContent='—';meta.textContent=rows.length?`${rows.length} agent${rows.length===1?'':'s'} ranked today`:'Waiting for today’s rankings';return;}
   const me=rows[index];
   position.textContent=`#${index+1}`;
-  if(index===0){meta.textContent=`Leading · ${rows.length} agents`;return;}
-  const gap=Math.max(0,(Number(rows[index-1]?.score)||0)-(Number(me.score)||0));
-  meta.textContent=gap?`${gap} ${gap===1?'pt':'pts'} to #${index}`:`Level with #${index}`;
+  meta.textContent=`${me.score||0}% complete · ${rows.length} agent${rows.length===1?'':'s'} ranked`;
 }
 function selectedLeaderboardDayDate(){const d=new Date();d.setDate(d.getDate()+leaderboardDayOffset);return d}
 function selectedLeaderboardDayKey(){return dateKey(selectedLeaderboardDayDate())}

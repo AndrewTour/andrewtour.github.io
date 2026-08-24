@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.36.27-fixed-home-scoreboard">
+<link rel="stylesheet" href="styles.css?v=1.36.26-beta-timeline-knocking-cleanup">
 <title>AGNT</title>
 </head>
 <body>
@@ -342,23 +342,19 @@
       <section class="score-week glass">
         <div class="score-overview">
           <div class="score-copy">
-            <span id="welcomeMessage">NOT STARTED</span>
+            <span id="welcomeMessage">DAILY COMPLETION</span>
             <strong id="dailyScore">0%</strong>
-            <small class="score-caption">DAILY COMPLETION</small>
+            <small id="momentumWhisper" class="momentum-whisper">Building today’s momentum…</small>
+          </div>
+          <div class="trend-wrap">
+            <span>DAY-ON-DAY</span>
+            <svg id="dayTrend" class="day-trend" viewBox="0 0 180 62" role="img" aria-label="Recent daily completion trend"></svg>
           </div>
         </div>
         <div class="bar"><i id="scoreBar"></i></div>
-        <div class="home-score-support" aria-label="Daily comparison and team position">
-          <div class="home-score-stat day-on-day-stat">
-            <span>DAY ON DAY</span>
-            <strong id="dayOnDayValue">—</strong>
-            <small id="dayOnDayMeta">vs last workday</small>
-          </div>
-          <div class="home-score-stat leaderboard-position">
-            <span>TEAM POSITION</span>
-            <strong id="leaderboardPosition">—</strong>
-            <small id="leaderboardPositionMeta">Waiting for today’s rankings</small>
-          </div>
+        <div class="leaderboard-position">
+          <div><span>LEADERBOARD POSITION</span><small id="leaderboardPositionMeta">Waiting for today’s rankings</small></div>
+          <strong id="leaderboardPosition">—</strong>
         </div>
         <button id="openTodayTimeline" class="now-card" type="button" aria-label="Open today timeline">
           <span id="nowCardLabel" class="now-card-label">RIGHT NOW</span>
@@ -1135,6 +1131,6 @@ Andrew Tour | McGrath</textarea></label>
 
 
 
-<script type="module" src="app.js?v=1.36.27-fixed-home-scoreboard"></script>
+<script type="module" src="app.js?v=1.36.26-beta-timeline-knocking-cleanup"></script>
 </body>
 </html>

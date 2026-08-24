@@ -1,15 +1,4 @@
-# AGNT BETA v1.36.27 — Rollout Check
-
-## Fixed Home scoreboard acceptance
-
-1. Confirm Daily Completion remains the largest Home value and its progress bar still reflects the existing four-metric completion calculation.
-2. Confirm the Day-on-Day graph is absent and the fixed comparison cell shows the percentage-point change from the last scheduled workday.
-3. Confirm Team Position uses the equal fixed cell beside Day on Day, shows a useful rank gap with two or more agents and shows a stable no-comparison state otherwise.
-4. Move between not started, on track, needs attention, complete, past, future and rest-day states; confirm the score header, comparison row, Focus row and Calls starting position do not move.
-5. Confirm Focus uses one label, one title, one supporting line and a chevron, with long text truncated rather than wrapped.
-6. Confirm tapping Focus still opens Today and the underlying recommendation matches Today’s shared Daily Plan Engine.
-7. Confirm Calls, Connects, Data and Knocking markup and controls are unchanged from v1.36.26.
-8. Repeat the Home check at narrow phone width and in light and dark mode with no horizontal overflow.
+# AGNT BETA v1.36.26 — Rollout Check
 
 ## Timeline and knocking cleanup acceptance
 
