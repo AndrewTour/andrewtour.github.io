@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.36.23-beta-daily-briefing">
+<link rel="stylesheet" href="styles.css?v=1.36.24-beta-command-centre">
 <title>AGNT</title>
 </head>
 <body>
@@ -357,7 +357,7 @@
           <strong id="leaderboardPosition">—</strong>
         </div>
         <button id="openTodayTimeline" class="now-card" type="button" aria-label="Open today timeline">
-          <span class="now-card-label">FOCUS</span>
+          <span id="nowCardLabel" class="now-card-label">RIGHT NOW</span>
           <span class="now-card-copy"><strong id="nowCardTitle">Loading today…</strong><small id="nowCardMeta">Your next priority will appear here</small></span>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
         </button>
@@ -395,9 +395,13 @@
           <small id="timelineSummary">Your day at a glance</small>
         </div>
         <section class="timeline-overview glass">
-          <span class="timeline-overview-label">SMART COACH</span>
+          <div class="timeline-command-head">
+            <span id="timelineCurrentKicker" class="timeline-overview-label">RIGHT NOW</span>
+            <time id="timelineCurrentTime">—</time>
+          </div>
           <strong id="timelineCurrentTitle">Loading today…</strong>
           <small id="timelineCurrentMeta">Your schedule will appear below.</small>
+          <button id="timelineCurrentAction" class="timeline-command-action" type="button" hidden>Open AGNT</button>
         </section>
         <section id="dailyTimeline" class="daily-timeline glass" aria-live="polite"></section>
         <button id="openDayReview" class="open-day-review hidden" type="button"><span>DAY IN REVIEW</span><strong>Review today and prepare tomorrow</strong><b aria-hidden="true">›</b></button>
@@ -1125,6 +1129,6 @@ Andrew Tour | McGrath</textarea></label>
 
 
 
-<script type="module" src="app.js?v=1.36.23-beta-daily-briefing"></script>
+<script type="module" src="app.js?v=1.36.24-beta-command-centre"></script>
 </body>
 </html>

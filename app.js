@@ -236,6 +236,8 @@ function dailyBriefingMarketModel(){
 }
 function dailyBriefingOverdueCount(followUps=[]){const today=todayKey();return followUps.filter(item=>{const date=item?.nextFollowUp||item?.prospect?.nextFollowUp||item?.appointment?.followUpDate||'';return validDateKey(date)&&date<today}).length}
 function dailyBriefingPlan(now,data){
+  const shared=typeof dailyCommandPriority==='function'&&typeof timelineItemsForDate==='function'?dailyCommandPriority(todayKey(),timelineItemsForDate(todayKey()),now):null;
+  if(shared?.title)return{title:shared.title,meta:shared.meta,action:shared.action||'view-today',label:shared.label||'View Today',eventId:shared.eventId||''};
   const current=now.getHours()*60+now.getMinutes(),next=data.nextAppointment,untilNext=next?next.minutes-current:9999,activeEventId=cleanText(prospectSessionContext?.eventId,160),activeEvent=activeEventId?marketPulseEvents.find(event=>event.id===activeEventId):null,standardSession=prospectSessionActive&&!activeEventId,top=data.market.focusRows[0];
   if(next&&untilNext>=0&&untilNext<=60){const appointment=next.entry.appointment,name=appointment.contactName||appointment.name||appointmentType(appointment);return{title:'Protect the next appointment',meta:`${appointmentTimeLabel(appointment,next.entry.sourceDate)} · ${name}. Leave a clean preparation window${top&&data.market.fresh?`, then start with ${top.event.address}`:'.'}`,action:'view-appointments',label:'View Appointments',eventId:''}}
   if(prospectSessionActive&&activeEvent){const matches=marketMatches(activeEvent),progress=marketSessionProgress(activeEvent,matches),remaining=Math.max(0,progress.total-progress.workedIds.size);return{title:`Resume ${activeEvent.address}`,meta:`${remaining} client${remaining===1?'':'s'} remain in this ${activeEvent.eventType} session · ${formatEstimatedTime(estimatedMinutes(remaining))}.`,action:'resume-session',label:'Resume Priority Session',eventId:activeEvent.id}}
@@ -281,15 +283,20 @@ function dismissReturningSnapshot(){
 function showReturningSnapshot(){
   const screen=$('#returningSnapshotScreen');if(!screen||dailyBriefingSeen())return false;renderReturningSnapshot();markReturningSnapshotReady();document.body.classList.add('daily-briefing-open');$('#app')?.setAttribute('inert','');screen.classList.remove('hidden','is-leaving');screen.setAttribute('aria-hidden','false');requestAnimationFrame(()=>$('#returningSnapshotClose')?.focus({preventScroll:true}));clearTimeout(returningSnapshotTimer);if(cloud&&!dailyBriefingDataReady())returningSnapshotTimer=setTimeout(()=>{dailyBriefingFallback=true;returningSnapshotTimer=null;refreshReturningSnapshotIfVisible()},6500);return true;
 }
-function openDailyBriefingDestination(action='open',eventId=''){
-  dismissReturningSnapshot();
+function navigateDailyPlanAction(action='open',eventId=''){
   if(action==='open')return;
   if(action==='view-appointments'){switchView('appointmentsView');return}
   if(action==='view-today'){switchView('scheduleView');return}
+  if(action==='view-log'){switchView('scheduleView');setTodayPage('log');return}
+  if(action==='view-route'){switchView('scheduleView');setTodayPage('overview');requestAnimationFrame(()=>$('#dailyTimeline [data-plan-id^="knocking-part"],#dailyTimeline [data-plan-id="knocking-complete"]')?.scrollIntoView({behavior:'smooth',block:'center'}));return}
   if(action==='view-market'){switchView('prospectingView');setProspectorSection('market');renderProspecting();if(eventId)requestAnimationFrame(()=>{const card=[...document.querySelectorAll('[data-market-event-id]')].find(item=>item.dataset.marketEventId===eventId);card?.scrollIntoView({behavior:'smooth',block:'center'});card?.classList.add('briefing-target');setTimeout(()=>card?.classList.remove('briefing-target'),1600)});return}
   if(action==='view-followups'||action==='view-pipeline'){switchView('prospectingView');setProspectorSection('today');renderProspecting();return}
   if(action==='resume-session'){switchView('prospectingView');setProspectorSection(cleanText(prospectSessionContext?.eventId,160)?'market':'today');showProspectingSession();return}
-  if(action==='start-market'&&eventId){switchView('prospectingView');setProspectorSection('market');renderProspecting();requestAnimationFrame(()=>startMarketPulseSession(eventId))}
+  if(action==='start-market'&&eventId){switchView('prospectingView');setProspectorSection('market');renderProspecting();requestAnimationFrame(()=>startMarketPulseSession(eventId));return}
+  if(action==='start-knocking'){startKnockingSession()}
+}
+function openDailyBriefingDestination(action='open',eventId=''){
+  dismissReturningSnapshot();navigateDailyPlanAction(action,eventId);
 }
 function welcomeProfileName(){return (agentName||currentUser?.displayName||'Agent').trim()||'Agent'}
 function welcomeStorageKey(){return `${storagePrefix(uid)}welcome:${todayKey()}`}
@@ -1065,7 +1072,7 @@ function prospectFollowUpsForDate(viewDate){
 function allFollowUpsForDate(viewDate){
   return [...scheduledFollowUpsForDate(viewDate),...prospectFollowUpsForDate(viewDate)];
 }
-function timelineItemsForDate(viewDate){
+function legacyTimelineItemsForDate(viewDate){
   const isSaturday=parseKey(viewDate).getDay()===6;
   const items=isSaturday?[]:[
     {id:'prospecting',minutes:9*60,title:'Prospecting',meta:'Calls, connects and data',kind:'focus',duration:5*60},
@@ -1112,7 +1119,120 @@ function timelineItemsForDate(viewDate){
   const order={followup:0,appointment:1,ofi:1,focus:2,knock:3,check:4,wrap:5};
   return items.sort((a,b)=>a.minutes-b.minutes||(order[a.kind]??9)-(order[b.kind]??9)||a.title.localeCompare(b.title));
 }
+function dailyPlanRoundMinutes(value,min=15,max=60){
+  const rounded=Math.ceil(Math.max(0,Number(value)||0)/5)*5;
+  return Math.max(min,Math.min(max,rounded||min));
+}
+function dailyPlanMergeIntervals(intervals=[]){
+  const sorted=intervals.filter(item=>Number.isFinite(item.start)&&Number.isFinite(item.end)&&item.end>item.start).sort((a,b)=>a.start-b.start||a.end-b.end),merged=[];
+  for(const interval of sorted){const last=merged[merged.length-1];if(last&&interval.start<=last.end)last.end=Math.max(last.end,interval.end);else merged.push({start:interval.start,end:interval.end})}
+  return merged;
+}
+function dailyPlanFreeSlots(start,end,busy=[]){
+  const slots=[],merged=dailyPlanMergeIntervals(busy.map(interval=>({start:Math.max(start,interval.start),end:Math.min(end,interval.end)}))),cursor={value:start};
+  merged.forEach(interval=>{if(interval.start>cursor.value)slots.push({start:cursor.value,end:interval.start});cursor.value=Math.max(cursor.value,interval.end)});
+  if(cursor.value<end)slots.push({start:cursor.value,end});
+  return slots.filter(slot=>slot.end-slot.start>=10);
+}
+function dailyPlanLatestFreeStart(start,end,duration,busy=[]){
+  const slots=dailyPlanFreeSlots(start,end,busy).filter(slot=>slot.end-slot.start>=duration);
+  const slot=slots[slots.length-1];return slot?slot.end-duration:null;
+}
+function dailyPlanNextFreeStart(start,end,duration,busy=[]){
+  const slot=dailyPlanFreeSlots(start,end,busy).find(item=>item.end-item.start>=duration);return slot?slot.start:null;
+}
+function dailyPlanAppointmentModel(viewDate){
+  const items=[],busy=[];
+  appointmentEntriesForDate(viewDate).forEach(({appointment:a,sourceDate})=>{
+    if(appointmentScheduledDate(a,sourceDate)!==viewDate)return;
+    const start=timelineMinutes(a.time),duration=appointmentDurationMinutes(a),end=start+duration,prepStart=Math.max(0,start-20),rawPhone=String(a.contactNumber||a.phone||'').trim(),dial=rawPhone.replace(/[^+\d]/g,''),type=isOfiAppointment(a)?'OFI':appointmentType(a),address=a.address||'Address not recorded',contact=a.contactName||a.name||'';
+    busy.push({start:prepStart,end});
+    items.push({id:`appointment-prep-${calendarExportId(a,sourceDate)}`,minutes:prepStart,duration:start-prepStart,title:`Prepare · ${type}`,meta:`20-minute protected window · ${contact||address}`,kicker:'APPOINTMENT PREP',kind:'prep',plan:true,clockComplete:true,actionable:true,action:'view-appointments',label:'View appointment',commandTitle:'Protect the next appointment',commandMeta:`${timelineTimeLabel(start)} · ${type}${contact?` with ${contact}`:''}. Use this window to prepare the outcome and arrive settled.`,appointment:a,sourceDate});
+    items.push({id:`appointment-${calendarExportId(a,sourceDate)}`,minutes:start,duration,title:isOfiAppointment(a)?`OFI · ${address}`:`${type} · ${address}`,meta:isOfiAppointment(a)?`${timelineTimeLabel(start)}–${timelineTimeLabel(end)}${appointmentHasAuction(a)?` · Auction ${timelineTimeLabel(appointmentAuctionMinutes(a))}`:''}`:`${contact||'Contact not recorded'}${rawPhone?` · ${rawPhone}`:''}`,kicker:isOfiAppointment(a)?'OPEN HOME':'APPOINTMENT',kind:isOfiAppointment(a)?'ofi':'appointment',plan:true,clockComplete:true,actionable:true,action:'view-appointments',label:'View appointment',commandTitle:isOfiAppointment(a)?`Open home · ${address}`:`Appointment window · ${contact||type}`,commandMeta:`${timelineTimeLabel(start)}–${timelineTimeLabel(end)} · Keep this time protected.`,dial,appointment:a,sourceDate});
+  });
+  return{items,busy:dailyPlanMergeIntervals(busy)};
+}
+function dailyPlanMarketWorkloads(viewDate){
+  if(viewDate!==todayKey())return[];
+  const model=dailyBriefingMarketModel();if(!model.fresh)return[];
+  const activeEventId=cleanText(prospectSessionContext?.eventId,160),assigned=new Set(),bucketOrder={listed:0,sold:1,price:3,other:4};
+  return [...model.rows].sort((a,b)=>Number(b.event.id===activeEventId)-Number(a.event.id===activeEventId)||(bucketOrder[a.bucket]??4)-(bucketOrder[b.bucket]??4)||b.priority.score-a.priority.score).map(row=>{
+    const clients=row.matches.filter(person=>!assigned.has(person.id));clients.forEach(person=>assigned.add(person.id));if(!clients.length)return null;
+    const remaining=clients.filter(person=>!row.progress.workedIds.has(person.id)&&!prospectContactedToday(person.id)),complete=!remaining.length||row.progress.complete,address=[row.event.address,row.event.suburb].filter(Boolean).join(', '),plannedClients=complete?clients.length:remaining.length,duration=dailyPlanRoundMinutes(estimatedMinutes(Math.max(1,plannedClients)),15,60),active=row.event.id===activeEventId&&prospectSessionActive;
+    const bucketLabel=row.bucket==='listed'?'JUST LISTED':row.bucket==='sold'?'SOLD':row.bucket==='price'?'PRICE UPDATE':'MARKETPULSE';
+    return{id:`market-${row.event.id}`,workloadId:`market-${row.event.id}`,kind:'market',eventId:row.event.id,eventType:row.event.eventType,bucket:row.bucket,title:address||row.event.eventType,meta:complete?`${clients.length} matched client${clients.length===1?'':'s'} worked`:`${remaining.length} client${remaining.length===1?'':'s'} to speak to · ${duration} min protected`,kicker:`${bucketLabel} · ${clients.length} CLIENT${clients.length===1?'':'S'}`,duration,clientCount:clients.length,remainingClients:remaining.length,propertyCount:1,completed:complete,actionable:!complete,action:complete?'view-market':active?'resume-session':'start-market',label:complete?'Review':active?'Resume calls':'Start calls',commandTitle:complete?`${address} is covered`:active?`Resume ${address}`:`Call around ${address}`,commandMeta:complete?`${clients.length} matched client${clients.length===1?' has':'s have'} been worked.`:`${row.event.eventType} · ${remaining.length} client${remaining.length===1?'':'s'} · ${duration} protected minutes.`,rank:active?-100:(bucketOrder[row.bucket]??4)*10};
+  }).filter(Boolean);
+}
+function dailyPlanProspectFollowUpComplete(prospect,viewDate){
+  if(prospect.recordType==='buyer')return prospectInteractions.some(item=>item.prospectId===prospect.id&&item.type==='Follow-up'&&item.outcome==='Follow-up completed'&&item.date===viewDate);
+  return prospectInteractions.some(item=>item.prospectId===prospect.id&&item.type==='Call'&&item.date===viewDate);
+}
+function dailyPlanFollowUpWorkload(viewDate){
+  const appointmentFollowUps=scheduledFollowUpsForDate(viewDate),prospectFollowUps=prospectFollowUpsForDate(viewDate).filter(prospect=>!dailyPlanProspectFollowUpComplete(prospect,viewDate)),count=appointmentFollowUps.length+prospectFollowUps.length;if(!count)return null;
+  const overdue=prospectFollowUps.filter(prospect=>validDateKey(prospect.nextFollowUp)&&prospect.nextFollowUp<viewDate).length,duration=dailyPlanRoundMinutes(estimatedMinutes(count),15,45);
+  return{id:'followups',workloadId:'followups',kind:'followup-block',title:overdue?'Clear overdue follow-ups':'Today’s follow-ups',meta:`${count} conversation${count===1?'':'s'} · ${duration} min protected${overdue?` · ${overdue} overdue`:''}`,kicker:`FOLLOW-UPS · ${count} DUE`,duration,clientCount:count,remainingClients:count,completed:false,actionable:true,action:'view-followups',label:'Open follow-ups',commandTitle:overdue?`Clear ${overdue} overdue follow-up${overdue===1?'':'s'}`:`Work ${count} follow-up${count===1?'':'s'}`,commandMeta:`${count} conversation${count===1?'':'s'} need a clear next step · ${duration} protected minutes.`,rank:20};
+}
+function dailyPlanPipelineWorkload(viewDate){
+  if(viewDate!==todayKey())return null;const count=returningSnapshotPipelineCount();if(!count)return null;
+  const active=prospectSessionActive&&!cleanText(prospectSessionContext?.eventId,160),duration=dailyPlanRoundMinutes(estimatedMinutes(count,180),15,60);
+  return{id:'pipeline',workloadId:'pipeline',kind:'pipeline-block',title:active?'Current pipeline session':'Core pipeline calls',meta:`${count} eligible client${count===1?'':'s'} · ${duration} min protected`,kicker:`PIPELINE · ${count} READY`,duration,clientCount:count,remainingClients:count,completed:false,actionable:true,action:active?'resume-session':'view-pipeline',label:active?'Resume session':'Open pipeline',commandTitle:active?'Resume the current pipeline':'Build from the existing pipeline',commandMeta:`${count} eligible client${count===1?' is':'s are'} ready · ${duration} protected minutes.`,rank:active?-90:40};
+}
+function dailyPlanWorkloads(viewDate){
+  const market=dailyPlanMarketWorkloads(viewDate),followUp=dailyPlanFollowUpWorkload(viewDate),pipeline=dailyPlanPipelineWorkload(viewDate),preferred=market.filter(item=>item.bucket==='listed'||item.bucket==='sold'),other=market.filter(item=>item.bucket!=='listed'&&item.bucket!=='sold'),active=market.filter(item=>item.rank<0),ordered=[];
+  active.forEach(item=>ordered.push(item));if(pipeline?.rank<0)ordered.push(pipeline);preferred.filter(item=>!ordered.includes(item)).forEach(item=>ordered.push(item));if(followUp)ordered.push(followUp);other.filter(item=>!ordered.includes(item)).forEach(item=>ordered.push(item));if(pipeline&&!ordered.includes(pipeline))ordered.push(pipeline);
+  return ordered;
+}
+function dailyPlanAllocateWorkloads(workloads=[],slots=[]){
+  const available=slots.map(slot=>({...slot,cursor:slot.start})),items=[],backlog=[];
+  workloads.forEach(workload=>{
+    const minimumSegment=Math.max(10,Number(workload.minimumSegment)||10);let remaining=Math.max(minimumSegment,Number(workload.duration)||15),part=0;
+    for(const slot of available){
+      if(remaining<=0)break;const capacity=slot.end-slot.cursor;if(capacity<minimumSegment)continue;
+      let take=Math.min(remaining,capacity);if(remaining>take&&remaining-take<minimumSegment)take-=minimumSegment-(remaining-take);if(take<minimumSegment)continue;
+      part++;items.push({...workload,id:`${workload.id}-part-${part}`,sourceWorkloadId:workload.workloadId||workload.id,minutes:slot.cursor,duration:take,plan:true});slot.cursor+=take+5;remaining-=take;
+    }
+    if(remaining>0)backlog.push({...workload,remainingDuration:remaining});
+  });
+  const totals=new Map();items.forEach(item=>totals.set(item.sourceWorkloadId,(totals.get(item.sourceWorkloadId)||0)+1));
+  const positions=new Map();items.forEach(item=>{const position=(positions.get(item.sourceWorkloadId)||0)+1;positions.set(item.sourceWorkloadId,position);item.partIndex=position;item.partTotal=totals.get(item.sourceWorkloadId)||1});
+  return{items,backlog};
+}
+function dailyPlanStreetAllocations(streets=[],targetMinutes=60){
+  const total=Math.max(5,Math.ceil(Math.max(0,Number(targetMinutes)||0)/5)*5),selected=streets.slice(0,Math.max(1,Math.min(3,Math.floor(total/5))));if(!selected.length)return[];
+  const minimum=total>=selected.length*10?10:5,weightTotal=selected.reduce((sum,item)=>sum+Math.max(1,item.score),0);let allocations=selected.map(item=>({...item,minutes:Math.max(minimum,Math.round(total*(Math.max(1,item.score)/weightTotal)/5)*5)})),allocated=allocations.reduce((sum,item)=>sum+item.minutes,0);
+  while(allocated>total){const candidate=[...allocations].reverse().find(item=>item.minutes>minimum);if(!candidate)break;candidate.minutes-=5;allocated-=5}
+  let index=0;while(allocated<total){allocations[index%allocations.length].minutes+=5;allocated+=5;index++}
+  return allocations;
+}
+function dailyPlanAssignStreetAllocations(items=[],allocations=[]){
+  const remaining=allocations.map(item=>({...item,remainingMinutes:item.minutes}));
+  items.forEach(item=>{
+    let capacity=Math.max(0,Number(item.duration)||0);item.streets=[];
+    for(const street of remaining){if(capacity<=0)break;if(street.remainingMinutes<=0)continue;const minutes=Math.min(capacity,street.remainingMinutes);item.streets.push({...street,minutes});street.remainingMinutes-=minutes;capacity-=minutes}
+  });
+  return items;
+}
+function timelineItemsForDate(viewDate){
+  if(viewDate!==todayKey())return legacyTimelineItemsForDate(viewDate);
+  if(!isWorkDayKey(viewDate))return legacyTimelineItemsForDate(viewDate);
+  const appointmentModel=dailyPlanAppointmentModel(viewDate),knockTarget=rollingKnockTarget(viewDate),knockDone=Math.floor(liveKnockSeconds(dayData(viewDate))/60),knockRemaining=Math.max(0,knockTarget-knockDone),marketModel=dailyBriefingMarketModel(),streets=marketModel.fresh?knockingHotSpottingRecommendations():[],knockDuration=knockRemaining||Math.max(15,knockTarget),knockSlots=dailyPlanFreeSlots(14*60,18*60,appointmentModel.busy),knockWorkload={id:'knocking',workloadId:'knocking',kind:'knock',title:knockRemaining?'Priority street field block':'Door knocking complete',meta:knockRemaining?`${knockRemaining} min remaining · ${streets.length?`${streets.length} priority street${streets.length===1?'':'s'}`:'route ready to set'}`:`${knockDone} min logged · target complete`,kicker:`DOORKNOCKING · ${knockTarget} MIN TARGET`,duration:knockDuration,completed:knockRemaining===0,actionable:knockRemaining>0,action:'start-knocking',label:knockingSessionActive?'Resume knocking':'Start knocking',commandTitle:streets.length?`Knock ${streets[0].street}`:'Start the 2:00pm field block',commandMeta:knockRemaining?`${knockRemaining} minutes remain${streets.length?` · ${streets.slice(0,3).map(item=>item.street).join(' → ')}`:''}.`:'Today’s knocking target is complete.'},knockAllocation=knockRemaining?dailyPlanAllocateWorkloads([knockWorkload],knockSlots):{items:[{...knockWorkload,id:'knocking-complete',sourceWorkloadId:'knocking',minutes:14*60,plan:true,partIndex:1,partTotal:1}],backlog:[]},scheduledKnockMinutes=knockAllocation.items.reduce((sum,item)=>sum+item.duration,0),streetAllocations=knockRemaining&&scheduledKnockMinutes?dailyPlanStreetAllocations(streets,scheduledKnockMinutes):[];
+  dailyPlanAssignStreetAllocations(knockAllocation.items,streetAllocations);knockAllocation.items.forEach(item=>{if(item.partTotal>1)item.meta=`${item.duration} min field block · part ${item.partIndex} of ${item.partTotal}`});
+  const knockIntervals=knockAllocation.items.map(item=>({start:item.minutes,end:item.minutes+item.duration})),firstKnock=knockAllocation.items[0]?.minutes??14*60,lastKnockEnd=knockAllocation.items.reduce((latest,item)=>Math.max(latest,item.minutes+item.duration),14*60),routeStart=knockRemaining>0?dailyPlanLatestFreeStart(13*60,firstKnock,15,appointmentModel.busy):null,routeItem=routeStart===null?null:{id:'knocking-route',minutes:routeStart,duration:15,title:'Set the priority street route',meta:streets.length?streets.slice(0,3).map(item=>item.street).join(' → '):'Review today’s market activity before heading out',kicker:'FIELD PREP',kind:'route',plan:true,clockComplete:true,actionable:true,action:'view-route',label:'View streets',commandTitle:'Set the 2:00pm knocking route',commandMeta:streets.length?`${streets.slice(0,3).map(item=>item.street).join(' → ')} · leave ready to start at ${timelineTimeLabel(firstKnock)}.`:'Use MarketPulse to choose the strongest nearby street.'},routeInterval=routeItem?[{start:routeItem.minutes,end:routeItem.minutes+routeItem.duration}]:[],progressBusy=[...appointmentModel.busy,...knockIntervals,...routeInterval],progressStart=dailyPlanNextFreeStart(Math.max(16*60,lastKnockEnd+5),18*60,15,progressBusy),progressItem=progressStart===null?null:{id:'progress',minutes:progressStart,duration:15,title:'Daily progress check',meta:'Review calls, connects, data and the remaining queue',kicker:'RESET',kind:'check',plan:true,actionable:false,action:'',label:'',commandTitle:'Reset the final part of the day',commandMeta:'Review what moved, then protect the most valuable unfinished block.'},progressInterval=progressItem?[{start:progressItem.minutes,end:progressItem.minutes+progressItem.duration}]:[],callBusy=[...appointmentModel.busy,...knockIntervals,...routeInterval,...progressInterval],callSlots=[...dailyPlanFreeSlots(9*60,14*60,callBusy),...dailyPlanFreeSlots(16*60,18*60,callBusy)],workAllocation=dailyPlanAllocateWorkloads(dailyPlanWorkloads(viewDate),callSlots),callBacklogMinutes=workAllocation.backlog.reduce((sum,item)=>sum+item.remainingDuration,0),knockBacklogMinutes=knockAllocation.backlog.reduce((sum,item)=>sum+item.remainingDuration,0),backlogMinutes=callBacklogMinutes+knockBacklogMinutes,latestAppointmentEnd=appointmentModel.items.filter(item=>item.kind==='appointment'||item.kind==='ofi').reduce((latest,item)=>Math.max(latest,item.minutes+item.duration),0),wrapStart=Math.max(18*60,latestAppointmentEnd+5),wrapItem={id:'wrap',minutes:wrapStart,duration:15,title:'Close the day',meta:backlogMinutes?`${formatEstimatedTime(backlogMinutes)} remains outside today’s protected blocks · set tomorrow’s first priority`:'Review outcomes and prepare tomorrow’s first priority',kicker:'WRAP UP',kind:'wrap',plan:true,actionable:false,action:'view-log',label:'Open day log',commandTitle:'Close the day properly',commandMeta:backlogMinutes?`${formatEstimatedTime(backlogMinutes)} is still unplaced. Decide what carries forward before you finish.`:'Review today’s outcomes and make tomorrow easy to start.'};
+  const items=[...workAllocation.items,...appointmentModel.items,...(routeItem?[routeItem]:[]),...knockAllocation.items,...(progressItem?[progressItem]:[]),wrapItem],order={prep:0,appointment:1,ofi:1,market:2,'followup-block':3,'pipeline-block':4,route:5,knock:6,check:7,wrap:8};
+  return items.sort((a,b)=>a.minutes-b.minutes||(order[a.kind]??9)-(order[b.kind]??9)||a.title.localeCompare(b.title));
+}
 function timelineStatus(item,index,items,viewDate,focusItemId=''){
+  if(item.plan){
+    if(item.completed)return'complete';
+    if(viewDate<todayKey())return'complete';
+    if(viewDate>todayKey())return'upcoming';
+    const now=new Date(),nowMinutes=now.getHours()*60+now.getMinutes(),end=item.minutes+(item.duration||15);
+    if(focusItemId&&item.id===focusItemId)return'current';
+    if(nowMinutes<item.minutes)return'upcoming';
+    if(nowMinutes<end)return'current';
+    if(item.clockComplete)return'complete';
+    return item.actionable?'attention':'complete';
+  }
   if(item.kind==='followup'){
     if(item.completed)return'complete';
     if(focusItemId&&item.id===focusItemId)return'current';
@@ -1182,7 +1302,7 @@ function balancedCorePriority(state,now){
   }
   return incomplete[0];
 }
-function coachingEngine(viewDate=selectedDate,items=timelineItemsForDate(viewDate)){
+function legacyMetricCoachingEngine(viewDate=selectedDate,items=legacyTimelineItemsForDate(viewDate)){
   if(!isWorkDayKey(viewDate))return{title:'No tracking day scheduled',meta:'Your metrics remain available for reference',focusItemId:''};
   if(viewDate<todayKey())return{title:'Day complete',meta:`Final score ${completion(viewDate)}%`,focusItemId:''};
   if(viewDate>todayKey())return{title:'Plan your day',meta:items[0]?`First block starts ${timelineTimeLabel(items[0].minutes)}`:'No scheduled items',focusItemId:items[0]?.id||''};
@@ -1247,6 +1367,38 @@ function coachingEngine(viewDate=selectedDate,items=timelineItemsForDate(viewDat
 
   return{title:'You’re ahead',meta:state.knockRemaining?`Core targets complete · Door knocking begins at 2:00pm`:'All targets complete',focusItemId:state.knockRemaining?knockingId:progressId};
 }
+function dailyPlanTimeRange(item){return `${timelineTimeLabel(item.minutes)}–${timelineTimeLabel(item.minutes+(item.duration||15))}`}
+function dailyCommandFromItem(item,mode='current'){
+  if(!item)return null;
+  let meta=item.commandMeta||item.meta||'';
+  if(mode==='next')meta=`Starts ${timelineTimeLabel(item.minutes)} · ${meta}`;
+  if(mode==='attention')meta=`Still open · ${meta}`;
+  return{title:item.commandTitle||item.title,meta,kicker:mode==='attention'?'NEEDS ATTENTION':item.kicker||'RIGHT NOW',timeLabel:dailyPlanTimeRange(item),focusItemId:item.id,action:item.action||'',label:item.label||'',eventId:item.eventId||''};
+}
+function dailyCommandPriority(viewDate=selectedDate,items=timelineItemsForDate(viewDate),now=new Date()){
+  if(!isWorkDayKey(viewDate))return{title:'No tracking day scheduled',meta:'Your metrics remain available for reference.',kicker:'TODAY',timeLabel:'',focusItemId:'',action:'',label:'',eventId:''};
+  if(viewDate<todayKey())return{title:'Day complete',meta:`Final score ${completion(viewDate)}%.`,kicker:'DAY COMPLETE',timeLabel:'',focusItemId:'',action:'view-log',label:'View day log',eventId:''};
+  if(viewDate>todayKey()){const first=items[0];return first?dailyCommandFromItem(first,'next'):{title:'Plan your day',meta:'No scheduled blocks yet.',kicker:'UPCOMING',timeLabel:'',focusItemId:'',action:'view-appointments',label:'Add appointment',eventId:''}}
+  const nowMinutes=now.getHours()*60+now.getMinutes(),incomplete=item=>!item.completed&&!(item.clockComplete&&nowMinutes>=item.minutes+(item.duration||15)),appointments=items.filter(item=>item.kind==='appointment'||item.kind==='ofi'),preparation=items.filter(item=>item.kind==='prep'),knocking=items.filter(item=>item.kind==='knock'),actionable=items.filter(item=>item.actionable&&incomplete(item)),currentAppointment=appointments.find(item=>nowMinutes>=item.minutes&&nowMinutes<item.minutes+(item.duration||60)),currentPrep=preparation.find(item=>nowMinutes>=item.minutes&&nowMinutes<item.minutes+(item.duration||20)),nextAppointment=appointments.find(item=>item.minutes>nowMinutes),activeEventId=cleanText(prospectSessionContext?.eventId,160);
+  if(currentAppointment)return dailyCommandFromItem(currentAppointment);
+  if(currentPrep)return dailyCommandFromItem(currentPrep);
+  if(nextAppointment&&nextAppointment.minutes-nowMinutes<=20)return dailyCommandFromItem(nextAppointment,'next');
+  if(prospectSessionActive&&activeEventId){const sessionItem=items.find(item=>item.eventId===activeEventId&&!item.completed)||items.find(item=>item.kind==='market'&&!item.completed);if(sessionItem){const command=dailyCommandFromItem(sessionItem);command.title=`Resume ${sessionItem.title}`;command.meta=`Active Hot Spotting session · ${Math.max(0,prospectSessionIds.length-prospectSessionIndex)} client${Math.max(0,prospectSessionIds.length-prospectSessionIndex)===1?'':'s'} remain.`;command.action='resume-session';command.label='Resume calls';return command}}
+  if(prospectSessionActive&&!activeEventId){const sessionItem=items.find(item=>item.kind==='pipeline-block'&&!item.completed);if(sessionItem){const command=dailyCommandFromItem(sessionItem);command.title='Resume the current pipeline';command.meta=`${Math.max(0,prospectSessionIds.length-prospectSessionIndex)} client${Math.max(0,prospectSessionIds.length-prospectSessionIndex)===1?'':'s'} remain in the active session.`;command.action='resume-session';command.label='Resume session';return command}}
+  const activeKnock=knocking.find(item=>nowMinutes>=item.minutes&&nowMinutes<item.minutes+(item.duration||60)&&incomplete(item));
+  if(activeKnock)return dailyCommandFromItem(activeKnock);
+  const current=actionable.find(item=>nowMinutes>=item.minutes&&nowMinutes<item.minutes+(item.duration||15));if(current)return dailyCommandFromItem(current);
+  if(nowMinutes>=13*60+30){const nextKnock=knocking.find(item=>item.minutes>=nowMinutes&&incomplete(item));if(nextKnock&&nextKnock.minutes-nowMinutes<=45)return dailyCommandFromItem(nextKnock,'next')}
+  const attention=actionable.filter(item=>nowMinutes>=item.minutes+(item.duration||15)).sort((a,b)=>{const priority={market:0,'followup-block':1,'pipeline-block':2,knock:3,appointment:4,ofi:4,prep:5};return(priority[a.kind]??9)-(priority[b.kind]??9)||a.minutes-b.minutes})[0];
+  if(nowMinutes>=18*60+30){const wrap=items.find(item=>item.kind==='wrap'),openCount=actionable.filter(item=>item.minutes+(item.duration||15)<=nowMinutes).length;if(wrap){const command=dailyCommandFromItem(wrap);command.title='Close the day properly';command.meta=openCount?`${openCount} planned block${openCount===1?' remains':'s remain'} open. Decide what carries forward, then set tomorrow’s first move.`:'Review the outcomes, record the wins and make tomorrow easy to start.';return command}}
+  if(attention&&nowMinutes<14*60)return dailyCommandFromItem(attention,'attention');
+  const next=actionable.filter(item=>item.minutes>nowMinutes).sort((a,b)=>a.minutes-b.minutes)[0];if(next)return dailyCommandFromItem(next,'next');
+  if(attention)return dailyCommandFromItem(attention,'attention');
+  const currentSupport=items.find(item=>!item.completed&&nowMinutes>=item.minutes&&nowMinutes<item.minutes+(item.duration||15));if(currentSupport)return dailyCommandFromItem(currentSupport);
+  const nextSupport=items.find(item=>!item.completed&&item.minutes>nowMinutes);if(nextSupport)return dailyCommandFromItem(nextSupport,'next');
+  const fallback=legacyMetricCoachingEngine(viewDate,legacyTimelineItemsForDate(viewDate));return{...fallback,kicker:'TODAY',timeLabel:'',action:'view-log',label:'View progress',eventId:''};
+}
+function coachingEngine(viewDate=selectedDate,items=timelineItemsForDate(viewDate)){return dailyCommandPriority(viewDate,items,new Date())}
 function coachSentenceCase(value){
   const text=String(value||'').trim();
   return text?text.charAt(0).toUpperCase()+text.slice(1).toLowerCase():'';
@@ -1257,19 +1409,32 @@ function timelinePriority(viewDate=selectedDate){
 }
 function renderNowCard(){
   const priority=timelinePriority(selectedDate);
+  if($('#nowCardLabel'))$('#nowCardLabel').textContent='RIGHT NOW';
   if($('#nowCardTitle'))$('#nowCardTitle').textContent=priority.title;
-  if($('#nowCardMeta'))$('#nowCardMeta').textContent=coachSentenceCase(priority.meta);
+  if($('#nowCardMeta'))$('#nowCardMeta').textContent=[priority.timeLabel,priority.meta].filter(Boolean).join(' · ');
+}
+function timelinePlanStreetsMarkup(streets=[]){
+  if(!streets.length)return'';
+  return `<div class="timeline-street-list" aria-label="Priority streets">${streets.map((street,index)=>`<div><span><b>${index+1}</b><strong>${escapeHtml(street.street)}</strong><small>${escapeHtml(street.suburb)}</small></span><em>${street.minutes} min</em></div>`).join('')}</div>`;
+}
+function timelinePlanItemMarkup(item,status){
+  const marker=status==='complete'?'✓':status==='attention'?'!':status==='current'?'●':'○',part=item.partTotal>1?` · PART ${item.partIndex}/${item.partTotal}`:'',kicker=`${item.kicker||'TODAY'}${part}`,action=item.action?`<button class="timeline-plan-action ${status==='complete'?'is-complete':''}" type="button" data-plan-action="${escapeHtml(item.action)}" data-event-id="${escapeHtml(item.eventId||'')}">${escapeHtml(item.label||'Open')}</button>`:'',call=(item.kind==='appointment'||item.kind==='ofi')&&item.dial?`<a class="timeline-call" href="tel:${escapeHtml(item.dial)}">Call</a>`:'',actions=action||call?`<div class="timeline-plan-actions">${action}${call}</div>`:'';
+  return `<article class="timeline-item ${status} ${escapeHtml(item.kind)} plan-item${status==='current'?' time-active':''}" data-plan-id="${escapeHtml(item.id)}"><time><b>${escapeHtml(timelineTimeLabel(item.minutes))}</b><i>${escapeHtml(timelineTimeLabel(item.minutes+(item.duration||15)))}</i></time><span class="timeline-marker">${marker}</span><div class="timeline-plan-copy"><span class="timeline-item-kicker">${escapeHtml(kicker)}</span><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.meta)}</small>${timelinePlanStreetsMarkup(item.streets)}${actions}</div></article>`;
 }
 function renderTimeline(){
   if(!$('#dailyTimeline'))return;
   const priority=timelinePriority(selectedDate),items=priority.items;
   $('#timelineDateLabel').textContent=fmtDate(selectedDate);
+  if($('#timelineCurrentKicker'))$('#timelineCurrentKicker').textContent=priority.kicker||'RIGHT NOW';
+  if($('#timelineCurrentTime'))$('#timelineCurrentTime').textContent=priority.timeLabel||'';
   $('#timelineCurrentTitle').textContent=priority.title;
-  $('#timelineCurrentMeta').textContent=coachSentenceCase(priority.meta);
-  $('#timelineSummary').textContent=`${items.filter(i=>i.kind==='appointment'||i.kind==='ofi').length} appointment${items.filter(i=>i.kind==='appointment'||i.kind==='ofi').length===1?'':'s'} · ${completion(selectedDate)}% complete`;
+  $('#timelineCurrentMeta').textContent=priority.meta;
+  const commandAction=$('#timelineCurrentAction');if(commandAction){const available=Boolean(priority.action&&priority.label);commandAction.hidden=!available;commandAction.textContent=priority.label||'Open AGNT';commandAction.dataset.planAction=priority.action||'';commandAction.dataset.eventId=priority.eventId||''}
+  const appointmentCount=items.filter(item=>item.kind==='appointment'||item.kind==='ofi').length,marketWorkloads=new Map();items.filter(item=>item.kind==='market').forEach(item=>{if(!marketWorkloads.has(item.sourceWorkloadId))marketWorkloads.set(item.sourceWorkloadId,item.remainingClients||0)});const marketClients=[...marketWorkloads.values()].reduce((sum,count)=>sum+count,0),summary=[];if(marketClients)summary.push(`${marketClients} MarketPulse client${marketClients===1?'':'s'}`);summary.push(`${appointmentCount} appointment${appointmentCount===1?'':'s'}`);summary.push(`${completion(selectedDate)}% complete`);$('#timelineSummary').textContent=summary.join(' · ');
   const activeTimeBlock=timelineTimeBlockIndex(items,selectedDate);
   $('#dailyTimeline').innerHTML=items.length?items.map((item,index)=>{
     const status=timelineStatus(item,index,items,selectedDate,priority.focusItemId);
+    if(item.plan)return timelinePlanItemMarkup(item,status);
     const timeActive=index===activeTimeBlock?' time-active':'';
     const marker=item.kind==='followup'?(status==='complete'?'✓':''):(status==='complete'?'✓':status==='current'?'●':'○');
     const followUpAttrs=item.followUpType==='buyer'?`data-followup-buyer="${escapeHtml(item.prospectId)}"`:item.followUpType==='prospect'?`data-followup-prospect="${escapeHtml(item.prospectId)}"`:item.followUpType==='appointment'?`data-followup-appointment="${escapeHtml(calendarExportId(item.appointment,item.sourceDate))}" data-source-date="${escapeHtml(item.sourceDate)}"`:'';
@@ -2793,12 +2958,12 @@ function knockingHotSpottingRecommendations(){
     const existing=grouped.get(key)||{key,street:titleCaseMarketStreet(street),suburb:titleCaseMarketStreet(suburb),score:0,events:[],neighbours:new Set(),newestDays:Infinity};
     existing.score=Math.max(existing.score,priority.score);existing.events.push(event);matches.forEach(p=>existing.neighbours.add(p.id));existing.newestDays=Math.min(existing.newestDays,recency.days);grouped.set(key,existing);
   }
-  return [...grouped.values()].map(item=>({...item,neighbourCount:item.neighbours.size,priority:item.score>=72?'High':item.score>=50?'Medium':'Standard',recency:item.newestDays===0?'Today':item.newestDays===1?'Yesterday':`${item.newestDays} days ago`,conversations:streetConversationCount(item.events)})).sort((a,b)=>b.score-a.score||b.neighbourCount-a.neighbourCount||a.newestDays-b.newestDays).slice(0,5);
+  return [...grouped.values()].map(item=>({...item,neighbourCount:item.neighbours.size,priority:item.score>=72?'High':item.score>=50?'Medium':'Standard',recency:item.newestDays===0?'Today':item.newestDays===1?'Yesterday':`${item.newestDays} days ago`,conversations:streetConversationCount(item.events)})).sort((a,b)=>b.score-a.score||b.neighbourCount-a.neighbourCount||a.newestDays-b.newestDays).slice(0,3);
 }
 function renderKnockingHotSpotting(){
   const section=$('#knockingHotSpottingRecommendations'),host=$('#knockingHotSpottingList'),count=$('#knockingHotSpottingCount');if(!section||!host)return;
-  const streets=knockingHotSpottingRecommendations();section.classList.toggle('hidden',!streets.length);if(count)count.textContent=streets.length;
-  host.innerHTML=streets.map(item=>{const reasons=[...new Set(item.events.map(event=>cleanText(event.eventType,60)).filter(Boolean))],properties=item.events.map(event=>event.address).filter(Boolean),context=`${item.neighbourCount} neighbour${item.neighbourCount===1?'':'s'} · ${item.recency} · ${item.conversations} previous street conversation${item.conversations===1?'':'s'}`;return `<article class="knocking-hotspot-item"><div><strong>${escapeHtml(item.street)}</strong><small>${escapeHtml(item.suburb)}</small></div><div class="knocking-hotspot-reasons">${reasons.map(reason=>`<span class="market-event-tag event-${marketTypeClass(reason)}">${escapeHtml(reason)}</span>`).join('')}</div><div class="knocking-recommendation-context"><span class="priority-${item.priority.toLowerCase()}">${item.priority} priority</span><span>${formatEstimatedTime(estimatedMinutes(item.neighbourCount,150))}</span></div><p><strong>${escapeHtml(context)}</strong><br>${escapeHtml(properties.slice(0,2).join(' · '))}${properties.length>2?` · +${properties.length-2} more`:''}</p></article>`}).join('');
+  const remaining=Math.max(15,rollingKnockTarget(todayKey())-Math.floor(liveKnockSeconds(dayData(todayKey()))/60)),streets=dailyPlanStreetAllocations(dailyBriefingMarketModel().fresh?knockingHotSpottingRecommendations():[],remaining);section.classList.toggle('hidden',!streets.length);if(count)count.textContent=streets.length;
+  host.innerHTML=streets.map(item=>{const reasons=[...new Set(item.events.map(event=>cleanText(event.eventType,60)).filter(Boolean))],properties=item.events.map(event=>event.address).filter(Boolean),context=`${item.neighbourCount} neighbour${item.neighbourCount===1?'':'s'} · ${item.recency} · ${item.conversations} previous street conversation${item.conversations===1?'':'s'}`;return `<article class="knocking-hotspot-item"><div><strong>${escapeHtml(item.street)}</strong><small>${escapeHtml(item.suburb)}</small></div><div class="knocking-hotspot-reasons">${reasons.map(reason=>`<span class="market-event-tag event-${marketTypeClass(reason)}">${escapeHtml(reason)}</span>`).join('')}</div><div class="knocking-recommendation-context"><span class="priority-${item.priority.toLowerCase()}">${item.priority} priority</span><span>${item.minutes} min on street</span></div><p><strong>${escapeHtml(context)}</strong><br>${escapeHtml(properties.slice(0,2).join(' · '))}${properties.length>2?` · +${properties.length-2} more`:''}</p></article>`}).join('');
 }
 function renderKnockingSession(){
   const session=$('#knockingSession');if(!session)return;
@@ -2818,7 +2983,7 @@ function renderKnockingSession(){
   $('#knockingSessionRates').innerHTML=knockingRatesMarkup(dailyStats);
   renderKnockingSessionLog();
 }
-function openKnockingSession(){if(!knockingSessionActive)knockingSessionStartSeconds=liveKnockSeconds(dayData(todayKey()));knockingSessionActive=true;knockingSessionVisible=true;saveKnockingSessionState();renderKnockingSession()}
+function openKnockingSession(){if(!knockingSessionActive)knockingSessionStartSeconds=liveKnockSeconds(dayData(todayKey()));knockingSessionActive=true;knockingSessionVisible=true;saveKnockingSessionState();renderKnockingSession();const button=$('#toggleKnockingHotSpotting'),list=$('#knockingHotSpottingList'),section=$('#knockingHotSpottingRecommendations');if(button&&list&&section&&!section.classList.contains('hidden')){button.setAttribute('aria-expanded','true');list.classList.remove('hidden');section.classList.add('expanded')}}
 async function startKnockingSession(){
   if(!canEditDate(selectedDate))return lockedToast();
   if(selectedDate!==todayKey())return toast('Doorknocking sessions are available for today only');
@@ -3425,7 +3590,9 @@ document.querySelector('.today-page-tabs')?.addEventListener('click',e=>{const b
 let todaySwipeStartX=0,todaySwipeStartY=0;$('#scheduleView')?.addEventListener('touchstart',e=>{const touch=e.changedTouches?.[0];if(!touch)return;todaySwipeStartX=touch.clientX;todaySwipeStartY=touch.clientY},{passive:true});$('#scheduleView')?.addEventListener('touchend',e=>{const touch=e.changedTouches?.[0];if(!touch)return;const dx=touch.clientX-todaySwipeStartX,dy=touch.clientY-todaySwipeStartY;if(Math.abs(dx)<60||Math.abs(dx)<=Math.abs(dy)*1.25)return;const pages=['overview','insights','log'],index=pages.indexOf(todayPage),next=dx<0?Math.min(pages.length-1,index+1):Math.max(0,index-1);if(next!==index)setTodayPage(pages[next])},{passive:true});
 $('#openTodayTimeline').onclick=()=>switchView('scheduleView');$('#resetKnock').onclick=resetKnock;$('#knockingMetricCard').onclick=e=>{if(e.target.closest('button'))return;openKnockingHistory()};$('#knockingMetricCard').onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.closest('button')){e.preventDefault();openKnockingHistory()}};$('#closeKnockingHistory').onclick=closeKnockingHistory;$('#previousDay').onclick=()=>shiftHeaderDate(-1);$('#nextDay').onclick=()=>shiftHeaderDate(1);$('#leaderboardModeShortcut').onclick=()=>{leaderboardMode=leaderboardMode==='week'?'day':'week';renderUnifiedLeaderboard()};$('#homeShortcut').onclick=()=>switchView('todayView');$('#backToday').onclick=()=>{selectedDate=todayKey();appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()};
 $('.tabbar').onclick=e=>{const b=e.target.closest('button[data-view]');if(b)switchView(b.dataset.view)};
+$('#timelineCurrentAction')?.addEventListener('click',e=>navigateDailyPlanAction(e.currentTarget.dataset.planAction,e.currentTarget.dataset.eventId));
 $('#dailyTimeline').onclick=async e=>{
+  const planAction=e.target.closest('[data-plan-action]');if(planAction){e.preventDefault();navigateDailyPlanAction(planAction.dataset.planAction,planAction.dataset.eventId);return}
   const buyerCall=e.target.closest('[data-timeline-buyer-call]');if(buyerCall){e.preventDefault();launchBuyerProfileCall(buyerCall.dataset.timelineBuyerCall);return}
   const buyerCheck=e.target.closest('[data-followup-buyer]');if(buyerCheck){await completeProspectFollowUp(buyerCheck.dataset.followupBuyer);renderTimeline();renderNowCard();return}
   const prospectCheck=e.target.closest('[data-followup-prospect]');if(prospectCheck){switchView('prospectingView');openProspectLog(prospectCheck.dataset.followupProspect,false);return}
@@ -3692,7 +3859,7 @@ window.addEventListener('error',event=>console.error('Unhandled app error',event
 window.addEventListener('unhandledrejection',event=>console.error('Unhandled promise rejection',event.reason));
 renderProspecting();
 if('serviceWorker'in navigator)window.addEventListener('load',async()=>{const reg=await navigator.serviceWorker.register('./service-worker.js');reg.update()});
-setInterval(()=>{finaliseExpiredTimers().then(()=>{if(selectedDate<todayKey())renderAll()});maybeShowDayReview();updateAppViewport();if(cloud)scheduleLeaderboardPublish()},30000);
+setInterval(()=>{finaliseExpiredTimers().then(()=>{if(selectedDate<todayKey())renderAll()});if(selectedDate===todayKey()){renderNowCard();if($('#scheduleView')?.classList.contains('active'))renderTimeline()}maybeShowDayReview();updateAppViewport();if(cloud)scheduleLeaderboardPublish()},30000);
 init();
 
 loadBuyerSession();

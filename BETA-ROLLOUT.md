@@ -1,4 +1,4 @@
-# AGNT BETA v1.36.22 — Rollout Check
+# AGNT BETA v1.36.24 — Rollout Check
 
 ## Before release verification
 1. Confirm the existing `firestore.rules` remain active in Firebase project `daily-accountability-be0ac`; this release does not change them.
@@ -6,6 +6,23 @@
 3. Reopen the installed PWA and allow the new service worker/cache to activate.
 4. Confirm an existing account loads historical Today, Contacts/Prospecting, Appointments and Insights data.
 5. Confirm the existing Team and current members are still present.
+
+## Today command centre acceptance
+
+1. Open Today on a workday after the current MarketPulse import and confirm **Right Now** shows one priority, its protected time range, a concise reason and one action.
+2. Confirm the Home **Right Now** card and the morning briefing recommend the same underlying next block as the Today page.
+3. Confirm separate Just Listed/Listed and Sold Hot Spotting blocks appear before Price Update or other MarketPulse activity and before the standard pipeline.
+4. Confirm clients matched to multiple events are counted once across the plan and clients already worked today are no longer presented as outstanding.
+5. Tap a MarketPulse action and confirm it starts the exact property session; leave it active and confirm Today changes to **Resume calls**.
+6. Add an appointment during a planned call window and confirm the calls move or split around a 20-minute preparation block and the appointment itself.
+7. Add an appointment at 2:30 pm and confirm the knocking target starts at 2:00 pm, pauses for preparation/appointment time and resumes afterwards without overlapping it.
+8. Confirm the knocking block shows no more than three priority streets, each with a clear time allocation, and that their total matches the protected field time.
+9. Start knocking and confirm the same three-street list is expanded in the existing knocking session while the timer and capture workflow remain unchanged.
+10. Let an actionable block pass without completing it and confirm it shows **Needs attention**, not a completion tick.
+11. After 6:30 pm, confirm **Right Now** directs the agent to close the day and review carry-forward work rather than suggesting a new call session.
+12. Repeat the timeline in light and dark mode at 320 px, 375 px and 390 px widths; confirm the time axis, street rows and action controls remain contained with no horizontal overflow.
+13. Confirm Today → Log still holds actual completed session history and the timeline remains the plan rather than duplicating the log.
+14. Confirm past/future Today dates, appointments, Team-assigned appointments, metrics and existing navigation retain their previous behaviour.
 
 ## MarketPulse automation acceptance
 
@@ -27,6 +44,24 @@
 16. Submit an invalid or unparseable new email and confirm the prior active cards remain available.
 17. Process an older delayed email after today's successful import and confirm it is marked processed without rolling the active Hot Spotting deck backwards.
 18. Leave a prior-day Hot Spotting session open, import today's valid email, and confirm the obsolete session closes while its already logged activity remains in the contact history.
+
+## Daily briefing acceptance
+1. Sign in on a workday with today’s MarketPulse already imported and confirm the briefing opens once with the current greeting and agent first name.
+2. Confirm the MarketPulse total matches the active event deck and the client total counts unique, unworked matches only.
+3. Confirm a client matched to more than one property is counted once and is allocated to only one property in **Focus first**.
+4. Confirm clients already called today, event contacts already worked and completed event sessions are excluded from the remaining client total.
+5. Confirm Listed/Just Listed and Sold properties appear before Price and other event types when they have unworked matches.
+6. Confirm the top three property rows open Prospector → Hot Spotting and bring the selected card into view.
+7. Confirm **Start Priority Session** opens the recommended property session and **Resume Priority Session** returns to the existing active session.
+8. Create an appointment within the next 60 minutes and confirm AGNT protects it ahead of starting a new MarketPulse session.
+9. Create a later appointment and confirm the recommendation either fits the session before it with a 20-minute preparation window or gives a clear stop time/client count.
+10. Confirm the appointment, follow-up and pipeline summary cards open their existing AGNT destinations.
+11. With no current MarketPulse matches, confirm overdue follow-ups are recommended before today’s follow-ups and the standard pipeline.
+12. Open before today’s MarketPulse arrives and confirm the waiting state does not describe yesterday’s data as today’s priority.
+13. After dismissing that waiting state, import a valid current-day MarketPulse and reopen AGNT; confirm the fresh briefing is shown once.
+14. Simulate a slow connection and confirm the preparing state falls back to locally available data without blocking AGNT.
+15. Confirm close, Escape, primary and secondary actions all dismiss the briefing and that it does not reopen again for the same daily MarketPulse state.
+16. Repeat the core flow on a narrow phone viewport in light and dark mode, including vertical scrolling, 44px-or-larger actions and no horizontal overflow.
 
 ## Core acceptance
 1. Change Calls/Connects/Data for one member and confirm Daily leaderboard updates for another member.

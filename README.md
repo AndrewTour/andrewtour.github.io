@@ -1,6 +1,6 @@
-# AGNT BETA v1.36.23 — Daily MarketPulse Briefing
+# AGNT BETA v1.36.24 — Today Command Centre
 
-Incremental BETA update built directly on AGNT BETA v1.36.22 Daily MarketPulse Refresh, which extends the supplied MarketPulse automation package and the `AndrewTour/AGNT-beta` GitHub `main` baseline (`b8f6d0e187b00a1eca0d1dc5aeb9d960be83c8ff`, AGNT BETA v1.36.20).
+Incremental BETA update built directly on the current AGNT BETA v1.36.23 Daily MarketPulse Briefing package from the GitHub BETA line.
 
 ## Release baseline
 - Application/UI source: current `AndrewTour/AGNT-beta` GitHub `main` baseline at the commit above.
@@ -17,6 +17,7 @@ Incremental BETA update built directly on AGNT BETA v1.36.22 Daily MarketPulse R
 - Broadcast contrast and viewport refinements.
 - Universal nested/session navigation polish.
 - Once-daily decision-first briefing covering MarketPulse, appointments, follow-ups and pipeline.
+- Time-aware Today command centre with dedicated MarketPulse calling blocks, protected appointments and priority knocking streets.
 - Consumer-ready login with persistent Firebase authentication restore.
 - Team appointment assignment after Book Appointment, defaulting to Me.
 - Assignment choices use the live Team leaderboard display name and show first name only.
@@ -26,6 +27,18 @@ Incremental BETA update built directly on AGNT BETA v1.36.22 Daily MarketPulse R
 - Live/next-open appointment notification with Got it and Add to Calendar.
 - Setter-facing appointment/log/leaderboard context shows `Booked for [First name]` where applicable.
 - Targeted dark-mode contrast fixes for appointment contact suggestions and Editing Appointment.
+
+## Today command centre added in v1.36.24
+- The Today page now opens with one **Right Now** command containing the active time window, reason and one direct action. The Home focus card and morning briefing use the same priority engine.
+- Today’s fresh MarketPulse is converted into dedicated call blocks. Active sessions are resumed first, then Just Listed/Listed and Sold opportunities, overdue or due follow-ups, other MarketPulse events and the eligible pipeline.
+- Matched clients are de-duplicated across properties. Completed Hot Spotting work remains represented as complete, while unfinished blocks that pass their protected window are shown as needing attention rather than being falsely marked complete by the clock.
+- Calling work is placed into available morning and late-afternoon capacity. Blocks move or split around appointments instead of overlapping them, and every appointment receives a protected 20-minute preparation window.
+- The field plan starts from 2:00 pm. The remaining knocking target is split around appointment conflicts and the top three fresh MarketPulse streets are ranked directly inside the timeline.
+- Street time is allocated in five-minute increments from MarketPulse priority, matched neighbours and recency; the same three-street plan is expanded automatically when the knocking session starts.
+- A short field-preparation block sets the route before knocking, a progress reset follows the field block and the evening command switches to closing the day after 6:30 pm instead of prompting late calls.
+- Each actionable timeline block has one destination: start/resume the exact Hot Spotting session, open follow-ups or pipeline, view the appointment, start knocking or open the day log.
+- Past and future dates retain the established timeline behaviour. Existing session logging remains in Today → Log rather than being duplicated in the plan.
+- Firebase configuration, Authentication, UIDs, private user paths, Team paths, Firestore rules and the once-daily MarketPulse bridge remain unchanged. No migration or Blaze plan is required.
 
 ## Daily briefing added in v1.36.23
 - The old rotating returning snapshot is replaced with a clean once-daily AGNT briefing for each signed-in agent on a scheduled workday; the existing off-day review remains unchanged.

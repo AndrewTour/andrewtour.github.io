@@ -4819,7 +4819,7 @@ body.appointment-editing{overflow:hidden}
 }
 #scheduleView .today-page-tabs button{
   min-width:0;
-  min-height:38px;
+  min-height:44px;
   padding:8px 4px;
   border:0;
   border-radius:13px;
@@ -11472,3 +11472,85 @@ html[data-theme="dark"] .marketpulse-automation-card{background:#15191f;border-c
 html[data-theme="dark"] .marketpulse-automation-route{background:#11141a;border-color:#292d35}
 html[data-theme="dark"] .marketpulse-automation-badge{background:rgba(23,105,255,.16);color:#82bdff}
 html[data-theme="dark"] #marketPulseAutomationDetail,html[data-theme="dark"] .marketpulse-automation-route>small{color:#969ca7!important}
+
+/* AGNT BETA v1.36.24 — time-aware Today command centre. */
+.timeline-command-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.timeline-command-head time{color:var(--agnt-blue,#1769ff);font-size:.64rem;font-weight:760;font-variant-numeric:tabular-nums;white-space:nowrap}
+.timeline-command-action{
+  justify-self:start;
+  min-height:44px;
+  margin-top:11px;
+  padding:0 17px;
+  border:0!important;
+  border-radius:14px!important;
+  background:var(--agnt-ink,#111318)!important;
+  color:#fff!important;
+  box-shadow:none!important;
+  font-size:.72rem;
+  font-weight:760;
+}
+.timeline-command-action[hidden]{display:none!important}
+#scheduleView .today-overview-panel .daily-timeline::before{
+  left:var(--timeline-axis-x)!important;
+  width:1px!important;
+  background:var(--agnt-rule,#e8eaee)!important;
+  transform:translateX(-.5px)!important;
+}
+.timeline-item.plan-item{min-height:76px;padding:16px 0;align-items:start}
+.timeline-item.plan-item time{display:grid;gap:2px;padding-top:1px;text-align:right;white-space:nowrap}
+.timeline-item.plan-item time b{color:var(--agnt-ink,#111318);font-size:.62rem;font-weight:760;line-height:1.15}
+.timeline-item.plan-item time i{color:var(--agnt-faint,#a4a9b1);font-size:.51rem;font-style:normal;font-weight:650;line-height:1.15}
+.timeline-item.plan-item .timeline-marker{margin-top:1px}
+.timeline-plan-copy{display:grid;gap:5px;min-width:0}
+.timeline-item-kicker{color:var(--agnt-blue,#1769ff);font-size:.51rem;font-weight:840;letter-spacing:.105em;line-height:1.2;text-transform:uppercase}
+.timeline-plan-copy>strong{color:var(--agnt-ink,#111318);font-size:.82rem!important;font-weight:720;line-height:1.24;letter-spacing:-.012em}
+.timeline-plan-copy>small{color:var(--agnt-subtle,#747b86);font-size:.62rem!important;line-height:1.38}
+.timeline-plan-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:4px}
+.timeline-plan-action,.timeline-plan-actions .timeline-call{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:auto;
+  min-width:0;
+  min-height:44px;
+  padding:0 13px;
+  border:1px solid var(--agnt-rule,#e8eaee)!important;
+  border-radius:12px!important;
+  background:var(--agnt-soft,#f4f5f7)!important;
+  color:var(--agnt-ink,#111318)!important;
+  box-shadow:none!important;
+  font-size:.63rem;
+  font-weight:760;
+  text-decoration:none;
+}
+.timeline-item.current .timeline-plan-action{border-color:var(--agnt-blue,#1769ff)!important;background:var(--agnt-blue,#1769ff)!important;color:#fff!important}
+.timeline-plan-action.is-complete{color:var(--agnt-green,#079a67)!important}
+.timeline-item.attention{margin:4px -9px;padding:16px 9px;border-radius:17px;background:#fff8ea}
+.timeline-item.attention .timeline-marker{background:#c68416!important;color:#fff!important}
+.timeline-item.attention .timeline-item-kicker{color:#a76600}
+.timeline-street-list{display:grid;gap:0;margin-top:5px;border-top:1px solid var(--agnt-rule,#e8eaee);border-bottom:1px solid var(--agnt-rule,#e8eaee)}
+.timeline-street-list>div{display:flex!important;align-items:center;justify-content:space-between;gap:10px;padding:8px 0}
+.timeline-street-list>div+div{border-top:1px solid var(--agnt-rule,#e8eaee)}
+.timeline-street-list span{display:grid;grid-template-columns:18px minmax(0,1fr);align-items:center;gap:0 7px;min-width:0}
+.timeline-street-list span>b{grid-row:1/3;display:grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--agnt-soft,#f4f5f7);color:var(--agnt-subtle,#747b86);font-size:.49rem}
+.timeline-street-list span>strong{overflow:hidden;color:var(--agnt-ink,#111318)!important;font-size:.65rem!important;font-weight:720;line-height:1.15;text-overflow:ellipsis;white-space:nowrap}
+.timeline-street-list span>small{overflow:hidden;color:var(--agnt-faint,#a4a9b1)!important;font-size:.52rem!important;line-height:1.15;text-overflow:ellipsis;white-space:nowrap}
+.timeline-street-list em{flex:0 0 auto;color:var(--agnt-blue,#1769ff);font-size:.57rem;font-style:normal;font-weight:760;white-space:nowrap}
+.timeline-item.complete.plan-item{opacity:.62}
+.timeline-item.complete.plan-item .timeline-plan-action{pointer-events:auto;opacity:1}
+html[data-theme="dark"] .timeline-command-action{background:#397dff!important;color:#fff!important}
+html[data-theme="dark"] .timeline-command-head time,html[data-theme="dark"] .timeline-item-kicker,html[data-theme="dark"] .timeline-street-list em{color:#82bdff!important}
+html[data-theme="dark"] .timeline-item.plan-item time b,html[data-theme="dark"] .timeline-plan-copy>strong,html[data-theme="dark"] .timeline-street-list span>strong{color:#f5f6f7!important}
+html[data-theme="dark"] .timeline-item.plan-item time i,html[data-theme="dark"] .timeline-plan-copy>small{color:#969ca7!important}
+html[data-theme="dark"] .timeline-plan-action,html[data-theme="dark"] .timeline-plan-actions .timeline-call{background:#171a20!important;border-color:#2c313a!important;color:#f5f6f7!important}
+html[data-theme="dark"] .timeline-item.current .timeline-plan-action{background:#397dff!important;border-color:#397dff!important;color:#fff!important}
+html[data-theme="dark"] .timeline-item.attention{background:rgba(198,132,22,.12)}
+html[data-theme="dark"] .timeline-item.attention .timeline-item-kicker{color:#e4a846!important}
+html[data-theme="dark"] .timeline-street-list,html[data-theme="dark"] .timeline-street-list>div+div{border-color:#292e36}
+html[data-theme="dark"] .timeline-street-list span>b{background:#20242b;color:#aab0ba}
+@media(max-width:380px){
+  .daily-timeline{--timeline-time-col:51px;--timeline-marker-col:18px;--timeline-gap:7px}
+  .timeline-item.plan-item{padding:14px 0}
+  .timeline-plan-copy>strong{font-size:.78rem!important}
+  .timeline-command-action{width:100%}
+}
