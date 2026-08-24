@@ -11555,12 +11555,10 @@ html[data-theme="dark"] .timeline-street-list span>b{background:#20242b;color:#a
   .timeline-command-action{width:100%}
 }
 
-/* AGNT BETA v1.36.25 — intentional MarketPulse lifecycle follow-ups. */
-.market-followup-field{display:grid;gap:10px;padding:14px;border:1px solid rgba(23,105,216,.16);border-radius:17px;background:#f2f7ff}
-.market-followup-field>div span{display:block;color:#1769d8;font-size:10px;font-weight:850;letter-spacing:.12em}
-.market-followup-field>div small{display:block;margin-top:4px;color:#637187;font-size:11px;font-weight:600;line-height:1.4}
-.market-followup-field select{background:#fff!important;border-color:rgba(23,105,216,.16)!important;font-weight:720!important}
-.market-followup-field em{color:#58718f;font-size:10px;font-style:normal;font-weight:650;line-height:1.4}
+/* AGNT BETA v1.36.26 — cohesive Hot Spotting follow-up field. */
+.market-followup-field{display:grid;gap:6px;padding:0;border:0;border-radius:0;background:transparent}
+.market-followup-field>span{display:block;color:#626a75;font-size:12px;font-weight:750;letter-spacing:0;text-transform:none}
+.market-followup-field select{width:100%;min-height:50px;margin:0;padding:0 12px;border:1px solid rgba(0,0,0,.1)!important;border-radius:12px;background:#f8f9fb!important;color:#111!important;font:inherit;font-weight:650!important;box-sizing:border-box}
 .market-followup-ready{display:flex;align-items:center;gap:8px;margin-top:11px;padding:9px 11px;border-radius:13px;background:#edf5ff;color:#1769d8}
 .market-followup-ready strong{display:grid;place-items:center;min-width:23px;height:23px;border-radius:50%;background:#1769d8;color:#fff;font-size:11px}
 .market-followup-ready span{font-size:10px;font-weight:760}
@@ -11570,11 +11568,25 @@ html[data-theme="dark"] .timeline-street-list span>b{background:#20242b;color:#a
 .market-followup-prompt p{margin:5px 0 0!important;color:#5f6f84!important;font-size:11px!important;line-height:1.45}
 .prospect-history .market-followup-history{margin-top:5px;padding:5px 7px;border-radius:8px;background:#eef5ff;color:#1769d8;font-weight:700}
 .prospect-history .market-followup-history.triggered{background:#eaf8f2;color:#087d58}
-html[data-theme="dark"] .market-followup-field,html[data-theme="dark"] .market-followup-prompt,html[data-theme="dark"] .market-followup-ready{background:#142239!important;border-color:#284467!important}
-html[data-theme="dark"] .market-followup-field>div span,html[data-theme="dark"] .market-followup-prompt span,html[data-theme="dark"] .market-followup-ready{color:#82bdff!important}
-html[data-theme="dark"] .market-followup-field>div small,html[data-theme="dark"] .market-followup-field em,html[data-theme="dark"] .market-followup-prompt p{color:#9eabbc!important}
-html[data-theme="dark"] .market-followup-field select{background:#191d23!important;border-color:#35445a!important;color:#f5f6f7!important}
+html[data-theme="dark"] .market-followup-prompt,html[data-theme="dark"] .market-followup-ready{background:#142239!important;border-color:#284467!important}
+html[data-theme="dark"] .market-followup-field>span,html[data-theme="dark"] .market-followup-prompt span,html[data-theme="dark"] .market-followup-ready{color:#b5bbc5!important}
+html[data-theme="dark"] .market-followup-prompt p{color:#9eabbc!important}
+html[data-theme="dark"] .market-followup-field select{background:#191d23!important;border-color:#343a44!important;color:#f5f6f7!important}
 html[data-theme="dark"] .market-followup-prompt strong{color:#f5f6f7!important}
 html[data-theme="dark"] .market-followup-ready strong{background:#397dff;color:#fff}
 html[data-theme="dark"] .prospect-history .market-followup-history{background:#15233a;color:#82bdff}
 html[data-theme="dark"] .prospect-history .market-followup-history.triggered{background:#112a22;color:#62d5a9}
+
+/* AGNT BETA v1.36.26 — visible priority-street selector in live knocking. */
+.knocking-hotspot-intro{padding:16px 16px 0}
+.knocking-street-picker{display:grid;gap:6px;padding:14px 16px;color:#626a75;font-size:.64rem;font-weight:780}
+.knocking-street-picker>span{font-size:.55rem;font-weight:850;letter-spacing:.1em;text-transform:uppercase}
+.knocking-street-picker select{width:100%;min-height:50px;padding:0 13px;border:1px solid rgba(20,24,32,.1);border-radius:15px;background:#f7f9fc;color:#111318;font:inherit;font-size:.78rem;font-weight:750;box-sizing:border-box}
+.knocking-street-picker small{color:#7a8392;font-size:.58rem;font-weight:620;line-height:1.4}
+.knocking-hotspot-toggle{padding:12px 16px;border-top:1px solid rgba(20,24,32,.06)}
+.knocking-hotspot-detail-label{font-size:.63rem;font-weight:780;color:#4c5666}
+html[data-theme="dark"] .knocking-street-picker{color:#b5bbc5}
+html[data-theme="dark"] .knocking-street-picker select{background:#191d23;border-color:#343a44;color:#f5f6f7}
+html[data-theme="dark"] .knocking-street-picker small{color:#969ca7}
+html[data-theme="dark"] .knocking-hotspot-toggle{border-top-color:#292d35}
+html[data-theme="dark"] .knocking-hotspot-detail-label{color:#d9dde3}

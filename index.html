@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.36.25-beta-market-followups">
+<link rel="stylesheet" href="styles.css?v=1.36.26-beta-timeline-knocking-cleanup">
 <title>AGNT</title>
 </head>
 <body>
@@ -492,8 +492,10 @@
           <button id="endKnockingSession" type="button">End Session</button>
         </header>
         <section id="knockingHotSpottingRecommendations" class="knocking-hotspot-recommendations glass hidden" aria-label="Recommended streets to door knock">
+          <div class="knocking-hotspot-head knocking-hotspot-intro"><span>PRIORITY STREET</span><strong>Choose where to knock</strong><small>Just Listed or Sold activity matched to contact data in AGNT.</small></div>
+          <label class="knocking-street-picker" for="knockingStreetSelect"><span>Street</span><select id="knockingStreetSelect" aria-label="Choose a priority street"></select><small id="knockingStreetSummary"></small></label>
           <button id="toggleKnockingHotSpotting" class="knocking-hotspot-toggle" type="button" aria-expanded="false" aria-controls="knockingHotSpottingList">
-            <span class="knocking-hotspot-head"><span>HOT SPOTTING</span><strong>Streets worth knocking</strong><small>Based on your latest market activity.</small></span>
+            <span class="knocking-hotspot-detail-label">Why this street</span>
             <span class="knocking-hotspot-toggle-meta"><b id="knockingHotSpottingCount">0</b><i aria-hidden="true">⌄</i></span>
           </button>
           <div id="knockingHotSpottingList" class="knocking-hotspot-list hidden"></div>
@@ -1129,6 +1131,6 @@ Andrew Tour | McGrath</textarea></label>
 
 
 
-<script type="module" src="app.js?v=1.36.25-beta-market-followups"></script>
+<script type="module" src="app.js?v=1.36.26-beta-timeline-knocking-cleanup"></script>
 </body>
 </html>

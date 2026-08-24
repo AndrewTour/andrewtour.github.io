@@ -1,10 +1,26 @@
-# AGNT BETA v1.36.25 — Rollout Check
+# AGNT BETA v1.36.26 — Rollout Check
+
+## Timeline and knocking cleanup acceptance
+
+1. Add an appointment and confirm Today shows the appointment itself but no Appointment Prep card.
+2. At 31 minutes before the appointment, confirm the current working block remains the focus; at 30 minutes before, confirm the shared focus headline switches to the appointment.
+3. Confirm the final 30 minutes before the appointment remain free of calling or knocking blocks even though no prep card is displayed.
+4. Confirm there is no Field Prep or route-setting card before the 2:00 pm field block.
+5. With saved contacts on a street and a Just Listed or Sold MarketPulse event on that street, confirm the timeline title reads **Knock [Street]**.
+6. Confirm Price Update, Withdrawn, Under Offer and other event types do not create a knocking recommendation by themselves.
+7. Confirm a Just Listed or Sold event on a street with no saved AGNT contact-address data does not create a recommendation.
+8. With no qualifying street in the current deck, confirm AGNT uses the most recent retained Just Listed/Sold street that has saved contact data and clearly shows its recency.
+9. With no qualifying current or retained street, confirm AGNT shows a waiting state and does not offer a Start Knocking action.
+10. Start knocking and confirm the street selector is visible, contains only qualifying streets and retains the chosen street while the session remains active.
+11. Start a Just Listed session and confirm the contact log shows a standard **Hot Spotting Follow-Up** field with No Follow-Up, Sold, Price Change, Auction Date and All Updates.
+12. Start a Sold or Auction Result session and confirm the Hot Spotting Follow-Up field is absent.
+13. Confirm the follow-up control matches the size, border, surface and typography of the surrounding contact-log fields in light and dark mode.
 
 ## Market follow-up acceptance
 
-1. Start a Just Listed Hot Spotting session, log a connected outcome and confirm **Bring back when** appears with Sold selected by default.
+1. Start a Just Listed Hot Spotting session, log a connected outcome and confirm **Hot Spotting Follow-Up** appears with Sold selected by default.
 2. Change the outcome to No Answer and confirm the market-follow-up selector is removed from the active form flow.
-3. Save a Sold, Price Update, Auction Date or Any Update watch and confirm it appears in the contact's existing history with the property address.
+3. Save a Sold, Price Change, Auction Date or All Updates watch and confirm it appears in the contact's existing history with the property address.
 4. Import a later matching event for the exact property and confirm the requested client appears first with the previous note and latest market detail.
 5. Where MarketPulse supplies them, confirm the prompt shows the new price/guide, movement and auction date/time.
 6. Confirm the same fulfilled watch does not trigger again on a duplicate import.
@@ -24,10 +40,10 @@
 3. Confirm separate Just Listed/Listed and Sold Hot Spotting blocks appear before Price Update or other MarketPulse activity and before the standard pipeline.
 4. Confirm clients matched to multiple events are counted once across the plan and clients already worked today are no longer presented as outstanding.
 5. Tap a MarketPulse action and confirm it starts the exact property session; leave it active and confirm Today changes to **Resume calls**.
-6. Add an appointment during a planned call window and confirm the calls move or split around a 20-minute preparation block and the appointment itself.
-7. Add an appointment at 2:30 pm and confirm the knocking target starts at 2:00 pm, pauses for preparation/appointment time and resumes afterwards without overlapping it.
+6. Add an appointment during a planned call window and confirm calls move or split around the invisible 30-minute focus handover and the appointment itself, without rendering a prep card.
+7. Add an appointment at 3:00 pm and confirm the named-street knocking target can run from 2:00–2:30 pm, pauses for the 30-minute focus handover and appointment, then resumes afterwards without overlap.
 8. Confirm the knocking block shows no more than three priority streets, each with a clear time allocation, and that their total matches the protected field time.
-9. Start knocking and confirm the same three-street list is expanded in the existing knocking session while the timer and capture workflow remain unchanged.
+9. Start knocking and confirm the same qualifying streets appear in the restored selector while the timer and capture workflow remain unchanged.
 10. Let an actionable block pass without completing it and confirm it shows **Needs attention**, not a completion tick.
 11. After 6:30 pm, confirm **Right Now** directs the agent to close the day and review carry-forward work rather than suggesting a new call session.
 12. Repeat the timeline in light and dark mode at 320 px, 375 px and 390 px widths; confirm the time axis, street rows and action controls remain contained with no horizontal overflow.
@@ -63,8 +79,8 @@
 5. Confirm Listed/Just Listed and Sold properties appear before Price and other event types when they have unworked matches.
 6. Confirm the top three property rows open Prospector → Hot Spotting and bring the selected card into view.
 7. Confirm **Start Priority Session** opens the recommended property session and **Resume Priority Session** returns to the existing active session.
-8. Create an appointment within the next 60 minutes and confirm AGNT protects it ahead of starting a new MarketPulse session.
-9. Create a later appointment and confirm the recommendation either fits the session before it with a 20-minute preparation window or gives a clear stop time/client count.
+8. Create an appointment within the next 30 minutes and confirm AGNT protects it ahead of starting a new MarketPulse session.
+9. Create a later appointment and confirm the recommendation either fits before the 30-minute focus handover or gives a clear stop time/client count.
 10. Confirm the appointment, follow-up and pipeline summary cards open their existing AGNT destinations.
 11. With no current MarketPulse matches, confirm overdue follow-ups are recommended before today’s follow-ups and the standard pipeline.
 12. Open before today’s MarketPulse arrives and confirm the waiting state does not describe yesterday’s data as today’s priority.

@@ -1,9 +1,20 @@
-# AGNT BETA v1.36.25 — Market Follow-Ups
+# AGNT BETA v1.36.26 — Timeline & Knocking Cleanup
 
-Incremental BETA update built directly on the current AGNT BETA v1.36.24 Today Command Centre package.
+Incremental BETA update built directly on the working AGNT BETA v1.36.25 Market Follow-Ups package.
+
+## Timeline and knocking cleanup added in v1.36.26
+- Visible Appointment Prep and Field Prep cards have been removed from Today. The shared focus headline now takes over 30 minutes before an appointment, while that handover window remains clear in the underlying schedule.
+- AGNT only recommends knocking streets that have saved contact-address data and a Just Listed or Sold MarketPulse event.
+- If the current MarketPulse deck has no qualifying street, AGNT falls back to the most recent qualifying event retained in a compact MarketPulse street history. If no qualifying street exists, AGNT does not issue a Start Knocking action.
+- Each knocking block names the street directly, including split blocks around appointments.
+- The live knocking session again includes a visible street selector. It contains only qualifying streets, retains the selected street during the session and shows the market reason, saved-contact count and time target.
+- **Bring back when** is replaced by the standard **Hot Spotting Follow-Up** form field with Sold, Price Change, Auction Date, All Updates or No Follow-Up.
+- Sold and Auction Result sessions do not show the follow-up field because the property lifecycle has already concluded.
+- The follow-up selector now uses the same field styling as Outcome, Temperature and the surrounding contact-log controls.
+- Existing Firebase configuration, Authentication, UIDs, Firestore paths/rules, Team data and MarketPulse email automation remain unchanged. The compact history is stored inside the existing UID-scoped prospecting state document.
 
 ## Market follow-ups added in v1.36.25
-- Connected MarketPulse outcomes now include one intentional **Bring back when** control: Sold, Price Update, Auction Date, Any Update or Don't Bring Back.
+- Connected MarketPulse outcomes include one intentional property-lifecycle follow-up. In v1.36.26 this is presented as **Hot Spotting Follow-Up**: Sold, Price Change, Auction Date, All Updates or No Follow-Up.
 - The selection is stored with the original interaction and exact property identity. Free-text notes remain conversation context and never silently create a trigger.
 - A later matching MarketPulse event fulfils the watch once, promotes that client ahead of general street matches and carries the prior conversation note into the call screen.
 - Follow-up prompts include the new guide or sale price, price movement and auction date/time whenever those fields are available in MarketPulse.
@@ -42,10 +53,10 @@ Incremental BETA update built directly on the current AGNT BETA v1.36.24 Today C
 - The Today page now opens with one **Right Now** command containing the active time window, reason and one direct action. The Home focus card and morning briefing use the same priority engine.
 - Today’s fresh MarketPulse is converted into dedicated call blocks. Active sessions are resumed first, then Just Listed/Listed and Sold opportunities, overdue or due follow-ups, other MarketPulse events and the eligible pipeline.
 - Matched clients are de-duplicated across properties. Completed Hot Spotting work remains represented as complete, while unfinished blocks that pass their protected window are shown as needing attention rather than being falsely marked complete by the clock.
-- Calling work is placed into available morning and late-afternoon capacity. Blocks move or split around appointments instead of overlapping them, and every appointment receives a protected 20-minute preparation window.
-- The field plan starts from 2:00 pm. The remaining knocking target is split around appointment conflicts and the top three fresh MarketPulse streets are ranked directly inside the timeline.
-- Street time is allocated in five-minute increments from MarketPulse priority, matched neighbours and recency; the same three-street plan is expanded automatically when the knocking session starts.
-- A short field-preparation block sets the route before knocking, a progress reset follows the field block and the evening command switches to closing the day after 6:30 pm instead of prompting late calls.
+- Calling work is placed into available morning and late-afternoon capacity. Blocks move or split around appointments instead of overlapping them; the final 30 minutes before each appointment are reserved for the focus-headline handover without a separate prep card.
+- The field plan starts from 2:00 pm. The remaining knocking target is split around appointment conflicts and uses up to three Just Listed/Sold streets with saved contact data.
+- Street time is allocated in five-minute increments from MarketPulse priority, matched contacts and recency. Each block names its first street and the same choices appear in the live knocking selector.
+- When the current deck has no qualifying street, AGNT uses the most recent qualifying retained MarketPulse street. With no qualifying history, it shows a clear waiting state instead of telling the agent to knock blindly.
 - Each actionable timeline block has one destination: start/resume the exact Hot Spotting session, open follow-ups or pipeline, view the appointment, start knocking or open the day log.
 - Past and future dates retain the established timeline behaviour. Existing session logging remains in Today → Log rather than being duplicated in the plan.
 - Firebase configuration, Authentication, UIDs, private user paths, Team paths, Firestore rules and the once-daily MarketPulse bridge remain unchanged. No migration or Blaze plan is required.
@@ -55,7 +66,7 @@ Incremental BETA update built directly on the current AGNT BETA v1.36.24 Today C
 - The briefing waits for authoritative account and MarketPulse inbox snapshots before calculating priorities, with a short local-data fallback when the connection is slow.
 - MarketPulse is summarised as event totals, unique unworked clients and estimated focused calling time. Clients already called today, completed event sessions and event contacts already worked are excluded.
 - Just Listed/Listed and Sold activity is ranked ahead of other MarketPulse event types, with the top three properties shown as direct Hot Spotting shortcuts.
-- The priority plan protects an appointment due within 60 minutes, resumes an active session, then recommends the best Listed/Sold session. It accounts for a 20-minute appointment preparation window when estimating what fits.
+- The priority plan switches to an appointment 30 minutes before it starts, resumes an active session, then recommends the best Listed/Sold session. Workload estimates stop at that same 30-minute focus handover.
 - When no current MarketPulse work is ready, AGNT falls back in order to overdue follow-ups, today’s follow-ups, remaining appointments and the existing eligible pipeline.
 - Appointment, follow-up and pipeline summaries open the corresponding existing AGNT surfaces. The primary recommendation can start or resume the correct session directly.
 - Waiting, no-match and connection-error states retain previous Hot Spotting data for context without presenting it as today’s new priority.
@@ -69,7 +80,7 @@ Incremental BETA update built directly on the current AGNT BETA v1.36.24 Today C
 - If a prior-day Hot Spotting session was left open, rollover closes that obsolete session safely before presenting the new deck; already logged activity remains in history.
 - Yesterday's active Hot Spotting remains available when today's email is missing, delayed, unauthenticated or cannot be parsed. Settings shows **Awaiting today's MarketPulse** until a valid new import succeeds.
 - Same-day duplicate or corrected emails refresh matching events while preserving session started/completed/skipped progress. Delayed older emails cannot roll the active deck backwards.
-- Contacts, notes, call outcomes, follow-ups and interaction history are preserved. Only the active `marketPulseEvents` deck rolls forward.
+- Contacts, notes, call outcomes, follow-ups and interaction history are preserved. The active `marketPulseEvents` deck rolls forward while a compact Just Listed/Sold street history supports qualified knocking fallback.
 - Firebase configuration, Authentication, UID-scoped paths, Team data, Firestore rules and the service-account arrangement remain unchanged. No migration or Blaze plan is required.
 
 ## MarketPulse automation added in v1.36.21
