@@ -309,6 +309,7 @@ function showReturningSnapshot(){
 function navigateDailyPlanAction(action='open',eventId=''){
   if(action==='open')return;
   if(action==='edit-appointment'&&eventId){openAppointmentEditorFromToday(eventId);return}
+  if(action==='market-insights'&&eventId){showAppointmentMarketInsights(eventId);return}
   if(action==='view-appointments'){switchView('appointmentsView');return}
   if(action==='view-today'){switchView('scheduleView');return}
   if(action==='view-log'){switchView('scheduleView');setTodayPage('log');return}
@@ -1028,18 +1029,75 @@ function marketPulseActivityPriceLabel(events=[],kind=''){
   if(values.length===1)return`${kind==='sold'?'Recent sale':'Recent guide'} ${formatMarketMoney(median)}`;
   return`${kind==='sold'?'Sold median':'Guide median'} ${formatMarketMoney(median)}`
 }
+function marketPulseEventKind(event={}){
+  const type=normalisePlace(event.eventType);
+  if(['just listed','listed','new listing'].includes(type))return'listed';
+  if(['sold','auction result'].includes(type))return'sold';
+  if(['price update','price changed','price change'].includes(type))return'price';
+  return'other'
+}
+function marketPulseEventSortNewest(a={},b={}){
+  const dateCompare=String(b.receivedDate||'').localeCompare(String(a.receivedDate||''));
+  return dateCompare||Number(b.createdAt||0)-Number(a.createdAt||0)
+}
+function marketPulseEventConfigurationLabel(event={},fallbackCategory=''){
+  const config=buyerMarketPropertyConfiguration(event),parts=[];
+  if(config.bedrooms)parts.push(`${config.bedrooms} bed`);
+  if(config.bathrooms)parts.push(`${config.bathrooms} bath`);
+  if(config.cars)parts.push(`${config.cars} car`);
+  const propertyType=config.propertyType||(fallbackCategory==='Strata'?'Strata':fallbackCategory==='House'?'House':'');
+  if(propertyType)parts.push(propertyType);
+  return parts.join(' · ')
+}
+function marketPulseTalkingPoint(event={},fallbackCategory=''){
+  const kind=marketPulseEventKind(event),configuration=marketPulseEventConfigurationLabel(event,fallbackCategory),address=[event.address,event.suburb].filter(Boolean).join(', '),movement=marketMovementLabel(event),recency=relativeEventRecency(event).label;
+  let price='';
+  if(event.guide)price=`Guide ${event.guide}`;
+  else if(event.price)price=kind==='sold'?`Sold ${event.price}`:`Price ${event.price}`;
+  const prior=event.priorPrice?`Prior ${event.guide?'guide':'price'} ${event.priorPrice}`:'';
+  return{event,kind,label:kind==='sold'?'SOLD':kind==='listed'?'LISTED':kind==='price'?'PRICE UPDATE':String(event.eventType||'MARKETPULSE').toUpperCase(),address,configuration,price,movement,prior,recency}
+}
+function marketPulseTalkingPointsForIntel(intel={},limit=2){
+  const preferred=[intel.sold?.[0],intel.listed?.[0],intel.updates?.[0]].filter(Boolean),pool=[...(intel.sold||[]),...(intel.listed||[]),...(intel.updates||[])].sort(marketPulseEventSortNewest),picked=[],seen=new Set();
+  for(const event of [...preferred,...pool]){if(!event?.id||seen.has(event.id))continue;seen.add(event.id);picked.push(marketPulseTalkingPoint(event,intel.category));if(picked.length>=limit)break}
+  return picked
+}
 function appointmentMarketPulseIntelligence(a={}){
   const parts=appointmentMarketAddressParts(a.address),suburbKey=normalisePlace(parts.suburb),category=inferMarketPropertyCategoryFromAddress(parts.address||a.address);if(!suburbKey||!category)return null;
   const events=normaliseMarketPulseEvents(marketPulseEvents).filter(event=>normalisePlace(event.suburb)===suburbKey&&marketPulseEventPropertyCategory(event)===category);if(!events.length)return null;
-  const listed=events.filter(event=>['just listed','listed','new listing'].includes(normalisePlace(event.eventType))),sold=events.filter(event=>['sold','auction result'].includes(normalisePlace(event.eventType))),updates=events.filter(event=>['price update','price changed','price change'].includes(normalisePlace(event.eventType))),actionable=[...listed,...sold,...updates];if(!actionable.length)return null;
+  const listed=events.filter(event=>marketPulseEventKind(event)==='listed').sort(marketPulseEventSortNewest),sold=events.filter(event=>marketPulseEventKind(event)==='sold').sort(marketPulseEventSortNewest),updates=events.filter(event=>marketPulseEventKind(event)==='price').sort(marketPulseEventSortNewest),actionable=[...listed,...sold,...updates];if(!actionable.length)return null;
   const canonicalSuburb=events.find(event=>cleanText(event.suburb,100))?.suburb||parts.suburb,priceLabels=[marketPulseActivityPriceLabel(sold,'sold'),marketPulseActivityPriceLabel(listed,'listed')].filter(Boolean),reduced=updates.filter(event=>event.priceMovementDirection==='below').length,activity=[listed.length?`${listed.length} Listed`:'',sold.length?`${sold.length} Sold`:'',updates.length?`${updates.length} Price Update${updates.length===1?'':'s'}`:''].filter(Boolean),movement=reduced?`${reduced} reduction${reduced===1?'':'s'}`:'';
   const dates=actionable.map(event=>event.receivedDate).filter(validDateKey).sort(),latestDate=dates.at(-1)||'',recency=latestDate?relativeEventRecency({receivedDate:latestDate}).label:'Current MarketPulse';
-  return{suburb:canonicalSuburb,category,activity,priceLabels,movement,recency,eventCount:actionable.length}
+  return{suburb:canonicalSuburb,category,activity,priceLabels,movement,recency,eventCount:actionable.length,events:actionable.sort(marketPulseEventSortNewest),listed,sold,updates}
+}
+function appointmentMarketPulsePointMarkup(point={}){
+  const meta=[point.configuration,point.price].filter(Boolean).join(' · '),movement=[point.prior,point.movement].filter(Boolean).join(' · ');
+  return`<div class="appointment-market-point"><span class="appointment-market-point-tag ${escapeHtml(point.kind)}">${escapeHtml(point.label)}</span><div><strong>${escapeHtml(point.address)}</strong>${meta?`<small>${escapeHtml(meta)}</small>`:''}${movement?`<em>${escapeHtml(movement)}</em>`:''}</div></div>`
 }
 function appointmentMarketPulseMarkup(a={},sourceDate=''){
   if(isOfiAppointment(a)||appointmentLifecycle(a,sourceDate)!=='upcoming')return'';const intel=appointmentMarketPulseIntelligence(a);if(!intel)return'';
-  const activity=intel.activity.join(' · '),prices=intel.priceLabels.join(' · '),detail=[prices,intel.movement].filter(Boolean).join(' · ');
-  return`<div class="appointment-market-intel"><div class="appointment-market-intel-head"><span>MARKETPULSE</span><b>${escapeHtml(intel.suburb)} · ${escapeHtml(intel.category)}</b><em>${escapeHtml(intel.recency)}</em></div><strong>${escapeHtml(activity)}</strong>${detail?`<small>${escapeHtml(detail)}</small>`:''}</div>`
+  const activity=intel.activity.join(' · '),prices=intel.priceLabels.join(' · '),detail=[prices,intel.movement].filter(Boolean).join(' · '),points=marketPulseTalkingPointsForIntel(intel,2);
+  return`<div class="appointment-market-intel"><div class="appointment-market-intel-head"><span>MARKETPULSE</span><b>${escapeHtml(intel.suburb)} · ${escapeHtml(intel.category)}</b><em>${escapeHtml(intel.recency)}</em></div><strong>${escapeHtml(activity)}</strong>${detail?`<small>${escapeHtml(detail)}</small>`:''}${points.length?`<div class="appointment-market-intel-points">${points.map(appointmentMarketPulsePointMarkup).join('')}</div>`:''}</div>`
+}
+function marketInsightsSectionMarkup(title='',events=[],category=''){
+  const rows=(events||[]).slice(0,3).map(event=>marketPulseTalkingPoint(event,category));if(!rows.length)return'';
+  return`<section class="appointment-market-insights-section"><div class="appointment-market-insights-section-head"><span>${escapeHtml(title)}</span><small>${rows.length}${events.length>rows.length?` of ${events.length}`:''}</small></div><div class="appointment-market-insights-list">${rows.map(point=>{const meta=[point.configuration,point.price].filter(Boolean).join(' · '),movement=[point.prior,point.movement].filter(Boolean).join(' · ');return`<article><div><strong>${escapeHtml(point.address)}</strong>${meta?`<small>${escapeHtml(meta)}</small>`:''}${movement?`<em>${escapeHtml(movement)}</em>`:''}</div><span>${escapeHtml(point.recency)}</span></article>`}).join('')}</div></section>`
+}
+function appointmentEntryForMarketInsights(exportId=''){
+  const todayEntry=appointmentEntriesForDate(todayKey()).find(({appointment,sourceDate})=>calendarExportId(appointment,sourceDate)===exportId);if(todayEntry)return todayEntry;
+  const own=allAppointmentEntries().find(({appointment,sourceDate})=>calendarExportId(appointment,sourceDate)===exportId);return own?{...own,isTeamAssigned:false}:null
+}
+function closeAppointmentMarketInsights(){
+  const overlay=document.querySelector('.appointment-market-insights-overlay');if(!overlay)return;overlay.remove();document.body.classList.remove('appointment-market-insights-open')
+}
+function openAppointmentFromMarketInsights(exportId=''){
+  const entry=appointmentEntryForMarketInsights(exportId);closeAppointmentMarketInsights();if(!entry){toast('Appointment could not be found');return}if(entry.isTeamAssigned){switchView('appointmentsView');return}openAppointmentEditorFromToday(exportId)
+}
+function showAppointmentMarketInsights(exportId=''){
+  const entry=appointmentEntryForMarketInsights(exportId);if(!entry){toast('Appointment could not be found');return}const {appointment:a,sourceDate}=entry,intel=appointmentMarketPulseIntelligence(a);if(!intel){toast('No matching MarketPulse insights available');return}
+  closeAppointmentMarketInsights();const overlay=document.createElement('div');overlay.className='appointment-market-insights-overlay';const activity=intel.activity.join(' · '),summary=[activity,intel.priceLabels.join(' · '),intel.movement].filter(Boolean).join(' · '),sold=marketInsightsSectionMarkup('RECENT SOLD',intel.sold,intel.category),listed=marketInsightsSectionMarkup('RECENT LISTED',intel.listed,intel.category),updates=marketInsightsSectionMarkup('MARKET MOVEMENT',intel.updates,intel.category);
+  overlay.innerHTML=`<section class="appointment-market-insights-sheet" role="dialog" aria-modal="true" aria-labelledby="appointmentMarketInsightsTitle"><div class="appointment-market-insights-handle"></div><header><div><span>MARKET INSIGHTS</span><h2 id="appointmentMarketInsightsTitle">${escapeHtml(a.address||'Appointment')}</h2><p>${escapeHtml(intel.suburb)} · ${escapeHtml(intel.category)} · ${escapeHtml(intel.recency)}</p></div><button type="button" data-close-market-insights aria-label="Close Market Insights">×</button></header>${summary?`<div class="appointment-market-insights-summary">${escapeHtml(summary)}</div>`:''}<div class="appointment-market-insights-body">${sold}${listed}${updates}</div><div class="appointment-market-insights-actions"><button class="secondary" type="button" data-market-insights-view-appointment="${escapeHtml(exportId)}">View appointment</button><button class="primary" type="button" data-close-market-insights>Done</button></div></section>`;
+  document.body.append(overlay);document.body.classList.add('appointment-market-insights-open');overlay.addEventListener('click',event=>{const view=event.target.closest('[data-market-insights-view-appointment]');if(view){openAppointmentFromMarketInsights(view.dataset.marketInsightsViewAppointment);return}if(event.target===overlay||event.target.closest('[data-close-market-insights]'))closeAppointmentMarketInsights()});requestAnimationFrame(()=>overlay.querySelector('[data-close-market-insights]')?.focus({preventScroll:true}))
 }
 function isOfiAppointment(a){return appointmentType(a)==='OFI'}
 function appointmentHasAuction(a){return isOfiAppointment(a)&&Boolean(a.auction)}
@@ -1212,10 +1270,10 @@ function dailyPlanAppointmentModel(viewDate){
   const items=[],busy=[];
   appointmentEntriesForDate(viewDate).forEach(({appointment:a,sourceDate,isTeamAssigned})=>{
     if(appointmentScheduledDate(a,sourceDate)!==viewDate)return;
-    const start=timelineMinutes(a.time),duration=appointmentDurationMinutes(a),end=start+duration,focusStart=Math.max(0,start-30),rawPhone=String(a.contactNumber||a.phone||'').trim(),dial=rawPhone.replace(/[^+\d]/g,''),type=isOfiAppointment(a)?'OFI':appointmentType(a),address=a.address||'Address not recorded',contact=a.contactName||a.name||'';
+    const start=timelineMinutes(a.time),duration=appointmentDurationMinutes(a),end=start+duration,focusStart=Math.max(0,start-30),rawPhone=String(a.contactNumber||a.phone||'').trim(),dial=rawPhone.replace(/[^+\d]/g,''),type=isOfiAppointment(a)?'OFI':appointmentType(a),address=a.address||'Address not recorded',contact=a.contactName||a.name||'',marketIntel=!isOfiAppointment(a)?appointmentMarketPulseIntelligence(a):null,hasMarketInsights=Boolean(marketIntel),exportId=calendarExportId(a,sourceDate);
     // Keep the 30-minute focus handover clear without rendering a duplicate prep block.
     busy.push({start:focusStart,end});
-    items.push({id:`appointment-${calendarExportId(a,sourceDate)}`,minutes:start,duration,title:isOfiAppointment(a)?`OFI · ${address}`:`${type} · ${address}`,meta:isOfiAppointment(a)?`${timelineTimeLabel(start)}–${timelineTimeLabel(end)}${appointmentHasAuction(a)?` · Auction ${timelineTimeLabel(appointmentAuctionMinutes(a))}`:''}`:`${contact||'Contact not recorded'}${rawPhone?` · ${rawPhone}`:''}`,kicker:isOfiAppointment(a)?'OPEN HOME':'APPOINTMENT',kind:isOfiAppointment(a)?'ofi':'appointment',plan:true,clockComplete:true,actionable:true,action:isTeamAssigned?'view-appointments':'edit-appointment',eventId:isTeamAssigned?'':calendarExportId(a,sourceDate),label:'View appointment',commandTitle:isOfiAppointment(a)?`Open home · ${address}`:`Appointment window · ${contact||type}`,commandMeta:`${timelineTimeLabel(start)}–${timelineTimeLabel(end)} · Keep this time protected.`,dial,appointment:a,sourceDate});
+    items.push({id:`appointment-${exportId}`,minutes:start,duration,title:isOfiAppointment(a)?`OFI · ${address}`:`${type} · ${address}`,meta:isOfiAppointment(a)?`${timelineTimeLabel(start)}–${timelineTimeLabel(end)}${appointmentHasAuction(a)?` · Auction ${timelineTimeLabel(appointmentAuctionMinutes(a))}`:''}`:`${contact||'Contact not recorded'}${rawPhone?` · ${rawPhone}`:''}`,kicker:isOfiAppointment(a)?'OPEN HOME':'APPOINTMENT',kind:isOfiAppointment(a)?'ofi':'appointment',plan:true,clockComplete:true,actionable:true,action:hasMarketInsights?'market-insights':isTeamAssigned?'view-appointments':'edit-appointment',eventId:hasMarketInsights?exportId:isTeamAssigned?'':exportId,label:hasMarketInsights?'Market Insights':'View appointment',commandTitle:isOfiAppointment(a)?`Open home · ${address}`:`Appointment window · ${contact||type}`,commandMeta:hasMarketInsights?`${timelineTimeLabel(start)}–${timelineTimeLabel(end)} · ${marketIntel.suburb} ${marketIntel.category} context is ready.`:`${timelineTimeLabel(start)}–${timelineTimeLabel(end)} · Keep this time protected.`,dial,appointment:a,sourceDate});
   });
   return{items,busy:dailyPlanMergeIntervals(busy)};
 }
@@ -4064,7 +4122,7 @@ $('#teamCodeInput')?.addEventListener('input',event=>{pendingTeamJoin=null;event
 $('#teamCodeInput')?.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();completeJoinTeam()}});
 $('#newTeamName')?.addEventListener('input',()=>teamSetupMessage(''));
 $('#newTeamName')?.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();completeCreateTeam()}});
-document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;if(!$('#returningSnapshotScreen')?.classList.contains('hidden')){dismissReturningSnapshot();return}if(!$('#teamRemoveConfirm')?.classList.contains('hidden')){closeTeamMemberRemoval();return}if(!$('#teamDeleteConfirm')?.classList.contains('hidden')){hideTeamDeleteConfirmation();return}if(!$('#teamLeaveConfirm')?.classList.contains('hidden')){hideTeamLeaveConfirmation();return}if(!$('#teamCodeRefreshConfirm')?.classList.contains('hidden')){hideTeamCodeRefreshConfirmation();return}if(teamManagerOpen){hideTeamManager();return}if(teamOnboardingActive)hideTeamOnboarding()});
+document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;if(document.querySelector('.appointment-market-insights-overlay')){closeAppointmentMarketInsights();return}if(!$('#returningSnapshotScreen')?.classList.contains('hidden')){dismissReturningSnapshot();return}if(!$('#teamRemoveConfirm')?.classList.contains('hidden')){closeTeamMemberRemoval();return}if(!$('#teamDeleteConfirm')?.classList.contains('hidden')){hideTeamDeleteConfirmation();return}if(!$('#teamLeaveConfirm')?.classList.contains('hidden')){hideTeamLeaveConfirmation();return}if(!$('#teamCodeRefreshConfirm')?.classList.contains('hidden')){hideTeamCodeRefreshConfirmation();return}if(teamManagerOpen){hideTeamManager();return}if(teamOnboardingActive)hideTeamOnboarding()});
 
 $('#startDayButton').onclick=dismissDailyWelcome;
 $('#openAgntButton').onclick=dismissOffDayReview;

@@ -1,6 +1,16 @@
-# AGNT BETA v1.36.35 — MarketPulse Appointment Intelligence
+# AGNT BETA v1.36.36 — Market Insights Context
 
 Incremental BETA update built directly on the supplied confirmed-working AGNT BETA v1.36.34 Time-Sensitive Buyer Alerts package. The rejected v1.36.27 Home-page experiment is not included.
+
+## Market Insights context added in v1.36.36
+
+- Appointment MarketPulse intelligence now identifies the actual matched MarketPulse property address, configuration and price/guide so each insight is immediately usable as a talking point.
+- The Today timeline replaces `View appointment` with `Market Insights` when a reliable MarketPulse suburb + House/Strata match exists.
+- Market Insights opens in a compact iPhone-first bottom sheet with Recent Sold, Recent Listed and Market Movement sections.
+- The sheet retains a `View appointment` action, so the existing appointment workflow remains available.
+- Appointments without a reliable MarketPulse match keep the existing `View appointment` behaviour.
+- No Firebase configuration, Firestore path/rule, authentication, UID/team separation, storage key or MarketPulse import changes are required.
+
 
 ## MarketPulse appointment intelligence added in v1.36.35
 - Upcoming appointment cards now calculate a lightweight MarketPulse brief at render time from the appointment address and the existing UID-scoped MarketPulse event deck. Existing pipeline appointments require no migration or manual linking.

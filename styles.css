@@ -12117,3 +12117,38 @@ html[data-theme="dark"] .appointment-market-intel-head em{color:#7f8da2!importan
 html[data-theme="dark"] .appointment-market-intel>strong{color:#f5f6f7!important}
 html[data-theme="dark"] .appointment-market-intel>small{color:#9aa7b9!important}
 @media(max-width:380px){.appointment-market-intel{padding:8px 9px}.appointment-market-intel-head{gap:5px}.appointment-market-intel-head em{font-size:.47rem}.appointment-market-intel>strong{font-size:.66rem!important}}
+
+
+/* v1.36.36 — richer MarketPulse appointment talking points + Today Market Insights sheet */
+.appointment-market-intel-points{display:grid;gap:6px;margin-top:8px;padding-top:7px;border-top:1px solid rgba(57,125,255,.13)}
+.appointment-market-point{display:grid;grid-template-columns:auto minmax(0,1fr);gap:7px;align-items:start}
+.appointment-market-point-tag{margin-top:1px;padding:3px 5px;border-radius:6px;background:#e7efff;color:#397dff;font-size:.43rem;font-weight:900;letter-spacing:.06em;line-height:1.1}
+.appointment-market-point-tag.sold{background:#e6f6ef;color:#14835c}.appointment-market-point-tag.price{background:#fff2df;color:#9a641c}
+.appointment-market-point>div{min-width:0}.appointment-market-point strong{display:block!important;margin:0!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.59rem!important;line-height:1.22!important;color:#253247!important}
+.appointment-market-point small,.appointment-market-point em{display:block!important;margin:2px 0 0!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.52rem!important;line-height:1.25!important;color:#738095!important}
+.appointment-market-point em{font-style:normal!important;color:#8d6a41!important}
+.appointment-market-insights-overlay{position:fixed;inset:0;z-index:2300;display:flex;align-items:flex-end;justify-content:center;padding:0;background:rgba(11,16,24,.4);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.appointment-market-insights-sheet{width:min(100%,560px);max-height:min(86dvh,760px);display:flex;flex-direction:column;overflow:hidden;border-radius:28px 28px 0 0;background:var(--agnt-surface,#fff);color:var(--agnt-text,#17191d);box-shadow:0 -18px 60px rgba(18,28,45,.18);padding:10px 16px calc(16px + env(safe-area-inset-bottom))}
+.appointment-market-insights-handle{width:42px;height:5px;flex:0 0 auto;border-radius:99px;background:var(--agnt-line,#dfe3e9);margin:0 auto 13px}
+.appointment-market-insights-sheet>header{display:flex;align-items:flex-start;gap:12px;padding:0 2px 13px}
+.appointment-market-insights-sheet>header>div{min-width:0;flex:1}.appointment-market-insights-sheet>header span{display:block;color:#397dff;font-size:9px;font-weight:900;letter-spacing:.12em}
+.appointment-market-insights-sheet>header h2{margin:5px 0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:21px;line-height:1.12;letter-spacing:-.035em}
+.appointment-market-insights-sheet>header p{margin:0;color:var(--agnt-muted,#858b95);font-size:11px;font-weight:650}
+.appointment-market-insights-sheet>header button{width:36px;height:36px;flex:0 0 auto;border:0;border-radius:12px;background:var(--agnt-soft,#f4f6f8);color:inherit;font-size:22px;line-height:1}
+.appointment-market-insights-summary{margin:0 2px 12px;padding:10px 12px;border:1px solid #dce7f8;border-radius:14px;background:#f5f8fd;color:#4e6077;font-size:10px;font-weight:720;line-height:1.35}
+.appointment-market-insights-body{min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;display:grid;gap:14px;padding:0 2px 3px}
+.appointment-market-insights-section{display:grid;gap:7px}.appointment-market-insights-section-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.appointment-market-insights-section-head span{color:#697488;font-size:9px;font-weight:900;letter-spacing:.1em}.appointment-market-insights-section-head small{color:#9aa2af;font-size:9px}
+.appointment-market-insights-list{display:grid;gap:7px}.appointment-market-insights-list article{display:flex;align-items:flex-start;gap:10px;padding:11px 12px;border:1px solid var(--agnt-line,#e2e5ea);border-radius:15px;background:var(--agnt-soft,#f7f8fa)}
+.appointment-market-insights-list article>div{min-width:0;flex:1}.appointment-market-insights-list article strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;line-height:1.25}
+.appointment-market-insights-list article small,.appointment-market-insights-list article em{display:block;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#707b8d;font-size:10px;line-height:1.25}.appointment-market-insights-list article em{font-style:normal;color:#8e6a3d}
+.appointment-market-insights-list article>span{flex:0 0 auto;padding-top:1px;color:#929aa7;font-size:9px;font-weight:700}
+.appointment-market-insights-actions{display:grid;grid-template-columns:1fr 1.1fr;gap:9px;padding:13px 2px 0}.appointment-market-insights-actions button{min-height:47px;border-radius:15px}
+body.appointment-market-insights-open{overflow:hidden}
+html[data-theme="dark"] .appointment-market-intel-points{border-color:rgba(106,169,255,.16)}
+html[data-theme="dark"] .appointment-market-point-tag{background:#172947;color:#72a8ff}html[data-theme="dark"] .appointment-market-point-tag.sold{background:#123127;color:#66caa2}html[data-theme="dark"] .appointment-market-point-tag.price{background:#342817;color:#efb566}
+html[data-theme="dark"] .appointment-market-point strong{color:#ecf1f8!important}html[data-theme="dark"] .appointment-market-point small{color:#9ca8ba!important}html[data-theme="dark"] .appointment-market-point em{color:#c8a87f!important}
+html[data-theme="dark"] .appointment-market-insights-sheet{background:#101318;color:#f5f6f7}html[data-theme="dark"] .appointment-market-insights-handle{background:#343a44}html[data-theme="dark"] .appointment-market-insights-sheet>header button{background:#1c2027;color:#f5f6f7}
+html[data-theme="dark"] .appointment-market-insights-summary{background:#111a28;border-color:#263b59;color:#bdc9da}html[data-theme="dark"] .appointment-market-insights-section-head span{color:#a6afbd}html[data-theme="dark"] .appointment-market-insights-section-head small{color:#777f8b}
+html[data-theme="dark"] .appointment-market-insights-list article{background:#15181e;border-color:#292e37}html[data-theme="dark"] .appointment-market-insights-list article small{color:#9ba5b4}html[data-theme="dark"] .appointment-market-insights-list article em{color:#cba77a}html[data-theme="dark"] .appointment-market-insights-list article>span{color:#7f8793}
+@media(max-width:380px){.appointment-market-insights-sheet{padding-left:13px;padding-right:13px}.appointment-market-insights-sheet>header h2{font-size:19px}.appointment-market-insights-list article{padding:10px}.appointment-market-insights-list article>span{font-size:8px}.appointment-market-point strong{font-size:.56rem!important}}
