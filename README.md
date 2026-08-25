@@ -1,25 +1,95 @@
-# AGNT BETA v1.36.35 — Appointment Intelligence
+# AGNT BETA v1.36.34 — Time-Sensitive Buyer Alerts
 
-Incremental BETA update built on the current connected `AndrewTour/AGNT-beta` main-branch package.
+Incremental BETA update built directly on the completed AGNT BETA v1.36.33 Buyer + Seller Opportunities package. The rejected v1.36.27 Home-page experiment is not included.
 
-## Appointment intelligence added in v1.36.35
-- Upcoming appointment cards remain unchanged.
-- Opening an existing appointment now adds a compact Appointment Intelligence panel inside the editor.
-- AGNT matches MarketPulse by appointment suburb, then groups evidence by property category.
-- Explicit MarketPulse property type wins when the same property has a matching event. Address style is the fallback: standard street numbers and A/B suffixes are House / duplex; slash or leading hyphen formats are Strata.
-- Unit, apartment, townhouse and villa activity is grouped as Strata. House and duplex activity is grouped together.
-- The panel shows recent matching sold activity, active listing/price activity, compatible active buyer briefs and up to four recent MarketPulse examples.
-- Within 30 minutes of an appointment, Today Focus now surfaces the same suburb/property context and buyer depth before the appointment.
-- Firebase configuration, Authentication, Firestore paths/rules, UID separation, local-storage keys, sync behaviour, Team assignment, appointment records and existing card markup are unchanged.
+## Time-sensitive buyer alerts added in v1.36.34
+- AGNT now separates a normal property match from a match with a genuine market deadline. Imminent auctions, a price change that moves a property inside the buyer's saved ceiling, and genuinely fresh Just Listed or Price Update activity receive a concise reason.
+- Auction alerts escalate automatically from **Auction in 7 days** through **Auction tomorrow** and **Auction today**. A recently passed auction date asks the agent to verify availability rather than presenting the property as active fact.
+- Price changes become critical only when the previous guide was above the buyer's maximum and the new guide is inside it. Other price changes and fresh listings remain useful but lower-priority signals.
+- Today still creates one conversation per buyer. Time sensitivity reorders that existing queue, selects the most urgent matching property as the primary conversation and updates the shared Right Now command without creating another block or duplicate task.
+- The same alert wording appears on the Buyer card, each relevant property in Buyer detail and the existing Outcome sheet. The pre-filled buyer SMS now carries an available auction deadline and describes a Price Update as a changed guide.
+- Alerts are derived from the existing buyer brief and stored MarketPulse match. They strengthen and expire with time automatically, require no new collection and remain visible on unresolved attempted matches.
+- Phase 1 outcomes, daily suppression, BAP booking and SMS confirmation remain unchanged. Phase 2 buyer-seller angles continue inside the same conversation. Firebase paths/rules, Team data, MarketPulse automation and the working Home page remain untouched.
 
----
+## Buyer + seller opportunity detection added in v1.36.33
+- AGNT now connects three pieces of existing information inside one conversation: the live MarketPulse property match, the buyer's current home and a suggested seller-side conversation angle.
+- Detection is deliberately evidence-based. A seller angle appears only when the buyer also has a known current home and AGNT finds an explicit Buyer Seller position, a linked active seller-pipeline record, clear selling intent in notes, or an Upsizing/Downsizing position.
+- A recorded address alone never causes AGNT to assume that a buyer is a seller. Explicit not-selling or renting language prevents potential opportunities inferred from notes or a movement position.
+- Confirmed opportunities are distinguished from potential opportunities so the agent can see whether the signal came from verified structure or a conversation cue.
+- Today keeps the v1.36.32 one-buyer conversation. The seller angle sits inside that same row, so no second task, duplicate call or competing timeline block is created.
+- Buyer cards show a compact Buyer + seller cue; Buyer detail shows the current home and matched property side by side with the suggested angle; the same context remains visible while choosing the existing property-match outcome.
+- Existing buyers are evaluated immediately from their current brief, position tags, notes, linked pipeline data and open property matches. No migration, new collection or manual refresh is required.
+- Phase 1 Call, SMS, outcomes, follow-up dates, BAP flow and daily suppression remain unchanged. Firebase paths/rules, Team data, MarketPulse automation and the working Home page remain untouched.
 
-# AGNT BETA v1.36.20 — Buyer Save Performance
+## Unified buyer opportunities added in v1.36.32
+- Today now creates one contact envelope per buyer rather than one task per matching property. Multiple matches are carried inside the same conversation.
+- A buyer's due or overdue follow-up is merged into that same opportunity and removed from the separate Follow-ups workload, preventing duplicate prompts.
+- Once a Call, confirmed SMS or intentional match outcome is logged, that buyer is suppressed from Today for the rest of the day.
+- Buyer-match outcomes are now **Interested**, **Send details**, **Arrange inspection**, **Maybe**, **Not suitable** and **No answer**.
+- Interested, Send details and Maybe require an intentional return date. Interested advances the buyer to Inspecting; the other outcomes preserve the appropriate journey stage.
+- Arrange inspection opens a prefilled BAP for the matched property and only resolves the opportunity after the appointment is successfully saved.
+- Not suitable records the reason and closes only that property. No answer records an attempt, keeps the match open and allows it to return on a later day.
+- Buyer cards and Buyer detail retain the orange match count, while each property now uses a cohesive Call, SMS and Outcome action row with New Match or Contact Attempted state.
+- SMS is never assumed to have been sent. AGNT asks for confirmation after returning from Messages before logging the interaction or opening the outcome workflow.
+- Existing buyer briefs, contacts, interaction history, Firebase paths/rules, Team data, MarketPulse automation and daily rollover remain unchanged. No migration or new collection is required.
 
-Incremental BETA update built directly on the verified AGNT BETA v1.36.19 Buyer Card Hierarchy package.
+## Buyer matching added in v1.36.31
+- MarketPulse Just Listed and Price Update events are checked against active buyer briefs using exact suburb, strict property type, maximum budget and configured bedroom, bathroom and car minimums.
+- Matching is deliberately conservative. A House brief cannot receive a Townhouse, Unit/Apartment/Villa, Duplex or Land recommendation; missing property type or price data does not create a guess.
+- Buyers without a usable mobile number, archived buyers and purchased buyers are excluded from the actionable match queue.
+- Buyer matches are stored inside the existing UID-scoped buyer record and remain visible until an intentional outcome resolves them or later MarketPulse activity makes the property unavailable. Contact attempts remain open.
+- Sold, Auction Result, Withdrawn and Under Offer activity automatically retires an earlier open match for the same property.
+- Today consolidates new buyer-property opportunities into one protected block with one conversation per buyer. Each row names the primary MarketPulse property and provides direct Call, pre-filled SMS and Outcome actions.
+- Buyer cards show a compact orange count badge. Opening the buyer reveals each matching property, the verified match reason and cohesive Call, SMS and Outcome controls.
+- Existing buyer fields, Firebase paths/rules, authentication, Team data, morning live update, MarketPulse bridge and daily rollover remain unchanged. No migration or new collection is required.
+
+## Morning live update added in v1.36.30
+- Before 11:00 am, every second genuine app launch opens a passive four-second live update. The first launch opens normally, the second shows the update, and the pattern repeats per user each day.
+- The fixed one-page screen never scrolls and has identical geometry in Light and Dark mode.
+- Today’s completion percentage remains the hero, followed by a concise MarketPulse debrief and the number of unique saved clients influenced by today’s property activity.
+- Listed, Sold, Price and Other event totals are shown as information only; the screen has no task buttons or competing calls to action.
+- Existing Activity Left, Appointments, Pipeline and Knocking summaries remain visible in a compact two-by-two grid.
+- The update renders immediately from current local state, refreshes when cloud/MarketPulse data arrives and opens AGNT automatically after four seconds.
+- Existing Home, Today, Prospector, Appointments, Team, Firebase and MarketPulse automation behaviour remains unchanged.
+
+## Timeline theme parity added in v1.36.29
+- Light and Dark mode now use the same timeline columns, spacing, marker placement and rail coordinates.
+- The correctly aligned Light-mode centreline is now the canonical position in both themes.
+- One continuous rail runs from the start to the finish of the timeline behind every status marker.
+- Theme rules change colour only; they no longer change timeline geometry.
+- No timeline content, scheduling logic, Firebase paths, Team data or MarketPulse automation has changed.
+
+## Appointment and follow-up polish added in v1.36.28
+- **View appointment** on Today opens that exact personal appointment directly in edit mode. Team-assigned appointments retain their existing read-only route.
+- The **Hot Spotting Follow-Up** control now exactly matches the height, padding and corner radius of the Outcome control, with a blue field heading.
+- **Withdrawn** is available as an intentional property-lifecycle follow-up.
+- **All Updates** continues to respond to every later MarketPulse change for the property, now explicitly including Withdrawn.
+- The Today timeline rail and every status marker now share one fixed centreline, including the wider active blue marker in light and dark mode.
+- Existing Firebase configuration, Authentication, UIDs, Firestore paths/rules, Team data and MarketPulse email automation remain unchanged.
+
+## Timeline and knocking cleanup added in v1.36.26
+- Visible Appointment Prep and Field Prep cards have been removed from Today. The shared focus headline now takes over 30 minutes before an appointment, while that handover window remains clear in the underlying schedule.
+- AGNT only recommends knocking streets that have saved contact-address data and a Just Listed or Sold MarketPulse event.
+- If the current MarketPulse deck has no qualifying street, AGNT falls back to the most recent qualifying event retained in a compact MarketPulse street history. If no qualifying street exists, AGNT does not issue a Start Knocking action.
+- Each knocking block names the street directly, including split blocks around appointments.
+- The live knocking session again includes a visible street selector. It contains only qualifying streets, retains the selected street during the session and shows the market reason, saved-contact count and time target.
+- **Bring back when** is replaced by the standard **Hot Spotting Follow-Up** form field with Sold, Price Change, Auction Date, All Updates or No Follow-Up.
+- Sold and Auction Result sessions do not show the follow-up field because the property lifecycle has already concluded.
+- The follow-up selector now uses the same field styling as Outcome, Temperature and the surrounding contact-log controls.
+- Existing Firebase configuration, Authentication, UIDs, Firestore paths/rules, Team data and MarketPulse email automation remain unchanged. The compact history is stored inside the existing UID-scoped prospecting state document.
+
+## Market follow-ups added in v1.36.25
+- Connected MarketPulse outcomes include one intentional property-lifecycle follow-up. In v1.36.26 this is presented as **Hot Spotting Follow-Up**: Sold, Price Change, Auction Date, All Updates or No Follow-Up.
+- The selection is stored with the original interaction and exact property identity. Free-text notes remain conversation context and never silently create a trigger.
+- A later matching MarketPulse event fulfils the watch once, promotes that client ahead of general street matches and carries the prior conversation note into the call screen.
+- Follow-up prompts include the new guide or sale price, price movement and auction date/time whenever those fields are available in MarketPulse.
+- Auction dates are parsed from supported MarketPulse property lines without changing the existing eight-event parser result for the supplied live email.
+- Explicit market follow-ups are promoted into the existing shared Daily Plan Engine; no additional dashboard or task collection is added.
+- Archived contacts, Do Not Contact records, clients already worked today and fulfilled watches are not recycled.
+- Existing Firebase configuration, Authentication, UIDs, Firestore paths/rules, Team data, MarketPulse bridge and Today command-centre scheduling remain unchanged. No migration or Blaze plan is required.
 
 ## Release baseline
-- Application/UI source: verified `AGNT-BETA-v1.36.19-Buyer-Card-Hierarchy-FULL-GITHUB-READY.zip`.
+- Application/UI source: current `AndrewTour/AGNT-beta` GitHub `main` baseline at the commit above.
 - Firebase environment: existing BETA project `daily-accountability-be0ac`.
 - Existing Firebase Authentication accounts and UIDs are retained.
 - Existing personal data remains under the current `users/{uid}` paths.
@@ -32,7 +102,8 @@ Incremental BETA update built directly on the verified AGNT BETA v1.36.19 Buyer 
 - Persistent Pipeline Session refresh with per-user/per-day served-contact exclusion.
 - Broadcast contrast and viewport refinements.
 - Universal nested/session navigation polish.
-- Returning Daily Snapshot for four seconds on every second returning app open.
+- Once-daily decision-first briefing covering MarketPulse, appointments, follow-ups and pipeline.
+- Time-aware Today command centre with dedicated MarketPulse calling blocks, protected appointments and priority knocking streets.
 - Consumer-ready login with persistent Firebase authentication restore.
 - Team appointment assignment after Book Appointment, defaulting to Me.
 - Assignment choices use the live Team leaderboard display name and show first name only.
@@ -42,6 +113,51 @@ Incremental BETA update built directly on the verified AGNT BETA v1.36.19 Buyer 
 - Live/next-open appointment notification with Got it and Add to Calendar.
 - Setter-facing appointment/log/leaderboard context shows `Booked for [First name]` where applicable.
 - Targeted dark-mode contrast fixes for appointment contact suggestions and Editing Appointment.
+
+## Today command centre added in v1.36.24
+- The Today page now opens with one **Right Now** command containing the active time window, reason and one direct action. The Home focus card and morning briefing use the same priority engine.
+- Today’s fresh MarketPulse is converted into dedicated call blocks. Active sessions are resumed first, then Just Listed/Listed and Sold opportunities, overdue or due follow-ups, other MarketPulse events and the eligible pipeline.
+- Matched clients are de-duplicated across properties. Completed Hot Spotting work remains represented as complete, while unfinished blocks that pass their protected window are shown as needing attention rather than being falsely marked complete by the clock.
+- Calling work is placed into available morning and late-afternoon capacity. Blocks move or split around appointments instead of overlapping them; the final 30 minutes before each appointment are reserved for the focus-headline handover without a separate prep card.
+- The field plan starts from 2:00 pm. The remaining knocking target is split around appointment conflicts and uses up to three Just Listed/Sold streets with saved contact data.
+- Street time is allocated in five-minute increments from MarketPulse priority, matched contacts and recency. Each block names its first street and the same choices appear in the live knocking selector.
+- When the current deck has no qualifying street, AGNT uses the most recent qualifying retained MarketPulse street. With no qualifying history, it shows a clear waiting state instead of telling the agent to knock blindly.
+- Each actionable timeline block has one destination: start/resume the exact Hot Spotting session, open follow-ups or pipeline, view the appointment, start knocking or open the day log.
+- Past and future dates retain the established timeline behaviour. Existing session logging remains in Today → Log rather than being duplicated in the plan.
+- Firebase configuration, Authentication, UIDs, private user paths, Team paths, Firestore rules and the once-daily MarketPulse bridge remain unchanged. No migration or Blaze plan is required.
+
+## Daily briefing added in v1.36.23
+- The old rotating returning snapshot is replaced with a clean once-daily AGNT briefing for each signed-in agent on a scheduled workday; the existing off-day review remains unchanged.
+- The briefing waits for authoritative account and MarketPulse inbox snapshots before calculating priorities, with a short local-data fallback when the connection is slow.
+- MarketPulse is summarised as event totals, unique unworked clients and estimated focused calling time. Clients already called today, completed event sessions and event contacts already worked are excluded.
+- Just Listed/Listed and Sold activity is ranked ahead of other MarketPulse event types, with the top three properties shown as direct Hot Spotting shortcuts.
+- The priority plan switches to an appointment 30 minutes before it starts, resumes an active session, then recommends the best Listed/Sold session. Workload estimates stop at that same 30-minute focus handover.
+- When no current MarketPulse work is ready, AGNT falls back in order to overdue follow-ups, today’s follow-ups, remaining appointments and the existing eligible pipeline.
+- Appointment, follow-up and pipeline summaries open the corresponding existing AGNT surfaces. The primary recommendation can start or resume the correct session directly.
+- Waiting, no-match and connection-error states retain previous Hot Spotting data for context without presenting it as today’s new priority.
+- The briefing is shown once for the current MarketPulse state each day. If an agent opens before the new email arrives, the valid fresh import can receive its own briefing on the next open.
+- Firebase configuration, Authentication, UIDs, private user paths, Team data, Firestore rules and the daily 6:00 am MarketPulse bridge remain unchanged. No migration or Blaze plan is required.
+
+## Daily MarketPulse refresh added in v1.36.22
+- The collective inbox bridge now runs once daily at approximately 6:00 am in `Australia/Sydney`, after the expected 4:30 am MarketPulse delivery window.
+- Running the updated `setupMarketPulseBridge` removes the earlier five-minute trigger and installs exactly one daily trigger. Manual `runMarketPulseBridgeNow` remains available.
+- A valid newer MarketPulse email replaces the prior active Hot Spotting event deck instead of accumulating old daily cards.
+- If a prior-day Hot Spotting session was left open, rollover closes that obsolete session safely before presenting the new deck; already logged activity remains in history.
+- Yesterday's active Hot Spotting remains available when today's email is missing, delayed, unauthenticated or cannot be parsed. Settings shows **Awaiting today's MarketPulse** until a valid new import succeeds.
+- Same-day duplicate or corrected emails refresh matching events while preserving session started/completed/skipped progress. Delayed older emails cannot roll the active deck backwards.
+- Contacts, notes, call outcomes, follow-ups and interaction history are preserved. The active `marketPulseEvents` deck rolls forward while a compact Just Listed/Sold street history supports qualified knocking fallback.
+- Firebase configuration, Authentication, UID-scoped paths, Team data, Firestore rules and the service-account arrangement remain unchanged. No migration or Blaze plan is required.
+
+## MarketPulse automation added in v1.36.21
+- One collective inbox, `agnt.marketpulse@gmail.com`, can receive MarketPulse forwards for multiple AGNT users.
+- Each AGNT account registers its normalized login email on the existing private `users/{uid}` profile. The bridge allocates a forward only when the forwarding address, embedded original recipient and AGNT login email all match.
+- A bundled Google Apps Script bridge checks the dedicated Gmail inbox on the configured daily schedule, validates the approved original sender and subject plus McGrath DKIM/DMARC authentication, and writes an idempotent pending item to `users/{uid}/marketPulseInbox/{gmailMessageId}`.
+- AGNT waits for the authoritative Prospector cloud snapshot, imports pending MarketPulse data directly into Hot Spotting, merges by deterministic event ID, and preserves existing session progress.
+- Successful intake removes the raw email body from Firestore and retains only processing metadata. Manual paste remains available as a fallback.
+- Settings now shows the forwarding address, connection state and latest successful import.
+- The bridge uses the existing Firebase BETA project through a service account held only in Apps Script Properties. No credential is bundled in this repository.
+- No Firebase Blaze plan, Cloud Function, Firestore rule change, UID migration, Team-path change or data migration is required.
+- One-time installation instructions are in `automation/marketpulse-apps-script/SETUP.md`.
 
 ## Buyer save performance added in v1.36.20
 - Editing an existing buyer now saves to the device once, returns to the updated buyer profile immediately and completes Firestore sync in the background.
@@ -147,7 +263,7 @@ Incremental BETA update built directly on the verified AGNT BETA v1.36.19 Buyer 
 ## Firebase
 The frontend is connected to the existing BETA Firebase project `daily-accountability-be0ac`.
 The bundled `firestore.rules` is unchanged from the supplied v1.36.6 baseline, including its existing Team/private-data and Team appointment permissions.
-No Firebase Console, Firestore rule or data migration change is required for this release. The bundled rules are retained unchanged from the supplied baseline.
+No Firestore rule, schema or data migration change is required for this release. The bundled rules are retained unchanged from the GitHub baseline. The only Firebase Console action is the one-time bridge credential setup described in `automation/marketpulse-apps-script/SETUP.md`.
 
 ## Protected systems retained
 Existing Firebase/Auth UIDs, `users/{uid}` personal data, days, contacts, prospecting, appointments, notes/history, Team membership/leaderboard data, UID-scoped local cache shapes, offline Firestore sync, manifest/icon identity and service-worker behaviour remain preserved. Only release cache identifiers were bumped.
