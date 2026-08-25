@@ -1,4 +1,19 @@
-# AGNT BETA v1.36.30 — Rollout Check
+# AGNT BETA v1.36.31 — Rollout Check
+
+## MarketPulse buyer-match acceptance
+
+1. Create an active buyer with a mobile, maximum budget, suburb, property type and bedroom requirement, then import a matching Just Listed event and confirm an orange property-match count appears on the buyer card.
+2. Open that buyer and confirm the match names the property, price/guide, configuration and the exact verified reason it fits the brief.
+3. Confirm a House buyer does not match a Townhouse, Unit/Apartment/Villa, Duplex or Land event even when suburb and price fit.
+4. Confirm the match is rejected when the property is outside the selected suburb, above budget or below a configured bedroom, bathroom or car minimum.
+5. Confirm an event with no usable price or property type is not recommended rather than being guessed.
+6. Confirm active Just Listed and Price Update matches appear in one Buyer Matches block on Today, with buyer name, property address, Call and SMS.
+7. Select Call and confirm the correct buyer number opens; select SMS and confirm AGNT prepares a reviewable message naming the property and guide where available.
+8. Confirm SMS or a completed Call outcome clears that exact property alert as contacted, while Reviewed and Dismiss clear it without launching communication. Cancel a Call and confirm the alert remains outstanding.
+9. Import Sold, Auction Result, Withdrawn or Under Offer for the same property and confirm the earlier buyer match disappears automatically.
+10. Confirm archived, purchased and uncontactable buyers do not enter the match queue.
+11. Confirm existing buyers and current MarketPulse events are evaluated safely on first launch after deployment, without duplicate match badges.
+12. Repeat Buyer and Today checks in Light and Dark mode at narrow phone width and confirm all content remains contained.
 
 ## Morning live-update acceptance
 

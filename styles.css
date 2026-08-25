@@ -11880,3 +11880,80 @@ html[data-theme="dark"] .returning-snapshot-screen .morning-live-metrics article
   .returning-snapshot-screen .morning-live-market .daily-briefing-market-counts span{padding:6px 4px!important}
 }
 @media(max-width:380px){.returning-snapshot-screen{padding-left:14px!important;padding-right:14px!important}}
+
+/* AGNT BETA v1.36.31 — MarketPulse buyer matching. */
+.buyer-card.has-buyer-matches{position:relative!important}
+.buyer-card.has-buyer-matches::before{content:'';position:absolute;left:-14px;top:10px;bottom:10px;width:3px;border-radius:0 99px 99px 0;background:#f28a2e}
+.buyer-match-alert{
+  width:max-content;
+  max-width:100%;
+  min-height:25px;
+  margin:7px 0 0;
+  padding:3px 9px 3px 4px;
+  display:inline-flex!important;
+  align-items:center;
+  gap:6px;
+  border:1px solid rgba(226,112,18,.18);
+  border-radius:999px;
+  background:#fff3e7;
+  color:#b85a0b;
+  font-size:9.5px;
+  font-weight:800;
+  line-height:1;
+  box-sizing:border-box;
+}
+.buyer-match-alert b{width:18px;height:18px;display:grid;place-items:center;border-radius:50%;background:#ef7e24;color:#fff;font-size:9px}
+.buyer-property-matches{margin:16px 0;padding:15px;border:1px solid #f2d3b8;border-radius:19px;background:#fff9f3}
+.buyer-property-matches-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.buyer-property-matches-head span{display:block;color:#ba620f;font-size:9px;font-weight:850;letter-spacing:.12em}
+.buyer-property-matches-head h3{margin:4px 0 0;color:#191d25;font-size:16px;line-height:1.15;letter-spacing:-.02em}
+.buyer-property-matches-head>b{width:29px;height:29px;display:grid;place-items:center;flex:none;border-radius:50%;background:#ef7e24;color:#fff;font-size:12px}
+.buyer-property-match-list{display:grid;margin-top:11px}
+.buyer-property-match-list article{padding:12px 0;border-top:1px solid rgba(191,101,24,.13)}
+.buyer-property-match-list article:first-child{border-top:0;padding-top:4px}
+.buyer-property-match-list .buyer-match-event{display:block;color:#d26b17;font-size:8.5px;font-weight:850;letter-spacing:.1em;text-transform:uppercase}
+.buyer-property-match-list h4{margin:5px 0 0;color:#191d25;font-size:14px;line-height:1.25}
+.buyer-property-match-list p{margin:3px 0 0;color:#5f6671;font-size:11px;font-weight:700}
+.buyer-property-match-list small,.buyer-property-match-list em{display:block;margin-top:4px;color:#858c97;font-size:10px;font-style:normal;line-height:1.35}
+.buyer-property-match-list em{color:#a55b1d;font-weight:700}
+.buyer-property-match-list article>div{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-top:10px}
+.buyer-property-match-list button{min-width:0;min-height:35px;padding:0 5px;border:1px solid rgba(20,25,34,.09);border-radius:10px;background:#fff;color:#4f5661;font-size:9px;font-weight:800}
+.buyer-property-match-list button:first-child,.buyer-property-match-list button:nth-child(2){border-color:rgba(10,105,216,.18);background:#edf5ff;color:#0a69d8}
+.buyer-property-match-list button:disabled{opacity:.4}
+.timeline-buyer-match-list{display:grid;margin-top:11px;border-top:1px solid rgba(20,26,38,.09)}
+.timeline-buyer-match-list article{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(20,26,38,.09)}
+.timeline-buyer-match-list article>span{min-width:0;display:grid;gap:3px}
+.timeline-buyer-match-list strong,.timeline-buyer-match-list small,.timeline-buyer-match-list em{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.timeline-buyer-match-list strong{color:#171b23!important;font-size:11.5px!important}
+.timeline-buyer-match-list small{color:#626b78!important;font-size:10px!important}
+.timeline-buyer-match-list em{color:#a45b1d;font-size:8.8px;font-style:normal;font-weight:700}
+.timeline-buyer-match-list article>div{display:grid;grid-template-columns:repeat(2,42px);gap:5px}
+.timeline-buyer-match-list button{width:42px;min-width:42px;min-height:34px;padding:0;border:1px solid rgba(10,105,216,.18);border-radius:10px;background:#edf5ff;color:#0a69d8;font-size:9px;font-weight:820}
+.timeline-item.buyer-match .timeline-item-kicker{color:#c56617!important}
+.timeline-item.buyer-match.current{background:#fff6ec!important}
+.timeline-item.buyer-match.current .timeline-marker{background:#ef7e24!important;box-shadow:0 0 0 4px rgba(239,126,36,.14)!important}
+html[data-theme="dark"] .buyer-card.has-buyer-matches::before{background:#f39a4e}
+html[data-theme="dark"] .buyer-match-alert{border-color:rgba(243,154,78,.28);background:#2a2018;color:#f6ae70}
+html[data-theme="dark"] .buyer-match-alert b{background:#e88333;color:#fff}
+html[data-theme="dark"] .buyer-property-matches{border-color:#4a3424;background:#1e1915}
+html[data-theme="dark"] .buyer-property-matches-head span{color:#f1a361}
+html[data-theme="dark"] .buyer-property-matches-head h3,html[data-theme="dark"] .buyer-property-match-list h4{color:#f5f6f7}
+html[data-theme="dark"] .buyer-property-match-list article{border-color:#3c2d22}
+html[data-theme="dark"] .buyer-property-match-list p{color:#c1c5cc}
+html[data-theme="dark"] .buyer-property-match-list small{color:#969da8}
+html[data-theme="dark"] .buyer-property-match-list em{color:#efad75}
+html[data-theme="dark"] .buyer-property-match-list button{border-color:#363c45;background:#171a20;color:#c6cbd2}
+html[data-theme="dark"] .buyer-property-match-list button:first-child,html[data-theme="dark"] .buyer-property-match-list button:nth-child(2){border-color:rgba(112,182,255,.28);background:#15243a;color:#82bdff}
+html[data-theme="dark"] .timeline-buyer-match-list{border-color:#303640}
+html[data-theme="dark"] .timeline-buyer-match-list article{border-color:#303640}
+html[data-theme="dark"] .timeline-buyer-match-list strong{color:#f5f6f7!important}
+html[data-theme="dark"] .timeline-buyer-match-list small{color:#a3aab5!important}
+html[data-theme="dark"] .timeline-buyer-match-list em{color:#efad75}
+html[data-theme="dark"] .timeline-buyer-match-list button{border-color:rgba(112,182,255,.28);background:#15243a;color:#82bdff}
+html[data-theme="dark"] #scheduleView .today-overview-panel .timeline-item.buyer-match.current{background:#1f1914!important}
+@media(max-width:380px){
+  .buyer-property-match-list article>div{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .timeline-buyer-match-list article{grid-template-columns:1fr;gap:7px}
+  .timeline-buyer-match-list article>div{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .timeline-buyer-match-list button{width:100%;min-width:0}
+}

@@ -1,6 +1,16 @@
-# AGNT BETA v1.36.30 — Morning Live Update
+# AGNT BETA v1.36.31 — MarketPulse Buyer Matching
 
-Incremental BETA update built directly on the working AGNT BETA v1.36.29 package. The rejected v1.36.27 Home-page experiment is not included.
+Incremental BETA update built directly on the working AGNT BETA v1.36.30 package. The rejected v1.36.27 Home-page experiment is not included.
+
+## Buyer matching added in v1.36.31
+- MarketPulse Just Listed and Price Update events are checked against active buyer briefs using exact suburb, strict property type, maximum budget and configured bedroom, bathroom and car minimums.
+- Matching is deliberately conservative. A House brief cannot receive a Townhouse, Unit/Apartment/Villa, Duplex or Land recommendation; missing property type or price data does not create a guess.
+- Buyers without a usable mobile number, archived buyers and purchased buyers are excluded from the actionable match queue.
+- Buyer matches are stored inside the existing UID-scoped buyer record and remain visible until the agent calls, texts, reviews or dismisses them, or later MarketPulse activity makes the property unavailable.
+- Sold, Auction Result, Withdrawn and Under Offer activity automatically retires an earlier open match for the same property.
+- Today consolidates new buyer-property opportunities into one protected block. Each row names the buyer and MarketPulse property and provides direct Call and pre-filled SMS actions.
+- Buyer cards show a compact orange count badge. Opening the buyer reveals each matching property, the verified match reason and Call, SMS, Reviewed and Dismiss controls.
+- Existing buyer fields, Firebase paths/rules, authentication, Team data, morning live update, MarketPulse bridge and daily rollover remain unchanged. No migration or new collection is required.
 
 ## Morning live update added in v1.36.30
 - Before 11:00 am, every second genuine app launch opens a passive four-second live update. The first launch opens normally, the second shows the update, and the pattern repeats per user each day.
