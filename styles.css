@@ -12152,3 +12152,12 @@ html[data-theme="dark"] .appointment-market-insights-sheet{background:#101318;co
 html[data-theme="dark"] .appointment-market-insights-summary{background:#111a28;border-color:#263b59;color:#bdc9da}html[data-theme="dark"] .appointment-market-insights-section-head span{color:#a6afbd}html[data-theme="dark"] .appointment-market-insights-section-head small{color:#777f8b}
 html[data-theme="dark"] .appointment-market-insights-list article{background:#15181e;border-color:#292e37}html[data-theme="dark"] .appointment-market-insights-list article small{color:#9ba5b4}html[data-theme="dark"] .appointment-market-insights-list article em{color:#cba77a}html[data-theme="dark"] .appointment-market-insights-list article>span{color:#7f8793}
 @media(max-width:380px){.appointment-market-insights-sheet{padding-left:13px;padding-right:13px}.appointment-market-insights-sheet>header h2{font-size:19px}.appointment-market-insights-list article{padding:10px}.appointment-market-insights-list article>span{font-size:8px}.appointment-market-point strong{font-size:.56rem!important}}
+
+
+/* v1.36.37 — Today date stability + compact buyer summary */
+#scheduleView .today-overview-panel .timeline-view-head>div:first-child{flex:0 0 auto;min-width:max-content}
+#scheduleView .today-overview-panel #timelineDateLabel{white-space:nowrap;word-break:normal;overflow-wrap:normal}
+#scheduleView .today-overview-panel .timeline-view-head>small{min-width:0}
+@media(max-width:390px){
+  #scheduleView .today-overview-panel .timeline-view-head{grid-template-columns:max-content minmax(0,1fr)}
+}

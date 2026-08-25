@@ -1,6 +1,17 @@
-# AGNT BETA v1.36.36 — Market Insights Context
+# AGNT BETA v1.36.37 — Today Buyer Summary
 
-Incremental BETA update built directly on the supplied confirmed-working AGNT BETA v1.36.34 Time-Sensitive Buyer Alerts package. The rejected v1.36.27 Home-page experiment is not included.
+Incremental BETA update built directly on the supplied confirmed-working AGNT BETA v1.36.36 Market Insights Context package. The rejected v1.36.27 Home-page experiment is not included.
+
+
+## Today buyer summary refinement added in v1.36.37
+
+- Fixed the Today day/date heading so the weekday and date remain in their normal horizontal format on narrow iPhone screens instead of collapsing into a vertical word stack.
+- Buyer activity on Today is now summarised in the same compact timeline language as Pipeline and MarketPulse Hot Spotting rather than listing every buyer, property alert, seller angle and outcome control inline.
+- The Buyer block now uses `BUYER UPDATE · X CLIENTS`, shows the number of clients to speak to and protected time, and prioritises a concise `Buyer + Seller` count when those opportunities exist.
+- When there is no Buyer + Seller opportunity, the heading falls back to time-sensitive buyers when relevant, otherwise `Matched Buyer Opportunities`.
+- `Open Buyers` remains the single action from Today and opens the existing detailed Buyer section, where buyer matches, Call/SMS/Outcome controls, time-sensitive alerts and Buyer + Seller context remain unchanged.
+- Pipeline, Just Listed, Sold, Price Update and all other Hot Spotting workload logic and presentation are unchanged.
+- No Firebase configuration, Firestore path/rule, authentication, UID/team separation, storage key, MarketPulse import or appointment changes are required.
 
 ## Market Insights context added in v1.36.36
 
