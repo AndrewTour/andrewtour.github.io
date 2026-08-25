@@ -11957,3 +11957,146 @@ html[data-theme="dark"] #scheduleView .today-overview-panel .timeline-item.buyer
   .timeline-buyer-match-list article>div{grid-template-columns:repeat(2,minmax(0,1fr))}
   .timeline-buyer-match-list button{width:100%;min-width:0}
 }
+
+/* AGNT BETA v1.36.32 — unified buyer opportunity workflow. */
+body.buyer-match-outcome-open,body.buyer-match-sms-open{overflow:hidden}
+.buyer-match-labels{display:flex!important;align-items:center;justify-content:space-between;gap:8px;margin:0!important}
+.buyer-match-state{display:inline-flex;align-items:center;min-height:22px;padding:0 8px;border:1px solid #f0cda9;border-radius:999px;background:#fff4e8;color:#a75a16;font-size:8px;font-weight:850;letter-spacing:.05em;text-transform:uppercase}
+.buyer-match-attempted .buyer-match-state{border-color:#d8dde5;background:#f2f4f7;color:#69717d}
+.buyer-property-match-list article>.buyer-match-actions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important;margin-top:11px!important}
+.buyer-property-match-list .buyer-match-actions button{min-height:38px;border-radius:11px;font-size:9.5px}
+.buyer-property-match-list .buyer-match-actions button:last-child{border-color:#171b22;background:#171b22;color:#fff}
+.timeline-buyer-match-list article>div{grid-template-columns:repeat(3,48px)}
+.timeline-buyer-match-list button{width:48px;min-width:48px}
+.timeline-buyer-match-list button:last-child{border-color:#171b22;background:#171b22;color:#fff}
+.buyer-match-outcome-overlay,.buyer-match-sms-overlay{position:fixed;inset:0;z-index:1460;display:grid;place-items:end center;box-sizing:border-box;padding:max(18px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));background:rgba(20,24,32,.4)}
+.buyer-match-outcome-sheet,.buyer-match-sms-sheet{width:min(100%,520px);box-sizing:border-box;border:1px solid #e4e7ec;border-radius:28px;background:#fff;box-shadow:0 24px 70px rgba(18,24,36,.24)}
+.buyer-match-outcome-sheet{padding:22px}
+.buyer-match-outcome-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.buyer-match-outcome-head>div{min-width:0}
+.buyer-match-outcome-head span,.buyer-match-outcome-step>span,.buyer-match-sms-sheet>span{display:block;color:#2f68f5;font-size:10px;font-weight:900;letter-spacing:.15em}
+.buyer-match-outcome-head h2{margin:6px 0 0;color:#171a20;font-size:22px;line-height:1.12;letter-spacing:-.035em}
+.buyer-match-outcome-head>button{display:grid;place-items:center;width:38px;height:38px;flex:none;padding:0;border:1px solid #e3e6eb;border-radius:50%;background:#f5f6f8;color:#181b21;font-size:23px;line-height:1}
+.buyer-match-outcome-body{margin-top:17px}
+.buyer-match-outcome-context{display:grid;gap:4px;padding:14px 15px;border:1px solid #f1d3b7;border-radius:17px;background:#fff8f1}
+.buyer-match-outcome-context span{color:#c76618;font-size:9px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
+.buyer-match-outcome-context strong{overflow:hidden;color:#191c22;font-size:15px;line-height:1.25;text-overflow:ellipsis;white-space:nowrap}
+.buyer-match-outcome-context small{overflow:hidden;color:#747b86;font-size:11px;font-weight:650;text-overflow:ellipsis;white-space:nowrap}
+.buyer-match-outcome-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+.buyer-match-outcome-options button{display:grid;gap:3px;min-height:60px;padding:10px 12px;border:1px solid #e2e5ea;border-radius:15px;background:#f7f8fa;text-align:left}
+.buyer-match-outcome-options button:active,.buyer-match-reason-grid button:active{transform:scale(.985)}
+.buyer-match-outcome-options span{color:#1a1d23;font-size:13px;font-weight:850}
+.buyer-match-outcome-options small{color:#858c97;font-size:9.5px;font-weight:650}
+.buyer-match-outcome-options button:nth-child(1),.buyer-match-outcome-options button:nth-child(3){border-color:#cbdcff;background:#edf4ff}
+.buyer-match-outcome-options button:nth-child(1) span,.buyer-match-outcome-options button:nth-child(3) span{color:#2867ef}
+.buyer-match-outcome-step{position:relative;display:grid;gap:11px;padding-top:2px}
+.buyer-match-outcome-back{justify-self:start;padding:0;border:0;background:transparent;color:#2f68f5;font-size:24px;font-weight:800}
+.buyer-match-outcome-step h3{margin:-3px 0 0;color:#171a20;font-size:21px;letter-spacing:-.03em}
+.buyer-match-outcome-step p{margin:-3px 0 3px;color:#737b87;font-size:12px;line-height:1.45}
+.buyer-match-outcome-step label{display:grid;gap:7px;color:#606874;font-size:11px;font-weight:800}
+.buyer-match-outcome-step input{width:100%;min-height:52px;box-sizing:border-box;padding:0 14px;border:1px solid #dfe3e9;border-radius:14px;background:#f7f8fa;color:#181b21;font:inherit;font-size:14px}
+.buyer-match-outcome-step>.primary{min-height:52px;margin-top:3px;border:0;border-radius:14px;background:#111318;color:#fff;font-size:13px;font-weight:850}
+.buyer-match-reason-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.buyer-match-reason-grid button{min-height:48px;padding:9px;border:1px solid #e1e4e9;border-radius:13px;background:#f7f8fa;color:#242830;font-size:12px;font-weight:800}
+.buyer-match-sms-sheet{display:grid;gap:11px;padding:24px}
+.buyer-match-sms-sheet h2{margin:0;color:#171a20;font-size:24px;letter-spacing:-.035em}
+.buyer-match-sms-sheet p{margin:-3px 0 7px;color:#747c87;font-size:12px;line-height:1.4}
+.buyer-match-sms-sheet button{min-height:52px;border-radius:14px;font-size:13px;font-weight:850}
+.buyer-match-sms-sheet .primary{border:0;background:#111318;color:#fff}
+.buyer-match-sms-sheet .secondary{border:1px solid #e1e4e9;background:#f6f7f9;color:#242830}
+html[data-theme="dark"] .buyer-match-state{border-color:#60472f;background:#2a2119;color:#f0ab6d}
+html[data-theme="dark"] .buyer-match-attempted .buyer-match-state{border-color:#3a4049;background:#23272e;color:#aeb4bd}
+html[data-theme="dark"] .buyer-property-match-list .buyer-match-actions button:last-child,html[data-theme="dark"] .timeline-buyer-match-list button:last-child{border-color:#f3f4f6;background:#f3f4f6;color:#12151a}
+html[data-theme="dark"] .buyer-match-outcome-overlay,html[data-theme="dark"] .buyer-match-sms-overlay{background:rgba(0,0,0,.68)}
+html[data-theme="dark"] .buyer-match-outcome-sheet,html[data-theme="dark"] .buyer-match-sms-sheet{border-color:#30353d;background:#15181d;box-shadow:0 24px 70px rgba(0,0,0,.5)}
+html[data-theme="dark"] .buyer-match-outcome-head h2,html[data-theme="dark"] .buyer-match-outcome-step h3,html[data-theme="dark"] .buyer-match-sms-sheet h2{color:#f5f6f7}
+html[data-theme="dark"] .buyer-match-outcome-head>button{border-color:#343941;background:#23272d;color:#f5f6f7}
+html[data-theme="dark"] .buyer-match-outcome-context{border-color:#4b3524;background:#211a15}
+html[data-theme="dark"] .buyer-match-outcome-context strong{color:#f4f5f6}
+html[data-theme="dark"] .buyer-match-outcome-context small,html[data-theme="dark"] .buyer-match-outcome-step p,html[data-theme="dark"] .buyer-match-sms-sheet p{color:#a3aab4}
+html[data-theme="dark"] .buyer-match-outcome-options button,html[data-theme="dark"] .buyer-match-reason-grid button{border-color:#343941;background:#20242a}
+html[data-theme="dark"] .buyer-match-outcome-options span,html[data-theme="dark"] .buyer-match-reason-grid button{color:#eef0f3}
+html[data-theme="dark"] .buyer-match-outcome-options small{color:#9ba2ad}
+html[data-theme="dark"] .buyer-match-outcome-options button:nth-child(1),html[data-theme="dark"] .buyer-match-outcome-options button:nth-child(3){border-color:#294875;background:#17243a}
+html[data-theme="dark"] .buyer-match-outcome-options button:nth-child(1) span,html[data-theme="dark"] .buyer-match-outcome-options button:nth-child(3) span{color:#83b7ff}
+html[data-theme="dark"] .buyer-match-outcome-step label{color:#bdc2ca}
+html[data-theme="dark"] .buyer-match-outcome-step input{border-color:#363b44;background:#20242a;color:#f4f5f6;color-scheme:dark}
+html[data-theme="dark"] .buyer-match-outcome-step>.primary,html[data-theme="dark"] .buyer-match-sms-sheet .primary{background:#f3f4f6;color:#12151a}
+html[data-theme="dark"] .buyer-match-sms-sheet .secondary{border-color:#363b44;background:#20242a;color:#eef0f3}
+@media(min-width:700px){.buyer-match-outcome-overlay,.buyer-match-sms-overlay{place-items:center}.buyer-match-outcome-sheet,.buyer-match-sms-sheet{border-radius:30px}}
+@media(max-width:390px){.buyer-match-outcome-overlay,.buyer-match-sms-overlay{padding-inline:12px}.buyer-match-outcome-sheet{padding:19px 17px;border-radius:24px}.buyer-match-outcome-head h2{font-size:20px}.buyer-match-outcome-options{gap:6px}.buyer-match-outcome-options button{min-height:57px;padding-inline:10px}.buyer-match-sms-sheet{padding:21px 18px;border-radius:24px}.timeline-buyer-match-list article>div{grid-template-columns:repeat(3,minmax(0,1fr))}.timeline-buyer-match-list button{width:100%;min-width:0}.buyer-property-match-list article>.buyer-match-actions{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
+
+/* AGNT BETA v1.36.33 — buyer and seller opportunity detection. */
+.buyer-seller-opportunity-alert{display:inline-flex!important;align-items:center;gap:7px;width:max-content;max-width:100%;min-height:34px;margin:2px 0 0;padding:5px 10px 5px 5px;box-sizing:border-box;border:1px solid #efd9a8;border-radius:12px;background:#fff9ea;color:#75500a}
+.buyer-seller-opportunity-alert>b{display:grid;place-items:center;width:23px;height:23px;flex:none;border-radius:8px;background:#f1a22f;color:#fff;font-size:12px}
+.buyer-seller-opportunity-alert>span{display:grid;gap:1px;font-size:10px;font-weight:850;line-height:1.15}
+.buyer-seller-opportunity-alert small{color:#9a701e;font-size:8.5px;font-weight:750}
+.buyer-seller-opportunity-alert.confirmed{border-color:#d9c07f;background:#fff7df;color:#684500}
+.timeline-buyer-seller-angle{display:grid!important;grid-column:1/-1;gap:3px!important;width:100%;margin-top:1px;padding:8px 9px;box-sizing:border-box;border:1px solid #efdaa9;border-radius:11px;background:#fff9eb}
+.timeline-buyer-seller-angle>b{overflow:visible!important;color:#b16a08!important;font-size:8px!important;font-weight:900!important;letter-spacing:.08em;text-transform:uppercase;white-space:normal!important}
+.timeline-buyer-seller-angle>small{overflow:visible!important;color:#705a31!important;font-size:8.8px!important;font-weight:760!important;line-height:1.3;text-overflow:clip!important;white-space:normal!important}
+.timeline-buyer-seller-angle>i{margin:1px 0 0;color:#4d463a;font-size:8.8px;font-style:normal;font-weight:650;line-height:1.38}
+.timeline-buyer-seller-angle.confirmed{border-color:#e3c476;background:#fff7de}
+.buyer-seller-opportunity{display:grid;gap:12px;margin:16px 0;padding:15px;border:1px solid #efd9a8;border-radius:19px;background:#fff9ea}
+.buyer-seller-opportunity-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.buyer-seller-opportunity-head>div{min-width:0}
+.buyer-seller-opportunity-head span{display:block;color:#b26a08;font-size:9px;font-weight:900;letter-spacing:.13em}
+.buyer-seller-opportunity-head h3{margin:4px 0 0;color:#181c23;font-size:16px;line-height:1.18;letter-spacing:-.02em}
+.buyer-seller-opportunity-head>b{display:inline-flex;align-items:center;min-height:26px;padding:0 9px;flex:none;border-radius:999px;background:#f1a22f;color:#fff;font-size:8.5px;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
+.buyer-seller-property-pair{display:grid;grid-template-columns:minmax(0,1fr) 20px minmax(0,1fr);align-items:stretch;gap:7px}
+.buyer-seller-property-pair>div{display:grid;align-content:start;gap:4px;min-width:0;padding:10px;border:1px solid rgba(135,91,17,.12);border-radius:13px;background:rgba(255,255,255,.72)}
+.buyer-seller-property-pair span{color:#9b701c;font-size:7.5px;font-weight:900;letter-spacing:.1em}
+.buyer-seller-property-pair strong{overflow:hidden;color:#242019;font-size:10.5px;line-height:1.35;text-overflow:ellipsis}
+.buyer-seller-property-pair>i{display:grid;place-items:center;color:#c78922;font-size:15px;font-style:normal;font-weight:900}
+.buyer-seller-opportunity>p{margin:0;color:#514837;font-size:11px;font-weight:680;line-height:1.45}
+.buyer-seller-opportunity>small{color:#9a701e;font-size:8.8px;font-weight:800}
+.buyer-match-seller-angle{display:grid;gap:4px;margin-top:10px;padding:12px 13px;border:1px solid #efd9a8;border-radius:15px;background:#fff9ea}
+.buyer-match-seller-angle span{color:#b26a08;font-size:8.5px;font-weight:900;letter-spacing:.1em;text-transform:uppercase}
+.buyer-match-seller-angle strong{overflow:hidden;color:#28231b;font-size:12px;text-overflow:ellipsis;white-space:nowrap}
+.buyer-match-seller-angle p{margin:1px 0 0;color:#645946;font-size:10px;font-weight:650;line-height:1.42}
+.buyer-match-seller-angle.confirmed,.buyer-seller-opportunity.confirmed{border-color:#e3c476;background:#fff7de}
+html[data-theme="dark"] .buyer-seller-opportunity-alert{border-color:#544525;background:#211d14;color:#f3c46e}
+html[data-theme="dark"] .buyer-seller-opportunity-alert>b{background:#d58b24;color:#fff}
+html[data-theme="dark"] .buyer-seller-opportunity-alert small{color:#c7a25c}
+html[data-theme="dark"] .timeline-buyer-seller-angle{border-color:#514426;background:#211d14}
+html[data-theme="dark"] .timeline-buyer-seller-angle>b{color:#efb754!important}
+html[data-theme="dark"] .timeline-buyer-seller-angle>small{color:#c8b27f!important}
+html[data-theme="dark"] .timeline-buyer-seller-angle>i{color:#d4cec2}
+html[data-theme="dark"] .buyer-seller-opportunity,html[data-theme="dark"] .buyer-match-seller-angle{border-color:#544525;background:#211d14}
+html[data-theme="dark"] .buyer-seller-opportunity-head span,html[data-theme="dark"] .buyer-seller-property-pair span,html[data-theme="dark"] .buyer-seller-opportunity>small,html[data-theme="dark"] .buyer-match-seller-angle span{color:#efb754}
+html[data-theme="dark"] .buyer-seller-opportunity-head h3,html[data-theme="dark"] .buyer-seller-property-pair strong,html[data-theme="dark"] .buyer-match-seller-angle strong{color:#f5f3ee}
+html[data-theme="dark"] .buyer-seller-property-pair>div{border-color:#49402d;background:#191814}
+html[data-theme="dark"] .buyer-seller-property-pair>i{color:#e4a945}
+html[data-theme="dark"] .buyer-seller-opportunity>p,html[data-theme="dark"] .buyer-match-seller-angle p{color:#d2cbbf}
+@media(max-width:390px){.buyer-seller-property-pair{grid-template-columns:1fr}.buyer-seller-property-pair>i{height:12px;transform:rotate(90deg)}.buyer-seller-opportunity{padding:13px}.buyer-match-seller-angle{padding:10px 11px}}
+
+/* AGNT BETA v1.36.34 — time-sensitive buyer alerts. */
+.buyer-match-time-alert{display:grid!important;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:2px 7px;width:max-content;max-width:100%;min-height:36px;padding:6px 9px;box-sizing:border-box;border:1px solid #f0cfaa;border-radius:12px;background:#fff8ee;text-align:left;white-space:normal!important}
+.buyer-match-time-alert::before{content:'!';display:grid;grid-row:1/3;place-items:center;width:22px;height:22px;border-radius:8px;background:#e78021;color:#fff;font-size:11px;font-weight:900}
+.buyer-match-time-alert>b{min-width:0;overflow:hidden;color:#a9530c;font-size:9px;font-weight:900;letter-spacing:.035em;line-height:1.12;text-overflow:ellipsis;white-space:nowrap}
+.buyer-match-time-alert>small{min-width:0;overflow:hidden;color:#8a6848;font-size:8.5px;font-weight:690;line-height:1.25;text-overflow:ellipsis;white-space:nowrap}
+.buyer-match-time-alert.critical{border-color:#edb391;background:#fff2e9}
+.buyer-match-time-alert.critical::before{background:#cc5419}
+.buyer-match-time-alert.critical>b{color:#a43b0c}
+.buyer-match-time-alert.high::before{background:#e37619}
+.buyer-match-time-alert.fresh::before{content:'↗';background:#ef8b2c}
+.buyer-row-profile>.buyer-card-time-alert{margin-top:3px;white-space:normal!important}
+.buyer-row-profile>.buyer-card-time-alert>b,.buyer-row-profile>.buyer-card-time-alert>small{white-space:nowrap!important}
+.buyer-property-match-list .buyer-detail-time-alert{width:100%;margin-top:9px}
+.buyer-property-match-list .buyer-detail-time-alert>small{margin-top:0;overflow:visible;text-overflow:clip;white-space:normal}
+.buyer-property-match-list article.has-time-alert:first-child{padding-top:5px}
+.timeline-buyer-match-list article.has-time-alert>span:first-child{grid-column:1;grid-row:1}
+.timeline-buyer-match-list article.has-time-alert>.timeline-buyer-time-alert{grid-column:1;grid-row:2;width:100%;margin-top:2px;gap:2px 7px}
+.timeline-buyer-match-list article.has-time-alert>div{grid-column:2;grid-row:1/3;align-self:center}
+.timeline-buyer-match-list .timeline-buyer-time-alert>b,.timeline-buyer-match-list .timeline-buyer-time-alert>small{overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+.timeline-buyer-match-list .timeline-buyer-time-alert>b{color:#a9530c!important;font-size:9px!important}
+.timeline-buyer-match-list .timeline-buyer-time-alert>small{color:#8a6848!important;font-size:8.5px!important}
+.buyer-outcome-time-alert{width:100%;margin-top:10px;min-height:42px;padding:7px 10px}
+.buyer-outcome-time-alert>b{font-size:10px}.buyer-outcome-time-alert>small{overflow:visible;font-size:9px;text-overflow:clip;white-space:normal}
+html[data-theme="dark"] .buyer-match-time-alert{border-color:#5a4027;background:#241c15}
+html[data-theme="dark"] .buyer-match-time-alert::before{background:#d77a27;color:#fff}
+html[data-theme="dark"] .buyer-match-time-alert>b,html[data-theme="dark"] .timeline-buyer-match-list .timeline-buyer-time-alert>b{color:#f2aa68!important}
+html[data-theme="dark"] .buyer-match-time-alert>small,html[data-theme="dark"] .timeline-buyer-match-list .timeline-buyer-time-alert>small{color:#c6aa8e!important}
+html[data-theme="dark"] .buyer-match-time-alert.critical{border-color:#70402b;background:#291a14}
+html[data-theme="dark"] .buyer-match-time-alert.critical::before{background:#bd4a18}
+@media(max-width:380px){.timeline-buyer-match-list article.has-time-alert>span:first-child,.timeline-buyer-match-list article.has-time-alert>.timeline-buyer-time-alert,.timeline-buyer-match-list article.has-time-alert>div{grid-column:1;grid-row:auto}.timeline-buyer-match-list article.has-time-alert>div{width:100%}.buyer-match-time-alert{width:100%}}

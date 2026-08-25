@@ -1,15 +1,46 @@
-# AGNT BETA v1.36.31 — MarketPulse Buyer Matching
+# AGNT BETA v1.36.34 — Time-Sensitive Buyer Alerts
 
-Incremental BETA update built directly on the working AGNT BETA v1.36.30 package. The rejected v1.36.27 Home-page experiment is not included.
+Incremental BETA update built directly on the completed AGNT BETA v1.36.33 Buyer + Seller Opportunities package. The rejected v1.36.27 Home-page experiment is not included.
+
+## Time-sensitive buyer alerts added in v1.36.34
+- AGNT now separates a normal property match from a match with a genuine market deadline. Imminent auctions, a price change that moves a property inside the buyer's saved ceiling, and genuinely fresh Just Listed or Price Update activity receive a concise reason.
+- Auction alerts escalate automatically from **Auction in 7 days** through **Auction tomorrow** and **Auction today**. A recently passed auction date asks the agent to verify availability rather than presenting the property as active fact.
+- Price changes become critical only when the previous guide was above the buyer's maximum and the new guide is inside it. Other price changes and fresh listings remain useful but lower-priority signals.
+- Today still creates one conversation per buyer. Time sensitivity reorders that existing queue, selects the most urgent matching property as the primary conversation and updates the shared Right Now command without creating another block or duplicate task.
+- The same alert wording appears on the Buyer card, each relevant property in Buyer detail and the existing Outcome sheet. The pre-filled buyer SMS now carries an available auction deadline and describes a Price Update as a changed guide.
+- Alerts are derived from the existing buyer brief and stored MarketPulse match. They strengthen and expire with time automatically, require no new collection and remain visible on unresolved attempted matches.
+- Phase 1 outcomes, daily suppression, BAP booking and SMS confirmation remain unchanged. Phase 2 buyer-seller angles continue inside the same conversation. Firebase paths/rules, Team data, MarketPulse automation and the working Home page remain untouched.
+
+## Buyer + seller opportunity detection added in v1.36.33
+- AGNT now connects three pieces of existing information inside one conversation: the live MarketPulse property match, the buyer's current home and a suggested seller-side conversation angle.
+- Detection is deliberately evidence-based. A seller angle appears only when the buyer also has a known current home and AGNT finds an explicit Buyer Seller position, a linked active seller-pipeline record, clear selling intent in notes, or an Upsizing/Downsizing position.
+- A recorded address alone never causes AGNT to assume that a buyer is a seller. Explicit not-selling or renting language prevents potential opportunities inferred from notes or a movement position.
+- Confirmed opportunities are distinguished from potential opportunities so the agent can see whether the signal came from verified structure or a conversation cue.
+- Today keeps the v1.36.32 one-buyer conversation. The seller angle sits inside that same row, so no second task, duplicate call or competing timeline block is created.
+- Buyer cards show a compact Buyer + seller cue; Buyer detail shows the current home and matched property side by side with the suggested angle; the same context remains visible while choosing the existing property-match outcome.
+- Existing buyers are evaluated immediately from their current brief, position tags, notes, linked pipeline data and open property matches. No migration, new collection or manual refresh is required.
+- Phase 1 Call, SMS, outcomes, follow-up dates, BAP flow and daily suppression remain unchanged. Firebase paths/rules, Team data, MarketPulse automation and the working Home page remain untouched.
+
+## Unified buyer opportunities added in v1.36.32
+- Today now creates one contact envelope per buyer rather than one task per matching property. Multiple matches are carried inside the same conversation.
+- A buyer's due or overdue follow-up is merged into that same opportunity and removed from the separate Follow-ups workload, preventing duplicate prompts.
+- Once a Call, confirmed SMS or intentional match outcome is logged, that buyer is suppressed from Today for the rest of the day.
+- Buyer-match outcomes are now **Interested**, **Send details**, **Arrange inspection**, **Maybe**, **Not suitable** and **No answer**.
+- Interested, Send details and Maybe require an intentional return date. Interested advances the buyer to Inspecting; the other outcomes preserve the appropriate journey stage.
+- Arrange inspection opens a prefilled BAP for the matched property and only resolves the opportunity after the appointment is successfully saved.
+- Not suitable records the reason and closes only that property. No answer records an attempt, keeps the match open and allows it to return on a later day.
+- Buyer cards and Buyer detail retain the orange match count, while each property now uses a cohesive Call, SMS and Outcome action row with New Match or Contact Attempted state.
+- SMS is never assumed to have been sent. AGNT asks for confirmation after returning from Messages before logging the interaction or opening the outcome workflow.
+- Existing buyer briefs, contacts, interaction history, Firebase paths/rules, Team data, MarketPulse automation and daily rollover remain unchanged. No migration or new collection is required.
 
 ## Buyer matching added in v1.36.31
 - MarketPulse Just Listed and Price Update events are checked against active buyer briefs using exact suburb, strict property type, maximum budget and configured bedroom, bathroom and car minimums.
 - Matching is deliberately conservative. A House brief cannot receive a Townhouse, Unit/Apartment/Villa, Duplex or Land recommendation; missing property type or price data does not create a guess.
 - Buyers without a usable mobile number, archived buyers and purchased buyers are excluded from the actionable match queue.
-- Buyer matches are stored inside the existing UID-scoped buyer record and remain visible until the agent calls, texts, reviews or dismisses them, or later MarketPulse activity makes the property unavailable.
+- Buyer matches are stored inside the existing UID-scoped buyer record and remain visible until an intentional outcome resolves them or later MarketPulse activity makes the property unavailable. Contact attempts remain open.
 - Sold, Auction Result, Withdrawn and Under Offer activity automatically retires an earlier open match for the same property.
-- Today consolidates new buyer-property opportunities into one protected block. Each row names the buyer and MarketPulse property and provides direct Call and pre-filled SMS actions.
-- Buyer cards show a compact orange count badge. Opening the buyer reveals each matching property, the verified match reason and Call, SMS, Reviewed and Dismiss controls.
+- Today consolidates new buyer-property opportunities into one protected block with one conversation per buyer. Each row names the primary MarketPulse property and provides direct Call, pre-filled SMS and Outcome actions.
+- Buyer cards show a compact orange count badge. Opening the buyer reveals each matching property, the verified match reason and cohesive Call, SMS and Outcome controls.
 - Existing buyer fields, Firebase paths/rules, authentication, Team data, morning live update, MarketPulse bridge and daily rollover remain unchanged. No migration or new collection is required.
 
 ## Morning live update added in v1.36.30

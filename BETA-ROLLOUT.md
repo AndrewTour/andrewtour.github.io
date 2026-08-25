@@ -1,4 +1,47 @@
-# AGNT BETA v1.36.31 — Rollout Check
+# AGNT BETA v1.36.34 — Rollout Check
+
+## Time-sensitive buyer-alert acceptance
+
+1. Give an active buyer a matching Just Listed property dated today and confirm **Listed today** appears on Today, the Buyer card, Buyer detail and the Outcome sheet.
+2. Add an auction date seven days away and confirm the alert reads **Auction in 7 days**. Move it to tomorrow and today and confirm the wording escalates without creating another Today task.
+3. Add an auction time and confirm it is carried into the alert and the pre-filled buyer SMS.
+4. Give a Price Update a prior guide above the buyer's maximum and a new guide inside it; confirm **Now within budget** outranks an ordinary fresh listing for that buyer.
+5. Confirm a Price Update that was already within budget says **Price changed today** rather than claiming that it newly entered the buyer's range.
+6. Give one buyer several matches and confirm the most time-sensitive property becomes the primary property while the one-buyer conversation and additional-property count remain intact.
+7. Give several buyers different alert levels and confirm imminent auctions and newly in-budget properties rise above ordinary fresh matches in the Buyer Opportunities block.
+8. Confirm alerts expire naturally: a listing older than yesterday, a price update older than yesterday and an auction more than seven days away show as normal open matches.
+9. Confirm an auction date passed by one or two days says **Auction date passed** and asks the agent to verify the status; older passed dates do not remain urgent.
+10. Log a Call, confirmed SMS or intentional outcome and confirm the existing daily suppression and property-match lifecycle remain unchanged.
+11. Confirm Phase 2 Buyer + Seller context remains attached to the same prioritised property and no duplicate seller task appears.
+12. Repeat Today, Buyer card, Buyer detail, Outcome and SMS checks in Light and Dark mode. Geometry and hierarchy must remain identical; only colour changes.
+
+## Buyer + seller opportunity acceptance
+
+1. Give an active buyer a strict MarketPulse property match, a current address and the **Buyer Seller** position, then confirm Today keeps one buyer conversation and adds a **Confirmed buyer + seller** angle inside it.
+2. Confirm the angle names the current home, retains the matched property and gives one concise conversation suggestion connecting the purchase and sale timing.
+3. Remove the Buyer Seller position, add clear selling intent such as “needs to sell their current home” to buyer notes and confirm the opportunity returns as **Potential buyer + seller**.
+4. Confirm an Upsizing or Downsizing buyer with a current home receives a potential angle tailored to that move.
+5. Create a linked non-buyer contact with the same mobile or email and an active selling timeframe, then confirm the buyer opportunity is marked confirmed and references the seller pipeline.
+6. Confirm a current address by itself does not create a seller opportunity. Also confirm notes containing “not selling”, “no need to sell” or “currently renting” do not create an inferred opportunity.
+7. Remove the current home from the buyer and any linked seller record, then confirm no seller angle is shown even when a position tag remains; the normal property match must continue to work.
+8. Confirm the Buyer card shows one compact Buyer + seller cue, Buyer detail shows the current-home → matched-property pair, and the existing Outcome sheet carries the same angle.
+9. Complete a Call, confirmed SMS or property-match outcome and confirm the existing v1.36.32 daily suppression still removes the one buyer conversation without creating a separate seller task.
+10. Repeat Today, Buyer card, Buyer detail and Outcome checks in Light and Dark mode. Geometry, spacing and content hierarchy must remain identical; only colour changes.
+
+## Unified buyer-opportunity acceptance
+
+1. Give one buyer two matching properties and a due follow-up, then confirm Today shows one buyer conversation rather than three separate prompts.
+2. Confirm the Today row names the primary property, shows the additional-property count and carries the due/overdue follow-up context.
+3. Log a Call or confirmed SMS and confirm that buyer disappears from Today for the rest of the day while unresolved properties remain visible in Buyer detail.
+4. Cancel a launched call and confirm no call metric or buyer-match state is changed.
+5. Log No answer or Left voicemail and confirm the property changes to Contact Attempted, stays open and can return on a later day.
+6. Select Interested, choose a follow-up date and confirm the buyer moves to Inspecting with that date as their next action.
+7. Select Send details or Maybe and confirm AGNT requires an intentional follow-up date.
+8. Select Not suitable, choose a reason and confirm only that property closes; any other matching property and the buyer's saved brief remain intact.
+9. Select Arrange inspection and confirm a BAP opens prefilled with the buyer and matched address. Cancel it and confirm the opportunity remains open; save it and confirm the match resolves as Inspection arranged.
+10. Launch SMS, return without sending and select Not sent; confirm nothing is logged. Repeat, confirm SMS sent and verify an SMS interaction and outcome prompt appear.
+11. Confirm Buyer detail uses one cohesive Call, SMS and Outcome row and shows New Match or Contact Attempted without Reviewed/Dismiss controls.
+12. Repeat the Today, Buyer detail, outcome and SMS-confirmation checks in Light and Dark mode at narrow phone width.
 
 ## MarketPulse buyer-match acceptance
 
@@ -7,9 +50,9 @@
 3. Confirm a House buyer does not match a Townhouse, Unit/Apartment/Villa, Duplex or Land event even when suburb and price fit.
 4. Confirm the match is rejected when the property is outside the selected suburb, above budget or below a configured bedroom, bathroom or car minimum.
 5. Confirm an event with no usable price or property type is not recommended rather than being guessed.
-6. Confirm active Just Listed and Price Update matches appear in one Buyer Matches block on Today, with buyer name, property address, Call and SMS.
+6. Confirm active Just Listed and Price Update matches appear in one Buyer Opportunities block on Today, with one row per buyer and Call, SMS and Outcome actions.
 7. Select Call and confirm the correct buyer number opens; select SMS and confirm AGNT prepares a reviewable message naming the property and guide where available.
-8. Confirm SMS or a completed Call outcome clears that exact property alert as contacted, while Reviewed and Dismiss clear it without launching communication. Cancel a Call and confirm the alert remains outstanding.
+8. Confirm a completed Call or confirmed SMS opens the intentional outcome workflow. Cancel a Call and confirm the alert remains outstanding without changing its state.
 9. Import Sold, Auction Result, Withdrawn or Under Offer for the same property and confirm the earlier buyer match disappears automatically.
 10. Confirm archived, purchased and uncontactable buyers do not enter the match queue.
 11. Confirm existing buyers and current MarketPulse events are evaluated safely on first launch after deployment, without duplicate match badges.
