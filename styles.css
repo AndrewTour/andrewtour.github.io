@@ -12161,3 +12161,112 @@ html[data-theme="dark"] .appointment-market-insights-list article{background:#15
 @media(max-width:390px){
   #scheduleView .today-overview-panel .timeline-view-head{grid-template-columns:max-content minmax(0,1fr)}
 }
+
+
+/* v1.36.38 — Today viewport containment + Buyer property-match placement */
+/* Today remains vertically scrollable only. Every child is allowed to shrink
+   inside the installed iPhone PWA viewport instead of widening the scroller. */
+#scheduleView.today-timeline-view.active{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  overflow-x:hidden!important;
+  overscroll-behavior-x:none;
+}
+#scheduleView .today-page-tabs,
+#scheduleView .today-page-panel,
+#scheduleView .today-page-panel.active,
+#scheduleView .today-overview-panel,
+#scheduleView .today-overview-panel>.view-head,
+#scheduleView .today-overview-panel>.timeline-overview,
+#scheduleView .today-overview-panel>.daily-timeline,
+#scheduleView .today-overview-panel .timeline-item,
+#scheduleView .today-overview-panel .timeline-item>div{
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
+}
+#scheduleView .today-page-tabs{overflow:hidden!important}
+#scheduleView .today-overview-panel .timeline-view-head{
+  display:flex!important;
+  align-items:flex-end!important;
+  justify-content:space-between!important;
+  gap:12px!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+}
+#scheduleView .today-overview-panel .timeline-view-head>div:first-child{
+  flex:0 0 auto!important;
+  min-width:0!important;
+  max-width:58%!important;
+}
+#scheduleView .today-overview-panel #timelineDateLabel{
+  display:block!important;
+  max-width:100%!important;
+  white-space:nowrap!important;
+  word-break:normal!important;
+  overflow-wrap:normal!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+#scheduleView .today-overview-panel .timeline-view-head>small{
+  flex:1 1 0!important;
+  min-width:0!important;
+  max-width:none!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+#scheduleView .today-overview-panel .timeline-item :is(strong,small,p,span){
+  max-width:100%;
+}
+#scheduleView .today-overview-panel .timeline-item :is(strong,small,p){
+  overflow-wrap:anywhere;
+}
+@media(max-width:390px){
+  #scheduleView .today-overview-panel .timeline-view-head{
+    display:flex!important;
+    grid-template-columns:none!important;
+  }
+}
+
+/* Property-match count now belongs to the buyer identity line. The time/action
+   alert remains in its existing row beneath the buyer criteria/location. */
+.buyer-row-identity{
+  display:flex!important;
+  align-items:center!important;
+  gap:8px!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  overflow:hidden!important;
+  white-space:normal!important;
+  color:inherit!important;
+  font-size:inherit!important;
+  font-weight:inherit!important;
+}
+.buyer-row-identity>strong{
+  flex:1 1 auto!important;
+  min-width:0!important;
+}
+.buyer-row-identity>.buyer-match-alert{
+  flex:0 0 auto!important;
+  width:auto!important;
+  max-width:132px!important;
+  min-height:24px!important;
+  margin:0!important;
+  padding:2px 8px 2px 3px!important;
+  font-size:9px!important;
+  white-space:nowrap!important;
+}
+.buyer-row-identity>.buyer-match-alert b{
+  width:18px!important;
+  height:18px!important;
+  flex:0 0 18px!important;
+}
+@media(max-width:390px){
+  .buyer-row-identity{gap:6px!important}
+  .buyer-row-identity>.buyer-match-alert{max-width:118px!important;padding-right:7px!important;font-size:8.5px!important}
+}

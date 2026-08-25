@@ -1,4 +1,16 @@
-# AGNT BETA v1.36.37 — Today Buyer Summary
+# AGNT BETA v1.36.38 — Viewport Containment + Buyer Match Placement
+
+Built incrementally on the confirmed working v1.36.37 Today Buyer Summary release.
+
+## v1.36.38 changes
+
+- Today is vertically scrollable only; horizontal page overflow is contained at the source.
+- Today header/date, tabs, panels and timeline children can shrink inside the iPhone viewport.
+- The day/date remains on one horizontal line with safe truncation rather than widening the page.
+- Buyer `Property Match` count now sits beside the buyer name.
+- The orange time-sensitive/action alert remains in its existing position below the buyer criteria/location.
+- Pipeline, Listed, Sold, Price Update and all other Hotspotting behaviour is unchanged.
+- No Firebase, Firestore, authentication, rules, sync, cache or data-shape changes.
 
 Incremental BETA update built directly on the supplied confirmed-working AGNT BETA v1.36.36 Market Insights Context package. The rejected v1.36.27 Home-page experiment is not included.
 
