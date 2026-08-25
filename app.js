@@ -999,6 +999,48 @@ function renderWeekDays(){if(!$('#weekDays'))return;$('#weekDays').innerHTML=wee
 
 function normaliseAppointmentType(value){const raw=String(value||'').trim().toLowerCase();if(raw==='bap'||raw==='buyer appointment')return'BAP';if(raw==='map'||raw==='appraisal'||raw==='market appraisal')return'MAP';if(raw==='lap'||raw==='listing appointment')return'LAP';if(raw==='ofi'||raw==='open for inspection'||raw==='pu'||raw==='price update')return'OFI';return String(value||'').trim().toUpperCase()}
 function appointmentType(a){return normaliseAppointmentType(a.type||(Array.isArray(a.types)?a.types[0]:''))||'—'}
+function appointmentMarketAddressParts(value=''){
+  const raw=cleanMarketLine(value);if(!raw)return{address:'',suburb:''};
+  const split=splitMarketAddress(raw);if(split.suburb)return{address:split.address||raw,suburb:split.suburb};
+  const normalised=normalisePlace(raw),suburbs=SYDNEY_SUBURBS.map(name=>({name,key:normalisePlace(name)})).filter(item=>item.key&&(normalised===item.key||normalised.endsWith(` ${item.key}`))).sort((a,b)=>b.key.length-a.key.length),match=suburbs[0];
+  if(!match)return{address:raw,suburb:''};
+  const suburbIndex=raw.toLowerCase().lastIndexOf(match.name.toLowerCase()),address=suburbIndex>0?raw.slice(0,suburbIndex).replace(/[\s,;-]+$/,'').trim():raw;
+  return{address:address||raw,suburb:match.name};
+}
+function marketPropertyCategoryFromType(value=''){
+  const type=normalisePlace(value);if(type==='house'||type==='duplex'||type==='semi detached')return'House';if(['unit','apartment','flat','villa','townhouse'].includes(type))return'Strata';return''
+}
+function inferMarketPropertyCategoryFromAddress(value=''){
+  const raw=cleanMarketLine(value),lower=normalisePlace(raw);if(!raw)return'';
+  if(/\b(?:unit|apartment|apt|flat|villa|townhouse)\b/.test(lower))return'Strata';
+  const street=raw.split(',')[0].trim();
+  if(/^\s*(?:unit\s*)?[a-z]?\d+(?:\s*-\s*\d+)?\s*\/\s*\d+[a-z]?\b/i.test(street))return'Strata';
+  if(/^\s*\d+\s*-\s*\d+\b/.test(street))return'';
+  if(/^\s*\d+(?:\s*[ab])?\b/i.test(street))return'House';
+  return'';
+}
+function marketPulseEventPropertyCategory(event={}){
+  const explicit=marketPropertyCategoryFromType(buyerMarketPropertyConfiguration(event).propertyType),inferred=inferMarketPropertyCategoryFromAddress(event.address);if(explicit&&inferred&&explicit!==inferred)return'';return explicit||inferred
+}
+function marketMedianValue(values=[]){const sorted=values.map(Number).filter(value=>Number.isFinite(value)&&value>0).sort((a,b)=>a-b);if(!sorted.length)return 0;const mid=Math.floor(sorted.length/2);return sorted.length%2?sorted[mid]:Math.round((sorted[mid-1]+sorted[mid])/2)}
+function marketPulseActivityPriceLabel(events=[],kind=''){
+  const values=events.map(event=>parseMarketMoney(event.price||event.guide)).filter(Boolean),median=marketMedianValue(values);if(!median)return'';
+  if(values.length===1)return`${kind==='sold'?'Recent sale':'Recent guide'} ${formatMarketMoney(median)}`;
+  return`${kind==='sold'?'Sold median':'Guide median'} ${formatMarketMoney(median)}`
+}
+function appointmentMarketPulseIntelligence(a={}){
+  const parts=appointmentMarketAddressParts(a.address),suburbKey=normalisePlace(parts.suburb),category=inferMarketPropertyCategoryFromAddress(parts.address||a.address);if(!suburbKey||!category)return null;
+  const events=normaliseMarketPulseEvents(marketPulseEvents).filter(event=>normalisePlace(event.suburb)===suburbKey&&marketPulseEventPropertyCategory(event)===category);if(!events.length)return null;
+  const listed=events.filter(event=>['just listed','listed','new listing'].includes(normalisePlace(event.eventType))),sold=events.filter(event=>['sold','auction result'].includes(normalisePlace(event.eventType))),updates=events.filter(event=>['price update','price changed','price change'].includes(normalisePlace(event.eventType))),actionable=[...listed,...sold,...updates];if(!actionable.length)return null;
+  const canonicalSuburb=events.find(event=>cleanText(event.suburb,100))?.suburb||parts.suburb,priceLabels=[marketPulseActivityPriceLabel(sold,'sold'),marketPulseActivityPriceLabel(listed,'listed')].filter(Boolean),reduced=updates.filter(event=>event.priceMovementDirection==='below').length,activity=[listed.length?`${listed.length} Listed`:'',sold.length?`${sold.length} Sold`:'',updates.length?`${updates.length} Price Update${updates.length===1?'':'s'}`:''].filter(Boolean),movement=reduced?`${reduced} reduction${reduced===1?'':'s'}`:'';
+  const dates=actionable.map(event=>event.receivedDate).filter(validDateKey).sort(),latestDate=dates.at(-1)||'',recency=latestDate?relativeEventRecency({receivedDate:latestDate}).label:'Current MarketPulse';
+  return{suburb:canonicalSuburb,category,activity,priceLabels,movement,recency,eventCount:actionable.length}
+}
+function appointmentMarketPulseMarkup(a={},sourceDate=''){
+  if(isOfiAppointment(a)||appointmentLifecycle(a,sourceDate)!=='upcoming')return'';const intel=appointmentMarketPulseIntelligence(a);if(!intel)return'';
+  const activity=intel.activity.join(' · '),prices=intel.priceLabels.join(' · '),detail=[prices,intel.movement].filter(Boolean).join(' · ');
+  return`<div class="appointment-market-intel"><div class="appointment-market-intel-head"><span>MARKETPULSE</span><b>${escapeHtml(intel.suburb)} · ${escapeHtml(intel.category)}</b><em>${escapeHtml(intel.recency)}</em></div><strong>${escapeHtml(activity)}</strong>${detail?`<small>${escapeHtml(detail)}</small>`:''}</div>`
+}
 function isOfiAppointment(a){return appointmentType(a)==='OFI'}
 function appointmentHasAuction(a){return isOfiAppointment(a)&&Boolean(a.auction)}
 function appointmentDurationMinutes(a){return isOfiAppointment(a)?(appointmentHasAuction(a)?15:30):60}
@@ -1666,10 +1708,11 @@ function appointmentCardMarkup(entry,{dailyLog=false,history=false}={}){
   const bookedMeta=history&&booked?`<small class="appointment-created-meta">Booked ${escapeHtml(booked)}</small>`:'';
   const assignmentMeta=isTeamAssigned?`<small class="appointment-team-assigned-meta">Booked for you by ${escapeHtml(teamAppointmentSetterFirstName(a.setterName||'a teammate'))}</small>`:(!isTeamAssigned&&a.assignedToUid&&String(a.assignedToUid)!==String(uid)&&a.assignedToName?`<small class="appointment-booked-for-teammate">Booked for ${escapeHtml(teamAppointmentSetterFirstName(a.assignedToName))}</small>`:'');
   const dueMeta=history&&!isTeamAssigned&&a.followUpDate?`<small class="appointment-followup-timestamp ${a.followUpDate<todayKey()?'overdue':''}">Follow-up due ${escapeHtml(shortAppointmentDate(a.followUpDate))}</small>`:'';
+  const marketIntel=appointmentMarketPulseMarkup(a,sourceDate);
   const cardAttrs=isTeamAssigned?'':`data-appointment-card-edit="${escapeHtml(a.id)}" role="button" tabindex="0" aria-label="Edit ${type} appointment at ${address}"`;
   return `<article class="appointment-card appointment-card-premium appointment-followup-card ${lifecycle} ${isTeamAssigned?'team-assigned':''}" ${cardAttrs} data-source-date="${escapeHtml(sourceDate)}">
     ${isTeamAssigned?'':`<button class="appointment-delete" data-delete-appointment="${escapeHtml(a.id)}" data-source-date="${escapeHtml(sourceDate)}" aria-label="Delete appointment" title="Delete appointment">×</button>`}
-    <div class="appointment-card-copy"><div class="appointment-card-top"><span class="appointment-type-badge">${type}</span><span class="appointment-status-badge ${lifecycle}">${escapeHtml(statusText)}</span></div><strong>${address}</strong><small>${contact}${phone?` · ${phone}`:''}</small>${ofiSchedule}${loggedMeta}${bookedMeta}${assignmentMeta}${dueMeta}${note}</div>
+    <div class="appointment-card-copy"><div class="appointment-card-top"><span class="appointment-type-badge">${type}</span><span class="appointment-status-badge ${lifecycle}">${escapeHtml(statusText)}</span></div><strong>${address}</strong><small>${contact}${phone?` · ${phone}`:''}</small>${ofiSchedule}${loggedMeta}${bookedMeta}${assignmentMeta}${dueMeta}${marketIntel}${note}</div>
     <div class="appointment-followup-actions">${actions}</div>
   </article>`;
 }
@@ -2585,7 +2628,7 @@ async function processMarketPulseInboxDocument(item){
   marketPulseAutomation={...marketPulseAutomation,state:'processing',email:normaliseMarketPulseEmail(currentUser?.email),error:''};renderMarketPulseAutomationSettings();
   const merged=mergeParsedMarketPulseEvents(parsed);
   if(merged.ignoredAsStale){const batch=writeBatch(db);batch.set(item.ref,{status:'processed',plainText:'',error:'',processedAt:serverTimestamp(),eventCount:merged.incomingCount,newEventCount:0,refreshedEventCount:0,replacedEventCount:0,ignoredAsStale:true,activeDate:merged.activeDate},{merge:true});await batch.commit();marketPulseAutomation={...marketPulseAutomation,state:marketPulseAutomation.lastImportedAt?'live':'waiting',error:''};renderMarketPulseAutomationSettings();return}
-  saveLocal();renderMarketPulse();renderProspecting();await saveProspecting({render:false});
+  saveLocal();renderMarketPulse();renderProspecting();renderAppointments();await saveProspecting({render:false});
   if(!cloud||uid!==processingUid||currentUser?.uid!==processingUid)return;
   const batch=writeBatch(db);batch.set(item.ref,{status:'processed',plainText:'',error:'',processedAt:serverTimestamp(),eventCount:merged.appliedCount,newEventCount:merged.newCount,refreshedEventCount:merged.refreshedCount,replacedEventCount:merged.replacedCount,ignoredAsStale:false,activeDate:merged.activeDate},{merge:true});batch.set(doc(db,'users',processingUid),{marketPulseLastImportState:'success',marketPulseLastImportError:'',marketPulseLastImportedAt:serverTimestamp(),marketPulseLastImportedDate:merged.activeDate,marketPulseLastImportedCount:merged.appliedCount,marketPulseLastImportedNewCount:merged.newCount,marketPulseLastMessageId:cleanText(data.messageId||item.id,180),updatedAt:serverTimestamp()},{merge:true});await batch.commit();
   marketPulseAutomation={state:'live',email:normaliseMarketPulseEmail(currentUser?.email),lastImportedAt:Date.now(),lastImportedDate:merged.activeDate,lastImportedCount:merged.appliedCount,lastImportedNewCount:merged.newCount,error:''};renderMarketPulseAutomationSettings();refreshReturningSnapshotIfVisible();if(merged.newCount)toast(`Hot Spotting updated · ${merged.newCount} new event${merged.newCount===1?'':'s'}`);
@@ -3925,7 +3968,7 @@ async function startCloud(user,{promptTeamSetup=false}={}){
       if(!snap.metadata.hasPendingWrites)lastProspectingSignature=cloudSignature;
       const nextMarketEvents=hasMarketEvents?cloudMarketEvents:normaliseMarketPulseEvents(marketPulseEvents),nextMarketHistory=hasMarketHistory?cloudMarketHistory:normaliseMarketPulseHistory([...marketPulseHistory,...nextMarketEvents]),nextSignature=prospectingSignature(nextProspects,nextInteractions,nextMarketEvents,nextMarketHistory);
       if(nextSignature!==prospectingSignature()){
-        prospects=nextProspects;prospectInteractions=nextInteractions;marketPulseEvents=nextMarketEvents;marketPulseHistory=nextMarketHistory;const buyerMatchesChanged=refreshBuyerPropertyMatches(nextMarketEvents);saveLocal();renderProspecting();renderMarketPulse();renderTimeline();renderNowCard();refreshReturningSnapshotIfVisible();if(buyerMatchesChanged&&!snap.metadata.hasPendingWrites&&!snap.metadata.fromCache)queueProspectingSave().catch(err=>console.error('Buyer match migration failed',err))
+        prospects=nextProspects;prospectInteractions=nextInteractions;marketPulseEvents=nextMarketEvents;marketPulseHistory=nextMarketHistory;const buyerMatchesChanged=refreshBuyerPropertyMatches(nextMarketEvents);saveLocal();renderProspecting();renderMarketPulse();renderAppointments();renderTimeline();renderNowCard();refreshReturningSnapshotIfVisible();if(buyerMatchesChanged&&!snap.metadata.hasPendingWrites&&!snap.metadata.fromCache)queueProspectingSave().catch(err=>console.error('Buyer match migration failed',err))
       }
       if((!hasMarketEvents&&nextMarketEvents.length||!hasMarketHistory&&nextMarketHistory.length)&&!snap.metadata.hasPendingWrites&&!snap.metadata.fromCache){queueProspectingSave().catch(err=>console.error('Hot Spotting migration failed',err))}
     }

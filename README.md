@@ -1,6 +1,13 @@
-# AGNT BETA v1.36.34 — Time-Sensitive Buyer Alerts
+# AGNT BETA v1.36.35 — MarketPulse Appointment Intelligence
 
-Incremental BETA update built directly on the completed AGNT BETA v1.36.33 Buyer + Seller Opportunities package. The rejected v1.36.27 Home-page experiment is not included.
+Incremental BETA update built directly on the supplied confirmed-working AGNT BETA v1.36.34 Time-Sensitive Buyer Alerts package. The rejected v1.36.27 Home-page experiment is not included.
+
+## MarketPulse appointment intelligence added in v1.36.35
+- Upcoming appointment cards now calculate a lightweight MarketPulse brief at render time from the appointment address and the existing UID-scoped MarketPulse event deck. Existing pipeline appointments require no migration or manual linking.
+- Suburb matching is formatting/case tolerant. House addresses, including street numbers ending A/B, use House activity; clear slash/unit/villa/townhouse style addresses use Strata activity. Ambiguous classifications are intentionally omitted.
+- MarketPulse property details are used as supporting type evidence when they explicitly identify House, Duplex, Townhouse, Unit/Apartment/Villa/Flat. Address inference is the fallback.
+- The card prioritises matching Listed and Sold counts, then price updates, with relevant recent/median sale and guide figures where MarketPulse provides usable prices.
+- Missing suburb, property type or matching MarketPulse data leaves the existing appointment card unchanged. Firebase configuration, Authentication, UIDs, Firestore paths/rules, Team data, local cache/sync and MarketPulse automation are unchanged.
 
 ## Time-sensitive buyer alerts added in v1.36.34
 - AGNT now separates a normal property match from a match with a genuine market deadline. Imminent auctions, a price change that moves a property inside the buyer's saved ceiling, and genuinely fresh Just Listed or Price Update activity receive a concise reason.
