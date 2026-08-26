@@ -12879,3 +12879,256 @@ html[data-theme="dark"] #prospectorMarketPanel .market-followup-ready{background
   .appointment-market-insights-list article{padding:13px 0!important}
   #prospectorMarketPanel .market-pulse-card{padding:23px 0!important}
 }
+
+/* AGNT BETA v1.36.40 — Market UI Cohesion
+   Presentation only. Hot Spotting now follows the compact Buyer list hierarchy,
+   while Market Insights returns to the app's inset overlay language. */
+
+/* Market Insights: retain the app behind an inset, bordered overlay. */
+.appointment-market-insights-overlay{
+  align-items:flex-end!important;
+  padding:max(18px,env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom))!important;
+  background:rgba(6,9,14,.64)!important;
+  backdrop-filter:blur(12px)!important;
+  -webkit-backdrop-filter:blur(12px)!important;
+}
+.appointment-market-insights-sheet{
+  box-sizing:border-box!important;
+  width:min(100%,520px)!important;
+  height:auto!important;
+  max-height:min(78dvh,760px)!important;
+  margin:0!important;
+  padding:15px 16px 14px!important;
+  border:1px solid var(--agnt-border,#dfe3e8)!important;
+  border-radius:27px!important;
+  background:var(--agnt-card,#fff)!important;
+  box-shadow:0 24px 70px rgba(0,0,0,.28)!important;
+}
+.appointment-market-insights-handle{
+  display:block!important;
+  width:38px!important;
+  height:4px!important;
+  margin:0 auto 12px!important;
+  background:var(--agnt-divider,#e5e8ed)!important;
+}
+.appointment-market-insights-sheet>header{
+  gap:12px!important;
+  padding:0 2px 13px!important;
+}
+.appointment-market-insights-sheet>header span{
+  font-size:9px!important;
+  letter-spacing:.14em!important;
+}
+.appointment-market-insights-sheet>header h2{
+  margin:6px 0 4px!important;
+  font-size:21px!important;
+  line-height:1.12!important;
+  letter-spacing:-.035em!important;
+}
+.appointment-market-insights-sheet>header p{font-size:10.5px!important}
+.appointment-market-insights-sheet>header button{
+  width:36px!important;
+  height:36px!important;
+  border:1px solid var(--agnt-divider,#e5e8ed)!important;
+  border-radius:50%!important;
+  background:var(--agnt-soft,#f5f6f7)!important;
+  font-size:21px!important;
+}
+.appointment-market-insights-summary{
+  gap:3px!important;
+  margin:0 2px 12px!important;
+  padding:10px 11px!important;
+  border:1px solid var(--agnt-divider,#e5e8ed)!important;
+  border-radius:14px!important;
+  background:var(--agnt-soft,#f5f6f7)!important;
+}
+.appointment-market-insights-summary strong{font-size:11.5px!important}
+.appointment-market-insights-summary small{font-size:10px!important}
+.appointment-market-insights-body{padding:0 2px 2px!important}
+.appointment-market-insights-section+.appointment-market-insights-section{margin-top:18px!important}
+.appointment-market-insights-section-head{margin-bottom:1px!important}
+.appointment-market-insights-section-head span,
+.appointment-market-insights-section-head small{font-size:8.5px!important}
+.appointment-market-insights-list article{
+  gap:10px!important;
+  padding:11px 1px!important;
+}
+.appointment-market-insights-list article strong{
+  font-size:12px!important;
+  line-height:1.25!important;
+}
+.appointment-market-insights-list article small,
+.appointment-market-insights-list article em{
+  margin-top:3px!important;
+  font-size:9.5px!important;
+  line-height:1.3!important;
+}
+.appointment-market-insights-list article>span{font-size:8.5px!important}
+.appointment-market-insights-actions{
+  gap:8px!important;
+  padding:12px 2px 0!important;
+  background:var(--agnt-card,#fff)!important;
+}
+.appointment-market-insights-actions button{
+  min-height:45px!important;
+  border-radius:14px!important;
+  font-size:12px!important;
+}
+
+/* Hot Spotting: remove the repeated hero and use one shared bordered list shell. */
+#prospectorMarketPanel{gap:12px!important}
+#prospectorMarketPanel .market-pulse-hero{display:none!important}
+#prospectorMarketPanel .market-pulse-back{
+  min-height:34px!important;
+  margin:1px 0 0!important;
+  padding:0 11px!important;
+  border:1px solid var(--agnt-divider,#e5e8ed)!important;
+  border-radius:11px!important;
+  background:var(--agnt-card,#fff)!important;
+  font-size:11px!important;
+  font-weight:760!important;
+}
+#prospectorMarketPanel .market-pulse-results{
+  box-sizing:border-box!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:15px 15px 2px!important;
+  overflow:hidden!important;
+  border:1px solid var(--agnt-divider,#e5e8ed)!important;
+  border-radius:22px!important;
+  background:var(--agnt-card,#fff)!important;
+}
+#prospectorMarketPanel .prospecting-section-head{
+  align-items:flex-end!important;
+  gap:10px!important;
+  min-width:0!important;
+  margin:0!important;
+}
+#prospectorMarketPanel .prospecting-section-head>div{min-width:0!important}
+#prospectorMarketPanel .prospecting-section-head span{font-size:8.5px!important;letter-spacing:.11em!important}
+#prospectorMarketPanel .prospecting-section-head h3{
+  max-width:100%!important;
+  margin:4px 0 2px!important;
+  font-size:17px!important;
+  line-height:1.2!important;
+  letter-spacing:-.015em!important;
+}
+#prospectorMarketPanel .prospecting-section-head small{
+  display:block!important;
+  max-width:100%!important;
+  overflow:hidden!important;
+  color:var(--agnt-muted,#8b909a)!important;
+  font-size:10px!important;
+  line-height:1.3!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+#prospectorMarketPanel .prospecting-section-head .text-btn{
+  flex:0 0 auto!important;
+  padding:5px 1px!important;
+  font-size:10.5px!important;
+}
+#prospectorMarketPanel .market-pulse-list{
+  margin-top:12px!important;
+  border-top:1px solid var(--agnt-divider,#e5e8ed)!important;
+}
+#prospectorMarketPanel .market-pulse-card{
+  padding:15px 0!important;
+  border-bottom:1px solid var(--agnt-divider,#e5e8ed)!important;
+}
+#prospectorMarketPanel .market-pulse-card:last-child{border-bottom:0!important}
+#prospectorMarketPanel .market-pulse-card-head>button{
+  width:30px!important;
+  height:30px!important;
+  border:1px solid var(--agnt-divider,#e5e8ed)!important;
+  background:var(--agnt-soft,#f5f6f7)!important;
+  font-size:18px!important;
+}
+#prospectorMarketPanel .market-event-tag{
+  min-height:24px!important;
+  padding:0 8px!important;
+  font-size:8.5px!important;
+  letter-spacing:.1em!important;
+}
+#prospectorMarketPanel .market-pulse-card-title h4{
+  margin:10px 0 2px!important;
+  font-size:15px!important;
+  line-height:1.22!important;
+  letter-spacing:-.01em!important;
+}
+#prospectorMarketPanel .market-pulse-card-title p{
+  font-size:10.5px!important;
+  line-height:1.3!important;
+}
+#prospectorMarketPanel .market-pulse-event-data{
+  gap:3px!important;
+  margin-top:10px!important;
+}
+#prospectorMarketPanel .market-pulse-event-data strong{font-size:14px!important;line-height:1.2!important}
+#prospectorMarketPanel .market-pulse-event-data small,
+#prospectorMarketPanel .market-price-movement{font-size:10px!important;line-height:1.3!important}
+#prospectorMarketPanel .market-followup-ready{
+  margin-top:10px!important;
+  padding-left:9px!important;
+  font-size:10px!important;
+}
+#prospectorMarketPanel .market-followup-ready strong{
+  min-width:19px!important;
+  height:19px!important;
+  font-size:9px!important;
+}
+#prospectorMarketPanel .hotspot-opportunity-summary{
+  margin:10px 0 11px!important;
+  padding:8px 0!important;
+}
+#prospectorMarketPanel .hotspot-opportunity-summary span{
+  padding-inline:6px!important;
+  font-size:7.5px!important;
+}
+#prospectorMarketPanel .hotspot-opportunity-summary strong{font-size:10px!important}
+#prospectorMarketPanel .market-pulse-card-content>.primary{
+  min-height:43px!important;
+  border-radius:13px!important;
+  font-size:11.5px!important;
+}
+.market-pulse-completed-disclosure summary{
+  gap:10px!important;
+  margin-top:9px!important;
+}
+.market-pulse-completed-disclosure summary>span:first-child strong{
+  font-size:15px!important;
+  line-height:1.22!important;
+}
+.market-pulse-completed-disclosure summary>span:first-child small{
+  margin-top:2px!important;
+  font-size:10.5px!important;
+}
+.market-pulse-complete-state{gap:5px!important}
+.market-pulse-complete-state strong{font-size:9.5px!important}
+.market-pulse-complete-state i{font-size:18px!important}
+.market-pulse-completed-disclosure .market-pulse-card-content{padding-top:11px!important}
+
+html[data-theme="dark"] .appointment-market-insights-overlay{background:rgba(2,4,8,.7)!important}
+html[data-theme="dark"] .appointment-market-insights-sheet,
+html[data-theme="dark"] .appointment-market-insights-actions{background:var(--agnt-card,#11141a)!important}
+html[data-theme="dark"] .appointment-market-insights-sheet{border-color:#343a44!important}
+html[data-theme="dark"] .appointment-market-insights-handle{background:#3b414b!important}
+html[data-theme="dark"] .appointment-market-insights-summary{
+  border-color:#2b3039!important;
+  border-radius:14px!important;
+  background:var(--agnt-soft,#171a20)!important;
+}
+html[data-theme="dark"] .appointment-market-insights-sheet>header button,
+html[data-theme="dark"] #prospectorMarketPanel .market-pulse-back,
+html[data-theme="dark"] #prospectorMarketPanel .market-pulse-card-head>button{border-color:#2b3039!important;background:var(--agnt-soft,#171a20)!important}
+html[data-theme="dark"] #prospectorMarketPanel .market-pulse-results{border-color:#2b3039!important;background:var(--agnt-card,#11141a)!important}
+
+@media(max-width:380px){
+  .appointment-market-insights-overlay{padding-inline:12px!important}
+  .appointment-market-insights-sheet{padding:13px 13px 12px!important;border-radius:24px!important}
+  .appointment-market-insights-sheet>header h2{font-size:19px!important}
+  #prospectorMarketPanel .market-pulse-results{padding-inline:13px!important}
+  #prospectorMarketPanel .market-pulse-card{padding:13px 0!important}
+  #prospectorMarketPanel .prospecting-section-head h3{font-size:16px!important}
+}

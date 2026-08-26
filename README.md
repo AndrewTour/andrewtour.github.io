@@ -1,8 +1,18 @@
-# AGNT BETA v1.36.39 — Overlay Clarity
+# AGNT BETA v1.36.40 — Market UI Cohesion
 
-Built incrementally on the confirmed working v1.36.38 Viewport Containment + Buyer Match release.
+Built incrementally on the confirmed working v1.36.39 Overlay Clarity release.
 
-## v1.36.39 changes
+## v1.36.40 changes
+
+- Hot Spotting removes the repeated oversized introduction and keeps its heading, event count and controls together inside one viewport-safe bordered surface.
+- Hot Spotting event rows now use the compact type, spacing, controls and divider rhythm established by the Buyers section.
+- Completed events retain their existing collapsed disclosure behaviour in a substantially lighter summary row.
+- Market Insights now opens as an inset, bordered overlay with the underlying app visibly retained behind a dimmed backdrop.
+- Market Insights content and actions are unchanged, but typography, row spacing and buttons now match the surrounding AGNT interface.
+- MarketPulse matching, appointment behaviour, Hot Spotting session logic and buyer matching remain unchanged.
+- No Firebase, Firestore, authentication, rules, sync, cache or data-shape changes.
+
+## Previous release — v1.36.39
 
 - Market Insights now opens as a full-height, single-surface view with a fixed header and bottom actions.
 - Market Insight listings use whitespace and dividers rather than nested rounded cards.
