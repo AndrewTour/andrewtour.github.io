@@ -1,8 +1,19 @@
-# AGNT BETA v1.36.40 — Market UI Cohesion
+# AGNT BETA v1.36.41 — Appointment Outcome Intelligence
 
-Built incrementally on the confirmed working v1.36.39 Overlay Clarity release.
+Built incrementally on the confirmed working v1.36.40 Market UI Cohesion release.
 
-## v1.36.40 changes
+## v1.36.41 changes
+
+- Appointment outcomes now follow the appointment type: MAP/LAP use seller outcomes, while BAP uses buyer-specific Interested, Further Inspection, Offer Pending, Not Suitable and Purchased outcomes.
+- Open outcomes require a current or future follow-up date in the same outcome sheet, removing the separate second step.
+- Linked MAP/LAP outcomes immediately update the existing seller pipeline record and write the result into contact history.
+- Linked BAP outcomes move the buyer through Inspecting or Negotiating; Purchased converts the existing buyer to an owner contact using the established buyer fields.
+- Listed, Purchased and other closed outcomes leave the appointment history intact while removing the completed opportunity from active appointment or pipeline queues.
+- The sheet identifies whether an existing Prospector record is linked before saving. Unlinked appointments remain appointment-only and retain their outcome and notes without creating or guessing a contact.
+- Today, Appointments and Prospector recalculate immediately from the saved result.
+- No new page, collection, Firebase configuration, Firestore rule, authentication flow, storage key or migration is required.
+
+## Previous release — v1.36.40
 
 - Hot Spotting removes the repeated oversized introduction and keeps its heading, event count and controls together inside one viewport-safe bordered surface.
 - Hot Spotting event rows now use the compact type, spacing, controls and divider rhythm established by the Buyers section.

@@ -1622,10 +1622,29 @@ function openAppointmentEditorFromToday(exportId=''){
   if(!entry){toast('Appointment could not be found');return}
   requestAnimationFrame(()=>beginEditAppointment(entry.appointment.id,entry.sourceDate));
 }
+const SELLER_APPOINTMENT_OUTCOMES=Object.freeze([
+  {value:'Still Nurturing',label:'Still Nurturing',hint:'Set The Next Conversation',className:'outcome-blue'},
+  {value:'Listed',label:'Listed',hint:'Listing Secured',className:'outcome-green'},
+  {value:'Not Proceeding',label:'Not Proceeding',hint:'Close This Opportunity',className:'outcome-amber'},
+  {value:'Missed',label:'Missed',hint:'Listed With Another Agent',className:'outcome-red'}
+]);
+const BUYER_APPOINTMENT_OUTCOMES=Object.freeze([
+  {value:'Interested',label:'Interested',hint:'Keep Moving',className:'outcome-blue'},
+  {value:'Further Inspection',label:'Further Inspection',hint:'Book The Next Step',className:'outcome-blue'},
+  {value:'Offer Pending',label:'Offer Pending',hint:'Protect The Negotiation',className:'outcome-amber'},
+  {value:'Not Suitable',label:'Not Suitable',hint:'Close This Appointment',className:'outcome-amber'},
+  {value:'Purchased',label:'Purchased',hint:'Convert Buyer To Owner',className:'outcome-green'}
+]);
+const OPEN_APPOINTMENT_OUTCOMES=new Set(['Still Nurturing','Interested','Further Inspection','Offer Pending']);
+const CLOSED_APPOINTMENT_OUTCOMES=new Set(['Price Update Booked','Listing Appointment Booked','Signed','Listed','Not Proceeding','Missed','Not Suitable','Purchased']);
+function appointmentOutcomeOptionsFor(a={}){return appointmentType(a)==='BAP'?BUYER_APPOINTMENT_OUTCOMES:SELLER_APPOINTMENT_OUTCOMES}
+function appointmentOutcomeNeedsFollowUp(outcome=''){return OPEN_APPOINTMENT_OUTCOMES.has(appointmentOutcomeLabel(outcome))}
+function appointmentOutcomeIsClosed(outcome=''){return CLOSED_APPOINTMENT_OUTCOMES.has(appointmentOutcomeLabel(outcome))}
 function appointmentLifecycle(a,sourceDate=''){
   const ts=appointmentTimestamp(a,sourceDate),now=Date.now();
   if(isOfiAppointment(a))return ts&&ts>Date.now()?'upcoming':'completed';
-  if(a.status==='completed'||a.followedUpAt||['Price Update Booked','Listing Appointment Booked','Signed','Listed','Not Proceeding','Missed'].includes(a.outcome))return'completed';
+  if(appointmentOutcomeNeedsFollowUp(a.outcome))return'follow-up';
+  if(a.status==='completed'||a.followedUpAt||appointmentOutcomeIsClosed(a.outcome))return'completed';
   if(ts&&ts>now)return'upcoming';
   return'follow-up';
 }
@@ -1674,22 +1693,126 @@ async function saveAppointmentFollowUp(){
   await updateAppointmentRecord(id,sourceDate,{status:'follow-up',followUpDate,followedUpAt:null});toast('Follow-up scheduled');
 }
 async function markAppointmentFollowedUp(id,sourceDate){await updateAppointmentRecord(id,sourceDate,{status:'completed',followedUpAt:Date.now()});toast('Appointment marked followed up');}
+function appointmentRecordEntry(id,sourceDate){
+  const d=dayData(sourceDate),index=d.appointments.findIndex(a=>String(a.id)===String(id));
+  return index<0?null:{day:d,index,appointment:d.appointments[index],sourceDate};
+}
+function linkedProspectForAppointment(a={}){
+  const type=appointmentType(a),isExpected=p=>type==='BAP'?p?.recordType==='buyer':['MAP','LAP'].includes(type)?p?.recordType!=='buyer':false,direct=a.prospectId?prospectById(String(a.prospectId)):null;
+  if(direct&&isExpected(direct))return direct;
+  return prospects.find(p=>isExpected(p)&&appointmentMatchesProspect(a,p))||null;
+}
+function appointmentOutcomeOptionsMarkup(a={}){
+  return appointmentOutcomeOptionsFor(a).map(option=>`<button type="button" class="outcome-option ${option.className}" data-outcome="${escapeHtml(option.value)}"><span>${escapeHtml(option.label)}</span><i>${escapeHtml(option.hint)}</i></button>`).join('');
+}
+function appointmentOutcomeContextMarkup(a={},linked=null){
+  const type=appointmentType(a),contact=cleanText(a.contactName||a.name,120)||'Contact not recorded',address=cleanText(a.address,240)||'Address not recorded',linkLabel=linked?`${type==='BAP'?'Buyer':'Seller'} linked · ${linked.name}`:'Appointment only · no Prospector record will change';
+  return `<strong><span>${escapeHtml(type)}</span>${escapeHtml(address)}</strong><small>${escapeHtml(contact)}</small><em class="${linked?'linked':'unlinked'}">${escapeHtml(linkLabel)}</em>`;
+}
+function appointmentOutcomeValidation(){
+  if(!selectedAppointmentOutcome)return'Choose an outcome';
+  if(appointmentOutcomeNeedsFollowUp(selectedAppointmentOutcome)){
+    const followUpDate=$('#outcomeFollowUpDate')?.value||'';
+    if(!validDateKey(followUpDate)||followUpDate<todayKey())return'Choose a current or future follow-up date';
+  }
+  if(selectedAppointmentOutcome==='Purchased'){
+    if(!cleanText($('#outcomePurchaseAddress')?.value,240))return'Add the purchased property address';
+    if(!validDateKey($('#outcomePurchaseDate')?.value||''))return'Choose the purchase date';
+  }
+  return'';
+}
+function refreshAppointmentOutcomeForm({announce=false}={}){
+  const needsFollowUp=appointmentOutcomeNeedsFollowUp(selectedAppointmentOutcome),isPurchase=selectedAppointmentOutcome==='Purchased',followUpField=$('#outcomeFollowUpField'),purchaseFields=$('#outcomePurchaseFields'),error=$('#outcomeFormError'),save=$('#saveAppointmentOutcome');
+  if(followUpField)followUpField.hidden=!needsFollowUp;
+  if(purchaseFields)purchaseFields.hidden=!isPurchase;
+  const message=appointmentOutcomeValidation();
+  if(save)save.disabled=Boolean(message);
+  if(error){error.textContent=announce?message:'';error.hidden=!announce||!message;}
+}
+function selectAppointmentOutcome(outcome='',button=null){
+  selectedAppointmentOutcome=outcome;
+  $$('#outcomeOptions button').forEach(item=>item.classList.toggle('selected',button?item===button:item.dataset.outcome===outcome));
+  refreshAppointmentOutcomeForm();
+}
+function resetAppointmentOutcomeModal(){
+  selectedAppointmentOutcome='';
+  if($('#outcomeOptions'))$('#outcomeOptions').innerHTML='';
+  if($('#appointmentOutcomeContext'))$('#appointmentOutcomeContext').innerHTML='';
+  if($('#outcomeNoteInput'))$('#outcomeNoteInput').value='';
+  if($('#outcomeFollowUpDate'))$('#outcomeFollowUpDate').value='';
+  if($('#outcomePurchaseAddress'))$('#outcomePurchaseAddress').value='';
+  if($('#outcomePurchasePrice'))$('#outcomePurchasePrice').value='';
+  if($('#outcomePurchaseDate'))$('#outcomePurchaseDate').value='';
+  if($('#outcomeFollowUpField'))$('#outcomeFollowUpField').hidden=true;
+  if($('#outcomePurchaseFields'))$('#outcomePurchaseFields').hidden=true;
+  if($('#outcomeFormError')){$('#outcomeFormError').textContent='';$('#outcomeFormError').hidden=true;}
+  if($('#saveAppointmentOutcome')){$('#saveAppointmentOutcome').disabled=true;$('#saveAppointmentOutcome').textContent='Save Outcome';}
+}
+function closeAppointmentOutcomeModal(){closeActionModal('#outcomeModal');pendingOutcomeAppointment=null;resetAppointmentOutcomeModal();}
 function updateAppointmentOutcome(id,sourceDate){
-  pendingOutcomeAppointment={id,sourceDate};selectedAppointmentOutcome='';
-  $$('#outcomeOptions button').forEach(button=>button.classList.remove('selected'));
-  $('#outcomeNoteInput').value='';$('#saveAppointmentOutcome').disabled=true;
+  const entry=appointmentRecordEntry(id,sourceDate);
+  if(!entry)return toast('Appointment could not be found');
+  const a=entry.appointment,linked=linkedProspectForAppointment(a),type=appointmentType(a),options=appointmentOutcomeOptionsFor(a),existingOutcome=appointmentOutcomeLabel(a.outcome),canRestore=options.some(option=>option.value===existingOutcome);
+  pendingOutcomeAppointment={id,sourceDate};resetAppointmentOutcomeModal();
+  $('#outcomeModalTitle').textContent=`${type} Outcome`;
+  $('#appointmentOutcomeContext').innerHTML=appointmentOutcomeContextMarkup(a,linked);
+  $('#outcomeOptions').innerHTML=appointmentOutcomeOptionsMarkup(a);
+  $('#outcomeNoteInput').value=cleanText(a.outcomeNote,3000);
+  const followUp=$('#outcomeFollowUpDate');followUp.min=todayKey();followUp.value=validDateKey(a.followUpDate)?a.followUpDate:defaultFollowUpDate();
+  const purchaseAddress=$('#outcomePurchaseAddress'),purchasePrice=$('#outcomePurchasePrice'),purchaseDate=$('#outcomePurchaseDate');
+  purchaseAddress.value=cleanText(a.buyerPurchaseAddress||linked?.buyerPurchaseAddress||a.address,240);
+  purchasePrice.value=Number(a.buyerPurchasePrice||linked?.buyerPurchasePrice)>0?String(a.buyerPurchasePrice||linked.buyerPurchasePrice):'';
+  purchaseDate.max=todayKey();purchaseDate.value=validDateKey(a.buyerPurchaseDate)?a.buyerPurchaseDate:validDateKey(linked?.buyerPurchaseDate)?linked.buyerPurchaseDate:todayKey();
+  if(canRestore)selectAppointmentOutcome(existingOutcome);
+  else refreshAppointmentOutcomeForm();
   openActionModal('#outcomeModal');
+}
+function appointmentOutcomeInteractionNote(a={},sourceDate='',note='',followUpDate='',purchase={}){
+  const type=appointmentType(a),scheduled=appointmentScheduledDate(a,sourceDate),context=[type,cleanText(a.address,240),validDateKey(scheduled)?fmtDate(scheduled):''].filter(Boolean).join(' · '),details=[context];
+  if(note)details.push(cleanText(note,2000));
+  if(purchase.address)details.push(`Purchased ${purchase.address}${purchase.price?` for ${formatBuyerMoney(purchase.price)}`:''} on ${fmtDate(purchase.date)}`);
+  if(validDateKey(followUpDate))details.push(`Follow up ${fmtDate(followUpDate)}`);
+  return cleanText(details.join(' · '),2000);
+}
+function applyLinkedAppointmentOutcome(a={},sourceDate='',outcome='',{note='',followUpDate='',purchase={}}={}){
+  const linked=linkedProspectForAppointment(a);
+  if(!linked)return{linked:false,kind:'appointment'};
+  const now=Date.now(),date=todayKey(),needsFollowUp=appointmentOutcomeNeedsFollowUp(outcome),historyNote=appointmentOutcomeInteractionNote(a,sourceDate,note,followUpDate,purchase);
+  if(appointmentType(a)==='BAP'){
+    if(outcome==='Purchased'){
+      const purchaseAddress=cleanText(purchase.address,240),purchasePrice=Math.max(0,Number(purchase.price)||0),purchaseDate=validDateKey(purchase.date)?purchase.date:date,tags=Array.from(new Set([...(linked.tags||[]),'Owner'])).slice(0,12);
+      const updated=normaliseProspect({...linked,recordType:'contact',buyerStage:'Purchased',buyerPurchaseAddress:purchaseAddress,buyerPurchasePrice:purchasePrice,buyerPurchaseDate:purchaseDate,buyerConvertedAt:now,address:purchaseAddress,tags,stage:'Nurture',nextFollowUp:'',lastContact:date,updatedAt:now});
+      prospects=prospects.map(item=>item.id===linked.id?updated:item);
+    }else{
+      const buyerStage=outcome==='Offer Pending'?'Negotiating':outcome==='Interested'||outcome==='Further Inspection'?'Inspecting':linked.buyerStage;
+      prospects=prospects.map(item=>item.id===linked.id?normaliseProspect({...item,buyerStage,nextFollowUp:needsFollowUp?followUpDate:item.nextFollowUp,lastContact:date,updatedAt:now}):item);
+    }
+    prospectInteractions.push({id:prospectId(),prospectId:linked.id,date,at:now,type:'Appointment',outcome:`BAP · ${outcome}`,note:historyNote,nextFollowUp:needsFollowUp?followUpDate:''});
+    return{linked:true,kind:'buyer',converted:outcome==='Purchased',name:linked.name};
+  }
+  const stage=outcome==='Listed'?'Listed':'Nurture',sellingTimeframe=needsFollowUp?(linked.sellingTimeframe||'Now'):'';
+  prospects=prospects.map(item=>item.id===linked.id?normaliseProspect({...item,stage,sellingTimeframe,nextFollowUp:needsFollowUp?followUpDate:'',lastContact:date,updatedAt:now}):item);
+  prospectInteractions.push({id:prospectId(),prospectId:linked.id,date,at:now,type:'Appointment',outcome:`${appointmentType(a)} · ${outcome}`,note:historyNote,nextFollowUp:needsFollowUp?followUpDate:''});
+  return{linked:true,kind:'seller',name:linked.name};
 }
 async function saveSelectedAppointmentOutcome(){
   if(!pendingOutcomeAppointment||!selectedAppointmentOutcome)return;
-  const {id,sourceDate}=pendingOutcomeAppointment,outcome=selectedAppointmentOutcome,note=$('#outcomeNoteInput').value.trim();
-  closeActionModal('#outcomeModal');pendingOutcomeAppointment=null;
-  if(outcome==='Still Nurturing'){
-    await updateAppointmentRecord(id,sourceDate,{outcome,outcomeNote:note,status:'follow-up',followedUpAt:Date.now()});
-    setAppointmentFollowUp(id,sourceDate);
-  }else{
-    await updateAppointmentRecord(id,sourceDate,{outcome,outcomeNote:note,status:'completed',followedUpAt:Date.now(),followUpDate:null});toast('Appointment outcome saved');
-  }
+  const validation=appointmentOutcomeValidation();if(validation){refreshAppointmentOutcomeForm({announce:true});return}
+  const {id,sourceDate}=pendingOutcomeAppointment,entry=appointmentRecordEntry(id,sourceDate);if(!entry)return closeAppointmentOutcomeModal(),toast('Appointment could not be found');
+  const save=$('#saveAppointmentOutcome'),outcome=selectedAppointmentOutcome,note=cleanText($('#outcomeNoteInput').value,3000),needsFollowUp=appointmentOutcomeNeedsFollowUp(outcome),followUpDate=needsFollowUp?$('#outcomeFollowUpDate').value:'',purchase=outcome==='Purchased'?{address:cleanText($('#outcomePurchaseAddress').value,240),price:Math.max(0,Number($('#outcomePurchasePrice').value)||0),date:$('#outcomePurchaseDate').value}:{};
+  save.disabled=true;save.textContent='Saving…';
+  try{
+    const now=Date.now(),purchaseFields=purchase.address?{buyerPurchaseAddress:purchase.address,buyerPurchasePrice:purchase.price,buyerPurchaseDate:purchase.date}:{};
+    entry.day.appointments[entry.index]={...entry.appointment,...purchaseFields,outcome,outcomeNote:note,status:needsFollowUp?'follow-up':'completed',followUpDate:needsFollowUp?followUpDate:null,followedUpAt:needsFollowUp?null:now,updatedAt:now};
+    days[sourceDate]=entry.day;
+    const linkedResult=applyLinkedAppointmentOutcome(entry.day.appointments[entry.index],sourceDate,outcome,{note,followUpDate,purchase});
+    await saveDay(sourceDate,{render:false,awaitCloud:false});
+    if(linkedResult.linked)await saveProspecting({render:false,awaitCloud:false});
+    renderAll();closeAppointmentOutcomeModal();
+    if(!linkedResult.linked)toast('Appointment outcome saved · no linked Prospector record changed');
+    else if(linkedResult.converted)toast('Buyer converted to owner and appointment closed');
+    else toast(`${linkedResult.kind==='buyer'?'Buyer journey':'Seller pipeline'} and appointment updated`);
+  }catch(err){console.error('Appointment outcome save failed',err);save.disabled=false;save.textContent='Save Outcome';toast('Outcome could not be saved. Please try again.')}
 }
 
 function appointmentOutcomeLabel(outcome=''){
@@ -1698,9 +1821,9 @@ function appointmentOutcomeLabel(outcome=''){
 }
 function appointmentOutcomeClass(outcome=''){
   const label=appointmentOutcomeLabel(outcome);
-  if(label==='Still Nurturing')return'outcome-blue';
-  if(label==='Listed')return'outcome-green';
-  if(label==='Not Proceeding')return'outcome-amber';
+  if(['Still Nurturing','Interested','Further Inspection'].includes(label))return'outcome-blue';
+  if(['Listed','Purchased'].includes(label))return'outcome-green';
+  if(['Not Proceeding','Not Suitable','Offer Pending'].includes(label))return'outcome-amber';
   if(label==='Missed')return'outcome-red';
   return'';
 }
@@ -1714,8 +1837,8 @@ function appointmentBookedLabel(a,sourceDate=''){
 function appointmentSortPriority(entry){
   const a=entry.appointment,sourceDate=entry.sourceDate,lifecycle=appointmentLifecycle(a,sourceDate),outcome=appointmentOutcomeLabel(a.outcome);
   if(lifecycle==='follow-up'&&!outcome&&!a.followUpDate)return 0; // requires outcome
-  if(lifecycle==='follow-up'&&outcome!=='Still Nurturing')return 1; // follow-up due/scheduled
-  if(outcome==='Still Nurturing')return 2; // nurturing
+  if(lifecycle==='follow-up'&&appointmentOutcomeNeedsFollowUp(outcome))return a.followUpDate&&a.followUpDate>todayKey()?2:1;
+  if(lifecycle==='follow-up')return 1;
   if(lifecycle==='upcoming')return 3;
   if(lifecycle==='completed')return 4;
   return 5;
@@ -2414,7 +2537,7 @@ function appointmentMatchesProspect(a,p){
 }
 function listingAppointmentsForProspect(p){return allAppointmentEntries().filter(({appointment:a})=>appointmentType(a)==='LAP'&&appointmentMatchesProspect(a,p)).sort((a,b)=>appointmentTimestamp(a.appointment,a.sourceDate)-appointmentTimestamp(b.appointment,b.sourceDate))}
 function latestListingAppointmentForProspect(p){const entries=listingAppointmentsForProspect(p);return entries.find(({appointment:a,sourceDate})=>appointmentTimestamp(a,sourceDate)>=Date.now())||entries.at(-1)||null}
-function pipelineTimeframeForProspect(p){return p.sellingTimeframe||(listingAppointmentsForProspect(p).length?'Now':'')}
+function pipelineTimeframeForProspect(p){if(p.sellingTimeframe)return p.sellingTimeframe;return listingAppointmentsForProspect(p).some(({appointment})=>!appointmentOutcomeIsClosed(appointment.outcome))?'Now':''}
 function sellerPipelineProspects(){return activeProspects().filter(p=>SELLING_TIMEFRAMES.includes(pipelineTimeframeForProspect(p)))}
 function pipelineSortValue(p){if(pipelineSort==='recent')return -(Number(p.updatedAt)||0);if(pipelineSort==='name')return p.name.toLowerCase();return p.nextFollowUp||'9999-12-31'}
 function filteredPipelineProspects(timeframe){
@@ -3316,7 +3439,7 @@ function renderProspecting(){renderBuyerSessionHero();
     if(!prospectSessionActive&&activeProspectId&&!$('#prospectDetail').classList.contains('hidden'))renderProspectDetail(activeProspectId);
   }
 }
-function prospectForm(p={}){return`<form id="prospectEditor" class="prospect-editor glass"><div class="prospect-detail-nav"><button type="button" data-close-prospect>‹ Back</button><strong>${p.id?'Edit Contact':'New Contact'}</strong><span></span></div><label>Name<input name="name" value="${escapeHtml(p.name||'')}" required></label><div class="prospect-form-grid"><label>Phone<input name="phone" type="tel" value="${escapeHtml(p.phone||'')}"></label><label>Email<input name="email" type="email" value="${escapeHtml(p.email||'')}"></label></div><label>Address<input name="address" value="${escapeHtml(p.address||'')}"></label><div class="prospect-form-grid"><label>Source<input name="source" value="${escapeHtml(p.source||'')}" placeholder="Door knock, database…"></label><label>Stage<select name="stage">${['New Lead','Nurture','Appraisal Opportunity','Appointment Booked','Pipeline','Past Client'].map(x=>`<option ${p.stage===x?'selected':''}>${x}</option>`).join('')}</select></label></div><div class="prospect-form-grid"><label>Temperature<select name="temperature" data-pipeline-temperature-field>${['Cold','Warm','Hot'].map(x=>`<option ${p.temperature===x?'selected':''}>${x}</option>`).join('')}</select></label><label>Motivation<select name="motivation" data-pipeline-motivation-field>${[1,2,3,4,5].map(x=>`<option value="${x}" ${Number(p.motivation)===x?'selected':''}>${x} / 5</option>`).join('')}</select></label></div><label>Selling timeframe<select name="sellingTimeframe" data-pipeline-timeframe-field><option value="">Not currently selling</option>${SELLING_TIMEFRAMES.map(x=>`<option value="${x}" ${p.sellingTimeframe===x?'selected':''}>${x}</option>`).join('')}</select></label><label>Tags<input name="tags" value="${escapeHtml((p.tags||[]).join(', '))}" placeholder="Vendor, Toongabbie, Past client"></label><label>Next follow-up<input name="nextFollowUp" type="date" value="${p.nextFollowUp||''}"></label><label>Background notes<textarea name="notes" rows="4" placeholder="Long-term context, plans and personal details">${escapeHtml(p.notes||'')}</textarea></label><button class="primary" type="submit">${p.id?'Save Contact':'Add Contact'}</button></form>`}
+function prospectForm(p={}){return`<form id="prospectEditor" class="prospect-editor glass"><div class="prospect-detail-nav"><button type="button" data-close-prospect>‹ Back</button><strong>${p.id?'Edit Contact':'New Contact'}</strong><span></span></div><label>Name<input name="name" value="${escapeHtml(p.name||'')}" required></label><div class="prospect-form-grid"><label>Phone<input name="phone" type="tel" value="${escapeHtml(p.phone||'')}"></label><label>Email<input name="email" type="email" value="${escapeHtml(p.email||'')}"></label></div><label>Address<input name="address" value="${escapeHtml(p.address||'')}"></label><div class="prospect-form-grid"><label>Source<input name="source" value="${escapeHtml(p.source||'')}" placeholder="Door knock, database…"></label><label>Stage<select name="stage">${['New Lead','Nurture','Appraisal Opportunity','Appointment Booked','Pipeline','Listed','Past Client'].map(x=>`<option ${p.stage===x?'selected':''}>${x}</option>`).join('')}</select></label></div><div class="prospect-form-grid"><label>Temperature<select name="temperature" data-pipeline-temperature-field>${['Cold','Warm','Hot'].map(x=>`<option ${p.temperature===x?'selected':''}>${x}</option>`).join('')}</select></label><label>Motivation<select name="motivation" data-pipeline-motivation-field>${[1,2,3,4,5].map(x=>`<option value="${x}" ${Number(p.motivation)===x?'selected':''}>${x} / 5</option>`).join('')}</select></label></div><label>Selling timeframe<select name="sellingTimeframe" data-pipeline-timeframe-field><option value="">Not currently selling</option>${SELLING_TIMEFRAMES.map(x=>`<option value="${x}" ${p.sellingTimeframe===x?'selected':''}>${x}</option>`).join('')}</select></label><label>Tags<input name="tags" value="${escapeHtml((p.tags||[]).join(', '))}" placeholder="Vendor, Toongabbie, Past client"></label><label>Next follow-up<input name="nextFollowUp" type="date" value="${p.nextFollowUp||''}"></label><label>Background notes<textarea name="notes" rows="4" placeholder="Long-term context, plans and personal details">${escapeHtml(p.notes||'')}</textarea></label><button class="primary" type="submit">${p.id?'Save Contact':'Add Contact'}</button></form>`}
 function openProspectEditor(id=''){const p=id?prospectById(id):{};activeProspectId=id||null;$('#prospectingDashboard').classList.add('hidden');$('#prospectingSession').classList.add('hidden');$('#prospectDetail').classList.remove('hidden');$('#prospectDetail').innerHTML=prospectForm(p)}
 function renderProspectDetail(id){const p=prospectById(id);if(!p)return closeProspectDetail();activeProspectId=id;const history=interactionsFor(id),phone=primaryProspectPhone(p),tel=prospectTel(p),sms=phone?`sms:${phone.replace(/[^+\d]/g,'')}`:'#';$('#prospectDetail').innerHTML=`<div class="prospect-detail-nav"><button type="button" data-close-prospect>‹ Back</button><button type="button" data-edit-prospect="${p.id}">Edit</button></div><section class="prospect-profile glass"><div class="prospect-profile-top"><span class="prospect-avatar large">${escapeHtml(p.name.split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase())}</span><div><span>${escapeHtml(p.stage)}</span><h2>${escapeHtml(p.name)}</h2><small>${escapeHtml(formatProspectAddress(p.address||p.company,p.suburb)||'No address added')}</small></div><span class="prospect-temp temp-${p.temperature.toLowerCase()}">${p.temperature}</span></div><div class="prospect-quick-actions"><a href="${tel}" class="${phone?'':'disabled'}" data-prospect-call="${p.id}" data-call-from-session="0">Call</a><a href="${sms}" class="${phone?'':'disabled'}">Message</a><button type="button" data-log-prospect="${p.id}">Log Contact</button></div><div class="prospect-profile-grid"><div><span>NEXT FOLLOW-UP</span><strong>${p.nextFollowUp?fmtDate(p.nextFollowUp):'Not set'}</strong></div><div><span>LAST CONTACT</span><strong>${p.lastContact?fmtDate(p.lastContact):'Never'}</strong></div><div><span>MOTIVATION</span><strong>${p.motivation}/5</strong></div><div><span>CONTACTS</span><strong>${history.length}</strong></div></div>${pipelineTimeframeForProspect(p)?`<div class="prospect-selling-status"><span>SELLING TIMEFRAME</span><strong>${escapeHtml(pipelineTimeframeForProspect(p))}</strong>${pipelineAppointmentLabel(p)?`<small>${escapeHtml(pipelineAppointmentLabel(p))}</small>`:''}</div>`:''}${p.tags.length?`<div class="prospect-tags">${p.tags.map(t=>`<span>${escapeHtml(t)}</span>`).join('')}</div>`:''}${p.notes?`<p class="prospect-background">${escapeHtml(p.notes)}</p>`:''}</section><section class="prospecting-section glass"><div class="prospecting-section-head"><div><span>CONTACT HISTORY</span><h3>Every conversation</h3></div></div><div class="prospect-history">${history.length?history.map(x=>`<article><i></i><div><strong>${escapeHtml(x.outcome||x.type)}</strong><small>${fmtDate(x.date)} · ${new Date(x.at).toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'})}</small>${x.note?`<p>${escapeHtml(x.note)}</p>`:''}${x.nextFollowUp?`<em>Follow-up: ${fmtDate(x.nextFollowUp)}</em>`:''}${marketFollowUpHistoryMarkup(x)}</div></article>`).join(''):'<div class="prospect-empty"><strong>No contact history yet</strong><small>Log the first conversation to start building context.</small></div>'}</div></section><button class="prospect-delete" type="button" data-delete-prospect="${p.id}">Delete Contact</button>`}
 function closeProspectDetail(){activeProspectId=null;$('#prospectDetail').classList.add('hidden');$('#prospectDetail').innerHTML='';$('#prospectingSession').classList.add('hidden');$('#prospectingDashboard').classList.remove('hidden');renderProspecting()}
@@ -4213,11 +4336,12 @@ if($('#teamAppointmentNotice'))$('#teamAppointmentNotice').onclick=e=>{if(e.targ
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&editingAppointment)closeAppointmentEditor();});
 $('#saveFollowUpDate').onclick=saveAppointmentFollowUp;
 $$('[data-close-followup]').forEach(button=>button.onclick=()=>{closeActionModal('#followUpModal');pendingFollowUpAppointment=null;});
-$('#outcomeOptions').onclick=e=>{const button=e.target.closest('[data-outcome]');if(!button)return;selectedAppointmentOutcome=button.dataset.outcome;$$('#outcomeOptions button').forEach(item=>item.classList.toggle('selected',item===button));$('#saveAppointmentOutcome').disabled=false;};
+$('#outcomeOptions').onclick=e=>{const button=e.target.closest('[data-outcome]');if(!button)return;selectAppointmentOutcome(button.dataset.outcome,button);};
+['outcomeFollowUpDate','outcomePurchaseAddress','outcomePurchasePrice','outcomePurchaseDate'].forEach(id=>$(`#${id}`)?.addEventListener('input',()=>refreshAppointmentOutcomeForm()));
 $('#saveAppointmentOutcome').onclick=saveSelectedAppointmentOutcome;
-$$('[data-close-outcome]').forEach(button=>button.onclick=()=>{closeActionModal('#outcomeModal');pendingOutcomeAppointment=null;selectedAppointmentOutcome='';});
+$$('[data-close-outcome]').forEach(button=>button.onclick=closeAppointmentOutcomeModal);
 $('#followUpModal').onclick=e=>{if(e.target.id==='followUpModal'){closeActionModal('#followUpModal');pendingFollowUpAppointment=null;}};
-$('#outcomeModal').onclick=e=>{if(e.target.id==='outcomeModal'){closeActionModal('#outcomeModal');pendingOutcomeAppointment=null;selectedAppointmentOutcome='';}};
+$('#outcomeModal').onclick=e=>{if(e.target.id==='outcomeModal')closeAppointmentOutcomeModal();};
 
 $('#appointmentsView').onclick=e=>{
   const marketInsightsButton=e.target.closest('[data-open-market-insights]');

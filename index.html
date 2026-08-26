@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.36.40-beta-market-ui-cohesion">
+<link rel="stylesheet" href="styles.css?v=1.36.41-beta-appointment-outcomes">
 <title>AGNT</title>
 </head>
 <body>
@@ -1056,13 +1056,18 @@ Andrew Tour | McGrath</textarea></label>
       <div><small>APPOINTMENT</small><h2 id="outcomeModalTitle">Update Outcome</h2></div>
       <button type="button" class="action-sheet-close" data-close-outcome aria-label="Close">×</button>
     </div>
-    <div class="outcome-options" id="outcomeOptions">
-      <button type="button" class="outcome-option outcome-blue" data-outcome="Still Nurturing"><span>Still Nurturing</span><i>Continue Follow-Up</i></button>
-      <button type="button" class="outcome-option outcome-green" data-outcome="Listed"><span>Listed</span><i>Listing Secured</i></button>
-      <button type="button" class="outcome-option outcome-amber" data-outcome="Not Proceeding"><span>Not Proceeding</span><i>Close Appointment</i></button>
-      <button type="button" class="outcome-option outcome-red" data-outcome="Missed"><span>Missed</span><i>Listed With Another Agent</i></button>
+    <div class="appointment-outcome-context" id="appointmentOutcomeContext"></div>
+    <div class="outcome-options" id="outcomeOptions"></div>
+    <label class="native-date-field appointment-outcome-dependent" id="outcomeFollowUpField" hidden><span>Required Follow-Up Date</span><input id="outcomeFollowUpDate" type="date"></label>
+    <div class="appointment-outcome-dependent appointment-outcome-purchase" id="outcomePurchaseFields" hidden>
+      <label><span>Purchased Property</span><input id="outcomePurchaseAddress" type="text" maxlength="240" autocomplete="street-address" placeholder="Property address"></label>
+      <div>
+        <label><span>Purchase Price <i>Optional</i></span><input id="outcomePurchasePrice" type="number" min="0" step="1000" inputmode="numeric" placeholder="$"></label>
+        <label><span>Purchase Date</span><input id="outcomePurchaseDate" type="date"></label>
+      </div>
     </div>
     <label class="outcome-note-field"><span>Optional Note</span><textarea id="outcomeNoteInput" rows="3" placeholder="Add a short follow-up note"></textarea></label>
+    <p class="outcome-form-error" id="outcomeFormError" role="alert" hidden></p>
     <div class="action-sheet-actions"><button type="button" class="secondary" data-close-outcome>Cancel</button><button type="button" class="primary" id="saveAppointmentOutcome" disabled>Save Outcome</button></div>
   </div>
 </div>
@@ -1115,6 +1120,6 @@ Andrew Tour | McGrath</textarea></label>
 
 
 
-<script type="module" src="app.js?v=1.36.40-beta-market-ui-cohesion"></script>
+<script type="module" src="app.js?v=1.36.41-beta-appointment-outcomes"></script>
 </body>
 </html>
