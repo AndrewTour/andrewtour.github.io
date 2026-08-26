@@ -1,573 +1,393 @@
 /*
- * AGNT BETA v1.37.0 — UI System Consolidation
- * Presentation-only layer. No workflow, persistence or Firebase behaviour changes.
+ * AGNT BETA v1.37.0 — Operational Minimalism UI Refinement
+ * Presentation-only consolidation layer built on v1.36.41.
+ * CRUX/CMPN principles are used as a reference only: restraint, hierarchy,
+ * spacing, selective containment and operational scanability.
  */
 
 :root{
-  --ui-page:#ffffff;
+  /* Core palette — light mode keeps the same hierarchy while preserving Appearance. */
+  --ui-page:#f7f7f5;
   --ui-surface:#ffffff;
-  --ui-surface-soft:#f5f6f8;
-  --ui-surface-blue:#eef5ff;
-  --ui-field:#f4f6f8;
-  --ui-border:#dfe3e8;
-  --ui-rule:#eceef1;
-  --ui-text:#141820;
-  --ui-text-soft:#424b57;
-  --ui-muted:#6d7581;
-  --ui-label:#69717d;
-  --ui-faint:#9ba1aa;
-  --ui-blue:#1769d2;
-  --ui-blue-strong:#0a69d8;
-  --ui-green:#16845b;
-  --ui-amber:#946000;
-  --ui-red:#c13b50;
-  --ui-radius-control:14px;
-  --ui-radius-card:18px;
-  --ui-radius-sheet:28px;
-  --ui-shadow-card:0 8px 24px rgba(22,28,45,.045);
-  --ui-shadow-sheet:0 24px 70px rgba(20,28,45,.22);
-  --ui-control-height:48px;
-  --ui-section-gap:18px;
+  --ui-surface-2:#f1f1ef;
+  --ui-surface-3:#e9e9e6;
+  --ui-border:#deded9;
+  --ui-rule:#e8e8e4;
+  --ui-text:#11110f;
+  --ui-text-2:#3f403d;
+  --ui-muted:#747570;
+  --ui-faint:#a1a29d;
+  --ui-accent:#ef7e24;
+  --ui-accent-strong:#d96817;
+  --ui-accent-soft:#fff1e5;
+  --ui-green:#4d8668;
+  --ui-green-soft:#eaf3ee;
+  --ui-amber:#9a7440;
+  --ui-amber-soft:#f7f0e4;
+  --ui-red:#94555b;
+  --ui-red-soft:#f5e9ea;
+  --ui-radius-major:30px;
+  --ui-radius-card:22px;
+  --ui-radius-control:16px;
+  --ui-radius-small:12px;
+  --ui-control-height:46px;
+  --ui-gutter:16px;
+  --ui-section-gap:28px;
+  --ui-shadow-overlay:0 24px 72px rgba(0,0,0,.18);
   color-scheme:light;
+
+  /* Normalise legacy AGNT variables without touching component logic. */
+  --bg:var(--ui-page);
+  --card:var(--ui-surface);
+  --line:var(--ui-border);
+  --ink:var(--ui-text);
+  --muted:var(--ui-muted);
+  --cyan:var(--ui-accent);
+  --blue:var(--ui-accent);
+  --green:var(--ui-green);
+  --amber:var(--ui-amber);
+  --red:var(--ui-red);
+  --shadow:none;
+  --agnt-page:var(--ui-page);
+  --agnt-card:var(--ui-surface);
+  --agnt-field:var(--ui-surface-2);
+  --agnt-border:var(--ui-border);
+  --agnt-divider:var(--ui-rule);
+  --agnt-ink:var(--ui-text);
+  --agnt-muted:var(--ui-muted);
+  --agnt-label:var(--ui-muted);
+  --agnt-blue:var(--ui-accent);
+  --agnt-green:var(--ui-green);
+  --agnt-red:var(--ui-red);
 }
 
 html[data-theme="dark"]{
-  --ui-page:#0b0d11;
-  --ui-surface:#11141a;
-  --ui-surface-soft:#171a20;
-  --ui-surface-blue:#101c2d;
-  --ui-field:#191d23;
-  --ui-border:#2d323b;
-  --ui-rule:#242830;
-  --ui-text:#f5f6f7;
-  --ui-text-soft:#d3d7dd;
-  --ui-muted:#9ca3ae;
-  --ui-label:#8f97a2;
-  --ui-faint:#727a86;
-  --ui-blue:#82bdff;
-  --ui-blue-strong:#69a9ff;
-  --ui-green:#65d6a8;
-  --ui-amber:#ffd46e;
-  --ui-red:#ff8fa1;
-  --ui-shadow-card:none;
-  --ui-shadow-sheet:0 24px 70px rgba(0,0,0,.55);
+  --ui-page:#000000;
+  --ui-surface:#101010;
+  --ui-surface-2:#161616;
+  --ui-surface-3:#1c1c1c;
+  --ui-border:#292929;
+  --ui-rule:#202020;
+  --ui-text:#f3f3f0;
+  --ui-text-2:#c2c2bd;
+  --ui-muted:#8f8f8a;
+  --ui-faint:#5f5f5b;
+  --ui-accent:#f28a2e;
+  --ui-accent-strong:#ff9a43;
+  --ui-accent-soft:#25180f;
+  --ui-green:#6f9e82;
+  --ui-green-soft:#142019;
+  --ui-amber:#b59157;
+  --ui-amber-soft:#211c13;
+  --ui-red:#a8676c;
+  --ui-red-soft:#241617;
+  --ui-shadow-overlay:0 28px 80px rgba(0,0,0,.62);
   color-scheme:dark;
 }
 
-html,body,.app{
-  background:var(--ui-page)!important;
-  color:var(--ui-text)!important;
-}
-
+html,body,.app{background:var(--ui-page)!important;color:var(--ui-text)!important}
 body{background-image:none!important}
+body::before,body::after{display:none!important}
 
-/* One surface language: opaque, quiet and readable in both themes. */
+/* ---------- Global rhythm and hierarchy ---------- */
+.app{
+  padding-left:var(--ui-gutter)!important;
+  padding-right:var(--ui-gutter)!important;
+  background:var(--ui-page)!important;
+}
+.view{color:var(--ui-text)}
+.topbar{min-height:72px!important;padding:2px 0 10px!important;background:transparent!important}
+.topbar h1{
+  margin:0 0 5px!important;
+  color:var(--ui-text)!important;
+  font-size:1.74rem!important;
+  font-weight:760!important;
+  line-height:1!important;
+  letter-spacing:-.052em!important;
+}
+.date,.view-subtitle{color:var(--ui-muted)!important;font-size:.73rem!important;font-weight:540!important;line-height:1.35!important}
+.view-head,.timeline-view-head,.leaderboard-head,.prospecting-heading{margin:22px 0 18px!important}
+.view-head h2,.timeline-view-head h2,.leaderboard-head h2,.prospecting-heading h2{
+  margin:5px 0 0!important;
+  color:var(--ui-text)!important;
+  font-size:1.52rem!important;
+  font-weight:730!important;
+  line-height:1.07!important;
+  letter-spacing:-.042em!important;
+}
+:is(.view-head,.leaderboard-head,.prospecting-heading,.section-label,.prospecting-section-head,.day-log-head,.scorecard-head,.buyer-detail-section-head,.daily-briefing-section-head) > :is(span,div>span),
+:is(.view-head,.leaderboard-head,.prospecting-heading,.section-label,.prospecting-section-head,.day-log-head,.scorecard-head,.buyer-detail-section-head,.daily-briefing-section-head) span:first-child{
+  color:var(--ui-muted)!important;
+  font-size:.58rem!important;
+  font-weight:820!important;
+  line-height:1.15!important;
+  letter-spacing:.145em!important;
+}
+.empty{padding:28px 10px!important;color:var(--ui-muted)!important;background:transparent!important;border:0!important;font-size:.72rem!important;line-height:1.45!important}
+
+/* Important information gets size; state gets colour. */
+:is(.timeline-overview,.pipeline-overview-head,.market-pulse-hero,.campaign-hero,.prospect-intelligence-hero,.prospect-weekly-focus,.scorecard-focus) :is(h3,strong),
+:is(.appointment-card,.appointment-card-premium,.prospect-card,.buyer-card,.pipeline-seller-card) strong{color:var(--ui-text)!important}
+:is(.timeline-overview,.pipeline-overview-head,.market-pulse-hero,.campaign-hero,.prospect-intelligence-hero,.prospect-weekly-focus,.scorecard-focus) :is(p,small),
+:is(.appointment-card,.appointment-card-premium,.prospect-card,.buyer-card,.pipeline-seller-card) small{color:var(--ui-muted)!important}
+
+/* ---------- Surfaces: fewer cards, quieter chrome ---------- */
 .glass{
   background:var(--ui-surface)!important;
   border-color:var(--ui-border)!important;
-  box-shadow:var(--ui-shadow-card)!important;
+  box-shadow:none!important;
   backdrop-filter:none!important;
   -webkit-backdrop-filter:none!important;
 }
 
-/* Global screen shell and header hierarchy. */
-.app{gap:8px}
-.topbar{
-  min-height:82px;
-  padding:4px 4px 10px;
-  transform:none!important;
-}
-.topbar>div:first-child{min-width:0}
-.topbar h1{
-  margin:0 0 5px;
-  color:var(--ui-text)!important;
-  font-size:1.72rem;
-  font-weight:780;
-  line-height:1.02;
-  letter-spacing:-.045em;
-}
-.view-subtitle,.date{
-  color:var(--ui-muted)!important;
-  font-size:.78rem;
-  font-weight:520;
-  line-height:1.35;
-  letter-spacing:0;
-}
-.date-line{gap:8px}
-.top-actions{gap:8px}
-.icon-btn,.back-today,.settings-shortcut-icon{
-  min-width:44px;
-  height:44px;
-  padding:0 12px;
+/* Actionable/intelligence modules remain contained. */
+:is(.now-card,.timeline-overview,.scorecard-hero,.pipeline-overview,.market-pulse-hero,.campaign-hero,.prospect-intelligence-hero,
+    .knocking-session-card,.knocking-tally-card,.offday-review-week-card,.morning-live-shell,.returning-snapshot-shell){
   border:1px solid var(--ui-border)!important;
-  border-radius:var(--ui-radius-control)!important;
-  background:var(--ui-surface-soft)!important;
-  color:var(--ui-text)!important;
+  border-radius:var(--ui-radius-card)!important;
+  background:var(--ui-surface)!important;
   box-shadow:none!important;
 }
-.view-head,.timeline-view-head,.leaderboard-head,.prospecting-heading{
-  margin-block:14px 16px;
-}
-.view-head>div>span,.leaderboard-head span,.prospecting-heading>span,
-.section-label>span,.prospecting-section-head span,.day-log-head span,
-.scorecard-head span,.buyer-detail-section-head>span{
-  color:var(--ui-label)!important;
-  font-size:.64rem!important;
-  font-weight:800!important;
-  line-height:1.15;
-  letter-spacing:.14em!important;
-}
-.view-head h2,.timeline-view-head h2,.leaderboard-head h2,.prospecting-heading h2{
-  margin-top:5px;
-  color:var(--ui-text)!important;
-  font-size:1.55rem;
-  font-weight:750;
-  line-height:1.08;
-  letter-spacing:-.035em;
-}
 
-/* Shared type hierarchy. */
-:is(.timeline-overview,.scorecard-focus,.prospecting-section-head,.pipeline-overview-head,
-     .market-pulse-hero,.campaign-hero,.prospect-intelligence-hero,
-     .prospect-weekly-focus,.day-log-head) :is(h3,strong){
-  color:var(--ui-text);
-}
-:is(.timeline-overview,.scorecard-focus,.prospecting-section-head,.pipeline-overview-head,
-     .market-pulse-hero,.campaign-hero,.prospect-intelligence-hero,
-     .prospect-weekly-focus,.day-log-head) :is(p,small){
-  color:var(--ui-muted);
-}
-.empty{
-  padding:30px 18px;
-  color:var(--ui-muted)!important;
-  font-size:.78rem;
-  font-weight:550;
-  line-height:1.45;
-}
-
-/* Buttons: black primary in light, blue primary in dark; blue secondary everywhere. */
-.primary,.secondary,.danger,.file-btn{
-  min-height:var(--ui-control-height);
-  margin-top:8px;
-  padding:0 16px;
-  border-radius:15px!important;
+/* Simple grouped information becomes section + divider, not another card. */
+:is(.daily-timeline,.day-log-card,.today-wins,.scorecard-metrics,.scorecard-focus,.scorecard-trends,.scorecard-productivity,.scorecard-momentum,
+    .scorecard-personal-bests,.scorecard-recommendations,.scorecard-achievements,.appointment-daily-log,.leaderboard-card,.leaderboard-unified-card,
+    .prospecting-section,.pipeline-timeframe,.market-pulse-results,.market-pulse-import,.prospect-intelligence-card,.prospect-weekly-focus,
+    .buyer-list-shell,.buyer-overview,.campaign-history,.settings){
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
   box-shadow:none!important;
-  font-size:.82rem;
-  font-weight:760;
-  letter-spacing:0;
 }
-.primary{
-  border:1px solid #111318!important;
-  background:#111318!important;
-  color:#fff!important;
-}
-.secondary,.file-btn{
-  border:1px solid #cdddf3!important;
-  background:#f3f7fd!important;
-  color:var(--ui-blue)!important;
-}
-.danger{
-  border:1px solid rgba(193,59,80,.18)!important;
-  background:rgba(193,59,80,.07)!important;
-  color:var(--ui-red)!important;
-}
-.text-btn{color:var(--ui-blue)!important;font-size:.74rem;font-weight:720}
-html[data-theme="dark"] .primary{
-  border-color:#397dff!important;
-  background:#397dff!important;
-  color:#fff!important;
-}
-html[data-theme="dark"] .secondary,
-html[data-theme="dark"] .file-btn{
-  border-color:rgba(112,182,255,.28)!important;
-  background:rgba(57,125,255,.11)!important;
-  color:var(--ui-blue)!important;
+:is(.day-log-card,.today-wins,.scorecard-metrics,.scorecard-focus,.scorecard-trends,.scorecard-productivity,.scorecard-momentum,
+    .scorecard-personal-bests,.scorecard-recommendations,.scorecard-achievements,.prospecting-section,.pipeline-timeframe,.market-pulse-results,
+    .market-pulse-import,.prospect-intelligence-card,.prospect-weekly-focus,.buyer-list-shell){
+  padding-left:0!important;
+  padding-right:0!important;
 }
 
-/* Form controls share one height, radius and text weight. */
+/* ---------- Controls ---------- */
 :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),select,textarea){
-  min-height:var(--ui-control-height);
+  min-height:var(--ui-control-height)!important;
   border:1px solid var(--ui-border)!important;
   border-radius:var(--ui-radius-control)!important;
-  background:var(--ui-field)!important;
+  background:var(--ui-surface-2)!important;
   color:var(--ui-text)!important;
   -webkit-text-fill-color:var(--ui-text)!important;
   box-shadow:none!important;
-  font-size:.92rem!important;
-  font-weight:520!important;
-  letter-spacing:0!important;
 }
-textarea{padding:13px 14px!important;line-height:1.45}
-input::placeholder,textarea::placeholder{color:var(--ui-faint)!important;opacity:1}
-:is(input,select,textarea):focus{
-  border-color:#91bdf8!important;
-  outline:0!important;
-  box-shadow:0 0 0 3px rgba(23,105,210,.11)!important;
-}
-:is(.appointment-form,.settings,.prospect-editor,.campaign-builder,.pipeline-controls,.buyer-editor) label{
-  color:var(--ui-label)!important;
-  font-size:.72rem;
-  font-weight:680;
-}
+input::placeholder,textarea::placeholder{color:var(--ui-faint)!important;opacity:1!important}
+:is(input,select,textarea):focus{border-color:color-mix(in srgb,var(--ui-accent) 60%,var(--ui-border))!important;outline:0!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--ui-accent) 13%,transparent)!important}
 
-/* One segmented-control language. */
-:is(.today-page-tabs,.prospector-sections,.leaderboard-mode-tabs,.insight-period-switch,
-     .appointment-filter,.broadcast-review-switch,.appearance-options){
-  gap:4px!important;
-  padding:4px!important;
-  border:1px solid var(--ui-border)!important;
-  border-radius:16px!important;
-  background:var(--ui-surface-soft)!important;
+.primary,.secondary,.danger,.file-btn{
+  min-height:var(--ui-control-height)!important;
+  border-radius:var(--ui-radius-control)!important;
   box-shadow:none!important;
-  backdrop-filter:none!important;
-  -webkit-backdrop-filter:none!important;
+  font-size:.78rem!important;
+  font-weight:770!important;
 }
-:is(.today-page-tabs,.prospector-sections,.leaderboard-mode-tabs,.insight-period-switch,
-     .appointment-filter,.broadcast-review-switch) button{
-  min-height:40px;
-  border:0!important;
-  border-radius:12px!important;
-  background:transparent!important;
-  color:var(--ui-muted)!important;
-  box-shadow:none!important;
-  font-size:.71rem;
-  font-weight:720;
+.primary{border:1px solid var(--ui-accent)!important;background:var(--ui-accent)!important;color:#140b04!important}
+.secondary,.file-btn{border:1px solid var(--ui-border)!important;background:var(--ui-surface-2)!important;color:var(--ui-text)!important}
+.danger,.danger-btn{border-color:color-mix(in srgb,var(--ui-red) 38%,var(--ui-border))!important;background:var(--ui-red-soft)!important;color:var(--ui-red)!important}
+.text-btn{color:var(--ui-accent)!important;font-weight:720!important}
+.icon-btn,.back-today,.settings-shortcut-icon{
+  min-width:40px!important;height:40px!important;padding:0 11px!important;
+  border:1px solid var(--ui-border)!important;border-radius:var(--ui-radius-control)!important;
+  background:var(--ui-surface-2)!important;color:var(--ui-text)!important;box-shadow:none!important;
 }
-:is(.today-page-tabs,.prospector-sections,.leaderboard-mode-tabs,.insight-period-switch,
-     .appointment-filter,.broadcast-review-switch) button.active{
-  background:var(--ui-text)!important;
-  color:var(--ui-page)!important;
-  box-shadow:none!important;
-}
-html[data-theme="dark"] :is(.today-page-tabs,.prospector-sections,.leaderboard-mode-tabs,
-     .insight-period-switch,.appointment-filter,.broadcast-review-switch) button.active{
-  background:#f4f5f7!important;
-  color:#111318!important;
-}
+.back-today{border-radius:999px!important}
 
-/* Bottom navigation remains familiar but gains a consistent selected capsule. */
+/* ---------- Segmented controls / local navigation ---------- */
+:is(.today-page-tabs,.prospector-sections,.leaderboard-mode-tabs,.insight-period-switch,.appointment-filter,.broadcast-review-switch,.appearance-options){
+  gap:3px!important;padding:3px!important;border:1px solid var(--ui-border)!important;border-radius:var(--ui-radius-control)!important;
+  background:var(--ui-surface)!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+}
+:is(.today-page-tabs,.prospector-sections,.leaderboard-mode-tabs,.insight-period-switch,.appointment-filter,.broadcast-review-switch) button{
+  min-height:38px!important;border:0!important;border-radius:13px!important;background:transparent!important;color:var(--ui-muted)!important;box-shadow:none!important;font-size:.67rem!important;font-weight:700!important;
+}
+:is(.today-page-tabs,.prospector-sections,.leaderboard-mode-tabs,.insight-period-switch,.appointment-filter,.broadcast-review-switch) button.active{
+  background:var(--ui-surface-2)!important;color:var(--ui-text)!important;
+}
+:is(.today-page-tabs,.prospector-sections) button.active::after{background:var(--ui-accent)!important;height:2px!important;border-radius:999px!important}
+
+/* ---------- Bottom navigation ---------- */
 .tabbar{
-  border-top:1px solid var(--ui-rule)!important;
-  background:var(--ui-surface)!important;
-  box-shadow:none!important;
-  backdrop-filter:none!important;
-  -webkit-backdrop-filter:none!important;
+  left:50%!important;bottom:max(8px,env(safe-area-inset-bottom))!important;transform:translateX(-50%)!important;
+  width:calc(100% - 24px)!important;max-width:536px!important;min-height:64px!important;
+  padding:5px 7px!important;border:1px solid var(--ui-border)!important;border-radius:23px!important;
+  background:color-mix(in srgb,var(--ui-surface) 94%,transparent)!important;
+  box-shadow:0 12px 34px rgba(0,0,0,.12)!important;
+  backdrop-filter:blur(18px) saturate(110%)!important;-webkit-backdrop-filter:blur(18px) saturate(110%)!important;
 }
-.tabbar button{
-  min-height:54px;
-  border-radius:18px!important;
-  color:var(--ui-faint)!important;
+html[data-theme="dark"] .tabbar{box-shadow:0 16px 42px rgba(0,0,0,.42)!important}
+.tabbar button{position:relative!important;min-height:52px!important;border:0!important;border-radius:17px!important;background:transparent!important;color:var(--ui-faint)!important;box-shadow:none!important}
+.tabbar button.active{background:transparent!important;color:var(--ui-text)!important}
+.tabbar button.active::before{
+  content:""!important;display:block!important;position:absolute!important;top:2px!important;left:50%!important;width:5px!important;height:5px!important;
+  transform:translateX(-50%)!important;border:0!important;border-radius:999px!important;background:var(--ui-accent)!important;opacity:1!important;
 }
-.tabbar button.active{
-  background:var(--ui-surface-soft)!important;
-  color:var(--ui-text)!important;
-}
-html[data-theme="dark"] .tabbar button.active{
-  background:var(--ui-surface-soft)!important;
-  color:var(--ui-text)!important;
-}
-.tabbar button.active::before{display:none!important}
-.tabbar .tab-icon,.tabbar .tab-icon svg{width:21px;height:21px}
-.tabbar span{font-size:.5rem;font-weight:620}
+.tabbar .tab-icon,.tabbar .tab-icon svg{width:20px!important;height:20px!important}
+.tabbar span{font-size:.46rem!important;font-weight:600!important;color:inherit!important}
 
-/* Home: one dominant focus, followed by clean working rows. */
-.dashboard .score-week{
-  padding:8px 2px 14px!important;
-  border:0!important;
-  border-bottom:1px solid var(--ui-rule)!important;
-  border-radius:0!important;
-  background:transparent!important;
-  box-shadow:none!important;
-}
-.score-copy strong{color:var(--ui-text)!important;font-weight:700}
+/* ---------- Home / accountability ---------- */
+.dashboard .score-week{padding:8px 0 16px!important;border:0!important;border-bottom:1px solid var(--ui-rule)!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+.score-copy strong{color:var(--ui-text)!important;font-weight:650!important;letter-spacing:-.068em!important}
 .score-copy .momentum-whisper,.leaderboard-position small{color:var(--ui-muted)!important}
-.leaderboard-position{border-bottom-color:var(--ui-rule)!important}
-.now-card{
-  border:1px solid #d8e6f9!important;
-  border-radius:var(--ui-radius-card)!important;
-  background:var(--ui-surface-blue)!important;
-  box-shadow:none!important;
-}
-.now-card-label,.now-card svg{color:var(--ui-blue)!important;stroke:var(--ui-blue)!important}
-.now-card-copy strong{color:var(--ui-text)!important}
-.now-card-copy small{color:var(--ui-muted)!important}
-.dashboard .metrics{
-  border:0!important;
-  border-radius:0!important;
-  background:transparent!important;
-  box-shadow:none!important;
-}
-.dashboard .metrics>.metric{
-  border-bottom:1px solid var(--ui-rule)!important;
-  border-radius:0!important;
-  background:transparent!important;
-}
-.dashboard .metric-copy>span{color:var(--ui-label)!important}
-.dashboard .metric-copy>small{color:var(--ui-muted)!important}
+.score-week>.bar{height:3px!important;background:var(--ui-surface-3)!important;box-shadow:none!important}
+.score-week>.bar i{background:var(--ui-accent)!important;box-shadow:none!important}
+.leaderboard-position{border-bottom:1px solid var(--ui-rule)!important;background:transparent!important}
+.leaderboard-position>strong{color:var(--ui-text)!important}
+.now-card{margin-top:14px!important;padding:15px 16px!important;background:var(--ui-surface)!important}
+.now-card-label,.now-card svg{color:var(--ui-accent)!important;stroke:var(--ui-accent)!important}
+.now-card-copy strong{color:var(--ui-text)!important}.now-card-copy small{color:var(--ui-muted)!important}
+.dashboard .metrics{border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+.dashboard .metrics>.metric{padding:12px 0!important;border:0!important;border-bottom:1px solid var(--ui-rule)!important;border-radius:0!important;background:transparent!important}
+.dashboard .metrics>.metric:last-child{border-bottom:0!important}
+.dashboard .metrics>.metric.complete::before{background:var(--ui-green)!important;width:3px!important}
+.dashboard .metric-copy>span{color:var(--ui-muted)!important}.dashboard .metric-copy>small{color:var(--ui-muted)!important}.dashboard .metric-copy>em{color:var(--ui-accent)!important}
+.dashboard .metric.complete .metric-copy>em{color:var(--ui-green)!important}
 .dashboard .metric-copy>strong,.dashboard .knock #knockValue{color:var(--ui-text)!important}
-.dashboard .actions:not(.knock-actions)>button,.knock-actions>button{
-  border:1px solid var(--ui-border)!important;
-  background:var(--ui-surface-soft)!important;
-  color:var(--ui-text)!important;
-}
-.dashboard .actions:not(.knock-actions)>button:last-child,.knock-actions .timer{
-  border-color:var(--ui-text)!important;
-  background:var(--ui-text)!important;
-  color:var(--ui-page)!important;
-}
+.metric-percent.metric-ring{--ring-color:var(--ui-accent)!important}.metric.complete .metric-percent.metric-ring{--ring-color:var(--ui-green)!important}
+.metric-percent.metric-ring::before{background:var(--ui-page)!important}
+.dashboard .actions:not(.knock-actions)>button,.knock-actions>button{border:1px solid var(--ui-border)!important;background:var(--ui-surface-2)!important;color:var(--ui-text)!important;box-shadow:none!important}
+.dashboard .actions:not(.knock-actions)>button:last-child,.knock-actions .timer{border-color:var(--ui-accent)!important;background:var(--ui-accent)!important;color:#160c04!important}
 
-/* Today, Insights and Log use matching contained sections. */
-.timeline-overview,.daily-timeline,.day-log-summary,.today-wins,.day-log-card,
-.scorecard-hero,.scorecard-metrics,.scorecard-focus,.scorecard-trends,
-.scorecard-productivity,.scorecard-momentum,.scorecard-personal-bests,
-.scorecard-recommendations,.scorecard-achievements{
-  border:1px solid var(--ui-border)!important;
-  border-radius:var(--ui-radius-card)!important;
-  background:var(--ui-surface)!important;
-  box-shadow:none!important;
-}
-.timeline-overview{padding:16px!important}
-.daily-timeline{padding:4px 14px!important}
-.timeline-item{border-bottom-color:var(--ui-rule)!important}
-.timeline-item.current{background:var(--ui-surface-blue)!important}
-.day-log-summary{padding:12px!important}
-.day-log-card,.today-wins{padding:16px!important}
-.scorecard-hero,.scorecard-metrics,.scorecard-focus,
-.scorecard-trends,.scorecard-productivity,.scorecard-momentum,
-.scorecard-personal-bests,.scorecard-recommendations,.scorecard-achievements{
-  padding:16px!important;
-  margin-bottom:12px!important;
-}
-:is(.scorecard-trend-grid,.scorecard-productivity-grid,.scorecard-momentum-grid,
-     .scorecard-best-grid,.scorecard-achievement-grid) article{
-  border-color:var(--ui-border)!important;
-  background:var(--ui-surface-soft)!important;
-  box-shadow:none!important;
-}
+/* ---------- Today command centre / timeline ---------- */
+.timeline-overview{padding:16px!important;margin-bottom:18px!important;background:var(--ui-surface)!important}
+.timeline-overview-label{color:var(--ui-muted)!important;letter-spacing:.14em!important}
+.timeline-overview strong{color:var(--ui-text)!important}.timeline-overview small{color:var(--ui-muted)!important}
+.daily-timeline{padding:0!important;background:transparent!important}
+.timeline-item{border-bottom:1px solid var(--ui-rule)!important;background:transparent!important}
+.timeline-item.current{border-radius:16px!important;background:var(--ui-surface-2)!important}
+.timeline-item.current .timeline-marker{background:var(--ui-accent)!important;color:#140b04!important;box-shadow:0 0 0 4px color-mix(in srgb,var(--ui-accent) 15%,transparent)!important}
+.timeline-command-action{border-color:var(--ui-border)!important;background:var(--ui-surface)!important;box-shadow:none!important}
+.today-wins-grid article,.day-log-summary article{border:0!important;background:transparent!important}
+.day-log-item{border-bottom-color:var(--ui-rule)!important}
 
-/* Appointments: destination, editor and history share the same hierarchy. */
-.appointment-destination-grid{gap:9px}
+/* ---------- Appointments ---------- */
+.appointment-destination-grid{gap:0!important;border-top:1px solid var(--ui-rule)!important}
 .appointment-destination-card{
-  min-height:88px;
-  padding:15px 46px 15px 15px;
-  border:1px solid var(--ui-border)!important;
-  border-radius:var(--ui-radius-card)!important;
-  background:var(--ui-surface-soft)!important;
-  box-shadow:none!important;
+  min-height:82px!important;padding:14px 42px 14px 2px!important;border:0!important;border-bottom:1px solid var(--ui-rule)!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;
 }
-.appointment-destination-card span{color:var(--ui-label)!important}
-.appointment-destination-card strong{color:var(--ui-text)!important}
-.appointment-destination-card small{color:var(--ui-muted)!important}
-.appointment-form{
-  padding:16px!important;
-  border:1px solid var(--ui-border)!important;
-  border-radius:var(--ui-radius-card)!important;
-  background:var(--ui-surface)!important;
-  box-shadow:none!important;
-}
-.appointment-types label,.appointment-card,.appointment-card-premium{
-  border-color:var(--ui-border)!important;
-  background:var(--ui-surface-soft)!important;
-  box-shadow:none!important;
-}
-.appointment-card strong,.appointment-card-premium strong{color:var(--ui-text)!important}
-.appointment-card small,.appointment-card-premium small{color:var(--ui-muted)!important}
+.appointment-destination-card span{color:var(--ui-muted)!important}.appointment-destination-card strong{color:var(--ui-text)!important}.appointment-destination-card small{color:var(--ui-muted)!important}
+.appointment-form{padding:18px 0!important;border:0!important;border-top:1px solid var(--ui-rule)!important;border-bottom:1px solid var(--ui-rule)!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+.appointment-types label,.appointment-card,.appointment-card-premium{border-color:var(--ui-border)!important;border-radius:var(--ui-radius-control)!important;background:var(--ui-surface)!important;box-shadow:none!important}
+.appointment-reminder{border-color:color-mix(in srgb,var(--ui-amber) 28%,var(--ui-border))!important;background:var(--ui-amber-soft)!important}
+.ofi-duration-summary{border-color:var(--ui-border)!important;background:var(--ui-surface-2)!important}
+.appointment-history-tabs{border-color:var(--ui-border)!important;background:var(--ui-surface)!important}
 
-/* Prospector: Buyers becomes the reference hierarchy for every database mode. */
-.prospecting-toolbar{
-  padding:6px 0 10px!important;
-  border-bottom:1px solid var(--ui-rule)!important;
-  background:var(--ui-surface)!important;
-  box-shadow:none!important;
-  backdrop-filter:none!important;
-  -webkit-backdrop-filter:none!important;
-}
-.prospecting-search-wrap{
-  border:1px solid var(--ui-border)!important;
-  background:var(--ui-field)!important;
-  box-shadow:none!important;
-}
-.prospecting-call-button{
-  border:1px solid var(--ui-border)!important;
-  background:var(--ui-surface-soft)!important;
-  color:var(--ui-text)!important;
-  box-shadow:none!important;
-}
-.prospecting-add{background:#347ff2!important;color:#fff!important;box-shadow:none!important}
-.prospecting-hero,.prospecting-section,.pipeline-overview,.pipeline-timeframe,
-.market-pulse-hero,.market-pulse-results,.market-pulse-import,.campaign-hero,
-.prospect-intelligence-hero,.prospect-intelligence-card,.prospect-weekly-focus,
-.broadcast-step-surface,#broadcastMenu .broadcast-type-list{
-  border:1px solid var(--ui-border)!important;
-  border-radius:var(--ui-radius-card)!important;
-  background:var(--ui-surface)!important;
-  box-shadow:none!important;
-}
-.prospecting-hero,.campaign-hero,.market-pulse-hero{padding:17px!important}
-.prospecting-section,.pipeline-overview,.pipeline-timeframe,
-.market-pulse-results,.market-pulse-import,.prospect-intelligence-card,
-.prospect-weekly-focus,.broadcast-step-surface{padding:15px!important}
-.prospect-card,.buyer-card,.pipeline-seller-card{border-color:var(--ui-rule)!important}
-.prospect-card-copy strong,.pipeline-seller-card strong{color:var(--ui-text)!important}
-.prospect-card-copy small,.prospect-card-copy em,.pipeline-seller-card small{color:var(--ui-muted)!important}
-.prospect-tags span,.prospect-background,.buyer-position-tag{
-  background:var(--ui-surface-blue)!important;
-  color:var(--ui-blue)!important;
-}
-.prospect-quick-actions a,.prospect-quick-actions button,
-.prospect-card-actions a,.prospect-card-actions button{
-  border:1px solid #d3e2f8!important;
-  border-radius:var(--ui-radius-control)!important;
-  background:#f4f8fd!important;
-  color:var(--ui-blue)!important;
-  box-shadow:none!important;
-}
-html[data-theme="dark"] .prospect-quick-actions a,
-html[data-theme="dark"] .prospect-quick-actions button,
-html[data-theme="dark"] .prospect-card-actions a,
-html[data-theme="dark"] .prospect-card-actions button{
-  border-color:rgba(112,182,255,.26)!important;
-  background:rgba(57,125,255,.11)!important;
-}
+/* ---------- Prospector command centre ---------- */
+.prospecting-toolbar{padding:7px 0 12px!important;border:0!important;border-bottom:1px solid var(--ui-rule)!important;background:var(--ui-page)!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.prospecting-search-wrap{border:1px solid var(--ui-border)!important;border-radius:var(--ui-radius-control)!important;background:var(--ui-surface-2)!important;box-shadow:none!important}
+.prospecting-call-button{border:1px solid var(--ui-border)!important;background:var(--ui-surface-2)!important;color:var(--ui-text)!important;box-shadow:none!important}
+.prospecting-add{background:var(--ui-accent)!important;color:#160c04!important;box-shadow:none!important}
+.prospecting-dashboard,.prospector-pipeline-panel,.prospector-market-panel,.prospector-insights-panel,.prospector-buyers-panel{gap:var(--ui-section-gap)!important}
+.prospecting-hero{padding:17px 0!important;border:0!important;border-bottom:1px solid var(--ui-rule)!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+.prospecting-hero>strong{color:var(--ui-text)!important}
+.prospecting-stats{gap:0!important;border-top:1px solid var(--ui-rule)!important;border-bottom:1px solid var(--ui-rule)!important}
+.prospecting-stat{padding:13px 10px!important;border-right:1px solid var(--ui-rule)!important;background:transparent!important}.prospecting-stat:last-child{border-right:0!important}
+.prospecting-stat span{color:var(--ui-muted)!important}.prospecting-stat strong{color:var(--ui-text)!important}
+.prospecting-section{padding-top:0!important;border-top:1px solid var(--ui-rule)!important}
+.prospecting-section-head{padding-top:17px!important;margin-bottom:8px!important}
+.prospect-card,.buyer-card,.pipeline-seller-card{border-top:0!important;border-bottom:1px solid var(--ui-rule)!important;background:transparent!important}
+.prospect-card:last-child,.buyer-card:last-child,.pipeline-seller-card:last-child{border-bottom:0!important}
+.prospect-avatar{background:var(--ui-surface-2)!important;color:var(--ui-text)!important}
+.prospect-temp,.buyer-position-tag,.prospect-tags span{border:1px solid var(--ui-border)!important;background:var(--ui-surface-2)!important;color:var(--ui-muted)!important}
+.temp-hot{border-color:color-mix(in srgb,var(--ui-red) 30%,var(--ui-border))!important;background:var(--ui-red-soft)!important;color:var(--ui-red)!important}
+.temp-warm{border-color:color-mix(in srgb,var(--ui-amber) 30%,var(--ui-border))!important;background:var(--ui-amber-soft)!important;color:var(--ui-amber)!important}
+.prospect-quick-actions a,.prospect-quick-actions button,.prospect-card-actions a,.prospect-card-actions button{border:1px solid var(--ui-border)!important;border-radius:var(--ui-radius-small)!important;background:var(--ui-surface-2)!important;color:var(--ui-text)!important;box-shadow:none!important}
+.prospect-profile-grid,.prospect-session-context{background:var(--ui-rule)!important}.prospect-profile-grid div,.prospect-session-context div{background:var(--ui-surface)!important}
 
-/* Leaderboard: open data presentation with one contained overview. */
-.leaderboard-dashboard{
-  padding:16px!important;
-  border:1px solid var(--ui-border)!important;
-  border-radius:var(--ui-radius-card)!important;
-  background:var(--ui-surface)!important;
-  box-shadow:none!important;
-}
-.leaderboard-card,.leaderboard-unified-card{
-  border:0!important;
-  border-radius:0!important;
-  background:transparent!important;
-  box-shadow:none!important;
-}
-.leaderboard-row{border-bottom-color:var(--ui-rule)!important}
-.leaderboard-row:first-child{
-  border:1px solid #d8e6f9!important;
-  border-radius:var(--ui-radius-control)!important;
-  background:var(--ui-surface-blue)!important;
-}
-.leaderboard-row strong,.leaderboard-kpis strong{color:var(--ui-text)!important}
-.leaderboard-row small,.leaderboard-metric-cell span{color:var(--ui-muted)!important}
+/* Buyers: preserve orange matching intelligence, remove decorative amber acreage. */
+.buyer-card.has-buyer-matches::before{background:var(--ui-accent)!important}
+.buyer-match-alert,.buyer-match-time-alert{border-color:color-mix(in srgb,var(--ui-accent) 32%,var(--ui-border))!important;background:var(--ui-accent-soft)!important;color:var(--ui-accent)!important}
+.buyer-match-alert b,.buyer-match-time-alert::before,.buyer-property-matches-head>b{background:var(--ui-accent)!important;color:#160c04!important}
+.buyer-property-matches{padding:14px 0!important;border:0!important;border-top:1px solid var(--ui-rule)!important;border-bottom:1px solid var(--ui-rule)!important;border-radius:0!important;background:transparent!important}
+.buyer-property-match-list article{border-top-color:var(--ui-rule)!important}
+.buyer-property-match-list h4{color:var(--ui-text)!important}.buyer-property-match-list p,.buyer-property-match-list small{color:var(--ui-muted)!important}
+.buyer-match-state{border-color:color-mix(in srgb,var(--ui-accent) 30%,var(--ui-border))!important;background:var(--ui-accent-soft)!important;color:var(--ui-accent)!important}
 
-/* Settings: clear grouped sections and a quiet destructive zone. */
-.settings{
-  padding:0 0 20px!important;
-  border:0!important;
-  border-radius:0!important;
-  background:transparent!important;
-  box-shadow:none!important;
-}
-.profile-hero{padding:4px 2px 14px;border-bottom:1px solid var(--ui-rule)}
-.profile-hero-copy h2{color:var(--ui-text)!important;font-weight:750;letter-spacing:-.03em}
-.account-email,.profile-hero-copy span{color:var(--ui-muted)!important}
-.profile-kpis{
-  gap:8px;
-  margin:14px 0 18px;
-}
-.profile-kpis article{
-  padding:13px;
-  border:1px solid var(--ui-border)!important;
-  border-radius:var(--ui-radius-control)!important;
-  background:var(--ui-surface-soft)!important;
-  box-shadow:none!important;
-}
-.profile-kpis span{color:var(--ui-label)!important}
-.profile-kpis strong{color:var(--ui-text)!important}
-.settings>fieldset{
-  margin:18px 0!important;
-  padding:16px!important;
-  border:1px solid var(--ui-border)!important;
-  border-radius:var(--ui-radius-card)!important;
-  background:var(--ui-surface)!important;
-}
-.settings>fieldset legend{
-  padding:0 6px;
-  color:var(--ui-text)!important;
-  font-size:.82rem;
-  font-weight:740;
-}
-.workday-options span,.calendar-preference-options label,.calendar-option-content{
-  border-color:var(--ui-border)!important;
-  background:var(--ui-surface-soft)!important;
-  color:var(--ui-muted)!important;
-}
-.workday-options input:checked+span,.calendar-preference-options label:has(input:checked){
-  border-color:#aac9f2!important;
-  background:var(--ui-surface-blue)!important;
-  color:var(--ui-blue)!important;
-}
-#signOut{margin-top:18px}
+/* Seller pipeline: commercial state first, cards become rows. */
+.pipeline-overview{padding:17px!important}.pipeline-overview-head>strong,.pipeline-overview-head strong{color:var(--ui-text)!important}
+.pipeline-summary-grid{gap:0!important;border-top:1px solid var(--ui-rule)!important;border-bottom:1px solid var(--ui-rule)!important}.pipeline-summary-card{border:0!important;border-right:1px solid var(--ui-rule)!important;border-radius:0!important;background:transparent!important}.pipeline-summary-card:last-child{border-right:0!important}
+.pipeline-timeframe{padding:0!important}.pipeline-timeframe-head{padding:18px 0 9px!important;border-bottom:1px solid var(--ui-rule)!important}.pipeline-timeframe-head h3{color:var(--ui-text)!important}.pipeline-timeframe-head strong{color:var(--ui-muted)!important}
+.pipeline-controls{border-color:var(--ui-border)!important;background:var(--ui-surface)!important;box-shadow:none!important}
 
-/* One modal/sheet system: opaque surface, no background blur, predictable actions. */
-.modal,.action-sheet-modal,.team-appointment-notice,.appointment-assignment-modal,
-.pipeline-refresh-overlay,.buyer-followup-overlay,
-.knocking-capture-overlay,.manual-dialler-overlay{
-  background:rgba(20,24,32,.42)!important;
-  backdrop-filter:none!important;
-  -webkit-backdrop-filter:none!important;
-}
-.modal .glass,.action-sheet.glass,.manual-dialler.glass,.calendar-shell.glass,
-.day-review-card,.team-appointment-notice-card,.appointment-assignment-card,
-.pipeline-refresh-card,.buyer-followup-sheet{
-  border:1px solid var(--ui-border)!important;
-  border-radius:var(--ui-radius-sheet)!important;
-  background:var(--ui-surface)!important;
-  color:var(--ui-text)!important;
-  box-shadow:var(--ui-shadow-sheet)!important;
-  backdrop-filter:none!important;
-  -webkit-backdrop-filter:none!important;
-}
-.action-sheet-close,.team-manager-close,.team-close{
-  min-width:44px;
-  min-height:44px;
-  border:1px solid var(--ui-border)!important;
-  border-radius:var(--ui-radius-control)!important;
-  background:var(--ui-surface-soft)!important;
-  color:var(--ui-muted)!important;
-}
-.action-sheet-actions,.team-appointment-notice-actions,.pipeline-refresh-actions,
-.buyer-followup-actions{gap:10px}
+/* MarketPulse: intelligence is retained; simple events read as rows. */
+.market-pulse-hero{padding:17px!important}
+.market-pulse-results{padding:0!important}.market-pulse-list{border-top:1px solid var(--ui-rule)!important}
+.market-pulse-card{padding:15px 0!important;border:0!important;border-bottom:1px solid var(--ui-rule)!important;border-radius:0!important;background:transparent!important}
+.market-pulse-card:last-child{border-bottom:0!important}.market-pulse-card-head>button{border:1px solid var(--ui-border)!important;background:var(--ui-surface-2)!important;color:var(--ui-text)!important}
+.market-event-tag{border:1px solid var(--ui-border)!important;background:var(--ui-surface-2)!important;color:var(--ui-muted)!important}
+.event-price-update,.event-price-changed,.event-price-change{border-color:color-mix(in srgb,var(--ui-amber) 30%,var(--ui-border))!important;background:var(--ui-amber-soft)!important;color:var(--ui-amber)!important}
+.event-sold{border-color:color-mix(in srgb,var(--ui-green) 30%,var(--ui-border))!important;background:var(--ui-green-soft)!important;color:var(--ui-green)!important}
+.market-followup-ready{border-left-color:var(--ui-accent)!important}.market-followup-ready strong{background:var(--ui-accent)!important;color:#160c04!important}
+.knocking-hotspot-item{border-bottom:1px solid var(--ui-rule)!important;border-radius:0!important;background:transparent!important}.knocking-hotspot-reasons span{background:var(--ui-surface-2)!important;color:var(--ui-accent)!important}
 
-/* Universal secondary-screen navigation. */
-:is(.prospect-session-head,.prospect-detail-nav,.knocking-history-head)>button:first-child,
-[data-team-back],#backFromArchivedContacts,#backFromMarketPulse,#broadcastBack{
-  color:var(--ui-blue)!important;
-}
-:is(.prospect-session-head,.prospect-detail-nav,.knocking-history-head){
-  border-bottom-color:var(--ui-rule)!important;
-}
+/* Broadcasts / campaigns. */
+.campaign-hero{padding:17px!important}.broadcast-type-card,.broadcast-step-surface{border:1px solid var(--ui-border)!important;border-radius:var(--ui-radius-card)!important;background:var(--ui-surface)!important;box-shadow:none!important}
+.broadcast-audience-intro,.campaign-preview article,.campaign-history article,.broadcast-recipient-list label{border-radius:var(--ui-radius-small)!important;background:var(--ui-surface-2)!important;color:var(--ui-text)!important}
+.campaign-warnings span{background:var(--ui-amber-soft)!important;color:var(--ui-amber)!important}.broadcast-readiness{border-color:var(--ui-border)!important;background:var(--ui-surface-2)!important}
 
-/* Accessible feedback without adding visual noise. */
-:is(button,a,input,select,textarea):focus-visible{
-  outline:3px solid rgba(23,105,210,.2)!important;
-  outline-offset:2px;
+/* ---------- Leaderboard / insights ---------- */
+.leaderboard-dashboard{padding:17px!important;border:1px solid var(--ui-border)!important;border-radius:var(--ui-radius-card)!important;background:var(--ui-surface)!important;box-shadow:none!important}
+.leaderboard-unified-card{padding:0!important}.leaderboard-row{border-bottom:1px solid var(--ui-rule)!important;background:transparent!important}.leaderboard-row:first-child{border:0!important;border-bottom:1px solid var(--ui-rule)!important;border-radius:0!important;background:transparent!important}
+.leaderboard-row .rank{background:var(--ui-surface-2)!important;color:var(--ui-muted)!important}.leaderboard-row strong,.leaderboard-kpis strong{color:var(--ui-text)!important}.leaderboard-row small,.leaderboard-metric-cell span{color:var(--ui-muted)!important}
+:is(.scorecard-trend-grid,.scorecard-productivity-grid,.scorecard-momentum-grid,.scorecard-best-grid,.scorecard-achievement-grid) article{border:0!important;border-bottom:1px solid var(--ui-rule)!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+
+/* ---------- Settings ---------- */
+.settings{padding-bottom:20px!important}.profile-hero{padding:4px 0 16px!important;border-bottom:1px solid var(--ui-rule)!important}.profile-hero-copy h2{color:var(--ui-text)!important}.account-email,.profile-hero-copy span{color:var(--ui-muted)!important}
+.profile-kpis{gap:0!important;margin:16px 0 24px!important;border-top:1px solid var(--ui-rule)!important;border-bottom:1px solid var(--ui-rule)!important}.profile-kpis article{padding:13px 8px!important;border:0!important;border-right:1px solid var(--ui-rule)!important;border-radius:0!important;background:transparent!important}.profile-kpis article:last-child{border-right:0!important}
+.settings>fieldset{margin:24px 0!important;padding:0 0 20px!important;border:0!important;border-bottom:1px solid var(--ui-rule)!important;border-radius:0!important;background:transparent!important}.settings>fieldset legend{padding:0 0 12px!important;color:var(--ui-text)!important;font-size:.82rem!important;font-weight:720!important}
+.workday-options span,.calendar-preference-options label,.calendar-option-content{border-color:var(--ui-border)!important;background:var(--ui-surface-2)!important;color:var(--ui-muted)!important}.workday-options input:checked+span,.calendar-preference-options label:has(input:checked){border-color:color-mix(in srgb,var(--ui-accent) 40%,var(--ui-border))!important;background:var(--ui-accent-soft)!important;color:var(--ui-accent)!important}
+.marketpulse-automation-card,.team-account-summary,.team-code-panel{border-color:var(--ui-border)!important;background:var(--ui-surface)!important;box-shadow:none!important}
+
+/* ---------- Overlays / secondary workspaces ---------- */
+:is(.modal,.action-sheet-modal,.team-onboarding,.team-manager,.team-appointment-notice,.appointment-assignment-modal,.pipeline-refresh-overlay,.buyer-followup-overlay,
+    .knocking-capture-overlay,.manual-dialler-modal,.buyer-match-outcome-overlay,.buyer-match-sms-overlay,.appointment-market-insights-overlay){
+  background:rgba(0,0,0,.62)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
 }
+:is(.action-sheet,.manual-dialler,.calendar-shell,.day-review-card,.team-onboarding-card,.team-manager-card,.team-appointment-notice-card,.appointment-assignment-card,
+    .pipeline-refresh-card,.buyer-followup-sheet,.buyer-match-outcome-sheet,.buyer-match-sms-sheet,.appointment-market-insights-sheet){
+  border:1px solid var(--ui-border)!important;border-radius:var(--ui-radius-major)!important;background:var(--ui-surface)!important;color:var(--ui-text)!important;box-shadow:var(--ui-shadow-overlay)!important;
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+}
+.action-sheet-handle,.team-onboarding-handle,.team-manager-handle,.appointment-market-insights-handle{background:var(--ui-border)!important}
+.action-sheet-close,.team-close,.team-manager-close,.buyer-match-outcome-head>button,.appointment-market-insights-sheet>header button{border:1px solid var(--ui-border)!important;border-radius:var(--ui-radius-control)!important;background:var(--ui-surface-2)!important;color:var(--ui-text)!important;box-shadow:none!important}
+.action-sheet-head small,.appointment-assignment-kicker,.team-appointment-notice-kicker,.team-onboarding-kicker,.team-manager-heading>span,.buyer-match-outcome-head span,.buyer-match-outcome-step>span{color:var(--ui-accent)!important}
+.appointment-outcome-context,.appointment-outcome-purchase,.buyer-match-outcome-context,.team-privacy-note,.team-join-confirm-card{border-color:var(--ui-border)!important;background:var(--ui-surface-2)!important;color:var(--ui-text)!important}
+.outcome-sheet .outcome-options button,.buyer-match-outcome-options button,.buyer-match-reason-grid button,.manual-call-outcome-options button{border-color:var(--ui-border)!important;background:var(--ui-surface-2)!important;color:var(--ui-text)!important;box-shadow:none!important}
+.action-sheet-actions{background:color-mix(in srgb,var(--ui-surface) 97%,transparent)!important}
+
+/* Team / onboarding use the same system as the app, not a separate product. */
+.team-choice,.team-manager-invite,.team-member-list article,.team-created-code,.team-created-summary{border-color:var(--ui-border)!important;background:var(--ui-surface-2)!important;box-shadow:none!important}.team-choice-icon,.team-join-confirm-icon,.team-created-check{background:var(--ui-surface-3)!important;color:var(--ui-accent)!important}.team-choice-copy strong,.team-onboarding-heading h1,.team-manager-heading h1{color:var(--ui-text)!important}.team-choice-copy small,.team-onboarding-heading p,.team-manager-heading p{color:var(--ui-muted)!important}
+
+/* Full-screen secondary experiences keep the same canvas. */
+:is(.knocking-history-view,.offday-review-screen,.returning-snapshot-screen,.welcome-screen){background:var(--ui-page)!important;color:var(--ui-text)!important}
+:is(.knocking-history-summary,.knocking-history-list-wrap,.offday-review-section,.welcome-simple-section,.welcome-pipeline-section,.welcome-momentum-section){border-color:var(--ui-border)!important;background:transparent!important;box-shadow:none!important}
+.knocking-history-item,.knocking-log-item,.offday-metric-grid article,.offday-day-list article,.offday-appointment-counts span{background:var(--ui-surface-2)!important;color:var(--ui-text)!important}
+
+/* Universal back/close language. */
+:is(.prospect-session-head,.prospect-detail-nav,.knocking-history-head,.appointment-history-head)>button:first-child,
+[data-team-back],#backFromArchivedContacts,#backFromMarketPulse,#broadcastBack{color:var(--ui-accent)!important}
+:is(.prospect-session-head,.prospect-detail-nav,.knocking-history-head,.appointment-history-head){border-bottom-color:var(--ui-rule)!important}
+
+/* Accessible focus and quiet tactile feedback. */
+:is(button,a,input,select,textarea):focus-visible{outline:2px solid color-mix(in srgb,var(--ui-accent) 58%,transparent)!important;outline-offset:2px!important}
 button:active:not(:disabled){transform:scale(.985)}
-@media(prefers-reduced-motion:reduce){
-  *,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}
-}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}}
 
-@media(display-mode:standalone){
-  html,body,.app{background:var(--ui-page)!important}
-}
+@media(display-mode:standalone){html,body,.app{background:var(--ui-page)!important}}
 
 @media(max-width:430px){
-  .topbar{min-height:76px;padding-bottom:8px}
-  .topbar h1{font-size:1.6rem}
-  .view-head h2,.timeline-view-head h2,.leaderboard-head h2,.prospecting-heading h2{font-size:1.45rem}
-  .tabbar{padding-inline:6px}
-  .tabbar button{border-radius:16px!important}
-  .settings>fieldset{padding:14px!important}
+  :root{--ui-gutter:15px;--ui-section-gap:24px}
+  .topbar{min-height:68px!important}.topbar h1{font-size:1.62rem!important}
+  .view-head h2,.timeline-view-head h2,.leaderboard-head h2,.prospecting-heading h2{font-size:1.44rem!important}
+  .tabbar{width:calc(100% - 20px)!important;border-radius:21px!important}
 }
-
 @media(max-width:390px){
-  .topbar h1{font-size:1.5rem}
-  .view-subtitle,.date{font-size:.72rem}
-  :is(.today-page-tabs,.prospector-sections,.leaderboard-mode-tabs,.insight-period-switch,
-       .appointment-filter,.broadcast-review-switch) button{font-size:.66rem;padding-inline:3px!important}
-  .tabbar span{font-size:.46rem}
+  :root{--ui-gutter:14px}
+  .topbar h1{font-size:1.52rem!important}.view-subtitle,.date{font-size:.69rem!important}
+  :is(.today-page-tabs,.prospector-sections,.leaderboard-mode-tabs,.insight-period-switch,.appointment-filter,.broadcast-review-switch) button{font-size:.63rem!important;padding-inline:2px!important}
+  .tabbar span{font-size:.43rem!important}
 }
