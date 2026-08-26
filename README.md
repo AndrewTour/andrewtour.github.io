@@ -1,4 +1,18 @@
-# AGNT BETA v1.36.38 — Viewport Containment + Buyer Match Placement
+# AGNT BETA v1.36.39 — Overlay Clarity
+
+Built incrementally on the confirmed working v1.36.38 Viewport Containment + Buyer Match release.
+
+## v1.36.39 changes
+
+- Market Insights now opens as a full-height, single-surface view with a fixed header and bottom actions.
+- Market Insight listings use whitespace and dividers rather than nested rounded cards.
+- Upcoming appointment cards show one concise, tappable MarketPulse summary row; the richer talking points remain available in Market Insights.
+- Hot Spotting sessions use flat event sections rather than stacked outer and inner cards.
+- Completed Hot Spotting sessions collapse to a quiet summary row and can be expanded to review their detail.
+- MarketPulse matching, appointment behaviour, Hot Spotting session logic and buyer matching remain unchanged.
+- No Firebase, Firestore, authentication, rules, sync, cache or data-shape changes.
+
+## Previous release — v1.36.38
 
 Built incrementally on the confirmed working v1.36.37 Today Buyer Summary release.
 
