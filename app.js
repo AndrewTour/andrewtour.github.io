@@ -163,7 +163,7 @@ function applyAppearance(pref=appearancePreference,{persist=true}={}){
   document.documentElement.dataset.theme=theme;
   document.documentElement.dataset.auth=authScreenActive?'true':'false';
   document.documentElement.style.colorScheme=theme;
-  const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.setAttribute('content',theme==='dark'?'#000000':'#f7f7f5');
+  const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.setAttribute('content',theme==='dark'?'#0b0d11':'#ffffff');
   if(persist){try{localStorage.setItem('agnt:appearance',appearancePreference)}catch{}}
 }
 function setAuthScreenActive(active){authScreenActive=Boolean(active);applyAppearance(appearancePreference,{persist:false})}

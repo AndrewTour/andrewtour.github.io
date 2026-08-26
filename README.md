@@ -1,19 +1,8 @@
-# AGNT BETA v1.37.0 — Operational Minimalism UI Refinement
+# AGNT BETA v1.36.41 — Appointment Outcome Intelligence
 
-Built incrementally on the confirmed working v1.36.41 Appointment Outcome Intelligence release.
+Built incrementally on the confirmed working v1.36.40 Market UI Cohesion release.
 
-## v1.37.0 changes
-
-- Added one shared presentation layer across AGNT so typography, spacing, surfaces, borders, radii, controls and overlays now follow one coherent system without changing workflow logic.
-- Dark mode now uses a true near-black canvas with restrained charcoal surfaces and dividers; light mode keeps the same hierarchy so the existing Appearance setting remains functional.
-- AGNT orange is the primary interaction and attention accent across navigation, progress, active controls and important intelligence, with muted semantic green, amber and red states.
-- Reduced card stacking across Today, Appointments, Prospector, Buyers, Pipeline, MarketPulse, Leaderboard, Insights and Settings by converting simple grouped information to rows and dividers while retaining containment for actionable and intelligence-heavy modules.
-- Bottom navigation is now a quieter floating dark/light surface with a small orange active indicator and monochrome inactive states.
-- Overlays, appointment outcomes, buyer-match sheets, team management, Market Insight and secondary workspaces now share the same viewport containment, border, radius and type language.
-- Updated PWA theme colour and cache references for the new UI layer.
-- No Firebase configuration, Firestore rule, authentication flow, UID separation, storage key, sync logic, collection path, data format or migration changed.
-
-## Previous release — v1.36.41
+## v1.36.41 changes
 
 - Appointment outcomes now follow the appointment type: MAP/LAP use seller outcomes, while BAP uses buyer-specific Interested, Further Inspection, Offer Pending, Not Suitable and Purchased outcomes.
 - Open outcomes require a current or future follow-up date in the same outcome sheet, removing the separate second step.
