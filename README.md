@@ -1,4 +1,18 @@
-# AGNT BETA v1.36.44 — Prospect Add Contact Null Guard
+# AGNT BETA v1.36.45 — Premium Visual Refinement
+
+Built directly on the supplied, confirmed-working v1.36.44 Prospect Add Contact Null Guard release. v1.36.44 itself is the supplied v1.36.42 Unified Buyer + Seller Profiles baseline plus its single confirmed null guard; no older recovery package or rejected v1.36.43 workaround has been combined into this release.
+
+## v1.36.45 changes
+
+- Introduces one semantic Light/Dark presentation system for colour, type, spacing, radius, elevation, status and motion through `ui-system.css`.
+- Establishes clearer hierarchy across launch, Home, Today, Insights, Log, Knocking, Prospector, Contacts, Buyers, Seller Pipeline, MarketPulse, Broadcast, Appointments, Leaderboard, Settings and Team surfaces.
+- Replaces repeated dashboard-card treatment with compact command rows, continuous records, timeline rails, section dividers and restrained working surfaces.
+- Standardises controls, forms, segmented navigation, touch feedback, focus-visible states, status treatment, overlays, confirmation sheets and keyboard-aware safe-area spacing.
+- Adds targeted 375px, 390–393px, 430px and short-height viewport safeguards, plus reduced-motion handling and horizontal-overflow containment.
+- Adds the consolidated presentation stylesheet to the offline asset cache and bumps the service-worker cache identifier.
+- Firebase configuration, authentication, Firestore collections/paths/rules, UID/team separation, local-storage keys, data shapes, calculations, navigation, save/sync logic, MarketPulse logic, buyer/seller canonical-profile logic and appointment behaviour remain unchanged.
+
+## Previous release — v1.36.44
 
 Built incrementally on the supplied v1.36.42 Unified Buyer + Seller Profiles release, with v1.36.41 used as the confirmed-working reference for Prospecting contact creation.
 
