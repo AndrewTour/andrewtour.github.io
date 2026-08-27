@@ -1,15 +1,18 @@
-# AGNT BETA v1.36.43 — Prospect Add Contact Fix
+# AGNT BETA v1.36.44 — Prospect Add Contact Null Guard
 
-Built incrementally on the supplied confirmed-working v1.36.42 Unified Buyer + Seller Profiles release.
+Built incrementally on the supplied v1.36.42 Unified Buyer + Seller Profiles release, with v1.36.41 used as the confirmed-working reference for Prospecting contact creation.
 
-## v1.36.43 changes
+## v1.36.44 changes
 
-- Prospecting → Add Contact now completes immediately from the local UID-scoped contact state instead of waiting for the debounced Firestore round trip before finishing the UI action.
-- The saved contact is opened directly after creation so the user receives an unambiguous successful save state.
-- Contact save now guards against a failed cloud write leaving the Add Contact control stuck. Existing local-save and sync-warning behaviour is retained.
-- Buyer/seller canonical matching and unification remain unchanged. Firebase configuration, Authentication, Firestore paths/rules, UID separation, cache data shapes and all unrelated workflows are unchanged.
+- Fixes the v1.36.42 Prospecting Add Contact regression where a brand-new contact could fail before persistence because the unified buyer/seller path attempted to read buyer position tags from a null existing record.
+- Adds a null-safe empty-record fallback at that single call site.
+- Restores the original v1.36.42 save/sync workflow; the v1.36.43 local-first workaround is not included.
+- Canonical buyer/seller identity matching, existing-contact reuse, duplicate merge, `also buying` flow and linked profile behaviour remain unchanged.
+- Firebase configuration, authentication, UID/team separation, Firestore paths/rules, local-storage keys, save/sync behaviour, MarketPulse and appointment behaviour are unchanged.
 
 ## Previous release — v1.36.42
+
+## v1.36.42 changes
 
 - Buyers and seller-pipeline contacts can now share one canonical profile, one interaction history and one follow-up instead of creating parallel contact records.
 - Add Buyer now starts with an existing-contact picker that prioritises active seller-pipeline records. Searching by name, mobile or address opens that same contact and adds the buyer brief in place.
