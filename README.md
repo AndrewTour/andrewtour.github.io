@@ -1,8 +1,15 @@
-# AGNT BETA v1.36.42 — Unified Buyer + Seller Profiles
+# AGNT BETA v1.36.43 — Prospect Add Contact Fix
 
-Built incrementally on the supplied confirmed-working v1.36.41 Appointment Outcome Intelligence release.
+Built incrementally on the supplied confirmed-working v1.36.42 Unified Buyer + Seller Profiles release.
 
-## v1.36.42 changes
+## v1.36.43 changes
+
+- Prospecting → Add Contact now completes immediately from the local UID-scoped contact state instead of waiting for the debounced Firestore round trip before finishing the UI action.
+- The saved contact is opened directly after creation so the user receives an unambiguous successful save state.
+- Contact save now guards against a failed cloud write leaving the Add Contact control stuck. Existing local-save and sync-warning behaviour is retained.
+- Buyer/seller canonical matching and unification remain unchanged. Firebase configuration, Authentication, Firestore paths/rules, UID separation, cache data shapes and all unrelated workflows are unchanged.
+
+## Previous release — v1.36.42
 
 - Buyers and seller-pipeline contacts can now share one canonical profile, one interaction history and one follow-up instead of creating parallel contact records.
 - Add Buyer now starts with an existing-contact picker that prioritises active seller-pipeline records. Searching by name, mobile or address opens that same contact and adds the buyer brief in place.
