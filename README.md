@@ -1,8 +1,20 @@
-# AGNT BETA v1.36.41 — Appointment Outcome Intelligence
+# AGNT BETA v1.36.42 — Unified Buyer + Seller Profiles
 
-Built incrementally on the confirmed working v1.36.40 Market UI Cohesion release.
+Built incrementally on the supplied confirmed-working v1.36.41 Appointment Outcome Intelligence release.
 
-## v1.36.41 changes
+## v1.36.42 changes
+
+- Buyers and seller-pipeline contacts can now share one canonical profile, one interaction history and one follow-up instead of creating parallel contact records.
+- Add Buyer now starts with an existing-contact picker that prioritises active seller-pipeline records. Searching by name, mobile or address opens that same contact and adds the buyer brief in place.
+- Contact create/edit and contact detail now include an `also buying` action, so the buyer brief can be added directly from the normal contact or pipeline workflow.
+- Selecting `Buyer Seller` in the buyer brief exposes the seller-side timeframe while retaining the current home, seller stage, contact notes and existing pipeline history.
+- Seller Pipeline, Contacts, buyer cards and both profile views show a clear `Buyer + Seller` identifier and provide direct navigation between the buyer brief and seller profile.
+- Exact existing matches reuse the canonical contact. If an older separate buyer record is encountered during a save, its buyer criteria and interactions are merged into the seller contact, the duplicate record is removed, and its former ID is retained only as an internal alias so historic appointment links continue to resolve.
+- Archiving or completing the buyer journey affects the buyer side only when a seller/contact role exists; the seller pipeline, current-home address and seller follow-up remain intact.
+- Legacy buyer-only records remain valid and are upgraded in place when a seller/contact role is added. No bulk migration or destructive automatic matching runs on launch.
+- Firebase configuration, authentication, UID/team separation, Firestore paths and rules, local-storage keys, MarketPulse, appointment outcome behaviour and GitHub Pages deployment structure are unchanged. The optional role and alias fields live inside the existing prospect record.
+
+## Previous release — v1.36.41
 
 - Appointment outcomes now follow the appointment type: MAP/LAP use seller outcomes, while BAP uses buyer-specific Interested, Further Inspection, Offer Pending, Not Suitable and Purchased outcomes.
 - Open outcomes require a current or future follow-up date in the same outcome sheet, removing the separate second step.
