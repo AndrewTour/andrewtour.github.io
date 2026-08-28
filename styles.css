@@ -13355,3 +13355,65 @@ html[data-theme="dark"] .buyer-linked-seller-profile>div>span{color:#f3bb69}
   .prospect-buyer-role button,.contact-buyer-role.linked button{width:100%}
   .buyer-linked-seller-profile dl>div{grid-template-columns:96px minmax(0,1fr)}
 }
+
+/* AGNT v1.36.45 — navigation-only refinement.
+   The existing bar geometry, safe-area placement and six destinations are inherited.
+   Only the selected-state language and tactile feedback are refined. */
+.tabbar button{
+  position:relative;
+  isolation:isolate;
+  background:transparent!important;
+  color:#989da5!important;
+  box-shadow:none!important;
+  transition:color 180ms cubic-bezier(.22,.75,.24,1),transform 120ms ease-out!important;
+}
+.tabbar button::before{
+  content:""!important;
+  position:absolute!important;
+  inset:auto!important;
+  top:2px!important;
+  left:50%!important;
+  z-index:1!important;
+  display:block!important;
+  width:4px!important;
+  height:4px!important;
+  border:0!important;
+  border-radius:50%!important;
+  background:var(--agnt-blue,#2f6df6)!important;
+  box-shadow:none!important;
+  opacity:0!important;
+  transform:translateX(-50%) scale(.65)!important;
+  transition:opacity 160ms ease-out,transform 180ms cubic-bezier(.22,.75,.24,1)!important;
+}
+.tabbar button.active{
+  background:transparent!important;
+  color:var(--agnt-blue,#2f6df6)!important;
+  box-shadow:none!important;
+}
+.tabbar button.active::before{
+  opacity:1!important;
+  transform:translateX(-50%) scale(1)!important;
+}
+.tabbar button .tab-icon,
+.tabbar button span{
+  color:inherit!important;
+  opacity:1!important;
+  transform:none!important;
+  transition:color 180ms cubic-bezier(.22,.75,.24,1),opacity 180ms ease-out!important;
+}
+.tabbar button:not(.active) .tab-icon,
+.tabbar button:not(.active) span{opacity:.72!important}
+.tabbar button:active:not(:disabled){transform:scale(.97)!important}
+
+html[data-theme="dark"] .tabbar button{color:#626975!important}
+html[data-theme="dark"] .tabbar button.active{color:#79aaff!important}
+html[data-theme="dark"] .tabbar button.active::before{
+  background:#79aaff!important;
+  border:0!important;
+}
+
+@media(prefers-reduced-motion:reduce){
+  .tabbar button,.tabbar button::before,.tabbar button .tab-icon,.tabbar button span{
+    transition:none!important;
+  }
+}
