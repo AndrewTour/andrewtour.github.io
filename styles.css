@@ -12143,9 +12143,9 @@ html[data-theme="dark"] #marketPulseAutomationDetail,html[data-theme="dark"] .ma
 }
 .timeline-item.current .timeline-plan-action{border-color:var(--agnt-blue,#1769ff)!important;background:var(--agnt-blue,#1769ff)!important;color:#fff!important}
 .timeline-plan-action.is-complete{color:var(--agnt-green,#079a67)!important}
-.timeline-item.attention{margin:4px -9px;padding:16px 9px;border-radius:17px;background:#fff8ea}
+.timeline-item.attention{margin:0;padding:16px 0;border-radius:0;background:transparent;box-shadow:none}
 .timeline-item.attention .timeline-marker{background:#c68416!important;color:#fff!important}
-.timeline-item.attention .timeline-item-kicker{color:#a76600}
+.timeline-item.attention .timeline-item-kicker{color:var(--agnt-blue,#1769ff)}
 .timeline-street-list{display:grid;gap:0;margin-top:5px;border-top:1px solid var(--agnt-rule,#e8eaee);border-bottom:1px solid var(--agnt-rule,#e8eaee)}
 .timeline-street-list>div{display:flex!important;align-items:center;justify-content:space-between;gap:10px;padding:8px 0}
 .timeline-street-list>div+div{border-top:1px solid var(--agnt-rule,#e8eaee)}
@@ -12162,8 +12162,8 @@ html[data-theme="dark"] .timeline-item.plan-item time b,html[data-theme="dark"] 
 html[data-theme="dark"] .timeline-item.plan-item time i,html[data-theme="dark"] .timeline-plan-copy>small{color:#969ca7!important}
 html[data-theme="dark"] .timeline-plan-action,html[data-theme="dark"] .timeline-plan-actions .timeline-call{background:#171a20!important;border-color:#2c313a!important;color:#f5f6f7!important}
 html[data-theme="dark"] .timeline-item.current .timeline-plan-action{background:#397dff!important;border-color:#397dff!important;color:#fff!important}
-html[data-theme="dark"] .timeline-item.attention{background:rgba(198,132,22,.12)}
-html[data-theme="dark"] .timeline-item.attention .timeline-item-kicker{color:#e4a846!important}
+html[data-theme="dark"] .timeline-item.attention{background:transparent}
+html[data-theme="dark"] .timeline-item.attention .timeline-item-kicker{color:#82bdff!important}
 html[data-theme="dark"] .timeline-street-list,html[data-theme="dark"] .timeline-street-list>div+div{border-color:#292e36}
 html[data-theme="dark"] .timeline-street-list span>b{background:#20242b;color:#aab0ba}
 @media(max-width:380px){
@@ -13133,7 +13133,7 @@ html[data-theme="dark"] #prospectorMarketPanel .market-pulse-results{border-colo
   #prospectorMarketPanel .prospecting-section-head h3{font-size:16px!important}
 }
 
-/* AGNT v1.36.47 — compact Hot Spotting message actions. */
+/* AGNT v1.36.48 — compact message actions and quieter timeline hierarchy. */
 .timeline-command-actions{
   display:flex;
   align-items:center;
@@ -13160,7 +13160,7 @@ html[data-theme="dark"] #prospectorMarketPanel .market-pulse-results{border-colo
   align-items:center;
   width:100%;
 }
-.timeline-item.market .timeline-plan-action:not(.timeline-bulk-sms-action){flex:1 1 auto;width:auto}
+.timeline-item.market .timeline-plan-action:not(.timeline-bulk-sms-action){flex:0 0 auto;width:auto}
 .timeline-bulk-sms-action{
   flex:0 0 44px!important;
   width:44px!important;
