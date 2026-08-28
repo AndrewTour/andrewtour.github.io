@@ -13133,54 +13133,88 @@ html[data-theme="dark"] #prospectorMarketPanel .market-pulse-results{border-colo
   #prospectorMarketPanel .prospecting-section-head h3{font-size:16px!important}
 }
 
-/* AGNT v1.36.46 — shared Hot Spotting Bulk SMS entry points. */
+/* AGNT v1.36.47 — compact Hot Spotting message actions. */
 .timeline-command-actions{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+  display:flex;
+  align-items:center;
   gap:8px;
   margin-top:11px;
 }
 .timeline-command-actions .timeline-command-action{
-  width:100%;
   margin-top:0;
 }
 .timeline-command-bulk-sms{
+  flex:0 0 44px;
+  width:44px!important;
+  min-width:44px;
+  height:44px;
+  min-height:44px;
+  padding:0!important;
   border:1px solid var(--agnt-rule,#e8eaee)!important;
-  background:var(--agnt-soft,#f4f5f7)!important;
-  color:var(--agnt-ink,#111318)!important;
+  border-radius:50%!important;
+  background:var(--agnt-card,#fff)!important;
+  color:var(--agnt-orange,#ff9500)!important;
 }
 .timeline-item.market .timeline-plan-actions{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
+  display:flex;
+  align-items:center;
   width:100%;
 }
-.timeline-item.market .timeline-plan-action{width:100%}
+.timeline-item.market .timeline-plan-action:not(.timeline-bulk-sms-action){flex:1 1 auto;width:auto}
+.timeline-bulk-sms-action{
+  flex:0 0 44px!important;
+  width:44px!important;
+  min-width:44px!important;
+  height:44px;
+  min-height:44px!important;
+  padding:0!important;
+  border-radius:50%!important;
+  color:var(--agnt-orange,#ff9500)!important;
+}
 .timeline-item.current .timeline-bulk-sms-action{
   border-color:var(--agnt-rule,#e8eaee)!important;
-  background:var(--agnt-soft,#f4f5f7)!important;
-  color:var(--agnt-ink,#111318)!important;
+  background:var(--agnt-card,#fff)!important;
+  color:var(--agnt-orange,#ff9500)!important;
 }
 #prospectorMarketPanel .market-pulse-card-actions{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
+  display:flex;
+  align-items:center;
   gap:8px;
 }
 #prospectorMarketPanel .market-pulse-card-actions>button{
-  width:100%!important;
   min-width:0!important;
   min-height:43px!important;
   margin:0!important;
-  padding-inline:10px!important;
-  border-radius:13px!important;
   font-size:11.5px!important;
   font-weight:760!important;
   white-space:nowrap;
 }
+#prospectorMarketPanel .market-pulse-card-actions>button:not(.market-bulk-sms-btn){flex:1 1 auto;width:auto!important;padding-inline:10px!important;border-radius:13px!important}
 #prospectorMarketPanel .market-bulk-sms-btn{
+  flex:0 0 44px;
+  width:44px!important;
+  min-width:44px!important;
+  height:44px;
+  min-height:44px!important;
+  padding:0!important;
   border:1px solid var(--agnt-divider,#e5e8ed)!important;
-  background:var(--agnt-soft,#f5f6f7)!important;
-  color:var(--agnt-ink,#111318)!important;
+  border-radius:50%!important;
+  background:var(--agnt-card,#fff)!important;
+  color:var(--agnt-orange,#ff9500)!important;
   box-shadow:none!important;
+}
+.timeline-command-bulk-sms svg,
+.timeline-bulk-sms-action svg,
+#prospectorMarketPanel .market-bulk-sms-btn svg{
+  display:block;
+  width:19px;
+  height:19px;
+  margin:auto;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
 }
 #prospectorMarketPanel .market-bulk-sms-btn:active,
 .timeline-command-bulk-sms:active,
@@ -13191,7 +13225,7 @@ html[data-theme="dark"] .timeline-item.current .timeline-bulk-sms-action,
 html[data-theme="dark"] #prospectorMarketPanel .market-bulk-sms-btn{
   border-color:#2c313a!important;
   background:#171a20!important;
-  color:#f5f6f7!important;
+  color:#ffad33!important;
 }
 @media(prefers-reduced-motion:reduce){
   #prospectorMarketPanel .market-bulk-sms-btn:active,
