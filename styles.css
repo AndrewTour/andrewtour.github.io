@@ -13133,6 +13133,72 @@ html[data-theme="dark"] #prospectorMarketPanel .market-pulse-results{border-colo
   #prospectorMarketPanel .prospecting-section-head h3{font-size:16px!important}
 }
 
+/* AGNT v1.36.46 — shared Hot Spotting Bulk SMS entry points. */
+.timeline-command-actions{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+  gap:8px;
+  margin-top:11px;
+}
+.timeline-command-actions .timeline-command-action{
+  width:100%;
+  margin-top:0;
+}
+.timeline-command-bulk-sms{
+  border:1px solid var(--agnt-rule,#e8eaee)!important;
+  background:var(--agnt-soft,#f4f5f7)!important;
+  color:var(--agnt-ink,#111318)!important;
+}
+.timeline-item.market .timeline-plan-actions{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  width:100%;
+}
+.timeline-item.market .timeline-plan-action{width:100%}
+.timeline-item.current .timeline-bulk-sms-action{
+  border-color:var(--agnt-rule,#e8eaee)!important;
+  background:var(--agnt-soft,#f4f5f7)!important;
+  color:var(--agnt-ink,#111318)!important;
+}
+#prospectorMarketPanel .market-pulse-card-actions{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+}
+#prospectorMarketPanel .market-pulse-card-actions>button{
+  width:100%!important;
+  min-width:0!important;
+  min-height:43px!important;
+  margin:0!important;
+  padding-inline:10px!important;
+  border-radius:13px!important;
+  font-size:11.5px!important;
+  font-weight:760!important;
+  white-space:nowrap;
+}
+#prospectorMarketPanel .market-bulk-sms-btn{
+  border:1px solid var(--agnt-divider,#e5e8ed)!important;
+  background:var(--agnt-soft,#f5f6f7)!important;
+  color:var(--agnt-ink,#111318)!important;
+  box-shadow:none!important;
+}
+#prospectorMarketPanel .market-bulk-sms-btn:active,
+.timeline-command-bulk-sms:active,
+.timeline-bulk-sms-action:active{transform:translateY(1px);opacity:.82}
+#prospectorMarketPanel .market-bulk-sms-btn:disabled{opacity:.42;transform:none}
+html[data-theme="dark"] .timeline-command-bulk-sms,
+html[data-theme="dark"] .timeline-item.current .timeline-bulk-sms-action,
+html[data-theme="dark"] #prospectorMarketPanel .market-bulk-sms-btn{
+  border-color:#2c313a!important;
+  background:#171a20!important;
+  color:#f5f6f7!important;
+}
+@media(prefers-reduced-motion:reduce){
+  #prospectorMarketPanel .market-bulk-sms-btn:active,
+  .timeline-command-bulk-sms:active,
+  .timeline-bulk-sms-action:active{transform:none}
+}
+
 /* AGNT BETA v1.36.41 — Appointment Outcome Intelligence
    Type-aware outcomes remain inside the established bordered bottom-sheet language. */
 .outcome-sheet{

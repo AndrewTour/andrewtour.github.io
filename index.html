@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.36.45-navigation-refinement">
+<link rel="stylesheet" href="styles.css?v=1.36.46-hot-spotting-bulk-sms">
 <title>AGNT</title>
 </head>
 <body>
@@ -385,7 +385,10 @@
           </div>
           <strong id="timelineCurrentTitle">Loading today…</strong>
           <small id="timelineCurrentMeta">Your schedule will appear below.</small>
-          <button id="timelineCurrentAction" class="timeline-command-action" type="button" hidden>Open AGNT</button>
+          <div id="timelineCurrentActions" class="timeline-command-actions" hidden>
+            <button id="timelineCurrentAction" class="timeline-command-action" type="button" hidden>Open AGNT</button>
+            <button id="timelineCurrentBulkSms" class="timeline-command-action timeline-command-bulk-sms" type="button" hidden>Bulk SMS</button>
+          </div>
         </section>
         <section id="dailyTimeline" class="daily-timeline glass" aria-live="polite"></section>
         <button id="openDayReview" class="open-day-review hidden" type="button"><span>DAY IN REVIEW</span><strong>Review today and prepare tomorrow</strong><b aria-hidden="true">›</b></button>
@@ -762,6 +765,10 @@
                   <div class="broadcast-audience-intro"><strong>Suburb-wide audience</strong><small>End-of-month updates include all eligible contacts in the selected suburb.</small></div>
                   <label class="broadcast-select-field">SUBURB<select id="campaignSuburbSelect"></select></label>
                 </div>
+                <div id="campaignContextAudience" class="broadcast-audience-mode hidden">
+                  <div class="broadcast-audience-intro"><strong id="campaignContextTitle">Hot Spotting matches</strong><small id="campaignContextMeta">Select the matching contacts who should receive this market update.</small></div>
+                  <div id="campaignContextRecipients" class="broadcast-recipient-list"></div>
+                </div>
                 <div id="campaignStreetAudience" class="broadcast-audience-mode hidden">
                   <div class="broadcast-audience-intro"><strong>Street audience</strong><small>Select a street, then choose the neighbours who should receive this update.</small></div>
                   <div class="campaign-filter-grid">
@@ -832,9 +839,9 @@ Andrew Tour | McGrath</textarea></label>
             <section id="broadcastStepSuccess" class="broadcast-step-page hidden" data-broadcast-step="4">
               <div class="broadcast-success-mark" aria-hidden="true">✓</div>
               <header class="broadcast-step-heading broadcast-success-heading">
-                <span>CAMPAIGN READY</span>
-                <h3>Sent to AGNT Bulk SMS</h3>
-                <p>Your personalised campaign has been handed to the test sending environment.</p>
+                <span>SHORTCUT LAUNCHED</span>
+                <h3>Opened in AGNT Bulk SMS</h3>
+                <p>AGNT prepared the personalised payload and opened the iOS Shortcut. Carrier delivery is not recorded.</p>
               </header>
               <div class="broadcast-step-surface broadcast-success-summary">
                 <div><span>CAMPAIGN</span><strong id="broadcastSuccessName">Campaign</strong></div>
@@ -1120,6 +1127,6 @@ Andrew Tour | McGrath</textarea></label>
 
 
 
-<script type="module" src="app.js?v=1.36.44-beta-add-contact-null-guard"></script>
+<script type="module" src="app.js?v=1.36.46-hot-spotting-bulk-sms"></script>
 </body>
 </html>
