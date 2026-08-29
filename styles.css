@@ -10593,16 +10593,18 @@ html[data-theme="dark"] #broadcastMenu .broadcast-type-icon{background:#1b1f26!i
   #app.broadcast-building .broadcast-step-progress i{width:7px!important;flex-basis:7px!important}
 }
 
-/* Pipeline session queue refresh: intentionally small and secondary to the call workflow. */
+/* Pipeline session queue refresh: solid, isolated confirmation surface. */
 .prospect-session-head-status{align-items:center!important}
 .prospect-session-refresh:active{transform:rotate(18deg);background:rgba(11,99,243,.13)!important}
-.pipeline-refresh-overlay{position:fixed;inset:0;z-index:1200;display:grid;place-items:center;padding:20px;background:rgba(8,11,16,.46);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
-.pipeline-refresh-card{width:min(100%,430px);padding:22px;border-radius:24px;background:#fff;border:1px solid rgba(18,26,40,.1);box-shadow:0 24px 70px rgba(13,18,28,.2)}
+body.pipeline-refresh-open{overflow:hidden}
+.pipeline-refresh-overlay{position:fixed;inset:0;z-index:2400;box-sizing:border-box;display:grid;place-items:center;padding:max(20px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left));background:rgba(8,11,16,.52);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.pipeline-refresh-card{position:relative;z-index:1;box-sizing:border-box;width:min(100%,430px);max-height:calc(100dvh - 40px);overflow:auto;padding:22px;border:1px solid rgba(18,26,40,.1);border-radius:24px;background:#fff!important;color:#111318;box-shadow:0 24px 70px rgba(13,18,28,.28);backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 .pipeline-refresh-card .eyebrow{display:block;color:#7d8590;font-size:10px;font-weight:850;letter-spacing:.16em}
 .pipeline-refresh-card h2{margin:7px 0 8px;font-size:23px;line-height:1.12;letter-spacing:-.035em}
 .pipeline-refresh-card p{margin:0;color:#68717e;font-size:13px;line-height:1.5}
 .pipeline-refresh-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:20px}
 .pipeline-refresh-actions button{min-height:48px;border-radius:15px}
+.pipeline-refresh-actions button:focus-visible{outline:3px solid rgba(47,118,239,.35);outline-offset:2px}
 html[data-theme="dark"] .pipeline-refresh-card{background:#13161b!important;border-color:#2b3038!important;box-shadow:0 24px 70px rgba(0,0,0,.48)!important}
 html[data-theme="dark"] .pipeline-refresh-card h2{color:#f5f6f7!important}
 html[data-theme="dark"] .pipeline-refresh-card p{color:#a0a7b2!important}
@@ -13038,11 +13040,29 @@ html[data-theme="dark"] #prospectorMarketPanel .market-followup-ready{background
   border-bottom:1px solid var(--agnt-divider,#e5e8ed)!important;
 }
 #prospectorMarketPanel .market-pulse-card:last-child{border-bottom:0!important}
-#prospectorMarketPanel .market-pulse-card-head>button{
+#prospectorMarketPanel .market-pulse-card-head{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  align-items:start!important;
+  gap:12px!important;
+}
+#prospectorMarketPanel .market-pulse-card-title{min-width:0!important}
+#prospectorMarketPanel .market-pulse-card-tools{
+  display:flex!important;
+  align-items:center!important;
+  gap:6px!important;
+  flex:0 0 auto!important;
+}
+#prospectorMarketPanel .market-pulse-card-tools>button{
+  display:grid!important;
+  place-items:center!important;
   width:30px!important;
   height:30px!important;
+  padding:0!important;
   border:1px solid var(--agnt-divider,#e5e8ed)!important;
+  border-radius:50%!important;
   background:var(--agnt-soft,#f5f6f7)!important;
+  color:var(--agnt-muted,#7f8793)!important;
   font-size:18px!important;
 }
 #prospectorMarketPanel .market-event-tag{
@@ -13052,14 +13072,22 @@ html[data-theme="dark"] #prospectorMarketPanel .market-followup-ready{background
   letter-spacing:.1em!important;
 }
 #prospectorMarketPanel .market-pulse-card-title h4{
-  margin:10px 0 2px!important;
+  display:-webkit-box!important;
+  margin:0 0 3px!important;
+  overflow:hidden!important;
   font-size:15px!important;
   line-height:1.22!important;
   letter-spacing:-.01em!important;
+  -webkit-box-orient:vertical!important;
+  -webkit-line-clamp:2!important;
 }
 #prospectorMarketPanel .market-pulse-card-title p{
+  margin:0!important;
+  overflow:hidden!important;
   font-size:10.5px!important;
   line-height:1.3!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
 }
 #prospectorMarketPanel .market-pulse-event-data{
   gap:3px!important;
@@ -13121,7 +13149,7 @@ html[data-theme="dark"] .appointment-market-insights-summary{
 }
 html[data-theme="dark"] .appointment-market-insights-sheet>header button,
 html[data-theme="dark"] #prospectorMarketPanel .market-pulse-back,
-html[data-theme="dark"] #prospectorMarketPanel .market-pulse-card-head>button{border-color:#2b3039!important;background:var(--agnt-soft,#171a20)!important}
+html[data-theme="dark"] #prospectorMarketPanel .market-pulse-card-tools>button{border-color:#2b3039!important;background:var(--agnt-soft,#171a20)!important}
 html[data-theme="dark"] #prospectorMarketPanel .market-pulse-results{border-color:#2b3039!important;background:var(--agnt-card,#11141a)!important}
 
 @media(max-width:380px){
