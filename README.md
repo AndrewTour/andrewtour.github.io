@@ -1,3 +1,21 @@
+# AGNT v1.37.0 — Stability Core
+
+Built incrementally from the supplied confirmed-working `AGNT-v1.36.51-Hot-Spotting-Skip` release. No earlier application ZIP was merged into this codebase.
+
+## v1.37.0 changes
+
+- Persists unfinished Add Contact drafts in UID-scoped local storage and restores the exact form after normal iPhone PWA background, foreground and relaunch events. Successful saves and intentional discards clear the draft.
+- Makes contact and buyer saves local-first and view-aware, so a late async completion can confirm success without taking control of the user’s current screen.
+- Adds an exact Today follow-up queue covering contact, buyer and appointment follow-ups, with the reason, last context and direct call/outcome action on each record.
+- Adds the latest stored call/SMS/follow-up outcome to the Hot Spotting call card alongside the existing last-contact date.
+- Replaces the dialler display with a native telephone input that supports iPhone paste and safe Australian/international number normalisation while retaining the keypad.
+- Adds a dedicated property-by-property MarketPulse Review with Listed, Sold, Price and Other filters, using the existing MarketPulse records and matching logic.
+- Expands the morning MarketPulse briefing with the priority properties behind the summary and a direct route to the full review.
+- Consolidates competing foreground/background listeners into one debounced lifecycle coordinator, preserves open editors during data renders and reduces unnecessary expired-timer scans.
+- Retains all Firebase configuration, authentication, Firestore paths and document shapes, local cache keys, team behavior, offline support and GitHub Pages deployment structure.
+
+## Previous release — v1.36.51
+
 # AGNT BETA v1.36.44 — Prospect Add Contact Null Guard
 
 Built incrementally on the supplied v1.36.42 Unified Buyer + Seller Profiles release, with v1.36.41 used as the confirmed-working reference for Prospecting contact creation.

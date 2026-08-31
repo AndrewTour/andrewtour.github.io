@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.36.51-hot-spotting-skip">
+<link rel="stylesheet" href="styles.css?v=1.37.0-stability-core">
 <title>AGNT</title>
 </head>
 <body>
@@ -158,6 +158,8 @@
           <p id="returningSnapshotMarketDebrief">Today’s MarketPulse has not arrived yet.</p>
         </div>
         <div id="returningSnapshotMarketCounts" class="daily-briefing-market-counts" aria-label="MarketPulse event counts"></div>
+        <div id="returningSnapshotMarketEvents" class="morning-market-events" aria-label="Priority MarketPulse properties"></div>
+        <button id="returningSnapshotReviewMarket" class="morning-market-review-button" type="button">Review Market</button>
       </section>
 
       <section class="morning-live-metrics" aria-label="Today at a glance">
@@ -654,6 +656,17 @@
           <div id="prospectQueue" class="prospect-list"></div>
         </section>
         </div>
+        <section id="prospectorFollowUpPanel" class="prospector-followup-panel hidden" aria-live="polite">
+          <button id="backFromFollowUps" class="market-pulse-back text-btn" type="button">‹ Back to Prospector</button>
+          <section class="followup-queue-hero glass">
+            <div><span>TODAY’S FOLLOW-UPS</span><h3>Every due conversation, in context</h3><p id="followUpQueueSummary">Loading the exact records behind this task.</p></div>
+            <strong id="followUpQueueCount">0</strong>
+          </section>
+          <section class="followup-queue-shell glass">
+            <div class="prospecting-section-head"><div><span>ACTION QUEUE</span><h3>Who needs action and why</h3><small>Log an outcome or update the appointment to clear the task.</small></div></div>
+            <div id="followUpContextQueue" class="followup-context-queue"></div>
+          </section>
+        </section>
         <section id="prospectorContactsPanel" class="prospecting-section prospector-contacts-panel glass hidden">
           <div class="prospecting-section-head contacts-head"><div><span id="prospectContactsEyebrow">CONTACTS</span><h3 id="prospectContactsHeading">Your database</h3><small id="prospectContactCount">0 contacts · Sorted A–Z</small></div><div class="contacts-head-actions"><label class="prospect-import-button">Import CSV<input id="prospectCsvImport" type="file" accept=".csv,text/csv"></label><button id="toggleProspectBulk" class="text-btn manage-contacts-btn" type="button">Manage Contacts</button><button id="toggleArchivedContacts" class="text-btn manage-contacts-btn" type="button">Archived</button></div></div>
           <div class="prospect-bulk-bar"><span id="prospectSelectedCount">0 selected</span><button id="selectAllProspects" class="text-btn" type="button">Select All</button><button id="restoreSelectedProspects" class="primary hidden" type="button" disabled>Restore</button><button id="deleteSelectedProspects" class="danger-btn" type="button" disabled>Delete</button></div>
@@ -716,12 +729,27 @@
 
         <section id="prospectorMarketPanel" class="prospector-market-panel hidden" aria-live="polite">
           <button id="backFromMarketPulse" class="market-pulse-back text-btn" type="button">‹ Back to Sessions</button>
-          <section class="market-pulse-hero glass">
-            <div><span>HOT SPOTTING</span><h3>Turn market activity into calls</h3><p>Paste the text from today’s Market Pulse email. AGNT will identify property events and match same-street contacts in the same suburb.</p></div>
+          <section class="market-pulse-hero market-review-hero glass">
+            <div><span>MARKETPULSE REVIEW</span><h3>What changed in your market</h3><p id="marketReviewSummary">A property-by-property briefing using the current MarketPulse update.</p></div>
             <strong id="marketPulseEventCount">0</strong>
           </section>
+          <section class="market-review-panel glass">
+            <div class="market-review-head">
+              <div><span id="marketReviewDate">DAILY REVIEW</span><h3>Property activity</h3><small id="marketReviewOpportunitySummary">Listed and Sold activity is prioritised.</small></div>
+              <span id="marketReviewStatus" class="daily-briefing-status" data-state="waiting">Awaiting today</span>
+            </div>
+            <div id="marketReviewCounts" class="market-review-counts" aria-label="MarketPulse review totals"></div>
+            <div id="marketReviewFilters" class="market-review-filters" aria-label="Filter MarketPulse events">
+              <button class="active" type="button" data-market-review-filter="all">All</button>
+              <button type="button" data-market-review-filter="listed">Listed</button>
+              <button type="button" data-market-review-filter="sold">Sold</button>
+              <button type="button" data-market-review-filter="price">Price</button>
+              <button type="button" data-market-review-filter="other">Other</button>
+            </div>
+            <div id="marketReviewList" class="market-review-list"></div>
+          </section>
           <section class="market-pulse-results glass">
-            <div class="prospecting-section-head"><div><span>TODAY’S OPPORTUNITIES</span><h3>Hot spotting sessions</h3><small id="marketPulseMatchSummary">Paste an email to find matching contacts.</small></div><button id="clearMarketPulseEvents" class="text-btn" type="button">Clear all</button></div>
+            <div class="prospecting-section-head"><div><span>CALL OPPORTUNITIES</span><h3>Hot spotting sessions</h3><small id="marketPulseMatchSummary">Paste an email to find matching contacts.</small></div><button id="clearMarketPulseEvents" class="text-btn" type="button">Clear all</button></div>
             <div id="marketPulseList" class="market-pulse-list"></div>
           </section>
           <section class="market-pulse-import glass">
@@ -1083,7 +1111,7 @@ Andrew Tour | McGrath</textarea></label>
 <div id="manualDiallerModal" class="modal manual-dialler-modal" aria-hidden="true">
   <section class="manual-dialler glass" role="dialog" aria-modal="true" aria-labelledby="manualDiallerTitle">
     <div class="manual-dialler-head"><button id="closeManualDialler" type="button" aria-label="Close keypad">×</button><div><small>QUICK CALL</small><h2 id="manualDiallerTitle">Enter a number</h2></div><span></span></div>
-    <div id="manualDiallerNumber" class="manual-dialler-number" aria-live="polite">&nbsp;</div>
+    <input id="manualDiallerNumber" class="manual-dialler-number" type="tel" inputmode="tel" autocomplete="tel" autocapitalize="off" spellcheck="false" aria-label="Phone number" placeholder="Paste or enter a number">
     <div id="manualDiallerKeypad" class="manual-dialler-keypad" aria-label="Phone keypad">
       <button type="button" data-dial-key="1"><strong>1</strong><small>&nbsp;</small></button>
       <button type="button" data-dial-key="2"><strong>2</strong><small>ABC</small></button>
@@ -1127,6 +1155,6 @@ Andrew Tour | McGrath</textarea></label>
 
 
 
-<script type="module" src="app.js?v=1.36.51-hot-spotting-skip"></script>
+<script type="module" src="app.js?v=1.37.0-stability-core"></script>
 </body>
 </html>

@@ -532,6 +532,59 @@ button:not(:disabled):active,.file-btn:active{
   button:not(:disabled),.file-btn,.appointment-card,.improvement-row,.leaderboard-row:first-child,.month,.week-day,.metric-percent,.actions button,.insights-switch,.insights-switch button,.tabbar,.tabbar button,.primary,.secondary,.danger,.settings input,.appointment-form input[type=text],.appointment-types label,.view-head input,.modal-head button,.year-head button{transition:none}
 }
 
+/* AGNT v1.37.0 — Stability Core: contextual work queues and shared market briefing. */
+.prospector-followup-panel,.followup-context-queue,.market-review-list{display:grid;gap:12px}
+.followup-queue-hero{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:16px;padding:18px}
+.followup-queue-hero span,.followup-context-head span,.followup-context-body span,.market-review-head>div>span{display:block;color:#7e8794;font-size:10px;font-weight:850;letter-spacing:.1em}
+.followup-queue-hero h3,.market-review-head h3{margin:4px 0;font-size:20px;letter-spacing:-.02em}
+.followup-queue-hero p{margin:0;color:#68717d;font-size:13px;line-height:1.4}
+.followup-queue-hero>strong{display:grid;place-items:center;width:58px;height:58px;border-radius:18px;background:#eaf3ff;color:#0a69d8;font-size:25px}
+.followup-queue-shell,.market-review-panel{padding:15px}
+.followup-queue-shell .prospecting-section-head small{display:block;margin-top:4px;color:#7d858f;font-size:12px;font-weight:500;line-height:1.35}
+.followup-context-card{padding:15px;border:1px solid rgba(20,29,43,.08);border-radius:17px;background:#f7f8fa}
+.followup-context-card.is-overdue{border-color:rgba(213,58,49,.22);background:#fff8f7}
+.followup-context-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.followup-context-head h3{margin:4px 0 0;font-size:18px}
+.followup-context-head b{padding:5px 8px;border-radius:999px;background:#edf1f5;color:#626c79;font-size:10px;white-space:nowrap}
+.followup-context-card.is-overdue .followup-context-head b{background:#ffe8e5;color:#bd3129}
+.followup-context-body{display:grid;gap:10px;margin:14px 0}
+.followup-context-body>div{padding:11px;border-radius:12px;background:#fff}
+.followup-context-body p{margin:5px 0 0;color:#3f4752;font-size:13px;line-height:1.42;white-space:pre-wrap}
+.followup-context-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.followup-context-actions .primary,.followup-context-actions .secondary{display:grid;place-items:center;min-height:44px;margin:0;padding:10px;text-decoration:none}
+.market-review-panel{display:grid;gap:13px}
+.market-review-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.market-review-head small{display:block;color:#737c88;font-size:12px;line-height:1.35}
+.market-review-counts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.market-review-counts span{padding:9px 5px;border-radius:12px;background:#f1f4f8;color:#717a86;text-align:center;font-size:10px;font-weight:750}
+.market-review-counts strong{display:block;margin-bottom:2px;color:#171b22;font-size:17px}
+.market-review-filters{display:flex;gap:7px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.market-review-filters::-webkit-scrollbar{display:none}
+.market-review-filters button{min-height:40px;padding:0 13px;border:1px solid rgba(20,29,43,.09);border-radius:999px;background:#f6f7f9;color:#606a77;font-size:12px;font-weight:800;white-space:nowrap}
+.market-review-filters button.active{border-color:#0a84ff;background:#eaf3ff;color:#096ac2}
+.market-briefing-row{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;padding:13px;border:1px solid rgba(20,29,43,.08);border-radius:16px;background:#f8f9fb}
+.market-briefing-event{align-self:start;padding:5px 7px;border-radius:999px;background:#e8eef7;color:#536477;font-size:9px;font-weight:900;letter-spacing:.07em;white-space:nowrap}
+.market-briefing-listed .market-briefing-event{background:#e3f6ec;color:#24734c}.market-briefing-sold .market-briefing-event{background:#e8efff;color:#315ca9}.market-briefing-price .market-briefing-event{background:#fff2d8;color:#916100}
+.market-briefing-property,.market-briefing-opportunity{min-width:0}.market-briefing-property strong,.market-briefing-property small,.market-briefing-property em,.market-briefing-opportunity strong,.market-briefing-opportunity small,.market-briefing-opportunity span{display:block}
+.market-briefing-property strong{font-size:15px;line-height:1.25}.market-briefing-property small{margin-top:3px;color:#737d8a;font-size:11px}.market-briefing-property em{margin-top:7px;color:#47515e;font-size:11px;font-style:normal;line-height:1.4}
+.market-briefing-opportunity{grid-column:2;display:flex;align-items:center;gap:6px;flex-wrap:wrap}.market-briefing-opportunity strong{color:#0a69d8;font-size:11px}.market-briefing-opportunity small{color:#b06a00;font-size:10px}.market-briefing-opportunity span{margin-left:auto;color:#8a929d;font-size:10px}
+.morning-market-events{display:grid;gap:6px}.morning-market-events .market-briefing-row{grid-template-columns:auto minmax(0,1fr);gap:7px;padding:8px;border-radius:11px;background:var(--morning-blue-soft);border:0}.morning-market-events .market-briefing-row:nth-child(n+3){display:none}.morning-market-events .market-briefing-event{padding:4px 5px;font-size:7px}.morning-market-events .market-briefing-property strong{color:var(--morning-ink);font-size:11px}.morning-market-events .market-briefing-property small{color:var(--morning-muted);font-size:9px}.morning-market-events .market-briefing-property em{display:none}.morning-market-events .market-briefing-opportunity{display:none}
+.morning-market-review-button{min-height:36px;border:1px solid var(--morning-border);border-radius:11px;background:var(--morning-surface);color:var(--morning-blue);font-size:11px;font-weight:850}
+.manual-dialler-number{width:100%;border:0!important;border-radius:12px;background:transparent!important;padding:0 10px;text-align:center;outline:none;-webkit-appearance:none;appearance:none}
+.manual-dialler-number::placeholder{color:#9aa0a8;font-size:16px;font-weight:550}.manual-dialler-number:focus{box-shadow:0 0 0 3px rgba(10,132,255,.17)}
+.prospect-session-context small{display:block;margin-top:5px;color:#68717c;font-size:11px;line-height:1.35}
+html[data-theme="dark"] .followup-queue-hero>strong{background:#172844;color:#78aaff}
+html[data-theme="dark"] .followup-queue-hero p,html[data-theme="dark"] .followup-queue-shell small,html[data-theme="dark"] .market-review-head small{color:#9da5b1}
+html[data-theme="dark"] .followup-context-card,html[data-theme="dark"] .market-briefing-row{border-color:rgba(255,255,255,.09);background:#171a20}
+html[data-theme="dark"] .followup-context-card.is-overdue{border-color:rgba(255,99,92,.28);background:#221819}
+html[data-theme="dark"] .followup-context-body>div,html[data-theme="dark"] .market-review-counts span,html[data-theme="dark"] .market-review-filters button{background:#20242b;color:#a4abb5}
+html[data-theme="dark"] .followup-context-body p,html[data-theme="dark"] .market-review-counts strong,html[data-theme="dark"] .market-briefing-property strong{color:#f3f5f7}
+html[data-theme="dark"] .market-review-filters button.active{border-color:#67a0ff;background:#172844;color:#8bb5ff}
+html[data-theme="dark"] .market-briefing-property em{color:#c0c6cf}
+html[data-theme="dark"] .manual-dialler-number{color:#f6f7f8!important}
+@media(max-height:760px){.morning-live-content{align-content:start;overflow:auto;scrollbar-width:none}.morning-live-content::-webkit-scrollbar{display:none}.morning-market-events .market-briefing-row:nth-child(n+2){display:none}}
+@media(max-width:390px){.followup-context-actions{grid-template-columns:1fr}.market-review-counts{gap:5px}.market-review-counts span{padding-inline:3px}.market-briefing-row{grid-template-columns:1fr}.market-briefing-event{justify-self:start}.market-briefing-opportunity{grid-column:1}.morning-market-events .market-briefing-row{grid-template-columns:auto minmax(0,1fr)}.morning-market-events .market-briefing-opportunity{grid-column:2}}
+
 /* v1.20 — low-risk quality-of-life insights. */
 .today-at-glance{
   margin-top:8px;
