@@ -1,4 +1,12 @@
-# AGNT v1.37.1 — Knocking Flow
+# AGNT v1.37.2 — MarketPulse Hub
+
+## v1.37.2 changes
+
+- Preserved the Home Right Now stack footprint while moving its label and activity copy into a left-aligned hierarchy.
+- Added a centred AGNT-orange MarketPulse shortcut on the right of the Home stack.
+- Separated the MarketPulse property review from Hot Spotting.
+- Restored Hot Spotting to open directly on its session pipeline and added a MarketPulse entry at the bottom.
+- Preserved the v1.37.1 knocking flow and all existing Firebase, authentication, storage and sync behaviour.
 
 Built incrementally from AGNT v1.37.0 Stability Core, which retains the supplied confirmed-working v1.36.51 lineage.
 

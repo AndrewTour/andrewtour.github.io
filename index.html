@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.37.1-knocking-flow">
+<link rel="stylesheet" href="styles.css?v=1.37.2-marketpulse-hub">
 <title>AGNT</title>
 </head>
 <body>
@@ -342,11 +342,15 @@
           <div><span>LEADERBOARD POSITION</span><small id="leaderboardPositionMeta">Waiting for today’s rankings</small></div>
           <strong id="leaderboardPosition">—</strong>
         </div>
-        <button id="openTodayTimeline" class="now-card" type="button" aria-label="Open today timeline">
-          <span id="nowCardLabel" class="now-card-label">RIGHT NOW</span>
-          <span class="now-card-copy"><strong id="nowCardTitle">Loading today…</strong><small id="nowCardMeta">Your next priority will appear here</small></span>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
-        </button>
+        <div class="now-card-stack">
+          <button id="openTodayTimeline" class="now-card" type="button" aria-label="Open today timeline">
+            <span class="now-card-copy"><span id="nowCardLabel" class="now-card-label">RIGHT NOW</span><strong id="nowCardTitle">Loading today…</strong><small id="nowCardMeta">Your next priority will appear here</small></span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+          </button>
+          <button id="openMarketPulseHome" class="marketpulse-orb" type="button" aria-label="Open MarketPulse" title="MarketPulse">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17 9 10l4 5 7-9"/><path d="M15 6h5v5"/></svg>
+          </button>
+        </div>
       </section>
 
       <section class="metrics glass">
@@ -728,36 +732,42 @@
         </section>
 
         <section id="prospectorMarketPanel" class="prospector-market-panel hidden" aria-live="polite">
-          <button id="backFromMarketPulse" class="market-pulse-back text-btn" type="button">‹ Back to Sessions</button>
-          <section class="market-pulse-hero market-review-hero glass">
-            <div><span>MARKETPULSE REVIEW</span><h3>What changed in your market</h3><p id="marketReviewSummary">A property-by-property briefing using the current MarketPulse update.</p></div>
-            <strong id="marketPulseEventCount">0</strong>
-          </section>
-          <section class="market-review-panel glass">
-            <div class="market-review-head">
-              <div><span id="marketReviewDate">DAILY REVIEW</span><h3>Property activity</h3><small id="marketReviewOpportunitySummary">Listed and Sold activity is prioritised.</small></div>
-              <span id="marketReviewStatus" class="daily-briefing-status" data-state="waiting">Awaiting today</span>
-            </div>
-            <div id="marketReviewCounts" class="market-review-counts" aria-label="MarketPulse review totals"></div>
-            <div id="marketReviewFilters" class="market-review-filters" aria-label="Filter MarketPulse events">
-              <button class="active" type="button" data-market-review-filter="all">All</button>
-              <button type="button" data-market-review-filter="listed">Listed</button>
-              <button type="button" data-market-review-filter="sold">Sold</button>
-              <button type="button" data-market-review-filter="price">Price</button>
-              <button type="button" data-market-review-filter="other">Other</button>
-            </div>
-            <div id="marketReviewList" class="market-review-list"></div>
-          </section>
-          <section class="market-pulse-results glass">
-            <div class="prospecting-section-head"><div><span>CALL OPPORTUNITIES</span><h3>Hot spotting sessions</h3><small id="marketPulseMatchSummary">Paste an email to find matching contacts.</small></div><button id="clearMarketPulseEvents" class="text-btn" type="button">Clear all</button></div>
-            <div id="marketPulseList" class="market-pulse-list"></div>
-          </section>
-          <section class="market-pulse-import glass">
-            <div class="section-label"><span>IMPORT EMAIL</span><small>Manual prototype · no inbox access</small></div>
-            <textarea id="marketPulseInput" rows="8" placeholder="Paste the Market Pulse email content here…"></textarea>
-            <div class="market-pulse-import-actions"><button id="clearMarketPulseInput" class="secondary" type="button">Clear</button><button id="importMarketPulse" class="primary" type="button">Find Opportunities</button></div>
-            <p id="marketPulseImportStatus" class="market-pulse-status">Nothing imported yet.</p>
-          </section>
+          <div id="hotSpottingPanel" class="hotspotting-panel">
+            <button id="backFromMarketPulse" class="market-pulse-back text-btn" type="button">‹ Back to Sessions</button>
+            <section class="market-pulse-results glass">
+              <div class="prospecting-section-head"><div><span>HOT SPOTTING</span><h3>Pipeline</h3><small id="marketPulseMatchSummary">Paste an email to find matching contacts.</small></div><button id="clearMarketPulseEvents" class="text-btn" type="button">Clear all</button></div>
+              <div id="marketPulseList" class="market-pulse-list"></div>
+            </section>
+            <section class="market-pulse-import glass">
+              <div class="section-label"><span>IMPORT EMAIL</span><small>Manual prototype · no inbox access</small></div>
+              <textarea id="marketPulseInput" rows="8" placeholder="Paste the Market Pulse email content here…"></textarea>
+              <div class="market-pulse-import-actions"><button id="clearMarketPulseInput" class="secondary" type="button">Clear</button><button id="importMarketPulse" class="primary" type="button">Find Opportunities</button></div>
+              <p id="marketPulseImportStatus" class="market-pulse-status">Nothing imported yet.</p>
+            </section>
+            <button id="openMarketPulseData" class="marketpulse-page-entry" type="button"><span class="marketpulse-page-entry-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 17 9 10l4 5 7-9"/><path d="M15 6h5v5"/></svg></span><span><strong>MarketPulse</strong><small>Review today’s property activity</small></span><b aria-hidden="true">›</b></button>
+          </div>
+          <div id="marketPulseDataPanel" class="market-pulse-data-panel hidden">
+            <button id="backFromMarketPulseData" class="market-pulse-back text-btn" type="button">‹ Back to Hot Spotting</button>
+            <section class="market-pulse-hero market-review-hero glass">
+              <div><span>MARKETPULSE REVIEW</span><h3>What changed in your market</h3><p id="marketReviewSummary">A property-by-property briefing using the current MarketPulse update.</p></div>
+              <strong id="marketPulseEventCount">0</strong>
+            </section>
+            <section class="market-review-panel glass">
+              <div class="market-review-head">
+                <div><span id="marketReviewDate">DAILY REVIEW</span><h3>Property activity</h3><small id="marketReviewOpportunitySummary">Listed and Sold activity is prioritised.</small></div>
+                <span id="marketReviewStatus" class="daily-briefing-status" data-state="waiting">Awaiting today</span>
+              </div>
+              <div id="marketReviewCounts" class="market-review-counts" aria-label="MarketPulse review totals"></div>
+              <div id="marketReviewFilters" class="market-review-filters" aria-label="Filter MarketPulse events">
+                <button class="active" type="button" data-market-review-filter="all">All</button>
+                <button type="button" data-market-review-filter="listed">Listed</button>
+                <button type="button" data-market-review-filter="sold">Sold</button>
+                <button type="button" data-market-review-filter="price">Price</button>
+                <button type="button" data-market-review-filter="other">Other</button>
+              </div>
+              <div id="marketReviewList" class="market-review-list"></div>
+            </section>
+          </div>
         </section>
         <section id="prospectorBroadcastPanel" class="prospector-campaigns-panel hidden" aria-live="polite">
           <button id="broadcastBack" class="market-pulse-back text-btn" type="button">‹ Back</button>
@@ -1155,6 +1165,6 @@ Andrew Tour | McGrath</textarea></label>
 
 
 
-<script type="module" src="app.js?v=1.37.1-knocking-flow"></script>
+<script type="module" src="app.js?v=1.37.2-marketpulse-hub"></script>
 </body>
 </html>

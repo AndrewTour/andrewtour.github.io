@@ -13625,3 +13625,85 @@ html[data-theme="dark"] .tabbar button.active::before{
     transition:none!important;
   }
 }
+
+/* AGNT v1.37.2 — Home MarketPulse entry and separated MarketPulse review. */
+.now-card-stack{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 48px;
+  align-items:center;
+  gap:12px;
+  width:100%;
+  height:70px;
+  min-height:70px;
+}
+.now-card-stack .now-card{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 18px;
+  align-items:center;
+  gap:8px;
+  width:100%;
+  height:70px;
+  min-height:70px;
+  margin:0!important;
+  padding:8px 0 0!important;
+}
+.now-card-stack .now-card-copy{display:grid;grid-template-rows:auto auto auto;align-content:center;gap:2px;text-align:left}
+.now-card-stack .now-card-label{display:block;line-height:1.1}
+.now-card-stack .now-card-copy strong,.now-card-stack .now-card-copy small{display:block;max-width:100%;text-align:left}
+.marketpulse-orb{
+  display:grid;
+  place-items:center;
+  width:48px;
+  height:48px;
+  min-width:48px;
+  min-height:48px;
+  padding:0;
+  border:0;
+  border-radius:50%;
+  background:#f05d3d;
+  color:#fff;
+  box-shadow:0 7px 18px rgba(240,93,61,.24);
+}
+.marketpulse-orb svg,.marketpulse-page-entry-icon svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:2.25;stroke-linecap:round;stroke-linejoin:round}
+.marketpulse-orb:active{transform:scale(.95);background:#dc4f32}
+
+.hotspotting-panel,.market-pulse-data-panel{display:grid;gap:12px;min-width:0}
+.hotspotting-panel.hidden,.market-pulse-data-panel.hidden{display:none!important}
+#prospectorMarketPanel .market-pulse-data-panel .market-review-hero{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:16px;
+  padding:18px!important;
+  border-radius:18px!important;
+}
+#prospectorMarketPanel .market-pulse-data-panel .market-review-hero h3{margin:4px 0;font-size:20px;letter-spacing:-.02em}
+#prospectorMarketPanel .market-pulse-data-panel .market-review-hero p{margin:0;color:var(--agnt-muted,#7f8792);font-size:12px;line-height:1.4}
+#prospectorMarketPanel .market-pulse-data-panel .market-review-hero>strong{font-size:28px;line-height:1}
+.marketpulse-page-entry{
+  display:grid;
+  grid-template-columns:42px minmax(0,1fr) auto;
+  align-items:center;
+  gap:12px;
+  width:100%;
+  min-height:66px;
+  margin:4px 0 2px;
+  padding:11px 14px;
+  border:1px solid var(--agnt-divider,#e5e8ed);
+  border-radius:17px;
+  background:var(--agnt-card,#fff);
+  color:var(--agnt-ink,#111318);
+  text-align:left;
+}
+.marketpulse-page-entry-icon{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:#f05d3d;color:#fff}
+.marketpulse-page-entry>span:nth-child(2){min-width:0}
+.marketpulse-page-entry strong,.marketpulse-page-entry small{display:block}
+.marketpulse-page-entry strong{font-size:14px;line-height:1.2}
+.marketpulse-page-entry small{margin-top:4px;color:var(--agnt-muted,#7f8792);font-size:11px}
+.marketpulse-page-entry>b{color:var(--agnt-faint,#aeb3bb);font-size:23px;font-weight:500}
+.marketpulse-page-entry:active{background:var(--agnt-soft,#f5f6f7)}
+html[data-theme="dark"] .marketpulse-orb,html[data-theme="dark"] .marketpulse-page-entry-icon{background:#f05d3d!important;color:#fff!important}
+html[data-theme="dark"] .marketpulse-page-entry{border-color:#292e36!important;background:#13161b!important;color:#f5f6f7!important}
+html[data-theme="dark"] #prospectorMarketPanel .market-pulse-data-panel .market-review-hero{display:grid!important;background:#13161b!important;border-color:#292e36!important}
+html[data-theme="dark"] #prospectorMarketPanel .market-pulse-data-panel .market-review-hero h3,html[data-theme="dark"] #prospectorMarketPanel .market-pulse-data-panel .market-review-hero>strong{color:#f5f6f7!important}
+@media(max-width:390px){.now-card-stack{grid-template-columns:minmax(0,1fr) 46px;gap:10px}.marketpulse-orb{width:46px;height:46px;min-width:46px;min-height:46px}.now-card-stack .now-card-copy small{display:block!important}}
