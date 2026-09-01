@@ -1,5 +1,5 @@
-const CACHE='agnt-v1.37.0-stability-core';
-const ASSETS=['./','./index.html','./styles.css?v=1.37.0-stability-core','./app.js?v=1.37.0-stability-core','./firebase-config.js','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
+const CACHE='agnt-v1.37.1-knocking-flow';
+const ASSETS=['./','./index.html','./styles.css?v=1.37.1-knocking-flow','./app.js?v=1.37.1-knocking-flow','./firebase-config.js','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{

@@ -778,7 +778,7 @@ function recentWeekHistory(){
 function streak(){let n=0,d=new Date();for(let i=0;i<730;i++){if(workDays.includes(d.getDay())){const k=dateKey(d);if(k===todayKey()&&completion(k)<100){d.setDate(d.getDate()-1);continue}if(completion(k)>=100)n++;else break}d.setDate(d.getDate()-1)}return n}
 
 async function changeMetric(metric,delta){if(!canEditDate(selectedDate))return lockedToast();const d=dayData(selectedDate);d[metric]=Math.max(0,d[metric]+delta);addEvent(d,metric,`${metric} ${delta>0?'+1':'−1'}`,delta);days[selectedDate]=d;haptic();await saveDay(selectedDate)}
-async function toggleTimer(){if(!canEditDate(selectedDate))return lockedToast();const d=dayData(selectedDate);if(d.timerStartedAt){d.knockSeconds=liveKnockSeconds(d);d.timerStartedAt=null;addEvent(d,'knock','Knocking paused')}else{d.timerStartedAt=Date.now();d.alarmPlayed=false;addEvent(d,'knock','Knocking started')}days[selectedDate]=d;haptic(18);await saveDay(selectedDate);ensureTick()}
+async function toggleTimer(){if(!canEditDate(selectedDate))return lockedToast();const d=dayData(selectedDate);if(d.timerStartedAt){d.knockSeconds=liveKnockSeconds(d);d.timerStartedAt=null;addEvent(d,'knock','Knocking paused')}else{d.timerStartedAt=Date.now();d.alarmPlayed=false;addEvent(d,'knock','Knocking started')}days[selectedDate]=d;haptic(18);await saveDay(selectedDate,{awaitCloud:false});ensureTick()}
 async function resetKnock(){if(!canEditDate(selectedDate))return lockedToast();if(!confirm('Reset knocking time for this date?'))return;const d=dayData(selectedDate);d.knockSeconds=0;d.timerStartedAt=null;d.alarmPlayed=false;addEvent(d,'knock','Knocking reset');days[selectedDate]=d;await saveDay(selectedDate);ensureTick()}
 async function finaliseExpiredTimers(){const today=todayKey();for(const [k,raw] of Object.entries(days)){if(k<today&&raw?.timerStartedAt){const d=dayData(k);d.knockSeconds=liveKnockSeconds(d);d.timerStartedAt=null;d.alarmPlayed=true;addEvent(d,'knock','Knocking stopped automatically at day close');days[k]=d;await saveDay(k,{quiet:true})}}}
 function renderKnockTimerOnly(){
@@ -798,7 +798,7 @@ function renderKnockTimerOnly(){
     knockRing.setAttribute('aria-label',`Knocking: ${knockActual}% complete, expected pace ${knockExpected}%, target ${kt} minutes`);
   }
 }
-function ensureTick(){clearInterval(timerTick);if(dayData(selectedDate).timerStartedAt)timerTick=setInterval(()=>{renderKnockTimerOnly();renderKnockingSession();const d=dayData(selectedDate),target=rollingKnockTarget(selectedDate)*60;if(liveKnockSeconds(d)>=target&&!d.alarmPlayed){d.alarmPlayed=true;days[selectedDate]=d;saveDay(selectedDate,{quiet:true});alarm()}},1000)}
+function ensureTick(){clearInterval(timerTick);if(dayData(selectedDate).timerStartedAt)timerTick=setInterval(()=>{renderKnockTimerOnly();renderKnockingSessionTimerOnly();const d=dayData(selectedDate),target=rollingKnockTarget(selectedDate)*60;if(liveKnockSeconds(d)>=target&&!d.alarmPlayed){d.alarmPlayed=true;days[selectedDate]=d;saveDay(selectedDate,{quiet:true,awaitCloud:false,render:false});alarm()}},1000)}
 function alarm(){haptic([180,100,180]);toast('Today’s knocking target reached');try{const c=new AudioContext(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=880;g.gain.value=.17;o.start();o.stop(c.currentTime+.7)}catch{}}
 
 function formatHour(h){return `${h%12||12}:00 ${h>=12?'PM':'AM'}`}
@@ -3835,7 +3835,7 @@ function renderKnockingSession(){
   if(!knockingSessionActive||!knockingSessionVisible)return;
   renderKnockingHotSpotting();
   const d=dayData(todayKey()),running=Boolean(d.timerStartedAt);
-  $('#knockingSessionTimer').textContent=fmtTimer(liveKnockSeconds(d));
+  renderKnockingSessionTimerOnly();
   $('#pauseKnockingSession').textContent=running?'Pause':'Resume';
   $('#pauseKnockingSession').setAttribute('aria-label',running?'Pause knocking timer':'Resume knocking timer');
   const dailyStats=dailyKnockingStats(todayKey());
@@ -3847,6 +3847,8 @@ function renderKnockingSession(){
   $('#knockingSessionRates').innerHTML=knockingRatesMarkup(dailyStats);
   renderKnockingSessionLog();
 }
+function knockingSessionElapsedSeconds(){return Math.max(0,liveKnockSeconds(dayData(todayKey()))-knockingSessionStartSeconds)}
+function renderKnockingSessionTimerOnly(){const timer=$('#knockingSessionTimer');if(timer&&knockingSessionActive&&knockingSessionVisible)timer.textContent=fmtTimer(knockingSessionElapsedSeconds())}
 function openKnockingSession(){if(!knockingSessionActive)knockingSessionStartSeconds=liveKnockSeconds(dayData(todayKey()));knockingSessionActive=true;knockingSessionVisible=true;saveKnockingSessionState();renderKnockingSession();const button=$('#toggleKnockingHotSpotting'),list=$('#knockingHotSpottingList'),section=$('#knockingHotSpottingRecommendations');if(button&&list&&section&&!section.classList.contains('hidden')){button.setAttribute('aria-expanded','true');list.classList.remove('hidden');section.classList.add('expanded')}}
 async function startKnockingSession(){
   if(!canEditDate(selectedDate))return lockedToast();
@@ -3896,16 +3898,18 @@ function openKnockingHistory(){renderKnockingHistory();$('#knockingHistoryView')
 function closeKnockingHistory(){$('#knockingHistoryView').classList.add('hidden')}
 async function endKnockingSession(){
   if(!knockingSessionActive||knockingSessionEnding)return;knockingSessionEnding=true;
-  const key=todayKey(),stats={...knockingSessionStats},log=knockingSessionLog.map(normaliseKnockingLogEntry),endedAt=Date.now();
+  const endButton=$('#endKnockingSession'),key=todayKey(),stats={...knockingSessionStats},log=knockingSessionLog.map(normaliseKnockingLogEntry),endedAt=Date.now();
+  if(endButton){endButton.disabled=true;endButton.textContent='Ending…'}
   try{
     const d=dayData(key),finalSeconds=liveKnockSeconds(d),durationSeconds=Math.max(0,finalSeconds-knockingSessionStartSeconds);
     d.knockSeconds=finalSeconds;d.timerStartedAt=null;d.alarmPlayed=Boolean(d.alarmPlayed);
     d.knockingSessions=Array.isArray(d.knockingSessions)?d.knockingSessions:[];d.knockingSessions.push({id:uuid(),date:key,startedAt:endedAt-durationSeconds*1000,endedAt,durationSeconds,stats,log});d.knockingSessions=d.knockingSessions.slice(-100);
-    days[key]=d;await saveDay(key);ensureTick();
+    days[key]=d;await saveDay(key,{awaitCloud:false,render:false});ensureTick();
     knockingSessionActive=false;knockingSessionVisible=false;knockingSessionStats={knocks:0,clients:0,data:0,MAP:0,LAP:0};knockingSessionLog=[];knockingSessionStartSeconds=0;selectedKnockingStreetKey='';clearKnockingSessionState();closeKnockingCapture();renderKnockingSession();renderToday();closeKnockingHistory();switchView('todayView');
     document.querySelectorAll('.prospect-session-review-overlay[data-knocking-review]').forEach(node=>node.remove());
-    const rates=knockingRates(stats),overlay=document.createElement('div');overlay.className='prospect-session-review-overlay';overlay.dataset.knockingReview='1';overlay.innerHTML=`<section class="prospect-session-review glass" role="dialog" aria-modal="true" aria-label="Session review"><span class="eyebrow">SESSION REVIEW</span><h2>Strong work.</h2><p>Here’s what you completed.</p><div class="prospect-session-review-grid knocking-review-grid"><div><strong>${stats.knocks}</strong><span>Knocks</span></div><div><strong>${stats.clients}</strong><span>Connects</span></div><div><strong>${stats.data}</strong><span>Data</span></div><div><strong>${stats.MAP}</strong><span>MAP</span></div><div><strong>${stats.LAP}</strong><span>LAP</span></div></div><div class="knocking-review-rates"><div><strong>${rates.connect}%</strong><span>Connect rate</span></div><div><strong>${rates.data}%</strong><span>Data rate</span></div><div><strong>${rates.appointment}%</strong><span>Appointment rate</span></div></div><button class="primary" type="button" data-close-session-review>Done</button></section>`;document.body.append(overlay);overlay.querySelector('[data-close-session-review]').onclick=()=>overlay.remove();
-  }finally{knockingSessionEnding=false}
+    const rates=knockingRates(stats),overlay=document.createElement('div');overlay.className='prospect-session-review-overlay';overlay.dataset.knockingReview='1';overlay.innerHTML=`<section class="prospect-session-review glass" role="dialog" aria-modal="true" aria-label="Knocking session review"><span class="eyebrow">KNOCKING REVIEW</span><h2>Session complete.</h2><p>${fmtTimer(durationSeconds)} on the street. Here’s what you completed.</p><div class="prospect-session-review-grid knocking-review-grid"><div><strong>${stats.knocks}</strong><span>Knocks</span></div><div><strong>${stats.clients}</strong><span>Connects</span></div><div><strong>${stats.data}</strong><span>Data</span></div><div><strong>${stats.MAP}</strong><span>MAP</span></div><div><strong>${stats.LAP}</strong><span>LAP</span></div></div><div class="knocking-review-rates"><div><strong>${rates.connect}%</strong><span>Connect rate</span></div><div><strong>${rates.data}%</strong><span>Data rate</span></div><div><strong>${rates.appointment}%</strong><span>Appointment rate</span></div></div><button class="primary" type="button" data-close-session-review>Done</button></section>`;document.body.append(overlay);overlay.querySelector('[data-close-session-review]').onclick=()=>overlay.remove();
+  }catch(err){console.error('Knocking session could not be ended',err);toast('Could not end the session. Please try again.')}
+  finally{knockingSessionEnding=false;if(endButton){endButton.disabled=false;endButton.textContent='End Session'}}
 }
 
 function parseCsv(text){const rows=[];let row=[],cell='',quoted=false;for(let i=0;i<text.length;i++){const c=text[i],n=text[i+1];if(c==='"'&&quoted&&n==='"'){cell+='"';i++;continue}if(c==='"'){quoted=!quoted;continue}if(c===','&&!quoted){row.push(cell);cell='';continue}if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&n==='\n')i++;row.push(cell);if(row.some(x=>x.trim()))rows.push(row);row=[];cell='';continue}cell+=c}row.push(cell);if(row.some(x=>x.trim()))rows.push(row);return rows}

@@ -1,3 +1,18 @@
+# AGNT v1.37.1 — Knocking Flow
+
+Built incrementally from AGNT v1.37.0 Stability Core, which retains the supplied confirmed-working v1.36.51 lineage.
+
+## v1.37.1 changes
+
+- Makes End Session local-first so the knocking UI exits immediately and the review appears without waiting for Firestore latency or connectivity.
+- Preserves background cloud sync and prevents a rejected deferred write from trapping the user in an already-ended session.
+- Updates only the live timer text each second instead of rebuilding the full knocking interface, preventing control replacement, lost press states and avoidable rendering work.
+- Shows the current session elapsed time in the knocking header rather than the cumulative daily knocking total.
+- Makes pause/resume timer writes local-first while retaining the existing local cache, offline queue and Firestore document structure.
+- Adds explicit ending feedback and guards against duplicate End Session actions.
+
+## Previous release — v1.37.0
+
 # AGNT v1.37.0 — Stability Core
 
 Built incrementally from the supplied confirmed-working `AGNT-v1.36.51-Hot-Spotting-Skip` release. No earlier application ZIP was merged into this codebase.
