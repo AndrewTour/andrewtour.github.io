@@ -1,4 +1,19 @@
-# AGNT v1.37.3 — MarketPulse + Follow-up Refinement
+# AGNT v1.37.5 — Micro Stability
+
+## v1.37.5 changes
+
+- Retains the 32px Home MarketPulse control while expanding its invisible touch target to 44px for more reliable iPhone tapping.
+- Replaces non-standard instant scroll restoration with the iOS-safe automatic behaviour across MarketPulse, sessions and appointments.
+- Makes contact and buyer follow-up completion local-first, refreshes every dependent app surface immediately and leaves cloud sync running in the background.
+- Preserves all v1.37.4 MarketPulse sizing, alignment and entry-aware back navigation.
+
+## Previous release — v1.37.4
+
+## v1.37.4 changes
+
+- Reduced the Home MarketPulse shortcut to a quieter 32px control and aligned it to the visual midpoint between the Home dividers.
+- Added entry-aware MarketPulse navigation: Home opens back to Home, while Hot Spotting opens back to Hot Spotting.
+- Preserved the v1.37.3 MarketPulse data hierarchy and shared follow-up completion behaviour.
 
 ## v1.37.3 changes
 

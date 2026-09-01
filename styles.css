@@ -13847,3 +13847,20 @@ html[data-theme="dark"] #prospectorMarketPanel .market-pulse-data-panel .market-
 html[data-theme="dark"] #prospectorMarketPanel .market-pulse-data-panel .market-review-filters button{background:transparent!important}
 html[data-theme="dark"] #prospectorMarketPanel .market-pulse-data-panel .market-briefing-row{background:transparent!important}
 @media(max-width:390px){.followup-queue-shell{padding-inline:12px!important}.followup-record-context small{white-space:normal}.market-pulse-data-panel .market-review-head{gap:8px!important}.market-pulse-data-panel .market-review-counts span{padding-inline:6px!important}.market-pulse-data-panel .market-review-filters{gap:15px!important}}
+
+/* AGNT v1.37.4 — visually centre the compact MarketPulse shortcut between Home dividers. */
+.marketpulse-orb{
+  width:32px;
+  height:32px;
+  min-width:32px;
+  min-height:32px;
+  transform:translateY(8px);
+  box-shadow:0 5px 14px rgba(240,93,61,.2);
+}
+.marketpulse-orb svg{width:15px;height:15px;stroke-width:2.2}
+.marketpulse-orb:active{transform:translateY(8px) scale(.94)}
+@media(max-width:390px){.marketpulse-orb{width:32px;height:32px;min-width:32px;min-height:32px;transform:translateY(8px)}.marketpulse-orb svg{width:15px;height:15px}.marketpulse-orb:active{transform:translateY(8px) scale(.94)}}
+
+/* AGNT v1.37.5 — retain the compact visual while restoring a reliable iPhone tap target. */
+.marketpulse-orb{position:relative;touch-action:manipulation}
+.marketpulse-orb::before{content:'';position:absolute;inset:-6px;border-radius:50%;background:transparent}
