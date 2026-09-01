@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.37.2-marketpulse-hub">
+<link rel="stylesheet" href="styles.css?v=1.37.3-marketpulse-followups">
 <title>AGNT</title>
 </head>
 <body>
@@ -735,7 +735,7 @@
           <div id="hotSpottingPanel" class="hotspotting-panel">
             <button id="backFromMarketPulse" class="market-pulse-back text-btn" type="button">‹ Back to Sessions</button>
             <section class="market-pulse-results glass">
-              <div class="prospecting-section-head"><div><span>HOT SPOTTING</span><h3>Pipeline</h3><small id="marketPulseMatchSummary">Paste an email to find matching contacts.</small></div><button id="clearMarketPulseEvents" class="text-btn" type="button">Clear all</button></div>
+              <div class="prospecting-section-head hotspotting-list-head"><div><span>HOT SPOTTING</span><small id="marketPulseMatchSummary">Paste an email to find matching contacts.</small></div><button id="clearMarketPulseEvents" class="text-btn" type="button">Clear all</button></div>
               <div id="marketPulseList" class="market-pulse-list"></div>
             </section>
             <section class="market-pulse-import glass">
@@ -748,10 +748,7 @@
           </div>
           <div id="marketPulseDataPanel" class="market-pulse-data-panel hidden">
             <button id="backFromMarketPulseData" class="market-pulse-back text-btn" type="button">‹ Back to Hot Spotting</button>
-            <section class="market-pulse-hero market-review-hero glass">
-              <div><span>MARKETPULSE REVIEW</span><h3>What changed in your market</h3><p id="marketReviewSummary">A property-by-property briefing using the current MarketPulse update.</p></div>
-              <strong id="marketPulseEventCount">0</strong>
-            </section>
+            <span id="marketPulseEventCount" hidden>0</span>
             <section class="market-review-panel glass">
               <div class="market-review-head">
                 <div><span id="marketReviewDate">DAILY REVIEW</span><h3>Property activity</h3><small id="marketReviewOpportunitySummary">Listed and Sold activity is prioritised.</small></div>
@@ -1165,6 +1162,6 @@ Andrew Tour | McGrath</textarea></label>
 
 
 
-<script type="module" src="app.js?v=1.37.2-marketpulse-hub"></script>
+<script type="module" src="app.js?v=1.37.3-marketpulse-followups"></script>
 </body>
 </html>

@@ -1,4 +1,13 @@
-# AGNT v1.37.2 — MarketPulse Hub
+# AGNT v1.37.3 — MarketPulse + Follow-up Refinement
+
+## v1.37.3 changes
+
+- Reduced the Home MarketPulse shortcut by 20% while retaining its existing right-side position and centring it within the Right Now stack.
+- Reworked MarketPulse property intelligence into the flat, divided hierarchy used by Hot Spotting while retaining its full event detail, counts and filters.
+- Removed the Pipeline heading from Hot Spotting.
+- Reworked Today’s Follow-ups to use the Buyer-tab record hierarchy.
+- Added a clear checkbox that completes the underlying buyer/contact or appointment follow-up and refreshes all dependent queues, counts, timeline and Right Now state.
+- Preserved the v1.37.2 MarketPulse navigation split and v1.37.1 knocking flow.
 
 ## v1.37.2 changes
 

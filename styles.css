@@ -13707,3 +13707,143 @@ html[data-theme="dark"] .marketpulse-page-entry{border-color:#292e36!important;b
 html[data-theme="dark"] #prospectorMarketPanel .market-pulse-data-panel .market-review-hero{display:grid!important;background:#13161b!important;border-color:#292e36!important}
 html[data-theme="dark"] #prospectorMarketPanel .market-pulse-data-panel .market-review-hero h3,html[data-theme="dark"] #prospectorMarketPanel .market-pulse-data-panel .market-review-hero>strong{color:#f5f6f7!important}
 @media(max-width:390px){.now-card-stack{grid-template-columns:minmax(0,1fr) 46px;gap:10px}.marketpulse-orb{width:46px;height:46px;min-width:46px;min-height:46px}.now-card-stack .now-card-copy small{display:block!important}}
+
+/* AGNT v1.37.3 — MarketPulse hierarchy and shared follow-up completion. */
+.marketpulse-orb{
+  justify-self:center;
+  align-self:center;
+  width:38px;
+  height:38px;
+  min-width:38px;
+  min-height:38px;
+}
+.marketpulse-orb svg{width:18px;height:18px}
+@media(max-width:390px){.marketpulse-orb{width:37px;height:37px;min-width:37px;min-height:37px}.marketpulse-orb svg{width:17px;height:17px}}
+
+#prospectorMarketPanel .hotspotting-list-head{align-items:center!important;padding:3px 0 1px!important}
+#prospectorMarketPanel .hotspotting-list-head>div{display:grid!important;gap:5px!important}
+#prospectorMarketPanel .hotspotting-list-head small{font-size:11px!important;white-space:normal!important}
+
+/* MarketPulse uses the same flat, divided information rhythm as Hot Spotting. */
+#prospectorMarketPanel .market-pulse-data-panel{gap:12px!important}
+#prospectorMarketPanel .market-pulse-data-panel .market-review-panel{
+  display:grid!important;
+  gap:0!important;
+  width:100%!important;
+  margin:0!important;
+  padding:14px 2px 4px!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+#prospectorMarketPanel .market-pulse-data-panel .market-review-head{align-items:flex-start!important;padding:0 2px 17px!important;border-bottom:1px solid var(--agnt-divider,#e5e8ed)!important}
+#prospectorMarketPanel .market-pulse-data-panel .market-review-head h3{margin:5px 0 7px!important;font-size:22px!important;line-height:1.15!important;letter-spacing:-.025em!important}
+#prospectorMarketPanel .market-pulse-data-panel .market-review-head small{max-width:650px!important;font-size:11px!important;line-height:1.45!important}
+#prospectorMarketPanel .market-pulse-data-panel .daily-briefing-status{flex:0 0 auto!important;margin-top:2px!important;padding:0!important;border:0!important;background:transparent!important;color:#2b9b70!important;font-size:10px!important;font-weight:800!important}
+#prospectorMarketPanel .market-pulse-data-panel .market-review-counts{
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:0!important;
+  margin:0!important;
+  padding:14px 0!important;
+  border-bottom:1px solid var(--agnt-divider,#e5e8ed)!important;
+}
+#prospectorMarketPanel .market-pulse-data-panel .market-review-counts span{padding:2px 8px!important;border:0!important;border-right:1px solid var(--agnt-divider,#e5e8ed)!important;border-radius:0!important;background:transparent!important;color:var(--agnt-muted,#7f8792)!important;font-size:10px!important;text-align:left!important}
+#prospectorMarketPanel .market-pulse-data-panel .market-review-counts span:last-child{border-right:0!important}
+#prospectorMarketPanel .market-pulse-data-panel .market-review-counts strong{margin:0 0 4px!important;color:var(--agnt-ink,#111318)!important;font-size:20px!important;line-height:1!important}
+#prospectorMarketPanel .market-pulse-data-panel .market-review-filters{gap:18px!important;margin:0!important;padding:13px 2px 0!important;border-bottom:1px solid var(--agnt-divider,#e5e8ed)!important}
+#prospectorMarketPanel .market-pulse-data-panel .market-review-filters button{min-height:35px!important;padding:0 0 10px!important;border:0!important;border-bottom:2px solid transparent!important;border-radius:0!important;background:transparent!important;color:var(--agnt-muted,#7f8792)!important;font-size:11px!important}
+#prospectorMarketPanel .market-pulse-data-panel .market-review-filters button.active{border-bottom-color:var(--agnt-blue,#2f6df6)!important;background:transparent!important;color:var(--agnt-blue,#2f6df6)!important}
+#prospectorMarketPanel .market-pulse-data-panel .market-review-list{display:block!important;gap:0!important}
+#prospectorMarketPanel .market-pulse-data-panel .market-briefing-row{
+  display:grid!important;
+  grid-template-columns:auto minmax(0,1fr)!important;
+  gap:11px 13px!important;
+  margin:0!important;
+  padding:21px 2px!important;
+  border:0!important;
+  border-bottom:1px solid var(--agnt-divider,#e5e8ed)!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+#prospectorMarketPanel .market-pulse-data-panel .market-briefing-property strong{font-size:18px!important;line-height:1.22!important;letter-spacing:-.015em!important}
+#prospectorMarketPanel .market-pulse-data-panel .market-briefing-property small{margin-top:5px!important;font-size:11px!important}
+#prospectorMarketPanel .market-pulse-data-panel .market-briefing-property em{margin-top:11px!important;color:var(--agnt-ink-soft,#4b5360)!important;font-size:12px!important;line-height:1.5!important}
+#prospectorMarketPanel .market-pulse-data-panel .market-briefing-opportunity{grid-column:2!important;padding-top:2px!important}
+#prospectorMarketPanel .market-pulse-data-panel .market-briefing-opportunity strong{font-size:11px!important}
+#prospectorMarketPanel .market-pulse-data-panel .market-briefing-opportunity small{font-size:10px!important}
+
+/* Follow-ups: Buyer-tab hierarchy with one canonical clear action. */
+.prospector-followup-panel{gap:10px!important}
+.followup-queue-hero{
+  padding:10px 2px 14px!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.followup-queue-hero>strong{width:auto!important;height:auto!important;border-radius:0!important;background:transparent!important;color:var(--agnt-ink,#111318)!important;font-size:28px!important}
+.followup-queue-shell{
+  padding:0 14px 2px!important;
+  border:1px solid var(--agnt-rule,#eceef1)!important;
+  border-radius:var(--agnt-nested-radius,18px)!important;
+  background:var(--agnt-page,#fff)!important;
+  box-shadow:none!important;
+}
+.followup-queue-shell>.prospecting-section-head{min-height:48px!important;margin:0!important;padding:8px 0!important;border-bottom:1px solid var(--agnt-rule,#eceef1)!important}
+.followup-queue-shell>.prospecting-section-head h3{font-size:16px!important;font-weight:700!important}
+.followup-queue-shell>.prospecting-section-head small{font-size:10px!important}
+.followup-context-queue{display:block!important;gap:0!important}
+.followup-context-card.followup-record{
+  display:grid!important;
+  grid-template-columns:32px minmax(0,1fr)!important;
+  align-items:start!important;
+  gap:11px!important;
+  margin:0!important;
+  padding:15px 0!important;
+  border:0!important;
+  border-bottom:1px solid var(--agnt-rule,#eceef1)!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.followup-context-card.followup-record:last-child{border-bottom:0!important}
+.followup-record-check{
+  display:grid;
+  place-items:center;
+  width:30px;
+  height:30px;
+  margin-top:1px;
+  padding:0;
+  border:1.5px solid #b9c2ce;
+  border-radius:9px;
+  background:transparent;
+  color:transparent;
+}
+.followup-record-check span{font-size:15px;font-weight:850;line-height:1}
+.followup-record-check:active,.followup-record-check[aria-checked="true"]{border-color:var(--agnt-blue,#2f6df6);background:var(--agnt-blue,#2f6df6);color:#fff}
+.followup-record-content{min-width:0}
+.followup-record .followup-context-head{align-items:flex-start!important;gap:10px!important}
+.followup-record .followup-context-head>div{min-width:0}
+.followup-record .followup-context-head span{font-size:8.5px!important;letter-spacing:.1em!important}
+.followup-record .followup-context-head h3{overflow:hidden;margin:4px 0 0!important;font-size:16px!important;line-height:1.2!important;text-overflow:ellipsis;white-space:nowrap}
+.followup-record .followup-context-head b{flex:0 0 auto!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;color:var(--agnt-muted,#7f8792)!important;font-size:9.5px!important;font-weight:700!important}
+.followup-record.is-overdue .followup-context-head b{background:transparent!important;color:#d0443b!important}
+.followup-record-context{display:grid;gap:4px;margin-top:10px}
+.followup-record-context strong{color:var(--agnt-ink-soft,#3d444f);font-size:12px;line-height:1.4}
+.followup-record-context small{overflow:hidden;color:var(--agnt-muted,#7f8792);font-size:10.5px;line-height:1.4;text-overflow:ellipsis;white-space:nowrap}
+.followup-record .followup-context-actions{display:flex!important;gap:7px!important;margin-top:11px!important}
+.followup-record .followup-record-action{display:grid!important;place-items:center!important;width:auto!important;min-width:82px!important;min-height:36px!important;margin:0!important;padding:7px 12px!important;border-radius:11px!important;font-size:10.5px!important;text-decoration:none!important}
+html[data-theme="dark"] .followup-queue-shell{background:#11141a!important;border-color:#292d35!important}
+html[data-theme="dark"] .followup-queue-hero{background:transparent!important}
+html[data-theme="dark"] .followup-record{border-bottom-color:#292d35!important;background:transparent!important}
+html[data-theme="dark"] .followup-record-context strong{color:#d7d9de!important}
+html[data-theme="dark"] .followup-record-check{border-color:#4a515d!important}
+html[data-theme="dark"] .followup-record-check:active,html[data-theme="dark"] .followup-record-check[aria-checked="true"]{border-color:#397dff!important;background:#397dff!important;color:#fff!important}
+html[data-theme="dark"] #prospectorMarketPanel .market-pulse-data-panel :is(.market-review-head,.market-review-counts,.market-review-filters,.market-briefing-row){border-color:#292e36!important}
+html[data-theme="dark"] #prospectorMarketPanel .market-pulse-data-panel .market-review-counts span{border-right-color:#292e36!important;background:transparent!important}
+html[data-theme="dark"] #prospectorMarketPanel .market-pulse-data-panel .market-review-filters button{background:transparent!important}
+html[data-theme="dark"] #prospectorMarketPanel .market-pulse-data-panel .market-briefing-row{background:transparent!important}
+@media(max-width:390px){.followup-queue-shell{padding-inline:12px!important}.followup-record-context small{white-space:normal}.market-pulse-data-panel .market-review-head{gap:8px!important}.market-pulse-data-panel .market-review-counts span{padding-inline:6px!important}.market-pulse-data-panel .market-review-filters{gap:15px!important}}
