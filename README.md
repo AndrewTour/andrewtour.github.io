@@ -1,4 +1,16 @@
-# AGNT v1.37.5 — Micro Stability
+# AGNT v1.38.0 — Street-Led Doorknocking
+
+## v1.38.0 changes
+
+- Rebuilt the live doorknocking workspace around searchable streets rather than saved clients.
+- MarketPulse now highlights where to knock and why even when a street has no matched AGNT contacts.
+- Added observable street data combining saved records, conversation history and previous street-only knocks.
+- Added direct `Knock`, `Knock · No Connect` and `Knock · Connect` logging with an optional note.
+- Street-only knocks remain attached to the session without creating false contacts; exact AGNT address matches also receive the interaction in their history.
+- Completed sessions now retain the street, address-level knock entries and MarketPulse context.
+- Firebase configuration, authentication, Firestore paths/rules, UID separation, existing contact shapes and sync behaviour remain unchanged.
+
+# Previous release — AGNT v1.37.5 — Micro Stability
 
 ## v1.37.5 changes
 
