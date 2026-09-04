@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.38.0-street-knocking">
+<link rel="stylesheet" href="styles.css?v=1.38.1-metrics-first-knocking">
 <title>AGNT</title>
 </head>
 <body>
@@ -485,13 +485,8 @@
           <button id="endKnockingSession" type="button">End Session</button>
         </header>
         <section id="knockingHotSpottingRecommendations" class="knocking-hotspot-recommendations glass" aria-label="Choose a street to door knock">
-          <div class="knocking-hotspot-head knocking-hotspot-intro"><span>WHERE TO KNOCK</span><strong>Choose the street</strong><small>MarketPulse priorities first, with every known AGNT street searchable.</small></div>
+          <div class="knocking-hotspot-head knocking-hotspot-intro"><span>MARKETPULSE</span><strong>Where to knock</strong><small>Priority streets and the market reason behind them.</small></div>
           <div id="knockingPriorityStreets" class="knocking-priority-streets" aria-label="MarketPulse priority streets"></div>
-          <div class="knocking-street-search-row">
-            <label class="knocking-street-picker" for="knockingStreetSearch"><span>SEARCH OR TYPE A STREET</span><input id="knockingStreetSearch" type="search" list="knockingStreetOptions" placeholder="Binalong Road, Toongabbie" autocomplete="off" autocapitalize="words" aria-label="Search or type a street"><datalist id="knockingStreetOptions"></datalist><small id="knockingStreetSummary">Select a MarketPulse priority or search every known street.</small></label>
-            <button id="applyKnockingStreet" type="button">Use street</button>
-          </div>
-          <div id="knockingSelectedStreet" class="knocking-selected-street hidden"></div>
           <button id="toggleKnockingHotSpotting" class="knocking-hotspot-toggle" type="button" aria-expanded="false" aria-controls="knockingHotSpottingList">
             <span class="knocking-hotspot-detail-label">Why this street</span>
             <span class="knocking-hotspot-toggle-meta"><b id="knockingHotSpottingCount">0</b><i aria-hidden="true">⌄</i></span>
@@ -499,18 +494,6 @@
           <div id="knockingHotSpottingList" class="knocking-hotspot-list hidden"></div>
         </section>
         <section class="knocking-session-card glass">
-          <section class="knocking-quick-log" aria-label="Quick knock log">
-            <div class="knocking-quick-log-head"><div><span>QUICK LOG</span><strong id="knockingQuickStreet">Select a street first</strong></div><small>Any door. A client record is not required.</small></div>
-            <form id="knockingQuickLogForm">
-              <input name="address" type="text" autocomplete="street-address" autocapitalize="words" placeholder="Door number or address" aria-label="Door number or address">
-              <textarea name="note" rows="2" maxlength="1000" placeholder="Add a note from the door…" aria-label="Knocking note"></textarea>
-              <div class="knocking-quick-log-actions">
-                <button type="submit" name="outcome" value="knock">Knock</button>
-                <button type="submit" name="outcome" value="no-connect">No Connect</button>
-                <button type="submit" name="outcome" value="connect">Connect</button>
-              </div>
-            </form>
-          </section>
           <div class="knocking-session-grid" aria-label="Session tallies">
             <div class="knocking-tally-card"><span>KNOCKS</span><strong id="knockSessionKnocks">0</strong><div class="knocking-tally-actions"><button type="button" data-knock-adjust="knocks" data-delta="-1" aria-label="Remove knock">−</button><button type="button" data-knock-adjust="knocks" data-delta="1">+ Add knock</button></div></div>
             <div class="knocking-tally-card"><span>CONNECTS</span><strong id="knockSessionClients">0</strong><div class="knocking-tally-actions"><button type="button" data-knock-adjust="clients" data-delta="-1" aria-label="Remove connect">−</button><button type="button" data-knock-adjust="clients" data-delta="1">+ Add connect</button></div></div>
@@ -519,7 +502,14 @@
             <button type="button" data-knock-capture="LAP"><span>LAP</span><strong id="knockSessionLap">0</strong><small>Book listing</small></button>
           </div>
           <div id="knockingSessionRates" class="knocking-session-rates" aria-label="Session conversion rates"></div>
-          <section class="knocking-street-data-section"><div class="knocking-session-log-head"><span>STREET DATA</span><small id="knockingStreetDataSummary">Select a street to inspect its records</small></div><div id="knockingStreetData" class="knocking-street-data"></div></section>
+          <section class="knocking-street-search-section" aria-label="Search previous street conversations">
+            <div class="knocking-session-log-head"><span>STREET SEARCH</span><small>Independent of MarketPulse</small></div>
+            <div class="knocking-street-search-row">
+              <label class="knocking-street-picker" for="knockingStreetSearch"><input id="knockingStreetSearch" type="search" list="knockingStreetOptions" placeholder="Search or type a street" autocomplete="off" autocapitalize="words" aria-label="Search or type a street"><datalist id="knockingStreetOptions"></datalist><small id="knockingStreetSummary">Search any known street and suburb.</small></label>
+              <button id="applyKnockingStreet" type="button">Search</button>
+            </div>
+          </section>
+          <section class="knocking-street-data-section"><div class="knocking-session-log-head"><span>PREVIOUS CONVERSATIONS</span><small id="knockingStreetDataSummary">Select a street to inspect its records</small></div><div id="knockingStreetData" class="knocking-street-data"></div></section>
           <section class="knocking-session-log-section"><div class="knocking-session-log-head"><span>SESSION LOG</span><small>Data and appointments captured this session</small></div><div id="knockingSessionLog" class="knocking-session-log"></div></section>
           <p class="knocking-session-hint">Tap a result as it happens. Data, MAP and LAP open client capture.</p>
         </section>
@@ -1180,6 +1170,6 @@ Andrew Tour | McGrath</textarea></label>
 
 
 
-<script type="module" src="app.js?v=1.38.0-street-knocking"></script>
+<script type="module" src="app.js?v=1.38.1-metrics-first-knocking"></script>
 </body>
 </html>

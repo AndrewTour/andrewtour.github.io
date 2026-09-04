@@ -1,4 +1,15 @@
-# AGNT v1.38.0 — Street-Led Doorknocking
+# AGNT v1.38.1 — Metrics-First Doorknocking
+
+## v1.38.1 changes
+
+- Restored the live session metrics as the primary doorknocking interface.
+- Removed the address-level Quick Log and Active Street sections.
+- Condensed MarketPulse to a separate where-to-knock and why layer.
+- Made street search independent from MarketPulse and continuously editable.
+- Retained observable previous conversations beneath the metric controls.
+- Restored the original session-only completion review and history presentation.
+
+# Previous release — AGNT v1.38.0 — Street-Led Doorknocking
 
 ## v1.38.0 changes
 
