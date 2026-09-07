@@ -1,0 +1,27 @@
+/* v1.37.6: shared interaction polish; existing layouts and metric colours retained. */
+:root{--cleanup-surface:#f4f6f9;--cleanup-ink:#202938;--cleanup-muted:#566173;--cleanup-line:#c1c9d5;--cleanup-accent:#155fca}
+html[data-theme="dark"]{--cleanup-surface:#202733;--cleanup-ink:#f1f5fb;--cleanup-muted:#b3bfd0;--cleanup-line:#64748b;--cleanup-accent:#93c5fd}
+button,a,input,select,textarea{touch-action:manipulation}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed}
+:is(button,a,input,select,textarea,summary):focus-visible{outline:3px solid var(--cleanup-accent)!important;outline-offset:3px!important}
+input::placeholder,textarea::placeholder{color:var(--cleanup-muted)!important;opacity:1}
+:is(input,select,textarea){color-scheme:light}
+html[data-theme="dark"] :is(input,select,textarea){color-scheme:dark}
+/* Same shape, touch target and alignment for back and dismissal controls. */
+:is([data-close-prospect],[data-close-buyer],[data-session-back],[data-buyer-session-back],[data-team-back],#backFromArchivedContacts,#backFromMarketPulse,#broadcastBack,.back-today){
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:6px;
+  min-width:44px!important;min-height:44px!important;height:auto!important;padding:10px 14px!important;
+  border:1px solid var(--cleanup-line)!important;border-radius:12px!important;
+  background:var(--cleanup-surface)!important;color:var(--cleanup-accent)!important;
+  font-size:14px!important;font-weight:650!important;line-height:1.2!important;flex-shrink:0;
+}
+:is([data-close-knock-capture],.action-sheet-close,.team-manager-close,.team-close){min-width:44px!important;min-height:44px!important;color:var(--cleanup-ink)!important;background:var(--cleanup-surface)!important;border-radius:12px!important}
+.cleanup-contact-picker{padding-bottom:14px;border-bottom:1px solid var(--cleanup-line);margin-bottom:4px}
+[data-knock-contact-results]{max-height:220px;overflow:auto;overscroll-behavior:contain}
+[data-knock-contact-results] button{display:flex;flex-direction:column;align-items:flex-start;gap:5px;width:100%;min-height:52px;padding:12px;margin-top:6px;text-align:left;white-space:normal;border:1px solid var(--cleanup-line);border-radius:12px;background:var(--cleanup-surface);color:var(--cleanup-ink)}
+[data-knock-contact-results] small,[data-knock-contact-results] p{color:var(--cleanup-muted);line-height:1.4}
+.knocking-capture-card{max-height:calc(100dvh - 32px);overflow:auto;overscroll-behavior:contain}
+html[data-theme="dark"] .knocking-capture-card :is(input,select,textarea){background:var(--cleanup-surface)!important;color:var(--cleanup-ink)!important;border-color:var(--cleanup-line)!important}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+@media(forced-colors:active){:is(button,input,select,textarea){border:1px solid ButtonText!important}:focus-visible{outline:3px solid Highlight!important}}
