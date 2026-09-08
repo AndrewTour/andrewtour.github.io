@@ -969,12 +969,23 @@ function setTodayPage(page='overview'){
   if(todayPage==='insights')renderScorecard();
   if(todayPage==='log')renderDayLog();
 }
+function dayStatsLines(k=selectedDate){
+  const d=dayData(k),knocking=dailyKnockingStats(k),appointments=appointmentCountsForDate(k),lines=[];
+  const add=(value,label)=>{const count=Math.max(0,Math.round(Number(value)||0));if(count)lines.push(`${count} ${label}`)};
+  add(d.calls,'Calls');add(knocking.knocks,'Knocks');add(d.connects,'Connects');add(d.data,'Data');add(appointments.LAP,'LAP');add(appointments.MAP,'MAP');add(appointments.BAP,'BAP');
+  return lines;
+}
+function sendDayStatsToWhatsApp(k=selectedDate){
+  const lines=dayStatsLines(k);if(!lines.length)return toast('No activity has been logged for this day yet');
+  window.location.assign(`https://wa.me/?text=${encodeURIComponent(lines.join('\n'))}`);
+}
 function renderDayLog(){
   const timeline=$('#dayLogTimeline');if(!timeline)return;const k=selectedDate,d=dayData(k),items=dayLogItems(k);
   const sessions=(Array.isArray(d.knockingSessions)?d.knockingSessions.filter(meaningfulKnockingSession).length:0)+(k===todayKey()&&knockingSessionActive?1:0)+(prospectInteractions.some(interaction=>interaction.date===k&&interaction.type==='Call')?1:0);
   const contacts=prospects.filter(prospect=>dateKey(new Date(Number(prospect.createdAt)||0))===k).length;
   const appointments=allAppointmentEntries().filter(({appointment:a,sourceDate})=>appointmentCreatedDate(a,sourceDate)===k&&['MAP','LAP','BAP'].includes(appointmentType(a))).length;
   $('#dayLogSessionTotal').textContent=sessions;$('#dayLogContactTotal').textContent=contacts;$('#dayLogAppointmentTotal').textContent=appointments;
+  $('#dayLogDateLabel').textContent=k===todayKey()?'Today Log':`${fmtDate(k)} Log`;
   $('#dayLogTitle').textContent=k===todayKey()?'Today’s story':fmtDate(k);
   $('#dayLogMeta').textContent=items.length?`${items.length} meaningful moment${items.length===1?'':'s'}`:'Meaningful activity only';
   const wins=[];if(d.calls>=targets.calls)wins.push(`${d.calls} calls completed`);if(d.connects>=targets.connects)wins.push(`${d.connects} connects achieved`);if(d.data>=targets.data)wins.push(`${d.data} data captured`);if(Math.floor(liveKnockSeconds(d)/60)>=rollingKnockTarget(k))wins.push(`${Math.floor(liveKnockSeconds(d)/60)} minutes knocked`);if(appointments)wins.push(`${appointments} appointment${appointments===1?'':'s'} created`);const hotMoves=prospectInteractions.filter(x=>x.date===k&&(x.outcome==='Appointment booked'||validDateKey(x.nextFollowUp))).length;if(hotMoves)wins.push(`${hotMoves} next action${hotMoves===1?'':'s'} secured`);const winsPanel=$('#todayWins'),winsGrid=$('#todayWinsGrid');if(winsPanel&&winsGrid){winsPanel.classList.toggle('hidden',!wins.length);$('#todayWinsMeta').textContent=wins.length?`${wins.length} meaningful win${wins.length===1?'':'s'}`:'';winsGrid.innerHTML=wins.slice(0,4).map(win=>`<div><span>✓</span><strong>${escapeHtml(win)}</strong></div>`).join('')}
@@ -1021,6 +1032,7 @@ function renderToday(){
   $('#knockTargetText').textContent=past?'Final result':(!scheduled?'No target today':knockRemainingText(Math.floor(secs/60),kt));
   $('#knockRemaining').textContent=past?'Day locked':(!scheduled?'Not scheduled':knockPaceText(Math.floor(secs/60),kt));
   const knockMinutes=Math.floor(secs/60),knockActual=pct(knockMinutes,kt);
+  $('#knockingMetricCard')?.classList.toggle('complete',knockActual>=100);
   const knockPaceNow=new Date(),knockPaceEnd=new Date(knockPaceNow);knockPaceEnd.setHours(17,0,0,0);const knockExpected=(selectedDate===todayKey()&&scheduled)?(knockPaceNow>=knockPaceEnd?100:Math.min(100,Math.round(expectedKnockAt(kt,knockPaceNow)/Math.max(1,kt)*100))):0;
   const knockRing=$('#knockPercent');
   if(knockRing){
@@ -2605,11 +2617,13 @@ function buildContactVCard(p={}){
   if(phone)lines.push(`TEL;TYPE=CELL:${vCardEscape(phone)}`);if(email)lines.push(`EMAIL;TYPE=INTERNET:${vCardEscape(email)}`);if(organisation)lines.push(`ORG:${vCardEscape(organisation)}`);if(address.street||address.locality)lines.push(`ADR;TYPE=HOME:;;${vCardEscape(address.street)};${vCardEscape(address.locality)};${vCardEscape(address.region)};${vCardEscape(address.postcode)};Australia`);if(p.tags?.length)lines.push(`CATEGORIES:${p.tags.map(vCardEscape).join(',')}`);if(notes)lines.push(`NOTE:${vCardEscape(notes)}`);lines.push(`REV:${new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d{3}Z$/,'Z')}`,'END:VCARD');return lines.join('\r\n')+'\r\n'
 }
 function contactVCardFileName(name='Contact'){const safe=cleanText(name,120).normalize('NFKD').replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'').slice(0,70)||'AGNT-Contact';return`${safe}.vcf`}
-function downloadContactVCard(file){const url=URL.createObjectURL(file),link=document.createElement('a');link.href=url;link.download=file.name;link.rel='noopener';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)}
+function openContactVCard(file){
+  const url=URL.createObjectURL(file),link=document.createElement('a');link.href=url;link.target='_blank';link.rel='noopener';link.type='text/vcard';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
 async function exportProspectToDeviceContacts(id=''){
   const p=prospectById(id);if(!p)return toast('Contact could not be found');const file=new File([buildContactVCard(p)],contactVCardFileName(p.name),{type:'text/vcard;charset=utf-8',lastModified:Date.now()});
-  try{if(typeof navigator.share==='function'&&typeof navigator.canShare==='function'&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:`Add ${p.name} to Contacts`});toast('Contact card opened');return}downloadContactVCard(file);toast('Contact card downloaded · open it to add to Contacts')}
-  catch(err){if(err?.name==='AbortError')return;console.warn('Device contact share failed',err);downloadContactVCard(file);toast('Contact card downloaded · open it to add to Contacts')}
+  try{openContactVCard(file);toast('Opening contact in iOS Contacts…')}
+  catch(err){console.warn('Device contact handoff failed',err);toast('Contacts could not be opened on this device')}
 }
 function pipelineDefaultsForTimeframe(timeframe=''){
   return {
@@ -4574,6 +4588,8 @@ $('#knockingStreetSelect')?.addEventListener('change',event=>{selectedKnockingSt
 $('#knockingSession').addEventListener('click',async e=>{const adjust=e.target.closest('[data-knock-adjust]');if(adjust){const type=adjust.dataset.knockAdjust,delta=Number(adjust.dataset.delta)||0,next=Math.max(0,(Number(knockingSessionStats[type])||0)+delta),actual=next-knockingSessionStats[type];if(!actual)return;knockingSessionStats[type]=next;if(type==='clients')await changeMetric('connects',actual);saveKnockingSessionState();renderKnockingSession();haptic();return}const edit=e.target.closest('[data-edit-knock-log]');if(edit){const found=findDailyKnockingLogEntry(edit.dataset.editKnockLog);if(found)openKnockingCapture(found.entry.type,found.entry);return}const remove=e.target.closest('[data-delete-knock-log]');if(remove){await deleteKnockingLogEntry(remove.dataset.deleteKnockLog);return}const capture=e.target.closest('[data-knock-capture]');if(capture){openKnockingCapture(capture.dataset.knockCapture);return}if(e.target.closest('[data-close-knock-capture]'))closeKnockingCapture()});
 $('#knockingSession').addEventListener('submit',async e=>{if(e.target.id!=='knockingCaptureForm')return;e.preventDefault();await submitKnockingCapture(e.target)});
 document.querySelector('.today-page-tabs')?.addEventListener('click',e=>{const button=e.target.closest('[data-today-page]');if(button)setTodayPage(button.dataset.todayPage)});
+$('#openTodayLogShortcut')?.addEventListener('click',()=>setTodayPage('log'));
+$('#sendTodayStats')?.addEventListener('click',()=>sendDayStatsToWhatsApp(selectedDate));
 let todaySwipeStartX=0,todaySwipeStartY=0;$('#scheduleView')?.addEventListener('touchstart',e=>{const touch=e.changedTouches?.[0];if(!touch)return;todaySwipeStartX=touch.clientX;todaySwipeStartY=touch.clientY},{passive:true});$('#scheduleView')?.addEventListener('touchend',e=>{const touch=e.changedTouches?.[0];if(!touch)return;const dx=touch.clientX-todaySwipeStartX,dy=touch.clientY-todaySwipeStartY;if(Math.abs(dx)<60||Math.abs(dx)<=Math.abs(dy)*1.25)return;const pages=['overview','insights','log'],index=pages.indexOf(todayPage),next=dx<0?Math.min(pages.length-1,index+1):Math.max(0,index-1);if(next!==index)setTodayPage(pages[next])},{passive:true});
 $('#openTodayTimeline').onclick=()=>switchView('scheduleView');
 $('#openTaskComposer')?.addEventListener('click',openTaskComposer);

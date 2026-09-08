@@ -9,8 +9,8 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.37.9-device-contacts">
-<link rel="stylesheet" href="cleanup.css?v=1.37.9-device-contacts">
+<link rel="stylesheet" href="styles.css?v=1.38.0-workflow-polish">
+<link rel="stylesheet" href="cleanup.css?v=1.38.0-workflow-polish">
 <title>AGNT</title>
 </head>
 <body>
@@ -382,6 +382,7 @@
       <div id="todayOverviewPanel" class="today-page-panel today-overview-panel active">
         <div class="view-head timeline-view-head">
           <div><span>TODAY</span><h2 id="timelineDateLabel"></h2></div>
+          <button id="openTodayLogShortcut" class="open-today-log-shortcut" type="button">Open Today Log</button>
         </div>
         <section class="timeline-overview glass">
           <div class="timeline-command-head">
@@ -464,6 +465,10 @@
         </div>
       </div>
       <div id="todayLogPanel" class="today-page-panel today-log-panel" aria-hidden="true">
+        <div class="day-log-toolbar">
+          <div><span>DAILY ACTIVITY</span><h2 id="dayLogDateLabel">Today Log</h2></div>
+          <button id="sendTodayStats" class="send-today-stats" type="button">Send Stats</button>
+        </div>
         <section class="day-log-summary glass" aria-label="Daily log summary">
           <div><strong id="dayLogSessionTotal">0</strong><span>Sessions</span></div>
           <div><strong id="dayLogContactTotal">0</strong><span>Contacts</span></div>
@@ -627,8 +632,9 @@
         </div>
         <button id="openManualDialler" class="prospecting-call-button" type="button" aria-label="Open call keypad" title="Call a number">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.2 3.9 9.8 3c.7-.2 1.5.2 1.8.9l1.2 3.1c.2.6.1 1.2-.4 1.6l-1.7 1.5a14 14 0 0 0 3.2 3.2l1.5-1.7c.4-.5 1.1-.6 1.6-.4l3.1 1.2c.7.3 1.1 1.1.9 1.8l-.9 2.6c-.3.9-1.1 1.5-2.1 1.5C10.8 18.3 5.7 13.2 5.7 6c0-1 .6-1.8 1.5-2.1Z"/></svg>
+          <b>Call</b>
         </button>
-        <button id="addProspectButton" class="prospecting-add" type="button" aria-label="Add prospect">+</button>
+        <button id="addProspectButton" class="prospecting-add" type="button" aria-label="Add new contact"><span aria-hidden="true">+</span><b>New Contact</b></button>
       </div>
 
       <div id="prospectingDashboard" class="prospecting-dashboard">
@@ -1062,7 +1068,7 @@ Andrew Tour | McGrath</textarea></label>
 </div>
 <div id="taskComposerModal" class="task-composer-modal hidden" aria-hidden="true">
   <section class="task-composer-card glass" role="dialog" aria-modal="true" aria-labelledby="taskComposerTitle">
-    <div class="task-composer-head"><div><span>NEW TASK</span><h2 id="taskComposerTitle">Add to Today</h2></div><button id="closeTaskComposer" type="button" aria-label="Close task">×</button></div>
+    <div class="task-composer-head"><div><span>NEW TASK</span><h2 id="taskComposerTitle">Add a task</h2></div><button id="closeTaskComposer" type="button" aria-label="Close task">×</button></div>
     <form id="taskForm">
       <label>Task<input id="taskTitle" name="title" type="text" maxlength="160" autocomplete="off" placeholder="What needs to happen?" required></label>
       <label>Context<textarea name="note" rows="3" maxlength="1000" placeholder="Optional note"></textarea></label>
@@ -1175,6 +1181,6 @@ Andrew Tour | McGrath</textarea></label>
 
 
 
-<script type="module" src="app.js?v=1.37.9-device-contacts"></script>
+<script type="module" src="app.js?v=1.38.0-workflow-polish"></script>
 </body>
 </html>

@@ -42,3 +42,79 @@ html[data-theme="dark"] :is(.task-composer-card,.hotspot-no-answer-option){backg
 @media(max-width:390px){.timeline-head-actions{gap:7px}.timeline-head-actions small{font-size:11px}.task-composer-modal{padding:10px}.task-composer-card{max-height:calc(100dvh - 20px);padding:18px 15px}.task-schedule-grid{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 @media(forced-colors:active){:is(button,input,select,textarea){border:1px solid ButtonText!important}:focus-visible{outline:3px solid Highlight!important}}
+
+/* v1.38.0 — requested workflow polish only. */
+
+/* Today: keep the log one tap away and give its share action a clear hierarchy. */
+.open-today-log-shortcut,.send-today-stats{
+  display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:0 13px;
+  border:1px solid var(--cleanup-line);border-radius:12px;background:var(--cleanup-surface);
+  color:var(--cleanup-accent);font-size:12px;font-weight:750;line-height:1;white-space:nowrap;
+}
+.day-log-toolbar{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:4px 2px 12px}
+.day-log-toolbar>div{min-width:0}.day-log-toolbar span{display:block;color:var(--cleanup-accent);font-size:10px;font-weight:850;letter-spacing:.14em}
+.day-log-toolbar h2{margin:5px 0 0;color:var(--cleanup-ink);font-size:20px;line-height:1.1}
+.send-today-stats{min-height:42px;padding-inline:16px;border-color:#178a55;background:#178a55;color:#fff}
+#scheduleView .today-log-panel{display:none!important}
+#scheduleView .today-log-panel.active{display:block!important}
+#scheduleView .today-log-panel>.day-log-summary{margin-bottom:10px}
+#scheduleView .today-log-panel>.today-wins{margin-bottom:10px}
+#scheduleView .today-log-panel>.day-log-card{min-height:420px}
+
+/* Home: the knocking completion message uses the same positive state as every KPI. */
+#knockingMetricCard.complete #knockRemaining{color:#178a55!important}
+html[data-theme="dark"] #knockingMetricCard.complete #knockRemaining{color:#59c99b!important}
+
+/* Prospector Today: two calm, equal actions instead of detached icon tiles. */
+#prospectingView .prospecting-call-button>b,#prospectingView .prospecting-add>b{display:none}
+#prospectingView .prospecting-add>span{display:block;line-height:1}
+#prospectingView .prospecting-toolbar.quick-actions-only{
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;
+  width:100%!important;max-width:none!important;margin:2px 0 18px!important;padding:0!important;
+  background:transparent!important;border:0!important;box-shadow:none!important;
+}
+#prospectingView .prospecting-toolbar.quick-actions-only :is(.prospecting-call-button,.prospecting-add){
+  display:flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;
+  width:100%!important;height:46px!important;min-width:0!important;min-height:46px!important;padding:0 14px!important;
+  border-radius:14px!important;font-size:14px!important;font-weight:750!important;box-shadow:none!important;
+}
+#prospectingView .prospecting-toolbar.quick-actions-only .prospecting-call-button{border:1px solid var(--cleanup-line)!important;background:var(--cleanup-surface)!important;color:var(--cleanup-ink)!important}
+#prospectingView .prospecting-toolbar.quick-actions-only .prospecting-add{border:1px solid #397dff!important;background:#397dff!important;color:#fff!important}
+#prospectingView .prospecting-toolbar.quick-actions-only :is(.prospecting-call-button>b,.prospecting-add>b){display:block;font:inherit;white-space:nowrap}
+#prospectingView .prospecting-toolbar.quick-actions-only .prospecting-add>span{font-size:22px;font-weight:500}
+#prospectingView .prospecting-toolbar.quick-actions-only .prospecting-call-button svg{width:18px;height:18px}
+
+/* Task sheet: compact controls, explicit contrast and consistent app spacing. */
+.task-composer-modal{padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom));background:rgba(8,12,18,.54);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+.task-composer-card{
+  width:min(100%,520px);max-height:calc(100dvh - max(24px,env(safe-area-inset-top)) - max(24px,env(safe-area-inset-bottom)));
+  padding:20px!important;overflow:auto;border:1px solid #d8dee8!important;border-radius:24px!important;
+  background:#fff!important;color:#202938!important;box-shadow:0 22px 70px rgba(8,15,28,.24)!important;
+}
+.task-composer-head{align-items:center;margin-bottom:16px}
+.task-composer-head h2{margin:4px 0 0;color:#202938!important;font-size:22px;line-height:1.08}
+.task-composer-head button{width:40px;height:40px;min-width:40px;border-radius:12px;font-size:22px}
+#taskForm{gap:12px}
+#taskForm label{gap:6px;color:#566173!important;font-size:13px;line-height:1.25}
+#taskForm :is(input,select,textarea){
+  min-width:0;width:100%;min-height:48px!important;height:48px;padding:0 13px!important;
+  border:1px solid #cbd3df!important;border-radius:14px!important;background:#f4f6f9!important;
+  color:#202938!important;font-size:15px!important;font-weight:600!important;box-shadow:none!important;
+}
+#taskForm textarea{height:86px!important;min-height:86px!important;padding-top:12px!important;resize:none}
+#taskForm :is(input,textarea)::placeholder{color:#687487!important;font-weight:550!important}
+.task-schedule-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:10px}
+#taskForm .primary{width:100%;min-height:48px!important;margin-top:2px;padding:0 16px!important;border-radius:14px!important;background:#111318!important;color:#fff!important;font-size:15px!important;font-weight:800!important}
+html[data-theme="dark"] .task-composer-card{border-color:#303744!important;background:#11141a!important;color:#f1f5fb!important;box-shadow:0 22px 70px rgba(0,0,0,.52)!important}
+html[data-theme="dark"] .task-composer-head h2{color:#f1f5fb!important}
+html[data-theme="dark"] #taskForm label{color:#b3bfd0!important}
+html[data-theme="dark"] #taskForm :is(input,select,textarea){border-color:#3b4554!important;background:#202733!important;color:#f1f5fb!important}
+html[data-theme="dark"] #taskForm :is(input,textarea)::placeholder{color:#9ba8ba!important}
+html[data-theme="dark"] #taskForm .primary{background:#397dff!important;color:#fff!important}
+body.task-composer-open{overflow:hidden}
+@media(max-width:390px){
+  #scheduleView .today-overview-panel .timeline-view-head>div:first-child{max-width:54%!important}
+  .open-today-log-shortcut{padding-inline:10px;font-size:11px}
+  .task-composer-card{padding:18px 15px!important}
+  .task-schedule-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
+}

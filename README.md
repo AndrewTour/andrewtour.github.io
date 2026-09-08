@@ -1,4 +1,16 @@
-# AGNT v1.37.9 — Device Contacts
+# AGNT v1.38.0 — Workflow Polish
+
+## v1.38.0 changes
+
+- Opens generated AGNT contact cards directly into the iOS contact-import preview instead of starting with the share sheet or saving a download.
+- Reworked the Add a task sheet for consistent contrast, control sizing and spacing in light and dark mode.
+- Makes the completed Knocking status green, matching the other completed daily metrics.
+- Reworked only the Prospector Today quick actions into balanced Call and New Contact buttons; the workflow cards beneath them are unchanged.
+- Added an always-visible Open Today Log shortcut beside the Today date heading.
+- Added Send Stats to Today Log. It opens WhatsApp with calls, knocked doors, connects, data and each non-zero LAP/MAP/BAP count prefilled; zero-value lines are omitted.
+- Preserves existing AGNT data, Firestore, authentication, team, manager, metric, MarketPulse and navigation behaviour.
+
+## Previous release — v1.37.9
 
 ## v1.37.9 changes
 
