@@ -1,4 +1,14 @@
-# AGNT v1.37.8 — Today Refinement
+# AGNT v1.37.9 — Device Contacts
+
+## v1.37.9 changes
+
+- Added **Add to Phone Contacts** to unified Contact, Buyer and Buyer + Seller profiles.
+- Exports a native `.vcf` contact card through the device share flow, with a direct-download fallback.
+- Maps name, mobile, email, organisation and Australian address fields into their corresponding contact fields.
+- Places AGNT-only context such as stage, temperature, motivation, source, tags, follow-up, buyer requirements and background notes into the contact Notes field.
+- Does not alter the AGNT record, request background Contacts access or automatically overwrite an existing phone contact.
+
+## Previous release — v1.37.8
 
 ## v1.37.8 changes
 

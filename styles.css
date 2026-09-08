@@ -13898,3 +13898,30 @@ html[data-theme="dark"] #prospectorMarketPanel .market-pulse-data-panel .market-
   text-overflow:ellipsis;
 }
 html[data-theme="dark"] .timeline-task-add{background:#397dff;color:#fff}
+
+/* AGNT v1.37.9 — explicit device-contact export from unified profiles. */
+.device-contact-action{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  width:100%;
+  min-height:52px;
+  margin:0 0 15px;
+  padding:10px 13px;
+  border:1px solid var(--agnt-divider,#e1e5ec);
+  border-radius:14px;
+  background:var(--agnt-soft,#f7f8fb);
+  color:var(--agnt-ink,#111318);
+  text-align:left;
+}
+.device-contact-action span{min-width:0}
+.device-contact-action strong,.device-contact-action small{display:block}
+.device-contact-action strong{font-size:12px;font-weight:800;line-height:1.2}
+.device-contact-action small{margin-top:3px;color:var(--agnt-muted,#747c88);font-size:9.5px;line-height:1.25}
+.device-contact-action b{flex:0 0 auto;color:var(--agnt-blue,#1769ff);font-size:21px;font-weight:500}
+.device-contact-action:active{background:#eef5ff}
+.device-contact-action:disabled{opacity:.55}
+html[data-theme="dark"] .device-contact-action{border-color:#2c313a;background:#171a20;color:#f5f6f7}
+html[data-theme="dark"] .device-contact-action small{color:#969ca7}
+html[data-theme="dark"] .device-contact-action b{color:#82bdff}
