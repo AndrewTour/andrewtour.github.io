@@ -9,8 +9,8 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.38.0-workflow-polish">
-<link rel="stylesheet" href="cleanup.css?v=1.38.0-workflow-polish">
+<link rel="stylesheet" href="styles.css?v=1.38.1-review-stats">
+<link rel="stylesheet" href="cleanup.css?v=1.38.1-review-stats">
 <title>AGNT</title>
 </head>
 <body>
@@ -284,13 +284,16 @@
 
 <div id="dayReviewOverlay" class="day-review-overlay hidden" aria-hidden="true">
   <section class="day-review-card" role="dialog" aria-modal="true" aria-labelledby="dayReviewTitle">
-    <div class="day-review-head"><span>DAY IN REVIEW</span><strong id="dayReviewScore">0%</strong></div>
+    <div class="day-review-head"><span>REVIEW DAY AND SEND STATS</span><strong id="dayReviewScore">0%</strong></div>
     <h2 id="dayReviewTitle">Day reviewed. Tomorrow is clearer.</h2>
     <p>The plan you started with, measured against what you completed.</p>
     <div id="dayReviewMetrics" class="day-review-metrics"></div>
     <div id="dayReviewPlan" class="day-review-plan"></div>
     <section class="day-review-coach"><span>TOMORROW'S FOCUS</span><p id="dayReviewCoach"></p></section>
-    <button id="closeDayReview" class="primary day-review-close" type="button">Finish My Day</button>
+    <div class="day-review-actions">
+      <button id="sendDayReviewStats" class="day-review-send-stats" type="button">Send Stats</button>
+      <button id="closeDayReview" class="primary day-review-close" type="button">Finish My Day</button>
+    </div>
   </section>
 </div>
 
@@ -382,7 +385,6 @@
       <div id="todayOverviewPanel" class="today-page-panel today-overview-panel active">
         <div class="view-head timeline-view-head">
           <div><span>TODAY</span><h2 id="timelineDateLabel"></h2></div>
-          <button id="openTodayLogShortcut" class="open-today-log-shortcut" type="button">Open Today Log</button>
         </div>
         <section class="timeline-overview glass">
           <div class="timeline-command-head">
@@ -398,7 +400,7 @@
           </div>
         </section>
         <section id="dailyTimeline" class="daily-timeline glass" aria-live="polite"></section>
-        <button id="openDayReview" class="open-day-review hidden" type="button"><span>DAY IN REVIEW</span><strong>Review today and prepare tomorrow</strong><b aria-hidden="true">›</b></button>
+        <button id="openDayReview" class="open-day-review hidden" type="button"><span>DAY IN REVIEW</span><strong>Review Day and Send Stats</strong><b aria-hidden="true">›</b></button>
       </div>
       <div id="todayInsightsPanel" class="today-page-panel today-insights-panel" aria-hidden="true">
         <div id="personalInsights" class="insights-page active">
@@ -1181,6 +1183,6 @@ Andrew Tour | McGrath</textarea></label>
 
 
 
-<script type="module" src="app.js?v=1.38.0-workflow-polish"></script>
+<script type="module" src="app.js?v=1.38.1-review-stats"></script>
 </body>
 </html>

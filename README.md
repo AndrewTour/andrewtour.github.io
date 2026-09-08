@@ -1,4 +1,15 @@
-# AGNT v1.38.0 — Workflow Polish
+# AGNT v1.38.1 — Review Stats
+
+## v1.38.1 changes
+
+- Restored the confirmed-working v1.37.9 Add to Phone Contacts flow: native vCard sharing where supported, with the working `.vcf` download fallback.
+- Removed the Open Today Log shortcut beside the Today date heading.
+- Retained the existing Send Stats action in the Today Log area.
+- Added Send Stats to the end-of-day review using the same non-zero WhatsApp activity summary.
+- Renamed the end-of-day entry and review heading to **Review Day and Send Stats**.
+- No Firestore, authentication, data-model, metric, appointment, MarketPulse or team logic changed.
+
+## Previous release — v1.38.0
 
 ## v1.38.0 changes
 

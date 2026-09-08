@@ -45,8 +45,8 @@ html[data-theme="dark"] :is(.task-composer-card,.hotspot-no-answer-option){backg
 
 /* v1.38.0 — requested workflow polish only. */
 
-/* Today: keep the log one tap away and give its share action a clear hierarchy. */
-.open-today-log-shortcut,.send-today-stats{
+/* Today Log: give the share action a clear hierarchy. */
+.send-today-stats{
   display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:0 13px;
   border:1px solid var(--cleanup-line);border-radius:12px;background:var(--cleanup-surface);
   color:var(--cleanup-accent);font-size:12px;font-weight:750;line-height:1;white-space:nowrap;
@@ -113,8 +113,13 @@ html[data-theme="dark"] #taskForm :is(input,textarea)::placeholder{color:#9ba8ba
 html[data-theme="dark"] #taskForm .primary{background:#397dff!important;color:#fff!important}
 body.task-composer-open{overflow:hidden}
 @media(max-width:390px){
-  #scheduleView .today-overview-panel .timeline-view-head>div:first-child{max-width:54%!important}
-  .open-today-log-shortcut{padding-inline:10px;font-size:11px}
   .task-composer-card{padding:18px 15px!important}
   .task-schedule-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
 }
+
+/* End-of-day review: share first, then close the day. */
+.day-review-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.day-review-actions :is(.day-review-send-stats,.day-review-close){width:100%;min-height:52px;margin:0!important;padding:0 14px;border-radius:17px;font-size:14px;font-weight:800}
+.day-review-send-stats{border:1px solid #178a55;background:#178a55;color:#fff}
+html[data-theme="dark"] .day-review-send-stats{border-color:#2ca36d;background:#178a55;color:#fff}
+@media(max-width:350px){.day-review-actions{grid-template-columns:1fr}}
