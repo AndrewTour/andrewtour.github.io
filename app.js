@@ -905,7 +905,6 @@ function updateTopbar(id=activeViewId()){
   const showDateNav=id==='todayView'||id==='scheduleView'||id==='appointmentsView';
   $('#dateNavActions')?.classList.toggle('hidden',!showDateNav);
   $('#leaderboardModeShortcut')?.classList.toggle('hidden',id!=='insightsView');
-  $('#homeShortcut')?.classList.toggle('hidden',id!=='settingsView');
 }
 function dayLogTime(at){
   const date=new Date(Number(at)||0);if(!Number.isFinite(date.getTime()))return'';
@@ -1700,8 +1699,7 @@ function renderTimeline(){
   $('#timelineCurrentMeta').textContent=priority.meta;
   const commandAction=$('#timelineCurrentAction');if(commandAction){const available=Boolean(priority.action&&priority.label);commandAction.hidden=!available;commandAction.textContent=priority.label||'Open AGNT';commandAction.dataset.planAction=priority.action||'';commandAction.dataset.eventId=priority.eventId||''}
   const commandBulkSms=$('#timelineCurrentBulkSms'),priorityMarketEvent=priority.eventId&&marketPulseBulkSmsEvent(priority.eventId);if(commandBulkSms){const available=Boolean(priorityMarketEvent&&marketPulseBulkSmsHasMobile(priority.eventId));commandBulkSms.hidden=!available;commandBulkSms.dataset.eventId=available?priority.eventId:''}
-  const commandActions=$('#timelineCurrentActions');if(commandActions)commandActions.hidden=Boolean(commandAction?.hidden&&commandBulkSms?.hidden);
-  const taskCount=items.filter(item=>item.kind==='task'&&!item.completed).length,appointmentCount=items.filter(item=>item.kind==='appointment'||item.kind==='ofi').length,marketWorkloads=new Map();items.filter(item=>item.kind==='market').forEach(item=>{if(!marketWorkloads.has(item.sourceWorkloadId))marketWorkloads.set(item.sourceWorkloadId,item.remainingClients||0)});const marketClients=[...marketWorkloads.values()].reduce((sum,count)=>sum+count,0),buyerMatches=selectedDate===todayKey()?buyerMatchContactEnvelopes(selectedDate).length:0,summary=[];if(taskCount)summary.push(`${taskCount} task${taskCount===1?'':'s'}`);if(buyerMatches)summary.push(`${buyerMatches} buyer opportunit${buyerMatches===1?'y':'ies'}`);if(marketClients)summary.push(`${marketClients} MarketPulse client${marketClients===1?'':'s'}`);summary.push(`${appointmentCount} appointment${appointmentCount===1?'':'s'}`);summary.push(`${completion(selectedDate)}% complete`);$('#timelineSummary').textContent=summary.join(' · ');
+  const commandActions=$('#timelineCurrentActions');if(commandActions)commandActions.hidden=false;
   const activeTimeBlock=timelineTimeBlockIndex(items,selectedDate);
   $('#dailyTimeline').innerHTML=items.length?items.map((item,index)=>{
     const status=timelineStatus(item,index,items,selectedDate,priority.focusItemId);
@@ -4551,7 +4549,7 @@ $('#closeTaskComposer')?.addEventListener('click',closeTaskComposer);
 $('#taskComposerModal')?.addEventListener('click',e=>{if(e.target.id==='taskComposerModal')closeTaskComposer()});
 $('#taskForm')?.addEventListener('submit',async e=>{e.preventDefault();await addTaskFromForm(e.currentTarget)});
 $('#openMarketPulseHome')&&($('#openMarketPulseHome').onclick=()=>openMarketPulseDataArea('home'));
-$('#resetKnock').onclick=resetKnock;$('#knockingMetricCard').onclick=e=>{if(e.target.closest('button'))return;openKnockingHistory()};$('#knockingMetricCard').onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.closest('button')){e.preventDefault();openKnockingHistory()}};$('#closeKnockingHistory').onclick=closeKnockingHistory;$('#previousDay').onclick=()=>shiftHeaderDate(-1);$('#nextDay').onclick=()=>shiftHeaderDate(1);$('#leaderboardModeShortcut').onclick=()=>{leaderboardMode=leaderboardMode==='week'?'day':'week';renderUnifiedLeaderboard()};$('#homeShortcut').onclick=()=>switchView('todayView');$('#backToday').onclick=()=>{selectedDate=todayKey();appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()};
+$('#resetKnock').onclick=resetKnock;$('#knockingMetricCard').onclick=e=>{if(e.target.closest('button'))return;openKnockingHistory()};$('#knockingMetricCard').onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.closest('button')){e.preventDefault();openKnockingHistory()}};$('#closeKnockingHistory').onclick=closeKnockingHistory;$('#previousDay').onclick=()=>shiftHeaderDate(-1);$('#nextDay').onclick=()=>shiftHeaderDate(1);$('#leaderboardModeShortcut').onclick=()=>{leaderboardMode=leaderboardMode==='week'?'day':'week';renderUnifiedLeaderboard()};$('#backToday').onclick=()=>{selectedDate=todayKey();appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()};
 $('.tabbar').onclick=e=>{const b=e.target.closest('button[data-view]');if(b)switchView(b.dataset.view)};
 $('#timelineCurrentAction')?.addEventListener('click',e=>navigateDailyPlanAction(e.currentTarget.dataset.planAction,e.currentTarget.dataset.eventId));
 $('#timelineCurrentBulkSms')?.addEventListener('click',e=>openMarketPulseBulkSms(e.currentTarget.dataset.eventId));

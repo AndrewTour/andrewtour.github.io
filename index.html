@@ -9,8 +9,8 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.37.7-tasks-workflow">
-<link rel="stylesheet" href="cleanup.css?v=1.37.7-tasks-workflow">
+<link rel="stylesheet" href="styles.css?v=1.37.8-today-refinement">
+<link rel="stylesheet" href="cleanup.css?v=1.37.8-today-refinement">
 <title>AGNT</title>
 </head>
 <body>
@@ -320,7 +320,6 @@
         <button id="nextDay" class="icon-btn topbar-nav-icon" type="button" aria-label="Next day"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 6.5 5.5 5.5-5.5 5.5"/></svg></button>
       </div>
       <button id="leaderboardModeShortcut" class="icon-btn leaderboard-mode-shortcut hidden" type="button" aria-label="Switch leaderboard to weekly view" title="Daily leaderboard">DAY</button>
-      <button id="homeShortcut" class="icon-btn home-shortcut-icon hidden" type="button" aria-label="Return to Today"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 10 8-6 8 6"/><path d="M6.5 9.5V20h11V9.5"/><path d="M10 20v-6h4v6"/></svg></button>
     </div>
   </header>
 
@@ -383,7 +382,6 @@
       <div id="todayOverviewPanel" class="today-page-panel today-overview-panel active">
         <div class="view-head timeline-view-head">
           <div><span>TODAY</span><h2 id="timelineDateLabel"></h2></div>
-          <div class="timeline-head-actions"><small id="timelineSummary">Your day at a glance</small><button id="openTaskComposer" class="timeline-task-add" type="button" aria-label="Add task">+</button></div>
         </div>
         <section class="timeline-overview glass">
           <div class="timeline-command-head">
@@ -392,9 +390,10 @@
           </div>
           <strong id="timelineCurrentTitle">Loading today…</strong>
           <small id="timelineCurrentMeta">Your schedule will appear below.</small>
-          <div id="timelineCurrentActions" class="timeline-command-actions" hidden>
+          <div id="timelineCurrentActions" class="timeline-command-actions">
             <button id="timelineCurrentAction" class="timeline-command-action" type="button" hidden>Open AGNT</button>
             <button id="timelineCurrentBulkSms" class="timeline-command-action timeline-command-bulk-sms" type="button" aria-label="Open Bulk SMS" title="Bulk SMS" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg></button>
+            <button id="openTaskComposer" class="timeline-task-add" type="button" aria-label="Add task" title="Add task">+</button>
           </div>
         </section>
         <section id="dailyTimeline" class="daily-timeline glass" aria-live="polite"></section>
@@ -1176,6 +1175,6 @@ Andrew Tour | McGrath</textarea></label>
 
 
 
-<script type="module" src="app.js?v=1.37.7-tasks-workflow"></script>
+<script type="module" src="app.js?v=1.37.8-today-refinement"></script>
 </body>
 </html>

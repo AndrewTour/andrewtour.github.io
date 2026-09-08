@@ -1,27 +1,14 @@
-# AGNT v1.38.1 — Metrics-First Doorknocking
+# AGNT v1.37.8 — Today Refinement
 
-## v1.38.1 changes
+## v1.37.8 changes
 
-- Restored the live session metrics as the primary doorknocking interface.
-- Removed the address-level Quick Log and Active Street sections.
-- Condensed MarketPulse to a separate where-to-knock and why layer.
-- Made street search independent from MarketPulse and continuously editable.
-- Retained observable previous conversations beneath the metric controls.
-- Restored the original session-only completion review and history presentation.
+- Removed the Today workload summary beneath the page heading.
+- Moved the task `+` into the Today priority card, aligned opposite its primary action and matched to the compact MarketPulse shortcut size.
+- Locked the Today and Leaderboard page subtitles to one line.
+- Removed the Today shortcut from Settings.
+- No data, Firebase, Firestore, authentication, metric, task, appointment, MarketPulse or navigation logic was changed.
 
-# Previous release — AGNT v1.38.0 — Street-Led Doorknocking
-
-## v1.38.0 changes
-
-- Rebuilt the live doorknocking workspace around searchable streets rather than saved clients.
-- MarketPulse now highlights where to knock and why even when a street has no matched AGNT contacts.
-- Added observable street data combining saved records, conversation history and previous street-only knocks.
-- Added direct `Knock`, `Knock · No Connect` and `Knock · Connect` logging with an optional note.
-- Street-only knocks remain attached to the session without creating false contacts; exact AGNT address matches also receive the interaction in their history.
-- Completed sessions now retain the street, address-level knock entries and MarketPulse context.
-- Firebase configuration, authentication, Firestore paths/rules, UID separation, existing contact shapes and sync behaviour remain unchanged.
-
-# Previous release — AGNT v1.37.5 — Micro Stability
+## Previous release — v1.37.5
 
 ## v1.37.5 changes
 

@@ -1,4 +1,4 @@
-/* v1.37.7: shared interaction polish; existing layouts and metric colours retained. */
+/* v1.37.8: shared interaction polish; existing layouts and metric colours retained. */
 :root{--cleanup-surface:#f4f6f9;--cleanup-ink:#202938;--cleanup-muted:#566173;--cleanup-line:#c1c9d5;--cleanup-accent:#155fca}
 html[data-theme="dark"]{--cleanup-surface:#202733;--cleanup-ink:#f1f5fb;--cleanup-muted:#b3bfd0;--cleanup-line:#64748b;--cleanup-accent:#93c5fd}
 button,a,input,select,textarea{touch-action:manipulation}

@@ -22,10 +22,58 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/teams/$(teamId)).data.ownerUid == request.auth.uid;
     }
 
+    function hasActiveTeamManagerGrant(teamId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/managerAccess/$(request.auth.uid)/grants/$("team__" + teamId))
+        && exists(/databases/$(database)/documents/teams/$(teamId))
+        && get(/databases/$(database)/documents/managerAccess/$(request.auth.uid)/grants/$("team__" + teamId)).data.status == 'active'
+        && get(/databases/$(database)/documents/managerAccess/$(request.auth.uid)/grants/$("team__" + teamId)).data.resourceType == 'team'
+        && get(/databases/$(database)/documents/managerAccess/$(request.auth.uid)/grants/$("team__" + teamId)).data.resourceId == teamId
+        && get(/databases/$(database)/documents/managerAccess/$(request.auth.uid)/grants/$("team__" + teamId)).data.grantedByUid == get(/databases/$(database)/documents/teams/$(teamId)).data.ownerUid;
+    }
+
+    function hasActiveAgentManagerGrant(userId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/managerAccess/$(request.auth.uid)/grants/$("agent__" + userId))
+        && get(/databases/$(database)/documents/managerAccess/$(request.auth.uid)/grants/$("agent__" + userId)).data.status == 'active'
+        && get(/databases/$(database)/documents/managerAccess/$(request.auth.uid)/grants/$("agent__" + userId)).data.resourceType == 'agent'
+        && get(/databases/$(database)/documents/managerAccess/$(request.auth.uid)/grants/$("agent__" + userId)).data.resourceId == userId
+        && get(/databases/$(database)/documents/managerAccess/$(request.auth.uid)/grants/$("agent__" + userId)).data.grantedByUid == userId;
+    }
+
+    function isSoloUser(userId) {
+      let userPath = /databases/$(database)/documents/users/$(userId);
+      let userData = get(userPath).data;
+      return exists(userPath)
+        && (!userData.keys().hasAny(['accountMode']) || userData.accountMode != 'team')
+        && (!userData.keys().hasAny(['teamId']) || userData.teamId == '');
+    }
+
+    function isAuthorisedManagerOfUser(userId) {
+      let userPath = /databases/$(database)/documents/users/$(userId);
+      let userData = get(userPath).data;
+      return signedIn()
+        && exists(userPath)
+        && (
+          (isSoloUser(userId) && hasActiveAgentManagerGrant(userId))
+          ||
+          (userData.keys().hasAny(['teamId'])
+            && userData.teamId is string
+            && userData.teamId != ''
+            && (isTeamOwner(userData.teamId) || hasActiveTeamManagerGrant(userData.teamId))
+            && exists(/databases/$(database)/documents/teams/$(userData.teamId)/members/$(userId)))
+        );
+    }
+
     // Stable personal-data rules. Kept structurally aligned with the confirmed
     // pre-Teams production rules: a user can only access their own records.
     match /users/{userId} {
       allow read, write: if isOwner(userId);
+
+      match /days/{dayId} {
+        allow read: if isOwner(userId) || isAuthorisedManagerOfUser(userId);
+        allow write: if isOwner(userId);
+      }
 
       match /{document=**} {
         allow read, write: if isOwner(userId);
@@ -36,7 +84,8 @@ service cloud.firestore {
     // Team security: users may only read their own legacy row.
     // Team views read the isolated team leaderboard below instead.
     match /leaderboard/{userId} {
-      allow read: if isOwner(userId);
+      allow read: if isOwner(userId)
+                  || (isSoloUser(userId) && hasActiveAgentManagerGrant(userId));
       allow write: if isOwner(userId);
     }
 
@@ -46,14 +95,20 @@ service cloud.firestore {
                     && request.resource.data.ownerUid == request.auth.uid
                     && request.resource.data.joinEnabled == true
                     && request.resource.data.joinCode is string;
-      allow read: if isTeamMember(teamId) || isTeamOwner(teamId);
+      allow read: if isTeamMember(teamId)
+                  || isTeamOwner(teamId)
+                  || hasActiveTeamManagerGrant(teamId);
+      allow list: if signedIn()
+                  && resource.data.ownerUid == request.auth.uid;
       allow update: if isTeamOwner(teamId)
                     && request.resource.data.ownerUid == resource.data.ownerUid;
       allow delete: if isTeamOwner(teamId);
 
       match /members/{memberId} {
         // A user can verify their own membership; team members can see their team.
-        allow read: if isOwner(memberId) || isTeamMember(teamId);
+        allow read: if isOwner(memberId)
+                    || isTeamMember(teamId)
+                    || hasActiveTeamManagerGrant(teamId);
 
         // Owner creation is validated against the post-batch team document.
         // Normal joining requires the exact current join code from the team.
@@ -83,7 +138,8 @@ service cloud.firestore {
 
       // Team appointment assignment. Setter keeps personal appointment/stat record.
       match /appointments/{appointmentId} {
-        allow read: if isTeamMember(teamId);
+        allow read: if isTeamMember(teamId)
+                    || hasActiveTeamManagerGrant(teamId);
         allow create: if isTeamMember(teamId)
                       && request.resource.data.setterUid == request.auth.uid
                       && request.resource.data.assignedToUid is string
@@ -99,7 +155,8 @@ service cloud.firestore {
       // Team task assignment mirrors appointment ownership: the setter controls
       // the task and the allocated agent can only update completion state.
       match /tasks/{taskId} {
-        allow read: if isTeamMember(teamId);
+        allow read: if isTeamMember(teamId)
+                    || hasActiveTeamManagerGrant(teamId);
         allow create: if isTeamMember(teamId)
                       && request.resource.data.setterUid == request.auth.uid
                       && request.resource.data.assignedToUid is string
@@ -116,7 +173,8 @@ service cloud.firestore {
       // Secure team-facing leaderboard. This is additive; it does not replace
       // leaderboard/{uid} publishing during the Teams transition.
       match /leaderboard/{memberId} {
-        allow read: if isTeamMember(teamId);
+        allow read: if isTeamMember(teamId)
+                    || hasActiveTeamManagerGrant(teamId);
         allow create, update: if isOwner(memberId)
                               && isTeamMember(teamId)
                               && request.resource.data.uid == request.auth.uid;
@@ -140,6 +198,173 @@ service cloud.firestore {
                     && get(/databases/$(database)/documents/teams/$(resource.data.teamId)).data.ownerUid == request.auth.uid;
       allow delete: if signedIn()
                     && get(/databases/$(database)/documents/teams/$(resource.data.teamId)).data.ownerUid == request.auth.uid;
+    }
+
+    match /managerProfiles/{managerUid} {
+      allow get: if isOwner(managerUid);
+      allow list: if false;
+
+      allow create: if isOwner(managerUid)
+                    && request.resource.data.keys().hasOnly([
+                      'uid',
+                      'name',
+                      'email',
+                      'accountType',
+                      'createdAt'
+                    ])
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.accountType == 'manager'
+                    && request.resource.data.name is string
+                    && request.resource.data.email == request.auth.token.email
+                    && request.resource.data.createdAt == request.time;
+
+      allow update: if isOwner(managerUid)
+                    && request.resource.data.uid == resource.data.uid
+                    && request.resource.data.accountType == 'manager'
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name']);
+
+      allow delete: if false;
+    }
+
+    match /managementRequests/{requestId} {
+      allow get: if signedIn();
+
+      allow list: if signedIn()
+                  && resource.data.managerUid == request.auth.uid;
+
+      allow create: if signedIn()
+                    && exists(/databases/$(database)/documents/managerProfiles/$(request.auth.uid))
+                    && request.resource.data.keys().hasOnly([
+                      'managerUid',
+                      'managerName',
+                      'managerEmail',
+                      'resourceType',
+                      'status',
+                      'createdAt',
+                      'expiresAt'
+                    ])
+                    && request.resource.data.managerUid == request.auth.uid
+                    && request.resource.data.managerName == get(/databases/$(database)/documents/managerProfiles/$(request.auth.uid)).data.name
+                    && request.resource.data.managerEmail == request.auth.token.email
+                    && request.resource.data.resourceType in ['team', 'agent']
+                    && request.resource.data.status == 'pending'
+                    && request.resource.data.createdAt == request.time
+                    && request.resource.data.expiresAt > request.time
+                    && request.resource.data.expiresAt <= request.time + duration.value(8, 'd');
+
+      allow update: if signedIn()
+                    && (
+                      (
+                        resource.data.managerUid == request.auth.uid
+                        && resource.data.status == 'pending'
+                        && request.resource.data.status == 'cancelled'
+                        && request.resource.data.cancelledAt == request.time
+                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                          'status',
+                          'cancelledAt'
+                        ])
+                      )
+                      ||
+                      (
+                        resource.data.status == 'pending'
+                        && resource.data.expiresAt > request.time
+                        && request.resource.data.status == 'approved'
+                        && request.resource.data.grantedByUid == request.auth.uid
+                        && request.resource.data.approvedAt == request.time
+                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                          'status',
+                          'resourceId',
+                          'resourceName',
+                          'grantedByUid',
+                          'approvedAt'
+                        ])
+                        && (
+                          (
+                            resource.data.resourceType == 'team'
+                            && isTeamOwner(request.resource.data.resourceId)
+                          )
+                          ||
+                          (
+                            resource.data.resourceType == 'agent'
+                            && request.resource.data.resourceId == request.auth.uid
+                            && isSoloUser(request.auth.uid)
+                          )
+                        )
+                      )
+                    );
+
+      allow delete: if false;
+    }
+
+    match /managerAccess/{managerUid}/grants/{grantId} {
+      allow read: if signedIn()
+                  && (
+                    request.auth.uid == managerUid
+                    || resource.data.grantedByUid == request.auth.uid
+                  );
+
+      allow create: if signedIn()
+                    && request.resource.data.keys().hasOnly([
+                      'managerUid',
+                      'managerName',
+                      'managerEmail',
+                      'resourceType',
+                      'resourceId',
+                      'resourceName',
+                      'grantedByUid',
+                      'requestId',
+                      'status',
+                      'grantedAt'
+                    ])
+                    && request.resource.data.managerUid == managerUid
+                    && request.resource.data.grantedByUid == request.auth.uid
+                    && request.resource.data.status == 'active'
+                    && request.resource.data.grantedAt == request.time
+                    && grantId == request.resource.data.resourceType + '__' + request.resource.data.resourceId
+                    && getAfter(/databases/$(database)/documents/managementRequests/$(request.resource.data.requestId)).data.status == 'approved'
+                    && getAfter(/databases/$(database)/documents/managementRequests/$(request.resource.data.requestId)).data.managerUid == managerUid
+                    && getAfter(/databases/$(database)/documents/managementRequests/$(request.resource.data.requestId)).data.managerName == request.resource.data.managerName
+                    && getAfter(/databases/$(database)/documents/managementRequests/$(request.resource.data.requestId)).data.managerEmail == request.resource.data.managerEmail
+                    && getAfter(/databases/$(database)/documents/managementRequests/$(request.resource.data.requestId)).data.resourceType == request.resource.data.resourceType
+                    && getAfter(/databases/$(database)/documents/managementRequests/$(request.resource.data.requestId)).data.resourceId == request.resource.data.resourceId
+                    && getAfter(/databases/$(database)/documents/managementRequests/$(request.resource.data.requestId)).data.resourceName == request.resource.data.resourceName
+                    && getAfter(/databases/$(database)/documents/managementRequests/$(request.resource.data.requestId)).data.grantedByUid == request.auth.uid;
+
+      allow update: if signedIn()
+                    && (
+                      (
+                        (
+                          request.auth.uid == managerUid
+                          || resource.data.grantedByUid == request.auth.uid
+                        )
+                        && resource.data.status == 'active'
+                        && request.resource.data.status == 'revoked'
+                        && request.resource.data.revokedByUid == request.auth.uid
+                        && request.resource.data.revokedAt == request.time
+                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                          'status',
+                          'revokedAt',
+                          'revokedByUid'
+                        ])
+                      )
+                      ||
+                      (
+                        resource.data.status == 'revoked'
+                        && request.resource.data.status == 'active'
+                        && request.resource.data.managerUid == resource.data.managerUid
+                        && request.resource.data.resourceType == resource.data.resourceType
+                        && request.resource.data.resourceId == resource.data.resourceId
+                        && request.resource.data.grantedByUid == request.auth.uid
+                        && request.resource.data.grantedAt == request.time
+                        && getAfter(/databases/$(database)/documents/managementRequests/$(request.resource.data.requestId)).data.status == 'approved'
+                        && getAfter(/databases/$(database)/documents/managementRequests/$(request.resource.data.requestId)).data.managerUid == managerUid
+                        && getAfter(/databases/$(database)/documents/managementRequests/$(request.resource.data.requestId)).data.resourceType == resource.data.resourceType
+                        && getAfter(/databases/$(database)/documents/managementRequests/$(request.resource.data.requestId)).data.resourceId == resource.data.resourceId
+                        && getAfter(/databases/$(database)/documents/managementRequests/$(request.resource.data.requestId)).data.grantedByUid == request.auth.uid
+                      )
+                    );
+
+      allow delete: if false;
     }
 
     match /{document=**} {
