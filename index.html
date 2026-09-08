@@ -9,8 +9,8 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.37.6-ui-cleanup">
-<link rel="stylesheet" href="cleanup.css?v=1.37.6-ui-cleanup">
+<link rel="stylesheet" href="styles.css?v=1.37.7-tasks-workflow">
+<link rel="stylesheet" href="cleanup.css?v=1.37.7-tasks-workflow">
 <title>AGNT</title>
 </head>
 <body>
@@ -383,7 +383,7 @@
       <div id="todayOverviewPanel" class="today-page-panel today-overview-panel active">
         <div class="view-head timeline-view-head">
           <div><span>TODAY</span><h2 id="timelineDateLabel"></h2></div>
-          <small id="timelineSummary">Your day at a glance</small>
+          <div class="timeline-head-actions"><small id="timelineSummary">Your day at a glance</small><button id="openTaskComposer" class="timeline-task-add" type="button" aria-label="Add task">+</button></div>
         </div>
         <section class="timeline-overview glass">
           <div class="timeline-command-head">
@@ -1061,6 +1061,19 @@ Andrew Tour | McGrath</textarea></label>
     <div id="calendarGrid" class="calendar-grid"></div>
   </div>
 </div>
+<div id="taskComposerModal" class="task-composer-modal hidden" aria-hidden="true">
+  <section class="task-composer-card glass" role="dialog" aria-modal="true" aria-labelledby="taskComposerTitle">
+    <div class="task-composer-head"><div><span>NEW TASK</span><h2 id="taskComposerTitle">Add to Today</h2></div><button id="closeTaskComposer" type="button" aria-label="Close task">×</button></div>
+    <form id="taskForm">
+      <label>Task<input id="taskTitle" name="title" type="text" maxlength="160" autocomplete="off" placeholder="What needs to happen?" required></label>
+      <label>Context<textarea name="note" rows="3" maxlength="1000" placeholder="Optional note"></textarea></label>
+      <div class="task-schedule-grid"><label>Date<input id="taskDate" name="date" type="date" required></label><label>Time<input id="taskTime" name="time" type="time" required></label></div>
+      <label id="taskAssigneeField">Assigned to<select id="taskAssignee" name="assignedToUid"><option value="">Me</option></select></label>
+      <div id="taskFormError" class="form-error hidden" role="alert"></div>
+      <button class="primary" type="submit">Add task</button>
+    </form>
+  </section>
+</div>
 <div id="appointmentAssignmentModal" class="appointment-assignment-modal hidden" aria-hidden="true">
   <section class="appointment-assignment-card glass" role="dialog" aria-modal="true" aria-labelledby="appointmentAssignmentTitle">
     <span class="appointment-assignment-kicker">ASSIGN APPOINTMENT</span>
@@ -1163,6 +1176,6 @@ Andrew Tour | McGrath</textarea></label>
 
 
 
-<script type="module" src="app.js?v=1.37.6-ui-cleanup"></script>
+<script type="module" src="app.js?v=1.37.7-tasks-workflow"></script>
 </body>
 </html>
