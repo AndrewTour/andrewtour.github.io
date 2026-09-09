@@ -25,7 +25,7 @@ context.detailWasOpen=true;context.editorWasOpen=true;vm.runInContext(branch,con
 assert.match(fn('upsertProspect'),/saveProspecting\(\{render:false,awaitCloud:false\}\)/);
 assert.match(fn('saveManualCallAsContact'),/name:buyer\?\.name/);assert.match(fn('saveManualCallAsContact'),/address:buyer\?\.address/);
 const index=fs.readFileSync(__dirname+'/index.html','utf8'),sw=fs.readFileSync(__dirname+'/service-worker.js','utf8');
-for(const asset of ['cleanup.css?v=1.38.1-review-stats','app.js?v=1.38.1-review-stats']){assert(index.includes(asset));assert(sw.includes(asset))}
+for(const asset of ['cleanup.css?v=1.38.2-buyer-legibility','app.js?v=1.38.2-buyer-legibility']){assert(index.includes(asset));assert(sw.includes(asset))}
 for(const file of ['manifest.json','icons/icon-192.png','icons/icon-512.png','firebase-config.js','firestore.rules'])assert(fs.existsSync(__dirname+'/'+file));
 for(const name of ['taskTimestampMillis','normaliseTaskRecord'])vm.runInContext(fn(name),context);
 const task=context.normaliseTaskRecord({title:'  Call solicitor  ',note:' Confirm exchange ',date:'2026-09-08',time:'14:30'},'2026-09-08');assert.equal(task.id,'task-id');assert.equal(task.title,'Call solicitor');assert.equal(task.note,'Confirm exchange');assert.equal(task.scheduledDate,'2026-09-08');assert.equal(task.assignedToUid,'test-user');
@@ -41,6 +41,7 @@ Object.assign(context,{dayData:()=>({calls:0,connects:0,data:0}),dailyKnockingSt
 assert.match(fn('sendDayStatsToWhatsApp'),/https:\/\/wa\.me\/\?text=/);assert.match(fn('downloadContactVCard'),/link\.download=file\.name/);assert.match(fn('exportProspectToDeviceContacts'),/navigator\.share/);assert.match(fn('exportProspectToDeviceContacts'),/downloadContactVCard\(file\)/);
 assert.match(source,/sendDayReviewStats.*sendDayStatsToWhatsApp\(todayKey\(\)\)/);assert.doesNotMatch(source,/openTodayLogShortcut/);
 assert.match(fn('renderToday'),/knockingMetricCard.*classList\.toggle\('complete'/s);
+const cleanup=fs.readFileSync(__dirname+'/cleanup.css','utf8');assert.match(cleanup,/v1\.38\.2 — Buyers list legibility only/);assert.match(cleanup,/#prospectorBuyersPanel \.buyer-card-actions \[data-call-buyer\]/);
 const submitBranch=source.slice(source.indexOf("if(e.target.id==='prospectLogForm')"),source.indexOf("};\n\n$('#openDayReview')"));assert.match(submitBranch,/applyProspectingOutcomeMetrics\(outcome,interactionId,\{awaitCloud:false\}\)/);assert.match(submitBranch,/saveProspecting\(\{render:false,awaitCloud:false\}\)/);assert.match(submitBranch,/sendHotSpotSmsAfterOutcome/);assert.match(source,/afterOutcome:hotSpotSmsAfterOutcome/);
 assert.match(source,/searchVisible=\['contacts','buyers','pipeline'\]/);assert.match(fn('updateBackTodayVisibility'),/\['todayView','scheduleView'\]/);
 const rules=fs.readFileSync(__dirname+'/firestore.rules','utf8');assert.match(rules,/match \/tasks\/\{taskId\}/);assert.match(rules,/hasOnly\(\['completedAt','updatedAt'\]\)/);

@@ -1,3 +1,15 @@
+# AGNT v1.38.2 — Buyer Legibility
+
+## v1.38.2 changes
+
+- Updated only the Buyers list presentation.
+- Added clearer visual containment and stronger buyer-name, criteria and suburb hierarchy.
+- Condensed MarketPulse opportunity presentation and aligned status information.
+- Made Call the primary card action while retaining SMS and Follow Up unchanged.
+- Improved light and dark mode contrast without changing buyer data, matching or behaviour.
+
+## Previous release — v1.38.1
+
 # AGNT v1.38.1 — Review Stats
 
 ## v1.38.1 changes
