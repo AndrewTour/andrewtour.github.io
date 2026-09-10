@@ -1,4 +1,16 @@
-# AGNT v1.40.0 — Consistency and Orchestration
+# AGNT v1.41.0 — Seller Next Best Action
+
+## v1.41.0 changes
+
+- Gives Today a seller-first Next Best Action using existing contact, pipeline, follow-up, appointment and MarketPulse data.
+- Scores urgency, temperature, motivation, selling timeframe, stage, contact freshness and relevant property activity.
+- Explains the recommendation in plain language and opens the exact seller profile in one tap.
+- Recalculates immediately after an existing seller outcome changes the record.
+- Adds a quiet `Not now` action in Today with Later today, Not today and Next workday choices.
+- Keeps deferral history UID-scoped on-device; no Firebase, Firestore or client-record changes are required.
+- Preserves appointments, active sessions, scheduled knocking and the 6:30pm day-close command above seller recommendations.
+
+## Previous release — v1.40.0
 
 ## v1.40.0 changes
 
