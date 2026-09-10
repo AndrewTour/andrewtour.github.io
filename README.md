@@ -1,3 +1,14 @@
+# AGNT v1.40.0 — Consistency and Orchestration
+
+## v1.40.0 changes
+
+- Restores the last safe, UID-scoped workspace across refresh, backgrounding and app re-entry.
+- Retains the active tab, supported subpage and list modes, selected date, stable scroll position and read-only Contact or Buyer profile.
+- Keeps temporary overlays, confirmations and unsafe editors out of automatic restoration.
+- Makes Home `Right Now` open its existing priority action directly when one is available.
+
+## Previous release — v1.39.3
+
 # AGNT v1.39.3 — Contact Profile Full Viewport
 
 ## v1.39.3 changes
