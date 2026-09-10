@@ -1,3 +1,14 @@
+# AGNT v1.38.3 — Buyer Full Viewport
+
+## v1.38.3 changes
+
+- Returned the Buyers list to the original flat, full-width viewport presentation.
+- Removed the individual buyer card/pill containers and restored simple row dividers.
+- Retained the improved typography, contrast, MarketPulse hierarchy and primary Call action from v1.38.2.
+- No buyer logic, data, matching, actions or other screens changed.
+
+## Previous release — v1.38.2
+
 # AGNT v1.38.2 — Buyer Legibility
 
 ## v1.38.2 changes

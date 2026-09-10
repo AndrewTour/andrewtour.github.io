@@ -124,9 +124,9 @@ body.task-composer-open{overflow:hidden}
 html[data-theme="dark"] .day-review-send-stats{border-color:#2ca36d;background:#178a55;color:#fff}
 @media(max-width:350px){.day-review-actions{grid-template-columns:1fr}}
 
-/* v1.38.2 — Buyers list legibility only. */
+/* v1.38.3 — Buyers list legibility in the original full-viewport style. */
 #prospectorBuyersPanel .buyer-list-shell{
-  padding:0 12px 12px!important;
+  padding:0 14px 4px!important;
   background:transparent!important;
   border-color:transparent!important;
   box-shadow:none!important;
@@ -134,26 +134,26 @@ html[data-theme="dark"] .day-review-send-stats{border-color:#2ca36d;background:#
 #prospectorBuyersPanel .buyer-results-head{
   min-height:44px!important;
   padding:0 2px!important;
-  border-bottom:0!important;
+  border-bottom:1px solid #e6e9ee!important;
 }
 #prospectorBuyersPanel .buyer-profile-list{
-  display:grid!important;
-  gap:10px!important;
-  overflow:visible!important;
+  display:block!important;
+  overflow:hidden!important;
 }
 #prospectorBuyersPanel .buyer-card{
   width:100%!important;
   margin:0!important;
-  padding:14px!important;
-  border:1px solid #e2e6ec!important;
-  border-radius:18px!important;
-  background:#fff!important;
-  box-shadow:0 5px 16px rgba(18,28,45,.045)!important;
+  padding:16px 2px 15px!important;
+  border:0!important;
+  border-bottom:1px solid #e6e9ee!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
   overflow:hidden!important;
   scroll-margin-top:112px;
 }
 #prospectorBuyersPanel .buyer-card.has-buyer-matches::before{
-  left:0!important;
+  left:-14px!important;
   top:14px!important;
   bottom:14px!important;
   width:3px!important;
@@ -256,10 +256,11 @@ html[data-theme="dark"] .day-review-send-stats{border-color:#2ca36d;background:#
   color:#fff!important;
 }
 html[data-theme="dark"] #prospectorBuyersPanel .buyer-card{
-  border-color:#2b3038!important;
-  background:#11141a!important;
-  box-shadow:0 5px 18px rgba(0,0,0,.22)!important;
+  border-bottom-color:#292e36!important;
+  background:transparent!important;
+  box-shadow:none!important;
 }
+html[data-theme="dark"] #prospectorBuyersPanel .buyer-results-head{border-bottom-color:#292e36!important}
 html[data-theme="dark"] #prospectorBuyersPanel .buyer-row-head strong{color:#f5f6f7!important}
 html[data-theme="dark"] #prospectorBuyersPanel .buyer-row-brief{color:#d7dbe1!important}
 html[data-theme="dark"] #prospectorBuyersPanel .buyer-row-location{color:#a4abb6!important}
@@ -279,7 +280,8 @@ html[data-theme="dark"] #prospectorBuyersPanel .buyer-card-actions [data-call-bu
   color:#fff!important;
 }
 @media(max-width:390px){
-  #prospectorBuyersPanel .buyer-card{padding:13px 12px!important}
+  #prospectorBuyersPanel .buyer-list-shell{padding-inline:12px!important}
+  #prospectorBuyersPanel .buyer-card{padding:15px 2px 14px!important}
   #prospectorBuyersPanel .buyer-row-head strong{font-size:15px!important}
   #prospectorBuyersPanel .buyer-row-identity>.buyer-match-alert{max-width:126px!important;font-size:9px!important}
   #prospectorBuyersPanel .buyer-card-actions{gap:6px!important}
