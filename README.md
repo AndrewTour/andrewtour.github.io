@@ -1,4 +1,16 @@
-# AGNT v1.41.0 — Seller Next Best Action
+# AGNT v1.41.1 — Non-Blocking Seller Priority
+
+## v1.41.1 hotfix
+
+- Removes seller-priority calculation from AGNT's critical startup and render path.
+- Opens the app immediately using the existing Today orchestration while seller intelligence prepares during idle time.
+- Replaces repeated contact-by-event matching with one indexed, linear data pass.
+- Processes seller candidates in small cooperative chunks so the iPhone interface stays responsive.
+- Limits a single background pass to the highest-potential 2,500 candidates.
+- Falls back to existing Today guidance if the background calculation is unavailable, interrupted or still preparing.
+- Invalidates and rebuilds the recommendation after seller, interaction or MarketPulse changes without blocking the current screen.
+
+## Previous release — v1.41.0
 
 ## v1.41.0 changes
 
