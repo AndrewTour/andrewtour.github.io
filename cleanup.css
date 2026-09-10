@@ -332,3 +332,121 @@ html[data-theme="dark"] #prospectorBuyersPanel .buyer-card-actions [data-call-bu
   #prospectorBuyersPanel .buyer-card-actions button,
   #prospectorBuyersPanel .buyer-card-actions a{font-size:11px!important}
 }
+
+/* v1.39.3 — Contact profile uses a flat, full-viewport detail surface. */
+#prospectDetail{
+  gap:0!important;
+}
+#prospectDetail>.prospect-detail-nav{
+  margin:0!important;
+  padding:0 14px 10px!important;
+}
+#prospectDetail>.prospect-profile{
+  width:100%!important;
+  margin:0!important;
+  padding:0 14px 4px!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+#prospectDetail>.prospect-profile>.prospect-profile-top{
+  padding:8px 2px 16px!important;
+  border-bottom:1px solid #e6e9ee!important;
+}
+#prospectDetail>.prospect-profile>.prospect-quick-actions{
+  margin:14px 0!important;
+}
+#prospectDetail>.prospect-profile>.device-contact-action{
+  min-height:64px!important;
+  margin:0!important;
+  padding:14px 2px!important;
+  border:0!important;
+  border-top:1px solid #e6e9ee!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+#prospectDetail>.prospect-profile>.device-contact-action:active{
+  background:rgba(10,132,255,.05)!important;
+}
+#prospectDetail>.prospect-profile>.seller-profile-config,
+#prospectDetail>.prospect-profile>.seller-estimate{
+  margin:0!important;
+  padding:16px 2px!important;
+  border:0!important;
+  border-top:1px solid #e6e9ee!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+#prospectDetail>.prospect-profile>.prospect-buyer-role{
+  margin:0!important;
+  padding:16px 2px!important;
+  border:0!important;
+  border-top:1px solid #e6e9ee!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+#prospectDetail>.prospect-profile>.prospect-profile-grid{
+  margin:0!important;
+  border-top:1px solid #e6e9ee!important;
+  border-bottom:1px solid #e6e9ee!important;
+  border-radius:0!important;
+  background:transparent!important;
+}
+#prospectDetail>.prospect-profile>.prospect-profile-grid>div{
+  padding:16px 12px!important;
+  background:transparent!important;
+}
+#prospectDetail>.prospect-profile>.prospect-profile-grid>div:nth-child(odd){
+  border-right:1px solid #e6e9ee!important;
+}
+#prospectDetail>.prospect-profile>.prospect-profile-grid>div:nth-child(-n+2){
+  border-bottom:1px solid #e6e9ee!important;
+}
+#prospectDetail>.prospect-profile>.prospect-selling-status{
+  margin:0!important;
+  padding:16px 2px!important;
+  border:0!important;
+  border-bottom:1px solid #e6e9ee!important;
+  border-radius:0!important;
+  background:transparent!important;
+}
+#prospectDetail>.prospecting-section{
+  width:100%!important;
+  margin:18px 0 0!important;
+  padding:20px 14px 0!important;
+  border:0!important;
+  border-top:1px solid #e6e9ee!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+html[data-theme="dark"] #prospectDetail>.prospect-profile>.prospect-profile-top,
+html[data-theme="dark"] #prospectDetail>.prospect-profile>.device-contact-action,
+html[data-theme="dark"] #prospectDetail>.prospect-profile>.seller-profile-config,
+html[data-theme="dark"] #prospectDetail>.prospect-profile>.seller-estimate,
+html[data-theme="dark"] #prospectDetail>.prospect-profile>.prospect-buyer-role,
+html[data-theme="dark"] #prospectDetail>.prospect-profile>.prospect-profile-grid,
+html[data-theme="dark"] #prospectDetail>.prospect-profile>.prospect-selling-status,
+html[data-theme="dark"] #prospectDetail>.prospecting-section{
+  border-color:#292e36!important;
+  background:transparent!important;
+}
+html[data-theme="dark"] #prospectDetail>.prospect-profile>.prospect-profile-grid{
+  background:transparent!important;
+}
+html[data-theme="dark"] #prospectDetail>.prospect-profile>.prospect-profile-grid>div{
+  border-color:#292e36!important;
+}
+@media(max-width:390px){
+  #prospectDetail>.prospect-detail-nav{padding-inline:12px!important}
+  #prospectDetail>.prospect-profile{padding-inline:12px!important}
+  #prospectDetail>.prospecting-section{padding-inline:12px!important}
+}

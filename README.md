@@ -1,3 +1,14 @@
+# AGNT v1.39.3 — Contact Profile Full Viewport
+
+## v1.39.3 changes
+
+- Corrected the target of the full-viewport update: individual Contact profiles now use the flat presentation.
+- Removed the pill/card containers around device contact export, property details, contact role, property estimate and selling timeframe.
+- Replaced stacked containers with clean spacing and row dividers while preserving every action and data point.
+- Retained the v1.39.2 property-detail persistence protection and flat Contacts list.
+
+## Previous release — v1.39.2
+
 # AGNT v1.39.2 — Contacts Full Viewport
 
 ## v1.39.2 changes
