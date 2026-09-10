@@ -1,6 +1,13 @@
-# AGNT v1.41.1 — Non-Blocking Seller Priority
+# AGNT v1.41.2 — Startup Fail-Open
 
-## v1.41.1 hotfix
+## v1.41.2 startup correction
+
+- The app shell now becomes visible before restored-view and MarketPulse rendering begins.
+- Expired knocking timers are closed locally first and their Firestore writes are deferred.
+- A slow cloud write can no longer hold the app behind “Loading your day”.
+- Post-startup rendering errors fail open and leave the app accessible.
+
+## v1.41.1 seller-priority correction
 
 - Removes seller-priority calculation from AGNT's critical startup and render path.
 - Opens the app immediately using the existing Today orchestration while seller intelligence prepares during idle time.

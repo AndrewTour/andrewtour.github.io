@@ -834,7 +834,7 @@ function streak(){let n=0,d=new Date();for(let i=0;i<730;i++){if(workDays.includ
 async function changeMetric(metric,delta){if(!canEditDate(selectedDate))return lockedToast();const d=dayData(selectedDate);d[metric]=Math.max(0,d[metric]+delta);addEvent(d,metric,`${metric} ${delta>0?'+1':'−1'}`,delta);days[selectedDate]=d;haptic();await saveDay(selectedDate)}
 async function toggleTimer(){if(!canEditDate(selectedDate))return lockedToast();const d=dayData(selectedDate);if(d.timerStartedAt){d.knockSeconds=liveKnockSeconds(d);d.timerStartedAt=null;addEvent(d,'knock','Knocking paused')}else{d.timerStartedAt=Date.now();d.alarmPlayed=false;addEvent(d,'knock','Knocking started')}days[selectedDate]=d;haptic(18);await saveDay(selectedDate,{awaitCloud:false});ensureTick()}
 async function resetKnock(){if(!canEditDate(selectedDate))return lockedToast();if(!confirm('Reset knocking time for this date?'))return;const d=dayData(selectedDate);d.knockSeconds=0;d.timerStartedAt=null;d.alarmPlayed=false;addEvent(d,'knock','Knocking reset');days[selectedDate]=d;await saveDay(selectedDate);ensureTick()}
-async function finaliseExpiredTimers(){const today=todayKey();for(const [k,raw] of Object.entries(days)){if(k<today&&raw?.timerStartedAt){const d=dayData(k);d.knockSeconds=liveKnockSeconds(d);d.timerStartedAt=null;d.alarmPlayed=true;addEvent(d,'knock','Knocking stopped automatically at day close');days[k]=d;await saveDay(k,{quiet:true})}}}
+async function finaliseExpiredTimers({awaitCloud=false}={}){const today=todayKey();for(const [k,raw] of Object.entries(days)){if(k<today&&raw?.timerStartedAt){const d=dayData(k);d.knockSeconds=liveKnockSeconds(d);d.timerStartedAt=null;d.alarmPlayed=true;addEvent(d,'knock','Knocking stopped automatically at day close');days[k]=d;await saveDay(k,{quiet:true,awaitCloud,render:false})}}}
 function renderKnockTimerOnly(){
   const d=dayData(selectedDate),kt=rollingKnockTarget(selectedDate),secs=liveKnockSeconds(d);
   const past=isPastDate(selectedDate),scheduled=isWorkDayKey(selectedDate);
@@ -4628,7 +4628,12 @@ async function startCloud(user,{promptTeamSetup=false}={}){
   refreshSyncStatus();showApp();scheduleLeaderboardPublish();
 }
 
-function showApp(){const resumeBuyer=buyerSession.active&&buyerSession.visible;setAuthScreenActive(false);$('#bootGate')?.classList.add('hidden');$('#authGate').classList.add('hidden');$('#app').classList.remove('hidden');restoreProspectingSessionState();restoreKnockingSessionState();renderKnockingSession();renderAll();ensureTick();const restoredDraft=restoreContactDraftWorkflow({silent:true});if(!restoredDraft&&resumeBuyer){setProspectorSection('today');switchView('prospectingView');showBuyerSession()}else if(!restoredDraft)restoreWorkspaceState();$('#appointmentDatePicker').value=appointmentDate;showLaunchExperience();requestAnimationFrame(()=>maybeShowTeamAppointmentNotice())}
+function showApp(){
+  const resumeBuyer=buyerSession.active&&buyerSession.visible;
+  setAuthScreenActive(false);$('#bootGate')?.classList.add('hidden');$('#authGate').classList.add('hidden');$('#app').classList.remove('hidden');
+  // Let iOS paint the usable app shell before any restored-view or MarketPulse rendering begins.
+  requestAnimationFrame(()=>{try{restoreProspectingSessionState();restoreKnockingSessionState();renderKnockingSession();renderAll();ensureTick();const restoredDraft=restoreContactDraftWorkflow({silent:true});if(!restoredDraft&&resumeBuyer){setProspectorSection('today');switchView('prospectingView');showBuyerSession()}else if(!restoredDraft)restoreWorkspaceState();$('#appointmentDatePicker').value=appointmentDate;showLaunchExperience();requestAnimationFrame(()=>maybeShowTeamAppointmentNotice())}catch(err){console.error('Post-startup rendering failed',err);ensureTick();toast('AGNT opened. Some live panels are still refreshing.')}})
+}
 let viewportFrame=0;
 function updateAppViewport(){
   cancelAnimationFrame(viewportFrame);

@@ -1,5 +1,5 @@
-const CACHE='agnt-v1.41.1-non-blocking-seller-priority';
-const ASSETS=['./','./index.html','./styles.css?v=1.41.1-non-blocking-seller-priority','./app.js?v=1.41.1-non-blocking-seller-priority','./cleanup.css?v=1.41.1-non-blocking-seller-priority','./firebase-config.js','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
+const CACHE='agnt-v1.41.2-startup-fail-open';
+const ASSETS=['./','./index.html','./styles.css?v=1.41.2-startup-fail-open','./app.js?v=1.41.2-startup-fail-open','./cleanup.css?v=1.41.2-startup-fail-open','./firebase-config.js','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{
