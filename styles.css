@@ -13952,3 +13952,8 @@ html[data-theme="dark"] .seller-profile-config strong,html[data-theme="dark"] .s
 html[data-theme="dark"] .seller-estimate{border-color:#294463;background:#151d27}
 html[data-theme="dark"] .seller-close-match{border-color:#285942;background:#16271f}html[data-theme="dark"] .seller-close-match strong{color:#74d5a9}html[data-theme="dark"] .seller-close-match small{color:#9abaaa}
 @media(max-width:390px){.seller-option-tags button{flex:1 1 calc(33.333% - 7px)}.seller-estimate strong{font-size:19px}}
+
+/* v1.39.1 — property details launched from the contact card */
+.property-details-action{margin-top:-5px}
+.seller-property-editor-form{display:grid;gap:14px;padding:18px 16px 24px}
+.seller-property-editor-form>.seller-estimate{margin-top:0}

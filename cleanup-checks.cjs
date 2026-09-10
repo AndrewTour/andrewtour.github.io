@@ -25,7 +25,7 @@ context.detailWasOpen=true;context.editorWasOpen=true;vm.runInContext(branch,con
 assert.match(fn('upsertProspect'),/saveProspecting\(\{render:false,awaitCloud:false\}\)/);
 assert.match(fn('saveManualCallAsContact'),/name:buyer\?\.name/);assert.match(fn('saveManualCallAsContact'),/address:buyer\?\.address/);
 const index=fs.readFileSync(__dirname+'/index.html','utf8'),sw=fs.readFileSync(__dirname+'/service-worker.js','utf8');
-for(const asset of ['cleanup.css?v=1.39.0-seller-intelligence','app.js?v=1.39.0-seller-intelligence']){assert(index.includes(asset));assert(sw.includes(asset))}
+for(const asset of ['cleanup.css?v=1.39.1-contact-property-details','app.js?v=1.39.1-contact-property-details']){assert(index.includes(asset));assert(sw.includes(asset))}
 for(const file of ['manifest.json','icons/icon-192.png','icons/icon-512.png','firebase-config.js','firestore.rules'])assert(fs.existsSync(__dirname+'/'+file));
 for(const name of ['taskTimestampMillis','normaliseTaskRecord'])vm.runInContext(fn(name),context);
 const task=context.normaliseTaskRecord({title:'  Call solicitor  ',note:' Confirm exchange ',date:'2026-09-08',time:'14:30'},'2026-09-08');assert.equal(task.id,'task-id');assert.equal(task.title,'Call solicitor');assert.equal(task.note,'Confirm exchange');assert.equal(task.scheduledDate,'2026-09-08');assert.equal(task.assignedToUid,'test-user');
@@ -43,7 +43,8 @@ assert.match(source,/sendDayReviewStats.*sendDayStatsToWhatsApp\(todayKey\(\)\)/
 assert.match(fn('renderToday'),/knockingMetricCard.*classList\.toggle\('complete'/s);
 assert.match(fn('normaliseProspect'),/sellerPropertyType/);assert.match(fn('normaliseProspect'),/sellerLandSizeBand/);assert.match(fn('normaliseProspect'),/sellerTitleType/);
 assert.match(fn('marketMatches'),/sellerMarketSimilarity/);assert.match(fn('sellerMarketPulseEstimate'),/marketPulseEventKind\(event\)==='sold'/);assert.match(fn('sellerEstimateMarkup'),/confidence/);
-assert.match(fn('marketFollowUpSessionPromptMarkup'),/Close match/);assert.match(source,/data-seller-property-wrap/);assert.match(source,/SELLER_LAND_SIZE_LABELS/);
+assert.match(fn('marketFollowUpSessionPromptMarkup'),/Close match/);assert.match(fn('sellerPropertyActionMarkup'),/Add Property Details/);assert.match(fn('sellerPropertyEditorForm'),/Save Property Details/);assert.match(source,/SELLER_LAND_SIZE_LABELS/);
+assert.doesNotMatch(fn('prospectForm'),/sellerPropertyEditorMarkup|sellerBedrooms/);assert.match(source,/if\(e\.target\.id==='sellerPropertyEditor'\)/);
 const cleanup=fs.readFileSync(__dirname+'/cleanup.css','utf8');assert.match(cleanup,/v1\.38\.3 — Buyers list legibility in the original full-viewport style/);assert.match(cleanup,/#prospectorBuyersPanel \.buyer-card-actions \[data-call-buyer\]/);assert.match(cleanup,/border-radius:0!important/);
 const submitBranch=source.slice(source.indexOf("if(e.target.id==='prospectLogForm')"),source.indexOf("};\n\n$('#openDayReview')"));assert.match(submitBranch,/applyProspectingOutcomeMetrics\(outcome,interactionId,\{awaitCloud:false\}\)/);assert.match(submitBranch,/saveProspecting\(\{render:false,awaitCloud:false\}\)/);assert.match(submitBranch,/sendHotSpotSmsAfterOutcome/);assert.match(source,/afterOutcome:hotSpotSmsAfterOutcome/);
 assert.match(source,/searchVisible=\['contacts','buyers','pipeline'\]/);assert.match(fn('updateBackTodayVisibility'),/\['todayView','scheduleView'\]/);

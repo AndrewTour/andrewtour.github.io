@@ -1,3 +1,14 @@
+# AGNT v1.39.1 — Contact Property Details
+
+## v1.39.1 changes
+
+- Moved property configuration out of the general Edit Contact form.
+- Added Add Property Details directly below Add to Phone Contacts on every contact profile.
+- Opens a dedicated property-details editor attached to the same contact record.
+- Existing configuration-aware MarketPulse priority and sold estimate logic remains connected.
+
+## Previous release — v1.39.0
+
 # AGNT v1.39.0 — Seller Intelligence
 
 ## v1.39.0 changes
