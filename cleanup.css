@@ -117,6 +117,50 @@ body.task-composer-open{overflow:hidden}
   .task-schedule-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
 }
 
+/* v1.39.2 — Contacts use the same full-viewport list rhythm as Buyers. */
+#prospectorContactsPanel{
+  width:100%!important;
+  margin:0!important;
+  padding:0 14px 4px!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+#prospectorContactsPanel .contacts-head{
+  margin:0!important;
+  padding:0 2px 12px!important;
+  border-bottom:1px solid #e6e9ee!important;
+}
+#prospectorContactsPanel .contacts-list{
+  display:block!important;
+  margin:0!important;
+  overflow:hidden!important;
+}
+#prospectorContactsPanel .contact-card-v156{
+  width:100%!important;
+  margin:0!important;
+  padding:16px 2px 15px!important;
+  border:0!important;
+  border-bottom:1px solid #e6e9ee!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+#prospectorContactsPanel .contact-card-v156:last-child{
+  border-bottom:0!important;
+}
+html[data-theme="dark"] #prospectorContactsPanel .contacts-head,
+html[data-theme="dark"] #prospectorContactsPanel .contact-card-v156{
+  border-bottom-color:#292e36!important;
+}
+@media(max-width:390px){
+  #prospectorContactsPanel{padding-inline:12px!important}
+  #prospectorContactsPanel .contact-card-v156{padding:15px 2px 14px!important}
+}
+
 /* End-of-day review: share first, then close the day. */
 .day-review-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
 .day-review-actions :is(.day-review-send-stats,.day-review-close){width:100%;min-height:52px;margin:0!important;padding:0 14px;border-radius:17px;font-size:14px;font-weight:800}

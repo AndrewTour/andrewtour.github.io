@@ -1,3 +1,14 @@
+# AGNT v1.39.2 — Contacts Full Viewport
+
+## v1.39.2 changes
+
+- Restyled Contacts as a flat, full-viewport list matching the Buyers tab, with simple row dividers and no enclosing card stack.
+- Preserved the existing contact identity, status, actions, filters and navigation.
+- Made saved property configurations wait for cloud confirmation when available.
+- Prevented a newer locally saved property configuration from being replaced by an older cloud snapshot after refresh or app re-entry.
+
+## Previous release — v1.39.1
+
 # AGNT v1.39.1 — Contact Property Details
 
 ## v1.39.1 changes
