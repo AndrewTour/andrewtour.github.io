@@ -13925,3 +13925,30 @@ html[data-theme="dark"] .timeline-task-add{background:#397dff;color:#fff}
 html[data-theme="dark"] .device-contact-action{border-color:#2c313a;background:#171a20;color:#f5f6f7}
 html[data-theme="dark"] .device-contact-action small{color:#969ca7}
 html[data-theme="dark"] .device-contact-action b{color:#82bdff}
+
+/* v1.39.0 — seller property configuration, MarketPulse close matches and sold estimate */
+.seller-editor-property{display:grid;gap:13px;margin-top:2px}
+.seller-property-help{margin:-3px 0 0;color:#6f7782;font-size:11px;line-height:1.4}
+.seller-field-label{margin-top:2px}
+.seller-option-tags{margin-top:-5px}
+.seller-option-tags button{min-height:42px}
+.seller-land-fields{display:grid;gap:8px}
+.seller-segment{grid-template-columns:repeat(6,minmax(0,1fr))}
+.seller-profile-config,.seller-estimate{margin-top:12px;padding:13px;border:1px solid #e1e4e9;border-radius:15px;background:#f7f8fa}
+.seller-profile-config span,.seller-estimate span{display:block;color:#6f7782;font-size:9px;font-weight:850;letter-spacing:.09em}
+.seller-profile-config strong{display:block;margin-top:5px;color:#252a32;font-size:12px;line-height:1.4}
+.seller-estimate{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 10px;background:#f2f7ff;border-color:#d8e7fb}
+.seller-estimate strong{display:block;margin-top:4px;color:#111318;font-size:21px;letter-spacing:-.025em}
+.seller-estimate em{align-self:center;padding:5px 7px;border-radius:8px;background:#e3ecf8;color:#45627f;font-size:9px;font-style:normal;font-weight:820;white-space:nowrap}
+.seller-estimate em.confidence-high{background:#e1f4e9;color:#27714d}.seller-estimate em.confidence-medium{background:#fff0d6;color:#8a5b12}
+.seller-estimate>small,.seller-estimate>p{grid-column:1/-1}.seller-estimate>small{color:#59697b;font-size:10px;font-weight:720}.seller-estimate>p{margin:1px 0 0;color:#7a8795;font-size:10px;line-height:1.35}
+.seller-estimate-empty{display:block;background:#f7f8fa;border-color:#e1e4e9}.seller-estimate-empty strong{font-size:15px}.seller-estimate-empty small{display:block;margin-top:4px;color:#7a828d;font-size:10px;line-height:1.35}
+.seller-close-match{display:flex;align-items:center;gap:9px;margin:13px 0;padding:10px 12px;border:1px solid #cce8dc;border-radius:13px;background:#edf8f3;text-align:left}
+.seller-close-match>span{display:grid;place-items:center;width:25px;height:25px;border-radius:50%;background:#21865c;color:#fff!important;font-size:12px!important}
+.seller-close-match strong,.seller-close-match small{display:block}.seller-close-match strong{color:#1d684a;font-size:12px}.seller-close-match small{margin-top:2px;color:#5b786b;font-size:10px;line-height:1.3}
+html[data-theme="dark"] .seller-editor-property,html[data-theme="dark"] .seller-profile-config,html[data-theme="dark"] .seller-estimate{border-color:#2a2e36;background:#171a20}
+html[data-theme="dark"] .seller-property-help,html[data-theme="dark"] .seller-profile-config span,html[data-theme="dark"] .seller-estimate span,html[data-theme="dark"] .seller-estimate>small,html[data-theme="dark"] .seller-estimate>p{color:#aeb4bd}
+html[data-theme="dark"] .seller-profile-config strong,html[data-theme="dark"] .seller-estimate strong{color:#f6f7f8}
+html[data-theme="dark"] .seller-estimate{border-color:#294463;background:#151d27}
+html[data-theme="dark"] .seller-close-match{border-color:#285942;background:#16271f}html[data-theme="dark"] .seller-close-match strong{color:#74d5a9}html[data-theme="dark"] .seller-close-match small{color:#9abaaa}
+@media(max-width:390px){.seller-option-tags button{flex:1 1 calc(33.333% - 7px)}.seller-estimate strong{font-size:19px}}

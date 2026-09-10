@@ -1,3 +1,14 @@
+# AGNT v1.39.0 — Seller Intelligence
+
+## v1.39.0 changes
+
+- Added optional property configuration to existing and new seller pipeline contacts.
+- Added configuration-aware MarketPulse priority and a Close match marker.
+- Added same-suburb, sold-only MarketPulse price ranges with confidence levels.
+- Preserved the v1.38.3 full-viewport Buyers presentation and all protected systems.
+
+## Previous release — v1.38.3
+
 # AGNT v1.38.3 — Buyer Full Viewport
 
 ## v1.38.3 changes
