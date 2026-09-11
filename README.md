@@ -1,4 +1,15 @@
-# AGNT v1.41.2 — Startup Fail-Open
+# AGNT v1.41.3 — Cloud Sync Recovery
+
+## v1.41.3 sync correction
+
+- Removes Firebase's multi-tab persistent browser cache from AGNT's write path while retaining AGNT's own UID-scoped local-first records.
+- Adds a durable retry marker for buyer, contact, interaction and MarketPulse changes until Firestore confirms the payload.
+- Merges locally newer profiles and interactions forward instead of allowing an older cloud snapshot to overwrite them.
+- Protects unsynced daily activity from older cloud snapshots and automatically retries its existing dirty-day queue.
+- Queues and republishes the latest Solo or Team leaderboard totals after a failed write or reconnect.
+- Compacts empty/default fields in the cloud payload without changing the data available after normalisation.
+- Retries failed prospecting writes with controlled backoff and clears the failure state after a confirmed save.
+- Replaces raw Firebase stack traces with a concise reconnecting message.
 
 ## v1.41.2 startup correction
 
