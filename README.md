@@ -1,18 +1,13 @@
-# AGNT v1.41.7 — Call Outcome Restoration
+# AGNT v1.41.8 — Beta Call Return Restoration
 
-## v1.41.7 changes
+## v1.41.8 changes
 
-- Restores the automatic Log Contact outcome screen after returning to AGNT from an iPhone call.
-- Moves pending Contact and Pipeline call-return state into durable, UID-scoped local storage.
-- Restores a pending call only after the correct user's contact data is available.
-- Gives the pending call outcome priority over ordinary workspace, draft and launch-screen restoration.
-- Keeps the pending state until the outcome is saved, cancelled or expires after two hours.
-- Prevents repeated iOS focus, page-show and visibility events from reopening the same outcome screen.
-- Preserves the confirmed-working v1.41.6 MarketPulse valuation guardrails and all protected sync behaviour.
+- Restores the Contact/Pipeline Call → return to AGNT → Log Contact workflow to the exact session-based implementation from the supplied working beta.
+- Removes the v1.41.7 persistent call-return override and its startup interception.
+- Keeps all v1.41.6 functionality, including Team sync recovery, buyer/contact profile refinements, background property-detail saving and MarketPulse valuation guardrails.
+- Firebase, Firestore, Team sync, leaderboard publishing, MarketPulse automation and data structures are unchanged.
 
 ## Previous release — v1.41.6
-
-# AGNT v1.41.6 — MarketPulse Valuation Guardrails
 
 ## v1.41.6 changes
 
