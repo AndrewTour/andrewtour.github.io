@@ -3,11 +3,12 @@ const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/st
 const source=fs.readFileSync(__dirname+'/app.js','utf8');
 function fn(name){const start=source.indexOf('function '+name+'(');assert(start>=0,name);const end=source.indexOf('\nfunction ',start+1);return source.slice(start,end<0?undefined:end)}
 const nodes=new Map();function node(id){if(!nodes.has(id)){const classes=new Set(['hidden']);nodes.set(id,{dataset:{},innerHTML:'',classList:{add:x=>classes.add(x),remove:x=>classes.delete(x),contains:x=>classes.has(x)}})}return nodes.get(id)}
-const memory=new Map(),context={console,Date,JSON,Math,Boolean,Number,String,Array,uid:'test-user',currentUser:null,buyerSession:{},prospects:[],cleanText:(x,n)=>String(x||'').trim().slice(0,n),normaliseDialNumber:x=>x,displayDialNumber:x=>x,escapeHtml:x=>String(x).replaceAll('<','&lt;'),primaryProspectPhone:p=>p.phone||'',validDateKey:x=>/^\d{4}-\d{2}-\d{2}$/.test(String(x||'')),uuid:()=> 'task-id',displayAgentName:()=> 'Andrew',localStorage:{getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,v),removeItem:k=>memory.delete(k)},$:node,renderBuyerSessionHero:()=>{}};
+const memory=new Map(),context={console,Date,JSON,Math,Boolean,Number,String,Array,uid:'test-user',currentUser:null,buyerSession:{},prospects:[],cleanText:(x,n)=>String(x||'').trim().slice(0,n),safeJsonParse:(value,fallback)=>{try{return JSON.parse(value)}catch{return fallback}},normaliseDialNumber:x=>x,displayDialNumber:x=>x,escapeHtml:x=>String(x).replaceAll('<','&lt;'),primaryProspectPhone:p=>p.phone||'',validDateKey:x=>/^\d{4}-\d{2}-\d{2}$/.test(String(x||'')),uuid:()=> 'task-id',displayAgentName:()=> 'Andrew',localStorage:{getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,v),removeItem:k=>memory.delete(k)},$:node,renderBuyerSessionHero:()=>{}};
 vm.createContext(context);
-for(const name of ['buyerSessionStorageKey','loadBuyerSession','saveBuyerSession','buyerSessionRemaining','showBuyerSession','completeBuyerSessionCall','appointmentContactMatches'])vm.runInContext(fn(name),context);
+for(const name of ['buyerSessionStorageKey','buyerSessionBackupStorageKey','loadBuyerSession','saveBuyerSession','buyerSessionRemaining','showBuyerSession','completeBuyerSessionCall','appointmentContactMatches'])vm.runInContext(fn(name),context);
 context.buyerSession={active:true,visible:true,index:0,contacts:[{id:'a',name:'Alice',phone:'0411111111',status:''},{id:'b',name:'Bob',phone:'0422222222',status:''}]};
 context.saveBuyerSession();context.buyerSession={};context.loadBuyerSession();assert.equal(context.buyerSession.visible,true);assert.equal(context.buyerSession.contacts.length,2);
+const buyerPrimary=context.buyerSessionStorageKey(),buyerBackup=context.buyerSessionBackupStorageKey();assert(memory.has(buyerPrimary));assert(memory.has(buyerBackup));memory.delete(buyerPrimary);context.buyerSession={};context.loadBuyerSession();assert.equal(context.buyerSession.contacts.length,2);assert(memory.has(buyerPrimary));
 context.showBuyerSession();assert.equal(node('#prospectingSession').dataset.sessionKind,'buyer');assert.match(node('#prospectingSession').innerHTML,/Alice/);
 context.completeBuyerSessionCall('Cancelled',{source:'buyer-session',buyerId:'a'});assert.equal(context.buyerSession.index,0);
 context.completeBuyerSessionCall('Connected',{source:'buyer-session',buyerId:'a'});assert.equal(context.buyerSession.index,1);
@@ -25,7 +26,7 @@ context.detailWasOpen=true;context.editorWasOpen=true;vm.runInContext(branch,con
 assert.match(fn('upsertProspect'),/saveProspecting\(\{render:false,awaitCloud:false\}\)/);
 assert.match(fn('saveManualCallAsContact'),/name:buyer\?\.name/);assert.match(fn('saveManualCallAsContact'),/address:buyer\?\.address/);
 const index=fs.readFileSync(__dirname+'/index.html','utf8'),sw=fs.readFileSync(__dirname+'/service-worker.js','utf8');
-for(const asset of ['styles.css?v=1.41.8-beta-call-return-restoration','cleanup.css?v=1.41.8-beta-call-return-restoration','app.js?v=1.41.8-beta-call-return-restoration']){assert(index.includes(asset));assert(sw.includes(asset))}
+for(const asset of ['styles.css?v=1.41.9-buyer-session-resume','cleanup.css?v=1.41.9-buyer-session-resume','app.js?v=1.41.9-buyer-session-resume']){assert(index.includes(asset));assert(sw.includes(asset))}
 for(const file of ['manifest.json','icons/icon-192.png','icons/icon-512.png','firebase-config.js','firestore.rules'])assert(fs.existsSync(__dirname+'/'+file));
 for(const name of ['taskTimestampMillis','normaliseTaskRecord'])vm.runInContext(fn(name),context);
 const task=context.normaliseTaskRecord({title:'  Call solicitor  ',note:' Confirm exchange ',date:'2026-09-08',time:'14:30'},'2026-09-08');assert.equal(task.id,'task-id');assert.equal(task.title,'Call solicitor');assert.equal(task.note,'Confirm exchange');assert.equal(task.scheduledDate,'2026-09-08');assert.equal(task.assignedToUid,'test-user');
@@ -77,6 +78,10 @@ assert.match(fn('rememberProspectCallReturn'),/sessionStorage\.setItem\(PROSPECT
 assert.match(fn('resumeProspectCallReturn'),/age>10\*60\*1000/);
 assert.match(fn('resumeProspectCallReturn'),/sessionStorage\.removeItem\(PROSPECT_CALL_RETURN_KEY\)[\s\S]*switchView\('prospectingView'\);openProspectLog/);
 assert.match(source,/data-prospect-call/);assert.match(source,/rememberProspectCallReturn\(prospectCall\.dataset\.prospectCall/);
+assert.match(fn('showApp'),/hasPendingManual[\s\S]*maybeShowManualCallOutcome\(\)/);
+assert.match(fn('handleAppSuspend'),/if\(buyerSession\.active\)saveBuyerSession\(\)/);
+assert.doesNotMatch(fn('handleAppSuspend'),/buyerSession\.visible=/);
+assert.match(fn('saveBuyerSession'),/buyerSessionBackupStorageKey/);assert.match(fn('saveBuyerSession'),/verification failed/);
 assert.match(source,/searchVisible=\['contacts','buyers','pipeline'\]/);assert.match(fn('updateBackTodayVisibility'),/\['todayView','scheduleView'\]/);
 const rules=fs.readFileSync(__dirname+'/firestore.rules','utf8');assert.match(rules,/match \/tasks\/\{taskId\}/);assert.match(rules,/hasOnly\(\['completedAt','updatedAt'\]\)/);
 console.log('PASS: baseline regressions plus beta-path Team sync restoration, memory-only Firestore cache, queued day replay, durable prospecting recovery, safe local/cloud merge, consumer-safe errors, fail-open startup and non-blocking seller priority.');

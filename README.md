@@ -1,4 +1,14 @@
-# AGNT v1.41.8 — Beta Call Return Restoration
+# AGNT v1.41.9 — Buyer Session Resume
+
+## v1.41.9 changes
+
+- Restores an imported Buyer List after the installed PWA is fully closed and reopened.
+- Preserves the session's intentional visible/hidden state instead of recalculating it during iOS suspension.
+- Adds a verified UID-scoped backup for the imported Buyer List and recovers from it if the primary copy is unavailable.
+- Rechecks pending imported-buyer calls after authentication restores the correct UID, then opens the existing call-outcome screen.
+- Keeps Firebase, Firestore, Team sync, leaderboard publishing, MarketPulse and all logging behaviour unchanged.
+
+## Previous release — v1.41.8
 
 ## v1.41.8 changes
 
