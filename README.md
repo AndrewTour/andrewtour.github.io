@@ -1,4 +1,15 @@
-# AGNT v1.41.9 — Buyer Session Resume
+# AGNT v1.41.10 — Simple Return State
+
+## v1.41.10 changes
+
+- Removes the global workspace restoration introduced after the beta, including saved tabs, dates, profiles and scroll positions.
+- Every fresh launch opens on the current calendar day, and an app left open across midnight automatically rolls forward to the new day.
+- Keeps the beta contact-draft save and restoration behaviour for unfinished contact entry.
+- Keeps an imported Buyer List as an isolated local session until it is deliberately finished and cleared.
+- Uses one fixed device-local pending-call key so the Call button can trigger the existing outcome screen without Firebase, authentication or cloud readiness deciding whether it appears.
+- Firebase, Firestore, Team sync, leaderboard publishing, MarketPulse and valuation behaviour are unchanged.
+
+## Previous release — v1.41.9
 
 ## v1.41.9 changes
 
