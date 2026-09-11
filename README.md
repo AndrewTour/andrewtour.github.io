@@ -1,3 +1,16 @@
+# AGNT v1.41.6 — MarketPulse Valuation Guardrails
+
+## v1.41.6 changes
+
+- Requires the same suburb, property type and bedroom count before a MarketPulse sale can contribute to a seller estimate.
+- Allows bathroom and parking differences of no more than one where those details are available.
+- Shows one matching result as `MarketPulse Sold Evidence` instead of manufacturing a price range from a single sale.
+- Shows two matching results as a low-confidence provisional range.
+- Shows a MarketPulse estimate only when at least three matching sold results are available.
+- Preserves MarketPulse street matching, seller priority, import automation and all confirmed-working v1.41.5 Firebase and Team sync behaviour.
+
+## Previous release — v1.41.5
+
 # AGNT v1.41.5 — Profile Flow Refinement
 
 ## v1.41.5 changes
