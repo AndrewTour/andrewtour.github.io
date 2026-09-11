@@ -1,4 +1,14 @@
-# AGNT v1.41.4 — Team Sync Restoration
+# AGNT v1.41.5 — Profile Flow Refinement
+
+## v1.41.5 changes
+
+- Gives individual Buyer profiles the same flat, full-viewport hierarchy as individual Contact profiles.
+- Retains established action buttons and status badges while removing high-level stacked card surfaces.
+- Consolidates configured seller property details into one tappable row with a blue chevron.
+- Returns immediately to the Contact profile after property details are saved while cloud sync continues in the background.
+- Preserves the confirmed-working v1.41.4 Team sync implementation unchanged.
+
+## Previous release — v1.41.4
 
 ## v1.41.4 sync correction
 

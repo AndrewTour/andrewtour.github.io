@@ -451,6 +451,113 @@ html[data-theme="dark"] #prospectDetail>.prospect-profile>.prospect-profile-grid
   #prospectDetail>.prospecting-section{padding-inline:12px!important}
 }
 
+/* v1.41.5 — Buyer profile follows the Contact full-viewport detail language. */
+#prospectDetail>.buyer-detail-card{
+  width:100%!important;
+  margin:0!important;
+  padding:0 14px 4px!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+#prospectDetail>.buyer-detail-card>.buyer-detail-head{
+  padding:8px 2px 16px!important;
+  border-bottom:1px solid #e6e9ee!important;
+}
+#prospectDetail>.buyer-detail-card>.buyer-detail-actions{
+  margin:14px 0!important;
+}
+#prospectDetail>.buyer-detail-card>.device-contact-action,
+#prospectDetail>.buyer-detail-card>.buyer-detail-next-action,
+#prospectDetail>.buyer-detail-card>.buyer-linked-seller-profile,
+#prospectDetail>.buyer-detail-card>.buyer-seller-opportunity,
+#prospectDetail>.buyer-detail-card>.buyer-property-matches,
+#prospectDetail>.buyer-detail-card>.buyer-detail-section{
+  width:100%!important;
+  margin:0!important;
+  padding:16px 2px!important;
+  border:0!important;
+  border-top:1px solid #e6e9ee!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+#prospectDetail>.buyer-detail-card>.device-contact-action{
+  min-height:64px!important;
+  padding-block:14px!important;
+}
+#prospectDetail>.buyer-detail-card>.buyer-detail-next-action{
+  grid-template-columns:minmax(0,1fr) auto!important;
+}
+#prospectDetail>.buyer-detail-card>.buyer-linked-seller-profile dl{
+  padding:2px 0!important;
+}
+#prospectDetail>.buyer-detail-card>.buyer-seller-opportunity .buyer-seller-property-pair>div{
+  padding:10px 0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+}
+#prospectDetail>.buyer-detail-card>.buyer-property-matches .buyer-property-match-list article{
+  border-color:#e6e9ee!important;
+}
+#prospectDetail>.buyer-detail-card>.buyer-detail-section .buyer-detail-section-head{
+  padding:0 2px 12px!important;
+}
+#prospectDetail>.buyer-detail-card>.buyer-detail-section .buyer-detail-requirements{
+  gap:0!important;
+  margin:0!important;
+  border-top:1px solid #e6e9ee!important;
+  border-bottom:1px solid #e6e9ee!important;
+  background:transparent!important;
+}
+#prospectDetail>.buyer-detail-card>.buyer-detail-section .buyer-detail-requirements>div{
+  padding:14px 10px!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+}
+#prospectDetail>.buyer-detail-card>.buyer-detail-section .buyer-detail-requirements>div:nth-child(odd):not(.wide){
+  border-right:1px solid #e6e9ee!important;
+}
+#prospectDetail>.buyer-detail-card>.buyer-detail-section .buyer-detail-requirements>div.wide{
+  border-top:1px solid #e6e9ee!important;
+}
+#prospectDetail>.buyer-detail-card>.prospect-background{
+  margin:0!important;
+  padding:16px 2px!important;
+  border-top:1px solid #e6e9ee!important;
+  border-radius:0!important;
+  background:transparent!important;
+}
+#prospectDetail>.buyer-detail-card>.buyer-lifecycle-actions{
+  margin:0!important;
+  padding:16px 2px!important;
+  border-top:1px solid #e6e9ee!important;
+}
+html[data-theme="dark"] #prospectDetail>.buyer-detail-card,
+html[data-theme="dark"] #prospectDetail>.buyer-detail-card>.buyer-detail-head,
+html[data-theme="dark"] #prospectDetail>.buyer-detail-card>.device-contact-action,
+html[data-theme="dark"] #prospectDetail>.buyer-detail-card>.buyer-detail-next-action,
+html[data-theme="dark"] #prospectDetail>.buyer-detail-card>.buyer-linked-seller-profile,
+html[data-theme="dark"] #prospectDetail>.buyer-detail-card>.buyer-seller-opportunity,
+html[data-theme="dark"] #prospectDetail>.buyer-detail-card>.buyer-property-matches,
+html[data-theme="dark"] #prospectDetail>.buyer-detail-card>.buyer-detail-section,
+html[data-theme="dark"] #prospectDetail>.buyer-detail-card>.prospect-background,
+html[data-theme="dark"] #prospectDetail>.buyer-detail-card>.buyer-lifecycle-actions,
+html[data-theme="dark"] #prospectDetail>.buyer-detail-card>.buyer-detail-section .buyer-detail-requirements,
+html[data-theme="dark"] #prospectDetail>.buyer-detail-card>.buyer-detail-section .buyer-detail-requirements>div,
+html[data-theme="dark"] #prospectDetail>.buyer-detail-card>.buyer-seller-opportunity .buyer-seller-property-pair>div{
+  border-color:#292e36!important;
+  background:transparent!important;
+}
+@media(max-width:390px){
+  #prospectDetail>.buyer-detail-card{padding-inline:12px!important}
+}
+
 /* v1.41.0 — explainable seller-first Next Best Action. */
 #timelineDeferSeller.seller-priority-defer{
   background:transparent!important;
