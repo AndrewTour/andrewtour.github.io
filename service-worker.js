@@ -1,5 +1,5 @@
-const CACHE='agnt-v1.41.3-cloud-sync-recovery';
-const ASSETS=['./','./index.html','./styles.css?v=1.41.3-cloud-sync-recovery','./app.js?v=1.41.3-cloud-sync-recovery','./cleanup.css?v=1.41.3-cloud-sync-recovery','./firebase-config.js','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
+const CACHE='agnt-v1.41.4-team-sync-restoration';
+const ASSETS=['./','./index.html','./styles.css?v=1.41.4-team-sync-restoration','./app.js?v=1.41.4-team-sync-restoration','./cleanup.css?v=1.41.4-team-sync-restoration','./firebase-config.js','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{

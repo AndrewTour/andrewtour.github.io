@@ -67,7 +67,6 @@ let sellerPriorityCache={ready:false,value:null,expiresAt:0};
 let sellerPriorityRefreshTimer=null,sellerPriorityBuildToken=0,sellerPriorityBuilding=false;
 const daySaveChains=new Map();
 let dirtyDayKeys=new Set();
-let cloudRecoveryTimer=null,cloudRecoveryDelay=2500,cloudRecoveryRunning=false;
 const appointmentSubmitLocks=new Set();
 const MARKET_PULSE_INBOX_ADDRESS='agnt.marketpulse@gmail.com';
 const MARKET_PULSE_SOURCE_ADDRESS='marketpulse@mcgrath.com.au';
@@ -298,25 +297,8 @@ function loadLocal(userId=uid){resetState();const prefix=storagePrefix(userId);t
 function saveDirtyDays(){try{localStorage.setItem(storagePrefix(uid)+'dirty-days',JSON.stringify([...dirtyDayKeys]))}catch(err){console.error('Dirty-day queue save failed',err)}}
 function markDayDirty(k){dirtyDayKeys.add(k);saveDirtyDays()}
 function clearDayDirty(k,clientUpdatedAt){if(Number(days[k]?.clientUpdatedAt)===Number(clientUpdatedAt)){dirtyDayKeys.delete(k);saveDirtyDays()}}
-function leaderboardDirtyKey(userId=uid){return`${storagePrefix(userId)}leaderboard-dirty`}
-function leaderboardIsDirty(){try{return localStorage.getItem(leaderboardDirtyKey())==='1'}catch{return true}}
-function markLeaderboardDirty(){try{localStorage.setItem(leaderboardDirtyKey(),'1')}catch(err){console.error('Leaderboard recovery marker failed',err)}}
-function clearLeaderboardDirty(){try{localStorage.removeItem(leaderboardDirtyKey())}catch(err){console.error('Leaderboard recovery marker clear failed',err)}}
-function scheduleCloudRecovery(delay=cloudRecoveryDelay){
-  if(cloudRecoveryTimer||!cloud||!navigator.onLine)return;
-  cloudRecoveryTimer=setTimeout(async()=>{cloudRecoveryTimer=null;await retryCloudWrites();if(dirtyDayKeys.size||leaderboardIsDirty()){cloudRecoveryDelay=Math.min(60000,Math.round(cloudRecoveryDelay*1.8));scheduleCloudRecovery()}},Math.max(250,delay));
-}
-async function retryCloudWrites(){
-  if(cloudRecoveryRunning||!cloud||!db||!uid||!navigator.onLine)return;
-  cloudRecoveryRunning=true;
-  try{
-    for(const k of [...dirtyDayKeys]){const clean={...dayData(k)};if(clean.clientUpdatedAt)await persistDayToCloud(k,clean,{quiet:true}).catch(()=>{})}
-    if(leaderboardIsDirty()){if(accountMode==='team')await publishTeamLeaderboard();else if(accountMode==='solo')await publishLeaderboard()}
-    if(!dirtyDayKeys.size&&!leaderboardIsDirty()){cloudRecoveryDelay=2500;clearSyncError()}
-  }finally{cloudRecoveryRunning=false}
-}
 function saveLocal(){const prefix=storagePrefix(uid);try{const serialised=JSON.stringify(normaliseDaysMap(days));const previous=localStorage.getItem(prefix+'days');if(previous)localStorage.setItem(prefix+'days-backup',previous);localStorage.setItem(prefix+'days',serialised);localStorage.setItem(prefix+'targets',JSON.stringify(targets));localStorage.setItem(prefix+'agent-name',agentName);localStorage.setItem(prefix+'work-days',JSON.stringify(workDays));localStorage.setItem(prefix+'calendar-preference',calendarPreference);localStorage.setItem(prefix+'prospects',JSON.stringify(prospects));localStorage.setItem(prefix+'prospect-interactions',JSON.stringify(prospectInteractions));localStorage.setItem(prefix+'market-pulse-events',JSON.stringify(marketPulseEvents));localStorage.setItem(prefix+'market-pulse-history',JSON.stringify(normaliseMarketPulseHistory(marketPulseHistory)));localStorage.setItem(prefix+'campaign-history',JSON.stringify(campaignHistory.slice(0,20)));localStorage.setItem(prefix+'bulk-sms-test-launches',JSON.stringify(bulkSmsTestLaunches.slice(0,10)));return true}catch(err){console.error('Local save failed',err);return false}}
-function clearActiveSession(){teamInitialisationToken++;unsubDays?.();unsubProfile?.();unsubLeaderboard?.();unsubProspecting?.();unsubMarketPulseInbox?.();unsubTeamMembership?.();unsubTeamMembers?.();unsubAppointmentAssignees?.();unsubAssignedTeamAppointments?.();unsubAssignedTeamTasks?.();unsubDays=unsubProfile=unsubLeaderboard=unsubProspecting=unsubMarketPulseInbox=unsubTeamMembership=unsubTeamMembers=unsubAppointmentAssignees=unsubAssignedTeamAppointments=unsubAssignedTeamTasks=null;hideTeamAppointmentNotice({acknowledge:false});hideTeamManager({restoreFocus:false});closeTeamMemberRemoval({force:true});hideTeamLeaveConfirmation({force:true,restoreFocus:false});hideTeamCodeRefreshConfirmation({force:true,restoreFocus:false});closeSellerPriorityDeferral();clearInterval(timerTick);clearInterval(returningSnapshotCountdownTimer);clearTimeout(syncTimer);clearTimeout(leaderboardPublishTimer);clearTimeout(cloudRecoveryTimer);clearTimeout(prospectingSaveTimer);clearTimeout(prospectingRetryTimer);clearTimeout(returningSnapshotTimer);clearTimeout(appResumeTimer);appResumeTimer=null;returningSnapshotTimer=returningSnapshotCountdownTimer=null;returningSnapshotEndsAt=0;cloudRecoveryTimer=null;cloudRecoveryDelay=2500;cloudRecoveryRunning=false;prospectingSaveTimer=prospectingRetryTimer=null;prospectingRetryDelay=2500;pendingProspectingPayload=null;pendingProspectingSignature='';pendingProspectingRevision=0;prospectingWriteInFlight=false;prospectingSaveWaiters.splice(0).forEach(({resolve})=>resolve());currentUser=null;uid='local';cloud=false;pendingSyncOperations=0;syncHasError=false;lastLeaderboardSignature='';lastTeamLeaderboardSignature='';lastProspectingSignature='';dirtyDayKeys=new Set();resetState()}
+function clearActiveSession(){teamInitialisationToken++;unsubDays?.();unsubProfile?.();unsubLeaderboard?.();unsubProspecting?.();unsubMarketPulseInbox?.();unsubTeamMembership?.();unsubTeamMembers?.();unsubAppointmentAssignees?.();unsubAssignedTeamAppointments?.();unsubAssignedTeamTasks?.();unsubDays=unsubProfile=unsubLeaderboard=unsubProspecting=unsubMarketPulseInbox=unsubTeamMembership=unsubTeamMembers=unsubAppointmentAssignees=unsubAssignedTeamAppointments=unsubAssignedTeamTasks=null;hideTeamAppointmentNotice({acknowledge:false});hideTeamManager({restoreFocus:false});closeTeamMemberRemoval({force:true});hideTeamLeaveConfirmation({force:true,restoreFocus:false});hideTeamCodeRefreshConfirmation({force:true,restoreFocus:false});closeSellerPriorityDeferral();clearInterval(timerTick);clearInterval(returningSnapshotCountdownTimer);clearTimeout(syncTimer);clearTimeout(leaderboardPublishTimer);clearTimeout(prospectingSaveTimer);clearTimeout(prospectingRetryTimer);clearTimeout(returningSnapshotTimer);clearTimeout(appResumeTimer);appResumeTimer=null;returningSnapshotTimer=returningSnapshotCountdownTimer=null;returningSnapshotEndsAt=0;prospectingSaveTimer=prospectingRetryTimer=null;prospectingRetryDelay=2500;pendingProspectingPayload=null;pendingProspectingSignature='';pendingProspectingRevision=0;prospectingWriteInFlight=false;prospectingSaveWaiters.splice(0).forEach(({resolve})=>resolve());currentUser=null;uid='local';cloud=false;pendingSyncOperations=0;syncHasError=false;lastLeaderboardSignature='';lastTeamLeaderboardSignature='';lastProspectingSignature='';dirtyDayKeys=new Set();resetState()}
 function displayAgentName(){return (agentName||currentUser?.displayName||currentUser?.email?.split('@')[0]||'Agent').trim()}
 function returningSnapshotReadyKey(){return `${storagePrefix(uid)}returning-snapshot-ready`}
 function returningSnapshotHasHistory(){
@@ -593,7 +575,6 @@ function leaderboardPayload(){
 function leaderboardSignature(payload){const clean={...payload};delete clean.clientUpdatedAt;delete clean.updatedAt;return JSON.stringify(clean)}
 function scheduleLeaderboardPublish(){
   if(!cloud||!db||!uid)return;
-  if(accountMode==='solo'||accountMode==='team')markLeaderboardDirty();
   if(accountMode==='solo'){
     leaderboardEntries=[leaderboardPayload()];
     renderLeaderboard();
@@ -604,12 +585,12 @@ function scheduleLeaderboardPublish(){
     else if(accountMode==='solo')publishLeaderboard();
   },180);
 }
-async function publishLeaderboard(){if(!cloud||!db||!uid||accountMode!=='solo')return;const payload=leaderboardPayload(),signature=leaderboardSignature(payload);if(signature===lastLeaderboardSignature){clearLeaderboardDirty();renderLeaderboardStatus();return}beginSyncOperation();try{await setDoc(doc(db,'leaderboard',uid),payload,{merge:true});lastLeaderboardSignature=signature;clearLeaderboardDirty();cloudRecoveryDelay=2500;endSyncOperation();renderLeaderboardStatus()}catch(err){console.error('Leaderboard publish failed',err);endSyncOperation({error:true});scheduleCloudRecovery();renderLeaderboardStatus()}}
+async function publishLeaderboard(){if(!cloud||!db||!uid||accountMode!=='solo')return;const payload=leaderboardPayload(),signature=leaderboardSignature(payload);if(signature===lastLeaderboardSignature){renderLeaderboardStatus();return}beginSyncOperation();try{await setDoc(doc(db,'leaderboard',uid),payload,{merge:true});lastLeaderboardSignature=signature;endSyncOperation();renderLeaderboardStatus()}catch(err){console.error('Leaderboard publish failed',err);endSyncOperation({error:true});renderLeaderboardStatus()}}
 async function persistDayToCloud(k,clean,{quiet=false}={}){
   if(!cloud||!db||!uid)return;
   beginSyncOperation();
-  try{await setDoc(doc(db,'users',uid,'days',k),{...clean,updatedAt:serverTimestamp()},{merge:true});clearDayDirty(k,clean.clientUpdatedAt);cloudRecoveryDelay=2500;if(k===todayKey())scheduleLeaderboardPublish();endSyncOperation()}
-  catch(err){console.error('Day sync failed',err);endSyncOperation({error:true});scheduleCloudRecovery();if(!quiet)toast('Saved on this device. Cloud sync will retry.');throw err}
+  try{await setDoc(doc(db,'users',uid,'days',k),{...clean,updatedAt:serverTimestamp()},{merge:true});clearDayDirty(k,clean.clientUpdatedAt);if(k===todayKey())scheduleLeaderboardPublish();endSyncOperation()}
+  catch(err){console.error('Day sync failed',err);endSyncOperation({error:true});if(!quiet)toast('Saved on this device. Cloud sync failed.');throw err}
 }
 async function saveDay(k,{quiet=false,awaitCloud=true,render=true}={}){
   if(!validDateKey(k))return;
@@ -621,7 +602,7 @@ async function saveDay(k,{quiet=false,awaitCloud=true,render=true}={}){
   daySaveChains.set(k,next);
   const release=()=>{if(daySaveChains.get(k)===next)daySaveChains.delete(k)};
   if(!awaitCloud){next.catch(err=>console.error('Deferred day sync failed',err)).finally(release);return}
-  try{await next;return true}catch{return false}finally{release()}
+  try{await next}finally{release()}
 }
 async function saveTargets(){saveLocal();if(!cloud)return;beginSyncOperation();try{await setDoc(doc(db,'users',uid),{targets,workDays:[...workDays],name:displayAgentName(),email:currentUser?.email||'',marketPulseForwardEmail:normaliseMarketPulseEmail(currentUser?.email),marketPulseAutomationVersion:1,updatedAt:serverTimestamp()},{merge:true});scheduleLeaderboardPublish();endSyncOperation()}catch(err){console.error(err);endSyncOperation({error:true});toast('Targets saved locally. Cloud sync failed.')}}
 function addEvent(d,type,label,delta=0){d.events.push({id:uuid(),type,label,delta,at:Date.now()});d.events=d.events.slice(-500)}
@@ -4508,10 +4489,10 @@ async function initialiseTeamLayer(profile={}, {promptNew=false}={}){
 }
 async function publishTeamLeaderboard(){
   if(!cloud||!db||!uid||accountMode!=='team'||!teamId)return;
-  const payload=leaderboardPayload(),signature=leaderboardSignature(payload);if(signature===lastTeamLeaderboardSignature){clearLeaderboardDirty();return}
+  const payload=leaderboardPayload(),signature=leaderboardSignature(payload);if(signature===lastTeamLeaderboardSignature)return;
   beginSyncOperation();
-  try{await setDoc(doc(db,'teams',teamId,'leaderboard',uid),payload,{merge:true});lastTeamLeaderboardSignature=signature;clearLeaderboardDirty();cloudRecoveryDelay=2500;if(teamLayerStatus==='error')setTeamLayerStatus('live');endSyncOperation()}
-  catch(err){console.error('Team leaderboard publish failed',err);endSyncOperation({error:true});scheduleCloudRecovery();setTeamLayerStatus('error',consumerSyncError(err,'Team leaderboard could not update.'))}
+  try{await setDoc(doc(db,'teams',teamId,'leaderboard',uid),payload,{merge:true});lastTeamLeaderboardSignature=signature;if(teamLayerStatus==='error')setTeamLayerStatus('live');endSyncOperation()}
+  catch(err){console.error('Team leaderboard publish failed',err);endSyncOperation({error:true});setTeamLayerStatus('error',consumerSyncError(err,'Team leaderboard could not update.'))}
 }
 async function completeSoloSetup(){
   if(!cloud||!uid||teamSetupBusy)return;if(accountMode==='team'&&teamId)return teamSetupMessage('Leave your current team before continuing Solo.','error');if(!navigator.onLine)return teamSetupMessage('Connect to the internet to save your setup.','error');
@@ -4629,13 +4610,13 @@ async function startCloud(user,{promptTeamSetup=false}={}){
   unsubDays=onSnapshot(collection(db,'users',uid,'days'),{includeMetadataChanges:true},snap=>{
     let dataChanged=false;
     snap.docChanges().forEach(ch=>{
-      if(ch.type==='removed'){if(dirtyDayKeys.has(ch.doc.id)){scheduleCloudRecovery(250);return}if(days[ch.doc.id]){delete days[ch.doc.id];dirtyDayKeys.delete(ch.doc.id);dataChanged=true}return}
+      if(ch.type==='removed'){if(dirtyDayKeys.has(ch.doc.id))return;if(days[ch.doc.id]){delete days[ch.doc.id];dirtyDayKeys.delete(ch.doc.id);dataChanged=true}return}
       const incoming=normaliseDayRecord(ch.doc.data(),ch.doc.id),local=dayData(ch.doc.id);
       const useLocal=dirtyDayKeys.has(ch.doc.id)&&local.clientUpdatedAt>incoming.clientUpdatedAt;
       const next=useLocal?local:incoming;
       if(JSON.stringify(local)!==JSON.stringify(next)){days[ch.doc.id]=next;dataChanged=true}
       if(!useLocal&&incoming.clientUpdatedAt>=local.clientUpdatedAt)dirtyDayKeys.delete(ch.doc.id);
-      if(useLocal&&!snap.metadata.fromCache)scheduleCloudRecovery(250);
+      if(useLocal&&!snap.metadata.fromCache)persistDayToCloud(ch.doc.id,{...local},{quiet:true}).catch(()=>{});
     });
     if(dataChanged){saveLocal();renderDayViews();ensureTick();refreshReturningSnapshotIfVisible()}else saveDirtyDays();
     if(!snap.metadata.fromCache){dailyBriefingDaysReady=true;refreshReturningSnapshotIfVisible()}
@@ -4672,7 +4653,7 @@ async function startCloud(user,{promptTeamSetup=false}={}){
     }
     if(!marketPulseInboxStarted&&!snap.metadata.fromCache){marketPulseInboxStarted=true;subscribeMarketPulseInbox()}
   },err=>{console.error('Prospecting sync failed',err);dailyBriefingMarketReady=true;marketPulseAutomation={...marketPulseAutomation,state:'error',error:'Automatic MarketPulse intake is waiting for Prospector cloud sync.'};renderMarketPulseAutomationSettings();refreshReturningSnapshotIfVisible();toast('Prospecting data is saved locally. Cloud sync needs attention.')});
-  refreshSyncStatus();showApp();scheduleLeaderboardPublish();if(dirtyDayKeys.size||leaderboardIsDirty())scheduleCloudRecovery(250);
+  refreshSyncStatus();showApp();scheduleLeaderboardPublish();for(const k of [...dirtyDayKeys]){const clean=dayData(k);if(clean.clientUpdatedAt)persistDayToCloud(k,{...clean},{quiet:true}).catch(()=>{})}
 }
 
 function showApp(){
@@ -5110,7 +5091,7 @@ $('#syncBadge').onclick=e=>{e.stopPropagation();const p=$('#syncPopover'),openin
 $('#syncPopover').onclick=e=>e.stopPropagation();
 document.addEventListener('click',closeSyncPopover);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSyncPopover()});
-window.addEventListener('online',()=>{renderBuyerSessionHero();if(cloud){clearSyncError();setSync('','Connecting');renderLeaderboardStatus();renderTeamSettings();renderTeamManager();markLeaderboardDirty();scheduleCloudRecovery(250);if(readProspectingDirtyAt())queueProspectingSave().catch(err=>console.error('Prospecting reconnect sync failed',err))}});window.addEventListener('offline',()=>{refreshSyncStatus();renderLeaderboardStatus();renderTeamSettings();renderTeamManager();renderBuyerSessionHero()});
+window.addEventListener('online',()=>{renderBuyerSessionHero();if(cloud){clearSyncError();setSync('','Connecting');renderLeaderboardStatus();renderTeamSettings();renderTeamManager();scheduleLeaderboardPublish();if(readProspectingDirtyAt())queueProspectingSave().catch(err=>console.error('Prospecting reconnect sync failed',err));for(const k of [...dirtyDayKeys]){const clean=dayData(k);if(clean.clientUpdatedAt)persistDayToCloud(k,{...clean},{quiet:true}).catch(()=>{})}}});window.addEventListener('offline',()=>{refreshSyncStatus();renderLeaderboardStatus();renderTeamSettings();renderTeamManager();renderBuyerSessionHero()});
 window.addEventListener('error',event=>console.error('Unhandled app error',event.error||event.message));
 window.addEventListener('unhandledrejection',event=>console.error('Unhandled promise rejection',event.reason));
 renderProspecting();

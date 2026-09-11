@@ -1,4 +1,14 @@
-# AGNT v1.41.3 — Cloud Sync Recovery
+# AGNT v1.41.4 — Team Sync Restoration
+
+## v1.41.4 sync correction
+
+- Restores the proven beta Team leaderboard scheduling, write and listener flow.
+- Removes the additional Team leaderboard retry wrapper introduced during the recovery work.
+- Keeps the memory-only Firestore cache correction so the reported iPhone persistent-cache quota failure cannot block Team writes.
+- Replays locally queued daily records through the proven direct day-save path, then republishes the Team leaderboard.
+- Makes no Firebase path, rules, Authentication, MarketPulse, buyer, navigation or feature change.
+
+## Previous release — v1.41.3
 
 ## v1.41.3 sync correction
 
