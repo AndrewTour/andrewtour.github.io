@@ -918,6 +918,7 @@ function updateTopbar(id=activeViewId()){
   if(syncPopover&&syncPopover.parentElement!==document.body)document.body.append(syncPopover);
   const showDateNav=id==='todayView'||id==='scheduleView'||id==='appointmentsView';
   $('#dateNavActions')?.classList.toggle('hidden',!showDateNav);
+  topActions?.classList.toggle('date-nav-visible',showDateNav);
   $('#leaderboardModeShortcut')?.classList.toggle('hidden',id!=='insightsView');
 }
 function dayLogTime(at){
@@ -1007,7 +1008,10 @@ function renderDayLog(){
   const icons={knocking:'🚪',appointment:'◆',prospecting:'☎',contact:'+',target:'✓',live:'●'};
   timeline.innerHTML=items.map(item=>`<article class="smart-log-card ${item.kind}"><header><time>${escapeHtml(item.timeLabel||dayLogTime(item.at))}</time><span class="smart-log-icon" aria-hidden="true">${icons[item.kind]||'•'}</span><div><strong>${escapeHtml(item.title)}</strong>${item.detail?`<small>${escapeHtml(item.detail)}</small>`:''}</div></header>${Array.isArray(item.stats)&&item.stats.length?`<div class="smart-log-stats">${item.stats.map(stat=>`<span>${escapeHtml(stat)}</span>`).join('')}</div>`:''}</article>`).join('');
 }
-function updateBackTodayVisibility(viewId=activeViewId()){const viewedDate=viewId==='appointmentsView'?appointmentDate:selectedDate,required=['todayView','scheduleView','appointmentsView'].includes(viewId)&&viewedDate!==todayKey();$('#backToday')?.classList.toggle('hidden',!required)}
+function updateBackTodayVisibility(viewId=activeViewId()){
+  const button=$('#backToday'),dateView=['todayView','scheduleView','appointmentsView'].includes(viewId),viewedDate=viewId==='appointmentsView'?appointmentDate:selectedDate,required=dateView&&viewedDate!==todayKey();if(!button)return;
+  button.classList.toggle('hidden',!dateView);button.classList.toggle('is-placeholder',dateView&&!required);button.disabled=!required;button.setAttribute('aria-hidden',String(!required));button.tabIndex=required?0:-1;
+}
 function renderToday(){
   const d=dayData(selectedDate),score=completion(selectedDate),kt=rollingKnockTarget(selectedDate),secs=liveKnockSeconds(d),wk=weekSummary();
   const past=isPastDate(selectedDate),scheduled=isWorkDayKey(selectedDate),locked=past||!scheduled;
@@ -1432,17 +1436,24 @@ function dailyPlanBuyerMatchWorkload(viewDate){
 function dailyPlanFollowUpWorkload(viewDate){
   const rows=todayFollowUpQueueModel(viewDate),count=rows.length;if(!count)return null;
   const overdue=rows.filter(row=>row.overdue).length,duration=dailyPlanRoundMinutes(estimatedMinutes(count),15,45);
-  return{id:'followups',workloadId:'followups',kind:'followup-block',title:overdue?'Clear overdue follow-ups':'Today’s follow-ups',meta:`${count} conversation${count===1?'':'s'} · ${duration} min protected${overdue?` · ${overdue} overdue`:''}`,kicker:`FOLLOW-UPS · ${count} DUE`,duration,clientCount:count,remainingClients:count,completed:false,actionable:true,action:'view-followups',label:'Open follow-ups',commandTitle:overdue?`Clear ${overdue} overdue follow-up${overdue===1?'':'s'}`:`Work ${count} follow-up${count===1?'':'s'}`,commandMeta:`${count} conversation${count===1?'':'s'} need a clear next step · ${duration} protected minutes.`,rank:20};
+  return{id:'followups',workloadId:'followups',kind:'followup-block',title:overdue?'Clear overdue follow-ups':'Today’s follow-ups',meta:`${count} conversation${count===1?'':'s'} · ${duration} min protected${overdue?` · ${overdue} overdue`:''}`,kicker:`FOLLOW-UPS · ${count} DUE`,duration,clientCount:count,overdueCount:overdue,remainingClients:count,completed:false,actionable:true,action:'view-followups',label:'Open follow-ups',commandTitle:overdue?`Clear ${overdue} overdue follow-up${overdue===1?'':'s'}`:`Work ${count} follow-up${count===1?'':'s'}`,commandMeta:`${count} conversation${count===1?'':'s'} need a clear next step · ${duration} protected minutes.`,rank:overdue?-75:20};
 }
 function dailyPlanPipelineWorkload(viewDate){
   if(viewDate!==todayKey())return null;const count=returningSnapshotPipelineCount();if(!count)return null;
   const active=prospectSessionActive&&!cleanText(prospectSessionContext?.eventId,160),duration=dailyPlanRoundMinutes(estimatedMinutes(count,180),15,60);
   return{id:'pipeline',workloadId:'pipeline',kind:'pipeline-block',title:active?'Current pipeline session':'Core pipeline calls',meta:`${count} eligible client${count===1?'':'s'} · ${duration} min protected`,kicker:`PIPELINE · ${count} READY`,duration,clientCount:count,remainingClients:count,completed:false,actionable:true,action:active?'resume-session':'view-pipeline',label:active?'Resume session':'Open pipeline',commandTitle:active?'Resume the current pipeline':'Build from the existing pipeline',commandMeta:`${count} eligible client${count===1?' is':'s are'} ready · ${duration} protected minutes.`,rank:active?-90:40};
 }
+function dailyPlanWorkloadLane(item={}){
+  if(item.kind==='buyer-match')return'buyer';if(item.kind==='pipeline-block')return'pipeline';if(item.kind==='followup-block')return'follow-up';if(item.kind==='market')return'seller';return item.kind||'other';
+}
+function dailyPlanWorkloadRank(item={}){
+  if(item.kind==='buyer-match'&&Number(item.criticalCount)>0)return-95;if(item.kind==='followup-block'&&Number(item.overdueCount)>0)return-75;return Number.isFinite(Number(item.rank))?Number(item.rank):50;
+}
+function dailyPlanBalancedWorkloadOrder(workloads=[]){
+  const remaining=workloads.filter(Boolean).slice(),ordered=[];while(remaining.length){remaining.sort((a,b)=>dailyPlanWorkloadRank(a)-dailyPlanWorkloadRank(b));const lastLane=dailyPlanWorkloadLane(ordered.at(-1)),urgent=dailyPlanWorkloadRank(remaining[0])<=-70;let index=0;if(!urgent&&lastLane){const alternate=remaining.findIndex(item=>dailyPlanWorkloadLane(item)!==lastLane);if(alternate>=0)index=alternate}ordered.push(remaining.splice(index,1)[0])}return ordered;
+}
 function dailyPlanWorkloads(viewDate){
-  const market=dailyPlanMarketWorkloads(viewDate),buyerMatches=dailyPlanBuyerMatchWorkload(viewDate),followUp=dailyPlanFollowUpWorkload(viewDate),pipeline=dailyPlanPipelineWorkload(viewDate),preferred=market.filter(item=>item.bucket==='listed'||item.bucket==='sold'),other=market.filter(item=>item.bucket!=='listed'&&item.bucket!=='sold'),active=market.filter(item=>item.rank<0),ordered=[];
-  active.forEach(item=>ordered.push(item));if(pipeline?.rank<0)ordered.push(pipeline);if(buyerMatches)ordered.push(buyerMatches);preferred.filter(item=>!ordered.includes(item)).forEach(item=>ordered.push(item));if(followUp)ordered.push(followUp);other.filter(item=>!ordered.includes(item)).forEach(item=>ordered.push(item));if(pipeline&&!ordered.includes(pipeline))ordered.push(pipeline);
-  return ordered;
+  return dailyPlanBalancedWorkloadOrder([...dailyPlanMarketWorkloads(viewDate),dailyPlanBuyerMatchWorkload(viewDate),dailyPlanFollowUpWorkload(viewDate),dailyPlanPipelineWorkload(viewDate)]);
 }
 function dailyPlanAllocateWorkloads(workloads=[],slots=[]){
   const available=slots.map(slot=>({...slot,cursor:slot.start})),items=[],backlog=[];
@@ -1686,7 +1697,7 @@ function sellerPriorityCandidatePreRank(prospect={}){const timeframe=sellerPrior
 async function rebuildSellerPriorityCache(token){
   sellerPriorityBuilding=true;try{await sellerPriorityYield();if(token!==sellerPriorityBuildToken)return;const now=new Date(),context=await sellerPriorityBuildContext(now,token);if(!context||token!==sellerPriorityBuildToken)return;const candidates=activeProspects().filter(prospect=>prospect.sellingTimeframe||['Appraisal Opportunity','Appointment Booked','Pipeline','Past Client'].includes(prospect.stage)||prospect.temperature==='Hot'||prospect.nextFollowUp||context.marketByStreet.has(prospectMarketKey(prospect))).sort((a,b)=>sellerPriorityCandidatePreRank(b)-sellerPriorityCandidatePreRank(a)).slice(0,SELLER_PRIORITY_MAX_CANDIDATES);let winner=null;
     for(let index=0;index<candidates.length;index++){if(token!==sellerPriorityBuildToken)return;const candidate=sellerPriorityCandidate(candidates[index],now,context);if(candidate&&candidate.score>=44&&(!winner||candidate.score>winner.score||candidate.score===winner.score&&(candidate.prospect.nextFollowUp||'9999-12-31').localeCompare(winner.prospect.nextFollowUp||'9999-12-31')<0))winner=candidate;if(index&&index%SELLER_PRIORITY_CHUNK_SIZE===0)await sellerPriorityYield()}
-    if(token!==sellerPriorityBuildToken)return;sellerPriorityCache={ready:true,value:winner?{title:`Call ${winner.prospect.name} — ${winner.purpose}`,meta:winner.reasons.join(' · '),kicker:'SELLER PRIORITY',timeLabel:'10 min',focusItemId:'',action:'open-seller',label:'Open seller',eventId:winner.prospect.id,sellerPriority:true}:null,expiresAt:Date.now()+5*60*1000};requestAnimationFrame(()=>{if($('#app')?.classList.contains('hidden'))return;renderNowCard();if($('#scheduleView')?.classList.contains('active'))renderTimeline()})
+    if(token!==sellerPriorityBuildToken)return;sellerPriorityCache={ready:true,value:winner?{title:`Call ${winner.prospect.name} — ${winner.purpose}`,meta:winner.reasons.join(' · '),kicker:'SELLER PRIORITY',timeLabel:'10 min',focusItemId:'',action:'open-seller',label:'Open seller',eventId:winner.prospect.id,sellerPriority:true,priorityRank:Math.max(-88,-40-Math.round(winner.score/2))}:null,expiresAt:Date.now()+5*60*1000};requestAnimationFrame(()=>{if($('#app')?.classList.contains('hidden'))return;renderNowCard();if($('#scheduleView')?.classList.contains('active'))renderTimeline()})
   }catch(err){console.error('Seller priority background refresh failed',err);if(token===sellerPriorityBuildToken)sellerPriorityCache={ready:true,value:null,expiresAt:Date.now()+5*60*1000}}
   finally{sellerPriorityBuilding=false;if(!sellerPriorityCache.ready)scheduleSellerPriorityRefresh(100)}
 }
@@ -1715,6 +1726,9 @@ function dailyCommandFromItem(item,mode='current'){
   if(mode==='attention')meta=`Still open · ${meta}`;
   return{title:item.commandTitle||item.title,meta,kicker:mode==='attention'?'NEEDS ATTENTION':item.kicker||'RIGHT NOW',timeLabel:dailyPlanTimeRange(item),focusItemId:item.id,action:item.action||'',label:item.label||'',eventId:item.eventId||''};
 }
+function dailyCommandItemRank(item={}){
+  if(item.kind==='task')return-100;if(item.kind==='buyer-match'&&Number(item.criticalCount)>0)return-95;if(item.kind==='followup-block'&&Number(item.overdueCount)>0)return-75;return dailyPlanWorkloadRank(item);
+}
 function dailyCommandPriority(viewDate=selectedDate,items=timelineItemsForDate(viewDate),now=new Date()){
   if(!isWorkDayKey(viewDate))return{title:'No tracking day scheduled',meta:'Your metrics remain available for reference.',kicker:'TODAY',timeLabel:'',focusItemId:'',action:'',label:'',eventId:''};
   if(viewDate<todayKey())return{title:'Day complete',meta:`Final score ${completion(viewDate)}%.`,kicker:'DAY COMPLETE',timeLabel:'',focusItemId:'',action:'view-log',label:'View day log',eventId:''};
@@ -1726,10 +1740,12 @@ function dailyCommandPriority(viewDate=selectedDate,items=timelineItemsForDate(v
   if(prospectSessionActive&&!activeEventId){const sessionItem=items.find(item=>item.kind==='pipeline-block'&&!item.completed);if(sessionItem){const command=dailyCommandFromItem(sessionItem);command.title='Resume the current pipeline';command.meta=`${Math.max(0,prospectSessionIds.length-prospectSessionIndex)} client${Math.max(0,prospectSessionIds.length-prospectSessionIndex)===1?'':'s'} remain in the active session.`;command.action='resume-session';command.label='Resume session';return command}}
   const activeKnock=knocking.find(item=>nowMinutes>=item.minutes&&nowMinutes<item.minutes+(item.duration||60)&&incomplete(item));
   if(activeKnock)return dailyCommandFromItem(activeKnock);
-  if(nowMinutes<18*60+30){const sellerPriority=sellerNextBestAction(now);if(sellerPriority)return sellerPriority}
-  const current=actionable.find(item=>nowMinutes>=item.minutes&&nowMinutes<item.minutes+(item.duration||15));if(current)return dailyCommandFromItem(current);
+  const current=actionable.filter(item=>nowMinutes>=item.minutes&&nowMinutes<item.minutes+(item.duration||15)).sort((a,b)=>dailyCommandItemRank(a)-dailyCommandItemRank(b))[0],sellerPriority=nowMinutes<18*60+30?sellerNextBestAction(now):null;
+  if(current&&(!sellerPriority||dailyCommandItemRank(current)<=Number(sellerPriority.priorityRank)))return dailyCommandFromItem(current);
+  if(sellerPriority)return sellerPriority;
+  if(current)return dailyCommandFromItem(current);
   if(nowMinutes>=13*60+30){const nextKnock=knocking.find(item=>item.minutes>=nowMinutes&&incomplete(item));if(nextKnock&&nextKnock.minutes-nowMinutes<=45)return dailyCommandFromItem(nextKnock,'next')}
-  const attention=actionable.filter(item=>nowMinutes>=item.minutes+(item.duration||15)).sort((a,b)=>{const priority={task:-1,'buyer-match':0,market:1,'followup-block':2,'pipeline-block':3,knock:4,appointment:5,ofi:5};return(priority[a.kind]??9)-(priority[b.kind]??9)||a.minutes-b.minutes})[0];
+  const attention=actionable.filter(item=>nowMinutes>=item.minutes+(item.duration||15)).sort((a,b)=>dailyCommandItemRank(a)-dailyCommandItemRank(b)||a.minutes-b.minutes)[0];
   if(nowMinutes>=18*60+30){const wrap=items.find(item=>item.kind==='wrap'),openCount=actionable.filter(item=>item.minutes+(item.duration||15)<=nowMinutes).length;if(wrap){const command=dailyCommandFromItem(wrap);command.title='Close the day properly';command.meta=openCount?`${openCount} planned block${openCount===1?' remains':'s remain'} open. Decide what carries forward, then set tomorrow’s first move.`:'Review the outcomes, record the wins and make tomorrow easy to start.';return command}}
   if(attention&&nowMinutes<14*60)return dailyCommandFromItem(attention,'attention');
   const next=actionable.filter(item=>item.minutes>nowMinutes).sort((a,b)=>a.minutes-b.minutes)[0];if(next)return dailyCommandFromItem(next,'next');
@@ -1763,7 +1779,7 @@ function timelineBuyerSellerOpportunityMarkup(opportunity){
   return`<span class="timeline-buyer-seller-angle ${escapeHtml(opportunity.state)}"><b>${escapeHtml(opportunity.stateLabel)}</b><small>Current home · ${escapeHtml(opportunity.currentHome)}</small><i>${escapeHtml(opportunity.conversationAngle)}</i></span>`
 }
 function timelineBuyerMatchesMarkup(matches=[]){
-  if(!matches.length)return'';return`<div class="timeline-buyer-match-list" aria-label="Buyer opportunities">${matches.map(match=>{const extra=Math.max(0,Number(match.propertyCount)||1)-1,context=[match.state,match.followUpLabel].filter(Boolean).join(' · ');return`<article class="${match.urgency?'has-time-alert':''}"><span><strong>${escapeHtml(match.buyerName)}</strong><small>${escapeHtml(match.address)}, ${escapeHtml(match.suburb)}${extra?` · +${extra} propert${extra===1?'y':'ies'}`:''}</small><em>${escapeHtml(context||match.reason)}</em></span>${buyerMatchTimeAlertMarkup(match.urgency,'timeline-buyer-time-alert')}<div><button type="button" data-buyer-match-call="${escapeHtml(match.buyerId)}" data-match-id="${escapeHtml(match.matchId)}" ${match.phone?'':'disabled'}>Call</button><button type="button" data-buyer-match-sms="${escapeHtml(match.buyerId)}" data-match-id="${escapeHtml(match.matchId)}" ${match.phone?'':'disabled'}>SMS</button><button type="button" data-open-buyer-match-outcome="${escapeHtml(match.buyerId)}" data-match-id="${escapeHtml(match.matchId)}">Outcome</button></div>${timelineBuyerSellerOpportunityMarkup(match.sellerOpportunity)}</article>`}).join('')}</div>`
+  if(!matches.length)return'';return`<div class="timeline-buyer-match-list" aria-label="Buyer opportunities">${matches.map(match=>{const extra=Math.max(0,Number(match.propertyCount)||1)-1,context=[match.state,match.followUpLabel].filter(Boolean).join(' · ');return`<article class="${match.urgency?'has-time-alert':''}"><span><strong>${escapeHtml(match.buyerName)}</strong><small>${escapeHtml(match.address)}, ${escapeHtml(match.suburb)}${extra?` · +${extra} propert${extra===1?'y':'ies'}`:''}</small><em>${escapeHtml(context||match.reason)}</em></span>${buyerMatchTimeAlertMarkup(match.urgency,'timeline-buyer-time-alert')}<div><button type="button" data-buyer-match-call="${escapeHtml(match.buyerId)}" data-match-id="${escapeHtml(match.matchId)}" ${match.phone?'':'disabled'}>Call</button><button type="button" data-buyer-match-sms="${escapeHtml(match.buyerId)}" data-match-id="${escapeHtml(match.matchId)}" ${match.phone?'':'disabled'}>SMS</button><button type="button" data-buyer-match-contacted="${escapeHtml(match.buyerId)}" data-match-id="${escapeHtml(match.matchId)}">Contacted</button><button type="button" data-open-buyer-match-outcome="${escapeHtml(match.buyerId)}" data-match-id="${escapeHtml(match.matchId)}">Outcome</button></div>${timelineBuyerSellerOpportunityMarkup(match.sellerOpportunity)}</article>`}).join('')}</div>`
 }
 function bulkSmsMessageIconMarkup(){return'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg>'}
 function timelinePlanItemMarkup(item,status){
@@ -3292,7 +3308,6 @@ function buyerContactedOnDate(buyerId,date=todayKey()){
 function buyerMatchContactEnvelopes(viewDate=todayKey(),{includeContacted=false}={}){
   return activeBuyerProspects().map(buyer=>{
     const matches=buyerOpenPropertyMatches(buyer);if(!matches.length)return null;
-    if(!includeContacted&&buyerContactedOnDate(buyer.id,viewDate))return null;
     const primary=matches[0],urgency=buyerMatchTimeAlert(buyer,primary,viewDate),followUpDate=validDateKey(buyer.nextFollowUp)?buyer.nextFollowUp:'',followUpDue=Boolean(followUpDate&&followUpDate<=viewDate),followUpLabel=followUpDue?(followUpDate<viewDate?`Follow-up overdue · ${fmtDate(followUpDate)}`:'Follow-up due today'):'',followUpScore=followUpDate<viewDate?112:followUpDue?106:0,priorityScore=Math.max(Number(urgency?.score)||0,followUpScore);
     return{buyer,primary,matches,propertyCount:matches.length,urgency,priorityScore,followUpDate,followUpDue,followUpLabel,phone:primaryProspectPhone(buyer)};
   }).filter(Boolean).sort((a,b)=>b.priorityScore-a.priorityScore||Number(b.followUpDue)-Number(a.followUpDue)||b.primary.receivedDate.localeCompare(a.primary.receivedDate)||a.buyer.name.localeCompare(b.buyer.name,'en-AU',{sensitivity:'base'}));
@@ -3344,6 +3359,9 @@ async function applyBuyerMatchOutcome(buyerId,matchId,outcome,{followUpDate='',r
 }
 function setBuyerPropertyMatchStatusLocal(buyerId,matchId,status='reviewed',{logInteraction=true}={}){
   if(!['reviewed','contacted','dismissed'].includes(status))return null;const selected=buyerMatchSelected(buyerId,matchId);if(!selected)return null;const now=Date.now(),matches=normaliseBuyerPropertyMatches(selected.buyer.buyerPropertyMatches).map(item=>buyerMatchStatusOpen(item.status)&&item.propertyKey===selected.match.propertyKey&&item.receivedDate<=selected.match.receivedDate?{...item,status,statusAt:now}:item),labels={reviewed:'Property match reviewed',contacted:'Property match contacted',dismissed:'Property match dismissed'};prospects=prospects.map(item=>item.id===buyerId?normaliseProspect({...item,buyerPropertyMatches:matches,updatedAt:now}):item);if(logInteraction)prospectInteractions.push({id:prospectId(),prospectId:buyerId,date:todayKey(),at:now,type:'Buyer match',outcome:labels[status],note:`${selected.match.address}, ${selected.match.suburb}${buyerMatchPriceLabel(selected.match)?` · ${buyerMatchPriceLabel(selected.match)}`:''}`,nextFollowUp:'',buyerMatchId:matchId});commitBuyerMatchChanges(buyerId);return selected
+}
+function markBuyerPropertyMatchContacted(buyerId,matchId){
+  const selected=setBuyerPropertyMatchStatusLocal(buyerId,matchId,'contacted');if(selected)toast('Property outreach cleared');return selected;
 }
 function launchBuyerMatchCall(buyerId,matchId){launchBuyerProfileCall(buyerId,matchId)}
 function buyerMatchFollowUpDate(days=1){const value=new Date();value.setDate(value.getDate()+Math.max(1,Number(days)||1));return dateKey(value)}
@@ -3484,7 +3502,7 @@ function buyerSellerOpportunityMarkup(p={}){
 }
 function buyerPropertyMatchesMarkup(p={}){
   const matches=buyerOpenPropertyMatches(p);if(!matches.length)return'';const phone=primaryProspectPhone(p);
-  return`<section class="buyer-property-matches"><div class="buyer-property-matches-head"><div><span>MARKETPULSE MATCHES</span><h3>${matches.length} propert${matches.length===1?'y':'ies'} worth discussing</h3></div><b>${matches.length}</b></div><div class="buyer-property-match-list">${matches.map(match=>{const config=[match.propertyType,match.bedrooms?`${match.bedrooms} bed`:'',match.bathrooms?`${match.bathrooms} bath`:''].filter(Boolean).join(' · '),price=buyerMatchPriceLabel(match),timeAlert=buyerMatchTimeAlert(p,match);return`<article class="buyer-match-${escapeHtml(match.status)}${timeAlert?' has-time-alert':''}"><div class="buyer-match-labels"><span class="buyer-match-event">${escapeHtml(match.eventType)}</span><span class="buyer-match-state">${escapeHtml(buyerMatchStateLabel(match))}</span></div>${buyerMatchTimeAlertMarkup(timeAlert,'buyer-detail-time-alert')}<h4>${escapeHtml(match.address)}</h4><p>${escapeHtml(match.suburb)}${price?` · ${escapeHtml(price)}`:''}</p><small>${escapeHtml(config)}</small><em>${escapeHtml(match.reason)}</em><div class="buyer-match-actions"><button type="button" data-buyer-match-call="${escapeHtml(p.id)}" data-match-id="${escapeHtml(match.id)}" ${phone?'':'disabled'}>Call</button><button type="button" data-buyer-match-sms="${escapeHtml(p.id)}" data-match-id="${escapeHtml(match.id)}" ${phone?'':'disabled'}>SMS</button><button type="button" data-open-buyer-match-outcome="${escapeHtml(p.id)}" data-match-id="${escapeHtml(match.id)}">Outcome</button></div></article>`}).join('')}</div></section>`
+  return`<section class="buyer-property-matches"><div class="buyer-property-matches-head"><div><span>MARKETPULSE MATCHES</span><h3>${matches.length} propert${matches.length===1?'y':'ies'} worth discussing</h3></div><b>${matches.length}</b></div><div class="buyer-property-match-list">${matches.map(match=>{const config=[match.propertyType,match.bedrooms?`${match.bedrooms} bed`:'',match.bathrooms?`${match.bathrooms} bath`:''].filter(Boolean).join(' · '),price=buyerMatchPriceLabel(match),timeAlert=buyerMatchTimeAlert(p,match);return`<article class="buyer-match-${escapeHtml(match.status)}${timeAlert?' has-time-alert':''}"><div class="buyer-match-labels"><span class="buyer-match-event">${escapeHtml(match.eventType)}</span><span class="buyer-match-state">${escapeHtml(buyerMatchStateLabel(match))}</span></div>${buyerMatchTimeAlertMarkup(timeAlert,'buyer-detail-time-alert')}<h4>${escapeHtml(match.address)}</h4><p>${escapeHtml(match.suburb)}${price?` · ${escapeHtml(price)}`:''}</p><small>${escapeHtml(config)}</small><em>${escapeHtml(match.reason)}</em><div class="buyer-match-actions"><button type="button" data-buyer-match-call="${escapeHtml(p.id)}" data-match-id="${escapeHtml(match.id)}" ${phone?'':'disabled'}>Call</button><button type="button" data-buyer-match-sms="${escapeHtml(p.id)}" data-match-id="${escapeHtml(match.id)}" ${phone?'':'disabled'}>SMS</button><button type="button" data-buyer-match-contacted="${escapeHtml(p.id)}" data-match-id="${escapeHtml(match.id)}">Contacted</button><button type="button" data-open-buyer-match-outcome="${escapeHtml(p.id)}" data-match-id="${escapeHtml(match.id)}">Outcome</button></div></article>`}).join('')}</div></section>`
 }
 function renderBuyerDetail(id){
   const p=prospectById(id);if(!prospectHasBuyerProfile(p))return closeProspectDetail();activeProspectId=p.id;
@@ -4767,6 +4785,7 @@ $('#dailyTimeline').onclick=async e=>{
   const taskToggle=e.target.closest('[data-toggle-task]');if(taskToggle){e.preventDefault();await toggleTimelineTask(taskToggle.dataset.toggleTask);return}
   const buyerMatchCall=e.target.closest('[data-buyer-match-call]');if(buyerMatchCall){e.preventDefault();launchBuyerMatchCall(buyerMatchCall.dataset.buyerMatchCall,buyerMatchCall.dataset.matchId);return}
   const buyerMatchSms=e.target.closest('[data-buyer-match-sms]');if(buyerMatchSms){e.preventDefault();launchBuyerMatchSms(buyerMatchSms.dataset.buyerMatchSms,buyerMatchSms.dataset.matchId);return}
+  const buyerMatchContacted=e.target.closest('[data-buyer-match-contacted]');if(buyerMatchContacted){e.preventDefault();markBuyerPropertyMatchContacted(buyerMatchContacted.dataset.buyerMatchContacted,buyerMatchContacted.dataset.matchId);return}
   const buyerMatchOutcome=e.target.closest('[data-open-buyer-match-outcome]');if(buyerMatchOutcome){e.preventDefault();openBuyerMatchOutcome(buyerMatchOutcome.dataset.openBuyerMatchOutcome,buyerMatchOutcome.dataset.matchId);return}
   const marketBulkSms=e.target.closest('[data-market-bulk-sms]');if(marketBulkSms){e.preventDefault();openMarketPulseBulkSms(marketBulkSms.dataset.marketBulkSms);return}
   const planAction=e.target.closest('[data-plan-action]');if(planAction){e.preventDefault();navigateDailyPlanAction(planAction.dataset.planAction,planAction.dataset.eventId);return}
@@ -4924,6 +4943,7 @@ $('#prospectingView').onclick=async e=>{
   const openBuyer=e.target.closest('[data-open-buyer]');if(openBuyer){$('#prospectingDashboard').classList.add('hidden');$('#prospectDetail').classList.remove('hidden');renderBuyerDetail(openBuyer.dataset.openBuyer);return}
   const buyerMatchCall=e.target.closest('[data-buyer-match-call]');if(buyerMatchCall){launchBuyerMatchCall(buyerMatchCall.dataset.buyerMatchCall,buyerMatchCall.dataset.matchId);return}
   const buyerMatchSms=e.target.closest('[data-buyer-match-sms]');if(buyerMatchSms){launchBuyerMatchSms(buyerMatchSms.dataset.buyerMatchSms,buyerMatchSms.dataset.matchId);return}
+  const buyerMatchContacted=e.target.closest('[data-buyer-match-contacted]');if(buyerMatchContacted){markBuyerPropertyMatchContacted(buyerMatchContacted.dataset.buyerMatchContacted,buyerMatchContacted.dataset.matchId);return}
   const buyerMatchOutcome=e.target.closest('[data-open-buyer-match-outcome]');if(buyerMatchOutcome){openBuyerMatchOutcome(buyerMatchOutcome.dataset.openBuyerMatchOutcome,buyerMatchOutcome.dataset.matchId);return}
   const callBuyer=e.target.closest('[data-call-buyer]');if(callBuyer){launchBuyerProfileCall(callBuyer.dataset.callBuyer);return}
   const editBuyer=e.target.closest('[data-edit-buyer]');if(editBuyer){openBuyerEditor(editBuyer.dataset.editBuyer);return}

@@ -1,3 +1,16 @@
+# AGNT v1.41.13 — Balanced Right Now
+
+## v1.41.13 changes
+
+- Balances the existing Right Now decision across sellers, buyers, overdue follow-ups, pipeline work, MarketPulse activity, appointments and time-sensitive actions.
+- Keeps live appointments, near appointments and active calling sessions protected before flexible work is ranked.
+- Adds a `Contacted` action to each individual property match so attempted outreach clears that property without forcing an outcome.
+- Centres the completed-task tick in the Today checklist.
+- Keeps previous/next calendar controls inside the safe viewport and reserves a fixed Today-button slot, so Today, yesterday and tomorrow retain identical header geometry.
+- Preserves all v1.41.12 Buyer Call Return, contact-draft, imported Buyer List, local-first sync, Firebase and PWA behaviour.
+
+## Previous release — v1.41.12
+
 # AGNT v1.41.12 — Buyer Call Return
 
 ## v1.41.12 changes
