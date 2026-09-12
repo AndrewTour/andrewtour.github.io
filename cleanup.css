@@ -25,6 +25,16 @@ html[data-theme="dark"] :is(input,select,textarea){color-scheme:dark}
 [data-knock-contact-results] small,[data-knock-contact-results] p{color:var(--cleanup-muted);line-height:1.4}
 .knocking-capture-card{max-height:calc(100dvh - 32px);overflow:auto;overscroll-behavior:contain}
 html[data-theme="dark"] .knocking-capture-card :is(input,select,textarea){background:var(--cleanup-surface)!important;color:var(--cleanup-ink)!important;border-color:var(--cleanup-line)!important}
+
+/* v1.41.12: keep date navigation inside the iPhone viewport and show Today only off-date. */
+#backToday.hidden{display:none!important}
+.topbar{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;column-gap:8px!important;max-width:100%!important;min-width:0!important}
+.topbar>div:first-child{min-width:0!important;overflow:hidden}
+.topbar .top-actions{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:6px!important;min-width:0!important;max-width:190px!important}
+.topbar .date-nav-actions{display:flex;align-items:center;gap:5px;min-width:0}
+.topbar .date-nav-actions.hidden{display:none!important}
+.topbar .topbar-nav-icon{width:36px!important;min-width:36px!important;height:36px!important;padding:0!important;flex:0 0 36px!important}
+@media(max-width:430px){.topbar .top-actions{max-width:174px!important}.topbar .topbar-nav-icon{width:34px!important;min-width:34px!important;height:34px!important;flex-basis:34px!important}.topbar #backToday{padding-inline:8px!important}}
 #prospectingView .prospecting-toolbar.hidden,#prospectingView .prospecting-search-wrap.hidden{display:none!important}
 #prospectingView .prospecting-toolbar.quick-actions-only{grid-template-columns:44px 44px!important;justify-content:end!important;margin-left:auto;width:max-content!important}
 .hotspot-no-answer-option{display:grid!important;grid-template-columns:22px minmax(0,1fr);align-items:start;gap:10px;padding:12px!important;border:1px solid var(--cleanup-line);border-radius:12px;background:var(--cleanup-surface)}

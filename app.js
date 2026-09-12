@@ -65,6 +65,7 @@ let pendingSellerPriorityId='';
 let sellerPriorityReturnView='';
 let sellerPriorityCache={ready:false,value:null,expiresAt:0};
 let sellerPriorityRefreshTimer=null,sellerPriorityBuildToken=0,sellerPriorityBuilding=false;
+const sellerPriorityImmediateDeferrals=new Map();
 const daySaveChains=new Map();
 let dirtyDayKeys=new Set();
 const appointmentSubmitLocks=new Set();
@@ -1006,7 +1007,7 @@ function renderDayLog(){
   const icons={knocking:'🚪',appointment:'◆',prospecting:'☎',contact:'+',target:'✓',live:'●'};
   timeline.innerHTML=items.map(item=>`<article class="smart-log-card ${item.kind}"><header><time>${escapeHtml(item.timeLabel||dayLogTime(item.at))}</time><span class="smart-log-icon" aria-hidden="true">${icons[item.kind]||'•'}</span><div><strong>${escapeHtml(item.title)}</strong>${item.detail?`<small>${escapeHtml(item.detail)}</small>`:''}</div></header>${Array.isArray(item.stats)&&item.stats.length?`<div class="smart-log-stats">${item.stats.map(stat=>`<span>${escapeHtml(stat)}</span>`).join('')}</div>`:''}</article>`).join('');
 }
-function updateBackTodayVisibility(viewId=activeViewId()){const required=selectedDate!==todayKey()&&['todayView','scheduleView'].includes(viewId);$('#backToday')?.classList.toggle('hidden',!required)}
+function updateBackTodayVisibility(viewId=activeViewId()){const viewedDate=viewId==='appointmentsView'?appointmentDate:selectedDate,required=['todayView','scheduleView','appointmentsView'].includes(viewId)&&viewedDate!==todayKey();$('#backToday')?.classList.toggle('hidden',!required)}
 function renderToday(){
   const d=dayData(selectedDate),score=completion(selectedDate),kt=rollingKnockTarget(selectedDate),secs=liveKnockSeconds(d),wk=weekSummary();
   const past=isPastDate(selectedDate),scheduled=isWorkDayKey(selectedDate),locked=past||!scheduled;
@@ -1672,6 +1673,7 @@ async function sellerPriorityBuildContext(now=new Date(),token=sellerPriorityBui
 }
 function sellerPriorityCandidate(prospect={},now=new Date(),context={}){
   if(!prospect)return null;
+  const immediateUntil=Number(sellerPriorityImmediateDeferrals.get(prospect.id))||0;if(immediateUntil>now.getTime())return null;if(immediateUntil)sellerPriorityImmediateDeferrals.delete(prospect.id);
   const interaction=context.interactionState?.get(prospect.id)||{},deferral=context.deferralState?.get(prospect.id)||{},market=context.marketByStreet?.get(prospectMarketKey(prospect))||null;
   if(prospect.archived||prospect.stage==='Listed'||!primaryProspectPhone(prospect)||interaction.workedToday||interaction.doNotContact||deferral.active)return null;
   const timeframe=sellerPriorityTimeframe(prospect),followUpDistance=prospect.nextFollowUp?sellerPriorityDateDistance(prospect.nextFollowUp):null,overdueDays=followUpDistance===null?0:Math.max(0,followUpDistance),dueToday=followUpDistance===0&&prospect.nextFollowUp===todayKey(),stage=cleanText(prospect.stage,60),lastContactDays=prospect.lastContact?Math.max(0,sellerPriorityDateDistance(prospect.lastContact)):null;
@@ -1691,7 +1693,7 @@ async function rebuildSellerPriorityCache(token){
 function scheduleSellerPriorityRefresh(delay=180){if(sellerPriorityCache.ready||sellerPriorityRefreshTimer||sellerPriorityBuilding)return;sellerPriorityRefreshTimer=setTimeout(()=>{sellerPriorityRefreshTimer=null;const token=++sellerPriorityBuildToken;rebuildSellerPriorityCache(token)},Math.max(0,delay))}
 function invalidateSellerPriorityCache({schedule=true,delay=180}={}){sellerPriorityBuildToken++;sellerPriorityCache={ready:false,value:null,expiresAt:0};if(sellerPriorityRefreshTimer){clearTimeout(sellerPriorityRefreshTimer);sellerPriorityRefreshTimer=null}if(schedule)scheduleSellerPriorityRefresh(delay)}
 function sellerNextBestAction(now=new Date()){
-  if(selectedDate!==todayKey())return null;if(sellerPriorityCache.ready&&Number(sellerPriorityCache.expiresAt)<=now.getTime())invalidateSellerPriorityCache({delay:0});if(!sellerPriorityCache.ready){scheduleSellerPriorityRefresh();return null}return sellerPriorityCache.value
+  if(selectedDate!==todayKey())return null;if(sellerPriorityCache.ready&&Number(sellerPriorityCache.expiresAt)<=now.getTime())invalidateSellerPriorityCache({delay:0});if(!sellerPriorityCache.ready){scheduleSellerPriorityRefresh();return null}const cached=sellerPriorityCache.value,immediateUntil=Number(sellerPriorityImmediateDeferrals.get(cached?.eventId))||0;if(immediateUntil>now.getTime())return null;return cached
 }
 function openSellerPriorityDeferral(prospectId=''){
   const prospect=prospectById(prospectId);if(!prospect)return toast('Seller could not be found');pendingSellerPriorityId=prospect.id;$('#sellerPriorityDeferralName').textContent=prospect.name;const modal=$('#sellerPriorityDeferralModal');modal?.classList.add('open');modal?.setAttribute('aria-hidden','false');document.body.classList.add('seller-priority-deferral-open');requestAnimationFrame(()=>modal?.querySelector('[data-seller-deferral-hours="2"]')?.focus({preventScroll:true}))
@@ -1701,7 +1703,7 @@ function nextSellerPriorityWorkdayStart(now=new Date()){
   const next=new Date(now);next.setHours(8,0,0,0);do{next.setDate(next.getDate()+1)}while(!workDays.includes(next.getDay()));return next.getTime()
 }
 async function deferSellerPriority(hours='',reason=''){
-  if(!pendingSellerPriorityId)return;const prospectId=pendingSellerPriorityId,now=Date.now(),duration=Number(hours),nextWorkdayAt=nextSellerPriorityWorkdayStart(new Date(now)),until=hours==='workday'||hours==='today'?nextWorkdayAt:now+Math.max(1,duration)*60*60*1000,rows=readSellerPriorityDeferrals(now);rows.push({prospectId,reason:cleanText(reason,80),at:now,until});writeSellerPriorityDeferrals(rows);
+  if(!pendingSellerPriorityId)return;const prospectId=pendingSellerPriorityId,now=Date.now(),duration=Number(hours),nextWorkdayAt=nextSellerPriorityWorkdayStart(new Date(now)),until=hours==='workday'||hours==='today'?nextWorkdayAt:now+Math.max(1,duration)*60*60*1000,rows=readSellerPriorityDeferrals(now);sellerPriorityImmediateDeferrals.set(prospectId,until);rows.push({prospectId,reason:cleanText(reason,80),at:now,until});writeSellerPriorityDeferrals(rows);
   if(hours==='workday'||hours==='today'){const followUpDate=dateKey(new Date(nextWorkdayAt));prospects=prospects.map(item=>item.id===prospectId?normaliseProspect({...item,nextFollowUp:followUpDate,updatedAt:now}):item)}
   closeSellerPriorityDeferral();invalidateSellerPriorityCache({delay:0});renderNowCard();renderTimeline();toast(hours==='workday'||hours==='today'?'Moved to the next workday':'Remind you again in 2 hours');
   if(hours==='workday'||hours==='today'){try{await saveProspecting({render:false,awaitCloud:false})}catch(err){console.error('Seller priority reschedule failed',err);toast('Follow-up moved locally. Cloud sync will retry.')}}
@@ -2636,8 +2638,9 @@ function launchBuyerSessionCall(){const buyer=buyerSession.contacts[buyerSession
 function showBuyerSession(){if(!buyerSession.active)return;const host=$('#prospectingSession');$('#prospectingDashboard').classList.add('hidden');$('#prospectDetail').classList.add('hidden');host.classList.remove('hidden');host.dataset.sessionView='1';host.dataset.sessionKind='buyer';buyerSession.visible=true;while(buyerSession.index<buyerSession.contacts.length&&buyerSession.contacts[buyerSession.index].status)buyerSession.index++;saveBuyerSession();const remaining=buyerSessionRemaining();if(!remaining){host.innerHTML=`<div class="prospect-session-head"><button type="button" data-buyer-session-back aria-label="Back">‹</button><span>Buyer List · Complete</span><button type="button" data-end-buyer-session>End Session</button></div><section class="prospect-session-card glass prospect-session-complete"><span class="prospect-avatar session-avatar">✓</span><h2>Queue complete</h2><p>You’ve worked through every buyer in this call list.</p><button class="primary" type="button" data-end-buyer-session>Finish Session</button></section>`;return}const buyer=buyerSession.contacts[buyerSession.index],initials=buyer.name.split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();host.innerHTML=`<div class="prospect-session-head"><button type="button" data-buyer-session-back aria-label="Back">‹</button><span>Buyer List · ${buyerSession.index+1} of ${buyerSession.contacts.length}</span><button type="button" data-end-buyer-session>End Session</button></div><section class="prospect-session-card glass"><span class="prospect-avatar session-avatar">${escapeHtml(initials)}</span><span>BUYER CALL</span><h2>${escapeHtml(buyer.name)}</h2><p>${escapeHtml(buyer.address||'No address or suburb supplied')}</p><div class="prospect-session-context"><div><span>MOBILE</span><strong>${escapeHtml(displayDialNumber(buyer.phone))}</strong></div><div><span>REMAINING</span><strong>${remaining} buyer${remaining===1?'':'s'}</strong></div></div>${buyer.doNotSms?'<blockquote>Agentbox flag: Do Not SMS</blockquote>':''}<button class="primary" type="button" data-call-buyer-session>Call ${escapeHtml(buyer.name.split(' ')[0])}</button><button class="text-btn" type="button" data-skip-buyer-session>Skip for now</button></section>`}
 function completeBuyerSessionCall(outcome,pending){if(pending?.source!=='buyer-session'||outcome==='Cancelled')return;const buyer=buyerSession.contacts.find(c=>c.id===pending.buyerId);if(buyer)buyer.status=outcome;while(buyerSession.index<buyerSession.contacts.length&&buyerSession.contacts[buyerSession.index].status)buyerSession.index++;saveBuyerSession();renderBuyerSessionHero()}
 function manualCallStorageKey(){return'agnt-manual-call-v126-device'}
-function readPendingManualCall(){try{const value=JSON.parse(localStorage.getItem(manualCallStorageKey())||'null');return value&&typeof value==='object'?value:null}catch{return null}}
-function writePendingManualCall(value){try{if(value)localStorage.setItem(manualCallStorageKey(),JSON.stringify(value));else localStorage.removeItem(manualCallStorageKey())}catch(err){console.warn('Manual call state could not be saved',err)}}
+const MANUAL_CALL_SESSION_KEY='agnt-manual-call-session-v1';
+function readPendingManualCall(){for(const storage of [sessionStorage,localStorage]){try{const value=JSON.parse(storage.getItem(storage===sessionStorage?MANUAL_CALL_SESSION_KEY:manualCallStorageKey())||'null');if(value&&typeof value==='object')return value}catch{}}return null}
+function writePendingManualCall(value){const payload=value?JSON.stringify(value):'';for(const [storage,key] of [[sessionStorage,MANUAL_CALL_SESSION_KEY],[localStorage,manualCallStorageKey()]]){try{if(value)storage.setItem(key,payload);else storage.removeItem(key)}catch(err){console.warn('Manual call state could not be saved',err)}}}
 function normaliseDialNumber(value=''){let clean=String(value).replace(/[^+\d]/g,'');if(clean.includes('+'))clean=(clean.startsWith('+')?'+':'')+clean.replace(/\+/g,'');return clean.slice(0,18)}
 function displayDialNumber(value=''){const number=normaliseDialNumber(value);if(!number)return'\u00a0';const local=number.startsWith('+61')&&number.length>3?'0'+number.slice(3):number;if(/^04\d*$/.test(local)){const digits=local.slice(0,10);return [digits.slice(0,4),digits.slice(4,7),digits.slice(7,10)].filter(Boolean).join(' ')}return local.replace(/(\d{4})(?=\d)/g,'$1 ').trim()}
 function renderManualDialler(){const output=$('#manualDiallerNumber'),call=$('#manualDiallerCall'),display=manualDiallerNumber?displayDialNumber(manualDiallerNumber):'';if(output&&output.value!==display)output.value=display;if(call)call.disabled=normaliseDialNumber(manualDiallerNumber).replace(/\D/g,'').length<6}
@@ -4663,7 +4666,7 @@ function bindViewport(){
 }
 function resumePendingExternalAction(){if(maybeShowManualCallOutcome())return true;if(resumeHotSpotSmsReturn())return true;if(resumeBuyerMatchSmsReturn())return true;if(resumeAppointmentFollowUpCallReturn())return true;return resumeProspectCallReturn()}
 function handleAppSuspend(){persistOpenContactDraft();if(buyerSession.active)saveBuyerSession();if(pendingProspectingPayload)flushProspectingSave()}
-async function handleAppResume(){updateAppViewport();const rolled=adoptCurrentDay();try{await finaliseExpiredTimers()}catch(err){console.error('Lifecycle maintenance failed',err)}renderAll();if(rolled)switchView('todayView');if(!resumePendingExternalAction()&&!document.body.classList.contains('daily-briefing-open'))restoreContactDraftWorkflow({silent:true})}
+async function handleAppResume(){updateAppViewport();const rolled=adoptCurrentDay(),resumedExternal=resumePendingExternalAction();try{await finaliseExpiredTimers()}catch(err){console.error('Lifecycle maintenance failed',err)}renderAll();if(rolled)switchView('todayView');if(!resumedExternal&&!resumePendingExternalAction()&&!document.body.classList.contains('daily-briefing-open'))restoreContactDraftWorkflow({silent:true})}
 function scheduleAppResume(delay=140){clearTimeout(appResumeTimer);appResumeTimer=setTimeout(()=>{appResumeTimer=null;handleAppResume().catch(err=>console.error('App resume failed',err))},delay)}
 function bindAppLifecycle(){document.addEventListener('visibilitychange',()=>{if(document.hidden)handleAppSuspend();else scheduleAppResume(120)});window.addEventListener('pagehide',handleAppSuspend);window.addEventListener('pageshow',()=>scheduleAppResume(140));window.addEventListener('focus',()=>scheduleAppResume(160))}
 function consumerAuthError(error,action='sign in'){
@@ -4684,7 +4687,7 @@ function shiftHeaderDate(delta){
   const id=activeViewId();
   if(id==='appointmentsView'){
     const d=parseKey(appointmentDate);d.setDate(d.getDate()+delta);appointmentDate=dateKey(d);
-    $('#appointmentDatePicker').value=appointmentDate;renderAppointments();updateTopbar(id);return;
+    $('#appointmentDatePicker').value=appointmentDate;renderAppointments();updateTopbar(id);updateBackTodayVisibility(id);return;
   }
   if(id==='todayView'||id==='scheduleView'){
     const d=parseKey(selectedDate);d.setDate(d.getDate()+delta);selectedDate=dateKey(d);appointmentDate=selectedDate;

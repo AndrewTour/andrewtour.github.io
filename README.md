@@ -1,4 +1,16 @@
-# AGNT v1.41.11 — Universal Call Prompt
+# AGNT v1.41.12 — Buyer Call Return
+
+## v1.41.12 changes
+
+- Makes Buyer List call return use the same active PWA session mechanism proven in Pipeline, with a device-local fallback if iOS rebuilds the app process.
+- Opens the prepared outcome before daily maintenance, rendering or cloud work runs when the PWA returns.
+- Keeps the call outcome prepared before handing the call to iPhone and restores it without Firebase or cloud verification.
+- Prevents a deferred seller priority from being immediately rebuilt from stale in-memory ranking data.
+- Keeps the previous/next date buttons fully inside the iPhone viewport.
+- Hides the top Today button on the current calendar day and shows it only when the active Today, Schedule or Appointments date is different.
+- Firebase, Firestore, Team sync, leaderboard publishing, MarketPulse and valuation behaviour are unchanged.
+
+## Previous release — v1.41.11
 
 ## v1.41.11 changes
 
