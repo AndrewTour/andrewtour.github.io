@@ -26,7 +26,7 @@ context.detailWasOpen=true;context.editorWasOpen=true;vm.runInContext(branch,con
 assert.match(fn('upsertProspect'),/saveProspecting\(\{render:false,awaitCloud:false\}\)/);
 assert.match(fn('saveManualCallAsContact'),/name:buyer\?\.name/);assert.match(fn('saveManualCallAsContact'),/address:buyer\?\.address/);
 const index=fs.readFileSync(__dirname+'/index.html','utf8'),sw=fs.readFileSync(__dirname+'/service-worker.js','utf8');
-for(const asset of ['styles.css?v=1.41.10-simple-return-state','cleanup.css?v=1.41.10-simple-return-state','app.js?v=1.41.10-simple-return-state']){assert(index.includes(asset));assert(sw.includes(asset))}
+for(const asset of ['styles.css?v=1.41.11-universal-call-prompt','cleanup.css?v=1.41.11-universal-call-prompt','app.js?v=1.41.11-universal-call-prompt']){assert(index.includes(asset));assert(sw.includes(asset))}
 for(const file of ['manifest.json','icons/icon-192.png','icons/icon-512.png','firebase-config.js','firestore.rules'])assert(fs.existsSync(__dirname+'/'+file));
 for(const name of ['taskTimestampMillis','normaliseTaskRecord'])vm.runInContext(fn(name),context);
 const task=context.normaliseTaskRecord({title:'  Call solicitor  ',note:' Confirm exchange ',date:'2026-09-08',time:'14:30'},'2026-09-08');assert.equal(task.id,'task-id');assert.equal(task.title,'Call solicitor');assert.equal(task.note,'Confirm exchange');assert.equal(task.scheduledDate,'2026-09-08');assert.equal(task.assignedToUid,'test-user');
@@ -82,6 +82,12 @@ assert.match(fn('showApp'),/adoptCurrentDay\(\{force:true\}\)/);assert.match(fn(
 assert.match(fn('handleAppSuspend'),/if\(buyerSession\.active\)saveBuyerSession\(\)/);
 assert.doesNotMatch(fn('handleAppSuspend'),/buyerSession\.visible=/);
 assert.match(fn('saveBuyerSession'),/buyerSessionBackupStorageKey/);assert.match(fn('saveBuyerSession'),/verification failed/);
+assert.match(fn('launchBuyerSessionCall'),/writePendingManualCall\(pending\);showManualCallOutcome\(\);window\.location\.href/);assert.doesNotMatch(fn('launchBuyerSessionCall'),/setTimeout|manualCallLaunchGuardUntil/);
+assert.match(fn('launchBuyerProfileCall'),/writePendingManualCall\(pending\);showManualCallOutcome\(\);window\.location\.href/);assert.doesNotMatch(fn('launchBuyerProfileCall'),/setTimeout|manualCallLaunchGuardUntil/);
+assert.match(fn('launchManualCall'),/showManualCallOutcome\(\);window\.location\.href/);
+assert.doesNotMatch(source,/manualCallLaunchGuardUntil|setTimeout\(maybeShowManualCallOutcome/);assert.doesNotMatch(fn('maybeShowManualCallOutcome'),/Date\.now/);
+assert.match(fn('deferSellerPriority'),/nextFollowUp:followUpDate/);assert.match(fn('deferSellerPriority'),/renderNowCard\(\);renderTimeline\(\)[\s\S]*saveProspecting/);
+assert(index.includes('Move the follow-up to the next workday'));
 vm.runInContext(fn('manualCallStorageKey'),context);assert.equal(context.manualCallStorageKey(),'agnt-manual-call-v126-device');assert.doesNotMatch(fn('manualCallStorageKey'),/uid|currentUser/);
 Object.assign(context,{maintenanceDayKey:'2026-09-10',selectedDate:'2026-09-10',appointmentDate:'2026-09-10',todayKey:()=> '2026-09-11'});vm.runInContext(fn('adoptCurrentDay'),context);assert.equal(context.adoptCurrentDay(),true);assert.equal(context.selectedDate,'2026-09-11');assert.equal(context.appointmentDate,'2026-09-11');assert.equal(context.adoptCurrentDay(),false);
 assert.match(source,/searchVisible=\['contacts','buyers','pipeline'\]/);assert.match(fn('updateBackTodayVisibility'),/\['todayView','scheduleView'\]/);

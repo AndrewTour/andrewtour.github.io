@@ -1,4 +1,16 @@
-# AGNT v1.41.10 — Simple Return State
+# AGNT v1.41.11 — Universal Call Prompt
+
+## v1.41.11 changes
+
+- Prepares the call-outcome screen at the moment a Buyer List, Buyer Profile, Buyer Match or manual Call button is pressed, before AGNT hands the call to iPhone.
+- Removes delayed lifecycle and timing checks from those call paths; the prepared outcome screen is already waiting when AGNT returns.
+- Keeps the existing Pipeline call-outcome workflow unchanged because it already prepares and restores correctly.
+- Makes Today seller-priority rescheduling remove the current client immediately.
+- `Not today` and `Next workday` now update the client follow-up date to the next scheduled workday and save in the background.
+- `Later today` removes the current client for two hours without changing their follow-up date.
+- Firebase, Firestore, Team sync, leaderboard publishing, MarketPulse, Buyer List retention and valuation behaviour are unchanged.
+
+## Previous release — v1.41.10
 
 ## v1.41.10 changes
 

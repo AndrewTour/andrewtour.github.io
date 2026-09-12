@@ -9,8 +9,8 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.41.10-simple-return-state">
-<link rel="stylesheet" href="cleanup.css?v=1.41.10-simple-return-state">
+<link rel="stylesheet" href="styles.css?v=1.41.11-universal-call-prompt">
+<link rel="stylesheet" href="cleanup.css?v=1.41.11-universal-call-prompt">
 <title>AGNT</title>
 </head>
 <body>
@@ -1104,11 +1104,11 @@ Andrew Tour | McGrath</textarea></label>
   <section class="action-sheet glass seller-priority-deferral-sheet" role="dialog" aria-modal="true" aria-labelledby="sellerPriorityDeferralTitle">
     <div class="action-sheet-handle"></div>
     <div class="action-sheet-head"><div><small>SELLER PRIORITY</small><h2 id="sellerPriorityDeferralTitle">Move to the next action?</h2></div><button id="closeSellerPriorityDeferral" type="button" class="action-sheet-close" aria-label="Close">×</button></div>
-    <p><strong id="sellerPriorityDeferralName">This seller</strong> will be temporarily removed from Today. Their contact record and follow-up date will not change.</p>
+    <p><strong id="sellerPriorityDeferralName">This seller</strong> will leave the current Today priority immediately. Choosing a later day will update their follow-up date.</p>
     <div class="seller-priority-deferral-options">
       <button type="button" data-seller-deferral-hours="2" data-seller-deferral-reason="Later today"><span>Later today</span><small>Bring this seller back in 2 hours</small></button>
-      <button type="button" data-seller-deferral-hours="today" data-seller-deferral-reason="Not a priority today"><span>Not today</span><small>Move to another seller for the rest of today</small></button>
-      <button type="button" data-seller-deferral-hours="workday" data-seller-deferral-reason="Next workday"><span>Next workday</span><small>Bring this seller back at the next scheduled start</small></button>
+      <button type="button" data-seller-deferral-hours="today" data-seller-deferral-reason="Not a priority today"><span>Not today</span><small>Move the follow-up to the next workday</small></button>
+      <button type="button" data-seller-deferral-hours="workday" data-seller-deferral-reason="Next workday"><span>Next workday</span><small>Move the follow-up to the next scheduled start</small></button>
     </div>
     <button id="cancelSellerPriorityDeferral" class="secondary seller-priority-deferral-cancel" type="button">Cancel</button>
   </section>
@@ -1198,6 +1198,6 @@ Andrew Tour | McGrath</textarea></label>
 
 
 
-<script type="module" src="app.js?v=1.41.10-simple-return-state"></script>
+<script type="module" src="app.js?v=1.41.11-universal-call-prompt"></script>
 </body>
 </html>
