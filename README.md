@@ -1,3 +1,15 @@
+# AGNT v1.41.22 — Scheduled-Day Quick Actions
+
+## v1.41.22 changes
+
+- Replaces the scheduled-day Day-on-Day graph with the existing live leaderboard position and ranking context.
+- Replaces the former full-width leaderboard strip with the five proven quick actions: Call, Add Task, Book Appointment, Search and Bulk SMS.
+- Retains the complete focus stack, including its sizing, layout, MarketPulse control and behaviour.
+- Retains all four daily metric rows without changing their markup, sizing rules, controls or behaviour.
+- Adds no Firebase path, storage key, query, save operation or background process.
+
+## Previous release — v1.41.21
+
 # AGNT v1.41.21 — Viewport Containment
 
 ## v1.41.21 changes

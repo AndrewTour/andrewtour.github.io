@@ -962,3 +962,83 @@ html[data-theme="dark"] #offDayConversations .buyer-card-actions :first-child{bo
   #appointmentForm .appointment-types span{padding-inline:2px!important;font-size:.66rem!important}
   .appointment-contact-suggestions{max-height:min(190px,25dvh)!important}
 }
+
+/* v1.41.22 — Scheduled-day hierarchy using the proven day-off quick actions. */
+.scheduled-leaderboard-summary{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  grid-template-rows:auto auto!important;
+  align-content:end!important;
+  align-items:end!important;
+  gap:3px 8px!important;
+  min-width:0!important;
+  overflow:hidden!important;
+  text-align:right!important;
+}
+.scheduled-leaderboard-summary>span{
+  grid-column:1/-1!important;
+  margin:0!important;
+  color:var(--cleanup-muted)!important;
+  font-size:9px!important;
+  font-weight:850!important;
+  letter-spacing:.13em!important;
+  white-space:nowrap!important;
+}
+.scheduled-leaderboard-summary>strong{
+  grid-column:2!important;
+  grid-row:2!important;
+  color:var(--cleanup-ink)!important;
+  font-size:28px!important;
+  font-weight:760!important;
+  line-height:1!important;
+  letter-spacing:-.04em!important;
+  white-space:nowrap!important;
+}
+.scheduled-leaderboard-summary>small{
+  grid-column:1!important;
+  grid-row:2!important;
+  align-self:end!important;
+  min-width:0!important;
+  overflow:hidden!important;
+  color:var(--cleanup-muted)!important;
+  font-size:9px!important;
+  font-weight:620!important;
+  line-height:1.2!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+.scheduled-day-quick-menu{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:9px;
+  width:100%;
+  min-width:0;
+  margin-top:14px;
+  padding:7px 4px 8px;
+  border-bottom:1px solid #e6e9ee;
+}
+.scheduled-day-quick-menu button{
+  display:grid;
+  place-items:center;
+  width:100%;
+  min-width:0;
+  min-height:44px;
+  padding:0;
+  border:1px solid #d9e3f1;
+  border-radius:14px;
+  background:#f5f8fc;
+  color:#2465be;
+  box-shadow:none;
+}
+.scheduled-day-quick-menu button:active{border-color:#397dff;background:#eaf2ff;color:#075fc7;transform:scale(.96)}
+.scheduled-day-quick-menu svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2.15;stroke-linecap:round;stroke-linejoin:round}
+html[data-theme="dark"] .scheduled-day-quick-menu{border-bottom-color:#292e36}
+html[data-theme="dark"] .scheduled-day-quick-menu button{border-color:#343b47;background:#1a1f27;color:#8fc2ff}
+html[data-theme="dark"] .scheduled-day-quick-menu button:active{border-color:#397dff;background:#202a38;color:#a8d1ff}
+@media(max-height:760px){
+  .scheduled-day-quick-menu{gap:7px;margin-top:9px;padding:4px 3px 6px}
+  .scheduled-day-quick-menu button{border-radius:12px}
+  .scheduled-day-quick-menu svg{width:17px;height:17px}
+  .scheduled-leaderboard-summary>strong{font-size:24px!important}
+  .scheduled-leaderboard-summary>small{font-size:8px!important}
+}
