@@ -1042,3 +1042,42 @@ html[data-theme="dark"] .scheduled-day-quick-menu button:active{border-color:#39
   .scheduled-leaderboard-summary>strong{font-size:24px!important}
   .scheduled-leaderboard-summary>small{font-size:8px!important}
 }
+
+/* v1.41.23 — Scheduled-day visual centring and compact leaderboard hierarchy. */
+.scheduled-leaderboard-summary{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:flex-end!important;
+  justify-content:flex-end!important;
+  gap:3px!important;
+  text-align:right!important;
+}
+.scheduled-leaderboard-summary>span,
+.scheduled-leaderboard-summary>strong,
+.scheduled-leaderboard-summary>small{
+  display:block!important;
+  width:auto!important;
+  max-width:100%!important;
+  margin:0!important;
+}
+.scheduled-leaderboard-summary>strong{font-size:27px!important}
+.scheduled-leaderboard-summary>small{
+  overflow:visible!important;
+  color:var(--cleanup-muted)!important;
+  font-size:9px!important;
+  font-weight:760!important;
+  letter-spacing:.08em!important;
+  text-overflow:clip!important;
+}
+.scheduled-day-quick-menu{
+  margin-top:0!important;
+  padding-top:9px!important;
+  padding-bottom:9px!important;
+}
+#openMarketPulseHome{transform:translateY(12px)!important}
+#openMarketPulseHome:active{transform:translateY(12px) scale(.94)!important}
+@media(max-height:760px){
+  .scheduled-day-quick-menu{margin-top:0!important;padding-top:7px!important;padding-bottom:7px!important}
+  .scheduled-leaderboard-summary>strong{font-size:24px!important}
+  .scheduled-leaderboard-summary>small{font-size:8px!important}
+}

@@ -1,3 +1,15 @@
+# AGNT v1.41.23 — Scheduled-Day Visual Balance
+
+## v1.41.23 changes
+
+- Vertically centres the scheduled-day quick actions between their upper and lower divider lines.
+- Reflows the compact leaderboard into a clear label, rank and `position • agents logged` hierarchy.
+- Aligns the Home MarketPulse button visually with the focus chevron.
+- Returns quick-action Broadcast Back and quick-search contact Back navigation to Home.
+- Keeps the focus stack, metrics, Firebase paths, saves and sync unchanged.
+
+## Previous release — v1.41.22
+
 # AGNT v1.41.22 — Scheduled-Day Quick Actions
 
 ## v1.41.22 changes
