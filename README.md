@@ -1,3 +1,17 @@
+# AGNT v1.41.26 — Weekly Appointments and Seller Actions
+
+## v1.41.26 changes
+
+- Changes the Home Calendar quick action into a scrollable view of upcoming appointments remaining in the current calendar week.
+- Reuses AGNT's existing Upcoming Appointments screen, cards, call actions and calendar actions.
+- Returns to Home from the weekly view while preserving the normal Appointments-tab back route.
+- Reorders both Home quick menus to Call, Add Appointment, Add Task, This Week and Bulk SMS.
+- Centres the Right Now content and MarketPulse action on the same visual line.
+- Adds Contacted and Not Required actions to the existing seller-priority sheet. Contacted clears a due follow-up and records contact; Not Required removes the follow-up date.
+- Uses the existing prospect and interaction save path with non-blocking cloud sync. No new Firebase path, storage key, query or listener is added.
+
+## Previous release — v1.41.25
+
 # AGNT v1.41.25 — Calendar Quick Action
 
 ## v1.41.25 changes

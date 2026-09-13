@@ -1081,3 +1081,23 @@ html[data-theme="dark"] .scheduled-day-quick-menu button:active{border-color:#39
   .scheduled-leaderboard-summary>strong{font-size:24px!important}
   .scheduled-leaderboard-summary>small{font-size:8px!important}
 }
+
+/* v1.41.26 — Weekly appointments quick view and balanced Today priority actions. */
+.now-card-stack{
+  align-items:center!important;
+  min-height:70px!important;
+  padding-block:0!important;
+}
+.now-card-stack .now-card{
+  align-self:center!important;
+  height:70px!important;
+  min-height:70px!important;
+  padding-top:0!important;
+}
+.now-card-stack .marketpulse-orb{
+  align-self:center!important;
+  justify-self:center!important;
+}
+#openMarketPulseHome{transform:none!important}
+#openMarketPulseHome:active{transform:scale(.94)!important}
+.seller-priority-deferral-sheet{max-height:calc(100dvh - 20px);overflow-y:auto;overscroll-behavior:contain}

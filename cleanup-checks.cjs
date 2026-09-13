@@ -26,7 +26,7 @@ context.detailWasOpen=true;context.editorWasOpen=true;vm.runInContext(branch,con
 assert.match(fn('upsertProspect'),/saveProspecting\(\{render:false,awaitCloud:false\}\)/);
 assert.match(fn('saveManualCallAsContact'),/name:buyer\?\.name/);assert.match(fn('saveManualCallAsContact'),/address:buyer\?\.address/);
 const index=fs.readFileSync(__dirname+'/index.html','utf8'),sw=fs.readFileSync(__dirname+'/service-worker.js','utf8');
-for(const asset of ['styles.css?v=1.41.25-calendar-quick-action','cleanup.css?v=1.41.25-calendar-quick-action','app.js?v=1.41.25-calendar-quick-action']){assert(index.includes(asset));assert(sw.includes(asset))}
+for(const asset of ['styles.css?v=1.41.26-weekly-appointments-seller-actions','cleanup.css?v=1.41.26-weekly-appointments-seller-actions','app.js?v=1.41.26-weekly-appointments-seller-actions']){assert(index.includes(asset));assert(sw.includes(asset))}
 for(const file of ['manifest.json','icons/icon-192.png','icons/icon-512.png','firebase-config.js','firestore.rules'])assert(fs.existsSync(__dirname+'/'+file));
 for(const name of ['dailyPlanWorkloadLane','dailyPlanWorkloadRank','dailyPlanBalancedWorkloadOrder'])vm.runInContext(fn(name),context);
 const balanced=Array.from(context.dailyPlanBalancedWorkloadOrder([{id:'seller-a',kind:'market',rank:0},{id:'seller-b',kind:'market',rank:1},{id:'buyer',kind:'buyer-match',rank:2},{id:'pipeline',kind:'pipeline-block',rank:3}]),item=>item.id);assert.deepEqual(balanced,['seller-a','buyer','seller-b','pipeline']);
@@ -119,7 +119,7 @@ assert.match(fn('offDayConversationState'),/latest=new Map/);assert.match(fn('of
 assert.match(fn('renderOffDayConversations'),/buyer-card off-day-conversation-card/);assert.match(fn('renderOffDayConversations'),/class="buyer-row-profile"/);assert.match(fn('renderOffDayConversations'),/class="buyer-row-head"/);assert.match(fn('renderOffDayConversations'),/class="buyer-row-brief">Last contact/);assert.match(fn('renderOffDayConversations'),/class="buyer-row-location">Next contact/);assert.match(fn('renderOffDayConversations'),/class="buyer-card-actions off-day-conversation-actions"/);assert.doesNotMatch(fn('renderOffDayConversations'),/prospect-avatar|initials|off-day-conversation-row|off-day-conversation-profile/);
 assert(!index.includes('Who to speak to next'));assert(!index.includes('Prioritised from your existing appointments'));
 assert.match(cleanup,/v1\.41\.18 — Home reuses the proven Buyers list hierarchy/);assert.doesNotMatch(cleanup,/\.off-day-conversation-profile|\.off-day-conversation-copy|\.off-day-conversation-chevron/);
-assert.match(fn('completeBackupPayload'),/appVersion:'1\.41\.25'/);
+assert.match(fn('completeBackupPayload'),/appVersion:'1\.41\.26'/);
 assert(index.includes('id="offDayNextWorkdayTitle"'));assert(index.includes('id="openMarketPulseOffDay"'));
 for(const name of ['offDayNextWorkdayModel','renderOffDayNextWorkday','offDayConversationSmsMarkup','offDayConversationMoveMarkup','renderOffDayHome','openOffDayContactMove'])assert(source.includes('function '+name+'('));
 assert.match(fn('renderToday'),/\.dashboard \.score-week/);assert.match(fn('renderToday'),/renderOffDayHome\(\)/);
@@ -128,7 +128,7 @@ assert.match(fn('openOffDayContactMove'),/saveProspecting\(\{render:false,awaitC
 assert.match(cleanup,/grid-template-columns:repeat\(3,minmax\(0,1fr\)\)!important/);
 assert.equal((index.match(/data-off-day-quick=/g)||[]).length,10);
 for(const name of ['openOffDayQuickAppointment','openOffDayBroadcast','runOffDayQuickAction'])assert(source.includes('function '+name+'('));
-assert.match(fn('runOffDayQuickAction'),/openManualDialler/);assert.match(fn('runOffDayQuickAction'),/openTaskComposer/);assert.match(fn('runOffDayQuickAction'),/openOffDayQuickAppointment/);assert.match(fn('runOffDayQuickAction'),/openCalendar/);assert.match(fn('runOffDayQuickAction'),/openOffDayBroadcast/);
+assert.match(fn('runOffDayQuickAction'),/openManualDialler/);assert.match(fn('runOffDayQuickAction'),/openTaskComposer/);assert.match(fn('runOffDayQuickAction'),/openOffDayQuickAppointment/);assert.match(fn('runOffDayQuickAction'),/openWeeklyAppointmentsQuickView/);assert.match(fn('runOffDayQuickAction'),/openOffDayBroadcast/);
 assert.doesNotMatch(fn('runOffDayQuickAction'),/search|openOffDayContactSearch/);
 assert.match(cleanup,/grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);assert.match(cleanup,/v1\.41\.20 — Existing AGNT actions/);
 assert.match(cleanup,/v1\.41\.21 — Fixed day-off command stack and appointment viewport containment/);
@@ -149,7 +149,7 @@ assert.match(fn('renderLeaderboardPosition'),/meta\.textContent=`\$\{index\+1\} 
 assert.match(cleanup,/\.scheduled-day-quick-menu button[\s\S]*min-height:44px/);
 assert.match(cleanup,/v1\.41\.23 — Scheduled-day visual centring and compact leaderboard hierarchy/);
 assert.match(cleanup,/\.scheduled-day-quick-menu\{[\s\S]*margin-top:0!important;[\s\S]*padding-top:9px!important;[\s\S]*padding-bottom:9px!important/);
-assert.match(cleanup,/#openMarketPulseHome\{transform:translateY\(12px\)!important\}/);
+assert.match(cleanup,/v1\.41\.26 — Weekly appointments quick view and balanced Today priority actions/);assert.match(cleanup,/#openMarketPulseHome\{transform:none!important\}/);
 assert.match(fn('openOffDayBroadcast'),/homeQuickProspectorReturn=true/);
 assert.equal((source.match(/homeQuickProspectorReturn=true/g)||[]).length,1,'Home return context must only be enabled by the remaining quick-action route that exposes Back navigation');
 assert.match(source,/#broadcastBack[\s\S]*homeQuickProspectorReturn[\s\S]*switchView\('todayView'\)/);
@@ -166,14 +166,28 @@ assert.equal((index.match(/data-off-day-quick="calendar"/g)||[]).length,2);
 assert.equal((index.match(/data-off-day-quick="broadcast"/g)||[]).length,2);
 const scheduledQuick=index.match(/<nav class="scheduled-day-quick-menu"[\s\S]*?<\/nav>/)?.[0]||'',offDayQuick=index.match(/<nav class="off-day-quick-menu"[\s\S]*?<\/nav>/)?.[0]||'';
 const quickOrder=markup=>Array.from(markup.matchAll(/data-off-day-quick="([^"]+)"/g),match=>match[1]);
-assert.deepEqual(quickOrder(scheduledQuick),['call','task','appointment','calendar','broadcast']);assert.deepEqual(quickOrder(offDayQuick),quickOrder(scheduledQuick));
-const openCalendarSource=source.match(/function openCalendar\(\)\{[^}]+\}/)?.[0]||'';assert(openCalendarSource);
-assert.match(openCalendarSource,/calendarModal/);assert.match(openCalendarSource,/renderCalendar/);
-assert.doesNotMatch(openCalendarSource,/renderProspecting|switchView|localStorage|sessionStorage|setDoc|updateDoc|addDoc/,'View Calendar must remain a modal-only, read-only quick action');
+assert.deepEqual(quickOrder(scheduledQuick),['call','appointment','task','calendar','broadcast']);assert.deepEqual(quickOrder(offDayQuick),quickOrder(scheduledQuick));
+assert.match(fn('openWeeklyAppointmentsQuickView'),/appointmentQuickReturnHome=true/);assert.match(fn('openWeeklyAppointmentsQuickView'),/setAppointmentHistoryScreen\('week'\)/);
+assert.match(fn('appointmentHistoryEntries'),/mode==='week'/);assert.match(fn('appointmentHistoryEntries'),/scheduledAt>now&&scheduledAt<weekEnd\.getTime\(\)/);
+assert.match(fn('setAppointmentHistoryScreen'),/mode==='week'\?'This Week'/);assert.match(fn('appointmentCardMarkup'),/\['upcoming','week'\]\.includes\(appointmentHistoryMode\)/);
+assert.match(source,/closeAppointmentHistory'[\s\S]*appointmentQuickReturnHome[\s\S]*switchView\('todayView'\)/);
+assert.match(source,/appointment-destination-grid'[\s\S]*appointmentQuickReturnHome=false[\s\S]*setAppointmentHistoryScreen/);
+assert.doesNotMatch(fn('openWeeklyAppointmentsQuickView'),/localStorage|sessionStorage|setDoc|updateDoc|addDoc/);
 const quickCalls=[];
-const quickContext={openManualDialler:()=>quickCalls.push('call'),openTaskComposer:()=>quickCalls.push('task'),openOffDayQuickAppointment:()=>quickCalls.push('appointment'),openCalendar:()=>quickCalls.push('calendar'),openOffDayBroadcast:()=>quickCalls.push('broadcast')};
+const quickContext={openManualDialler:()=>quickCalls.push('call'),openTaskComposer:()=>quickCalls.push('task'),openOffDayQuickAppointment:()=>quickCalls.push('appointment'),openWeeklyAppointmentsQuickView:()=>quickCalls.push('calendar'),openOffDayBroadcast:()=>quickCalls.push('broadcast')};
 vm.createContext(quickContext);vm.runInContext(fn('runOffDayQuickAction'),quickContext);
 for(const action of ['call','task','appointment','calendar','broadcast'])quickContext.runOffDayQuickAction(action);
 assert.deepEqual(quickCalls,['call','task','appointment','calendar','broadcast'],'Every Home quick action must dispatch once to its existing workflow');
 assert(!source.includes('function openOffDayContactSearch('));
-console.log('PASS: v1.41.25 removes the unstable Home Search route and safely reuses the existing Calendar modal.');
+assert(index.includes('data-seller-resolution="contacted"'));assert(index.includes('data-seller-resolution="not-required"'));
+assert.match(fn('resolveSellerPriority'),/type:'Follow-up'/);assert.match(fn('resolveSellerPriority'),/outcome=contacted\?'Contacted':'Not required'/);assert.match(fn('resolveSellerPriority'),/nextFollowUp:contacted&&validDateKey/);assert.match(fn('resolveSellerPriority'),/saveProspecting\(\{render:false,awaitCloud:false\}\)/);
+assert.doesNotMatch(fn('resolveSellerPriority'),/localStorage|sessionStorage|collection\(|setDoc|updateDoc|addDoc/);
+const fixedNow=new Date('2026-09-09T10:00:00Z').getTime();class FixedDate extends Date{constructor(...args){super(...(args.length?args:[fixedNow]))}static now(){return fixedNow}}
+const weeklyContext={Date:FixedDate,assignedTeamAppointments:[],allAppointmentEntries:()=>[
+  {appointment:{id:'past-this-week',scheduledAt:new Date('2026-09-08T09:00:00Z').getTime()},sourceDate:'2026-09-08'},
+  {appointment:{id:'future-this-week',scheduledAt:new Date('2026-09-10T09:00:00Z').getTime()},sourceDate:'2026-09-10'},
+  {appointment:{id:'next-week',scheduledAt:new Date('2026-09-14T09:00:00Z').getTime()},sourceDate:'2026-09-14'}
+],appointmentCreatedDate:(a,date)=>date,appointmentScheduledDate:(a,date)=>date,todayKey:()=> '2026-09-09',appointmentTimestamp:a=>a.scheduledAt,isOfiAppointment:()=>false,sortAppointmentEntries:entries=>entries};vm.createContext(weeklyContext);vm.runInContext(fn('appointmentHistoryEntries'),weeklyContext);assert.deepEqual(Array.from(weeklyContext.appointmentHistoryEntries('week'),entry=>entry.appointment.id),['future-this-week']);
+let sellerSaves=0;Object.assign(context,{pendingSellerPriorityId:'seller-contacted',prospects:[{id:'seller-contacted',lastContact:'2026-09-01',nextFollowUp:'2026-09-09'}],prospectInteractions:[],prospectById:id=>context.prospects.find(item=>item.id===id),prospectId:()=>`seller-interaction-${context.prospectInteractions.length+1}`,todayKey:()=> '2026-09-09',normaliseProspect:value=>value,closeSellerPriorityDeferral:()=>{context.pendingSellerPriorityId=''},invalidateSellerPriorityCache:()=>{},renderNowCard:()=>{},renderTimeline:()=>{},toast:()=>{},saveProspecting:()=>{sellerSaves++;return Promise.resolve()}});vm.runInContext(fn('resolveSellerPriority').replace(/^function /,'async function '),context);context.resolveSellerPriority('contacted');assert.equal(context.prospects[0].lastContact,'2026-09-09');assert.equal(context.prospects[0].nextFollowUp,'');assert.equal(context.prospectInteractions[0].outcome,'Contacted');assert.equal(sellerSaves,1);
+context.pendingSellerPriorityId='seller-not-required';context.prospects.push({id:'seller-not-required',lastContact:'2026-09-02',nextFollowUp:'2026-09-20'});context.resolveSellerPriority('not-required');const notRequired=context.prospects.find(item=>item.id==='seller-not-required');assert.equal(notRequired.lastContact,'2026-09-02');assert.equal(notRequired.nextFollowUp,'');assert.equal(context.prospectInteractions[1].outcome,'Not required');assert.equal(sellerSaves,2);
+console.log('PASS: v1.41.26 reuses Upcoming Appointments for the weekly Home view and safely resolves seller priorities.');
