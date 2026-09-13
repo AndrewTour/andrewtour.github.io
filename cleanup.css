@@ -621,3 +621,49 @@ html[data-theme="dark"] .seller-priority-deferral-options button{border-color:#2
 html[data-theme="dark"] :is(.timeline-item.current .timeline-plan-action,.timeline-command-action,.buyer-followup-actions .primary){border-color:#075fc7!important;background:#075fc7!important;color:#fff!important}
 :is(.buyer-match-alert b,.buyer-property-matches-head>b,.buyer-seller-opportunity-alert>b,.buyer-seller-opportunity-head>b),.buyer-match-time-alert::before{color:#4b2600!important}
 html[data-theme="dark"] :is(.buyer-match-alert b,.buyer-property-matches-head>b,.buyer-seller-opportunity-alert>b,.buyer-seller-opportunity-head>b),html[data-theme="dark"] .buyer-match-time-alert::before{color:#321900!important}
+
+/* v1.41.15 — Home header and bottom viewport balance only. */
+#app:has(#todayView.active) .topbar{
+  position:relative!important;
+  display:block!important;
+  min-height:68px!important;
+  padding:0!important;
+}
+#app:has(#todayView.active) .topbar>div:first-child{
+  width:100%!important;
+  max-width:none!important;
+  overflow:visible!important;
+}
+#app:has(#todayView.active) #viewTitle{
+  width:100%!important;
+  margin:0 0 4px!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  text-wrap:nowrap!important;
+  font-size:clamp(1.28rem,5.6vw,1.55rem)!important;
+  line-height:1!important;
+}
+#app:has(#todayView.active) .date-line{
+  min-width:0!important;
+  min-height:38px!important;
+  padding-right:min(238px,calc(100vw - 126px))!important;
+}
+#app:has(#todayView.active) .date-line .date{
+  min-width:0!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+#app:has(#todayView.active) .topbar .top-actions{
+  position:absolute!important;
+  right:0!important;
+  bottom:0!important;
+}
+#app:has(#todayView.active) .dashboard .metrics{
+  padding-bottom:8px!important;
+}
+@media(max-width:390px){
+  #app:has(#todayView.active) #viewTitle{font-size:1.28rem!important}
+  #app:has(#todayView.active) .date-line{padding-right:min(222px,calc(100vw - 118px))!important}
+}

@@ -1,3 +1,12 @@
+# AGNT v1.41.15 — Home Viewport Balance
+
+## v1.41.15 changes
+
+- Keeps the personalised Good morning, afternoon or evening heading on one line on the Home screen.
+- Uses the recovered header height to rebalance the existing metric stack automatically.
+- Adds a small eight-pixel cushion beneath Knocking before the fixed navigation.
+- Contains no application-logic, Firebase, Firestore, save, sync, MarketPulse or loading changes.
+
 # AGNT v1.41.14 — Stability & Trust
 
 ## v1.41.14 changes
