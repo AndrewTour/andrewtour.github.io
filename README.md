@@ -1,3 +1,15 @@
+# AGNT v1.41.20 — Day-Off Quick Actions
+
+## v1.41.20 changes
+
+- Adds a five-button quick menu between Next Workday and Next Conversations.
+- Reuses AGNT's existing manual dialler, task composer, appointment form, contact search and Broadcast/Bulk SMS workflows.
+- Keeps all five actions equally sized in one viewport-safe row.
+- Gives the Next Workday summary, quick menu, heading and conversation rows a more balanced vertical rhythm.
+- Adds no Firebase path, storage key, query, save operation or background process.
+
+## Previous release — v1.41.19
+
 # AGNT v1.41.19 — Day-Off Home
 
 ## v1.41.19 changes

@@ -26,7 +26,7 @@ context.detailWasOpen=true;context.editorWasOpen=true;vm.runInContext(branch,con
 assert.match(fn('upsertProspect'),/saveProspecting\(\{render:false,awaitCloud:false\}\)/);
 assert.match(fn('saveManualCallAsContact'),/name:buyer\?\.name/);assert.match(fn('saveManualCallAsContact'),/address:buyer\?\.address/);
 const index=fs.readFileSync(__dirname+'/index.html','utf8'),sw=fs.readFileSync(__dirname+'/service-worker.js','utf8');
-for(const asset of ['styles.css?v=1.41.19-day-off-home','cleanup.css?v=1.41.19-day-off-home','app.js?v=1.41.19-day-off-home']){assert(index.includes(asset));assert(sw.includes(asset))}
+for(const asset of ['styles.css?v=1.41.20-day-off-quick-actions','cleanup.css?v=1.41.20-day-off-quick-actions','app.js?v=1.41.20-day-off-quick-actions']){assert(index.includes(asset));assert(sw.includes(asset))}
 for(const file of ['manifest.json','icons/icon-192.png','icons/icon-512.png','firebase-config.js','firestore.rules'])assert(fs.existsSync(__dirname+'/'+file));
 for(const name of ['dailyPlanWorkloadLane','dailyPlanWorkloadRank','dailyPlanBalancedWorkloadOrder'])vm.runInContext(fn(name),context);
 const balanced=Array.from(context.dailyPlanBalancedWorkloadOrder([{id:'seller-a',kind:'market',rank:0},{id:'seller-b',kind:'market',rank:1},{id:'buyer',kind:'buyer-match',rank:2},{id:'pipeline',kind:'pipeline-block',rank:3}]),item=>item.id);assert.deepEqual(balanced,['seller-a','buyer','seller-b','pipeline']);
@@ -119,11 +119,15 @@ assert.match(fn('offDayConversationState'),/latest=new Map/);assert.match(fn('of
 assert.match(fn('renderOffDayConversations'),/buyer-card off-day-conversation-card/);assert.match(fn('renderOffDayConversations'),/class="buyer-row-profile"/);assert.match(fn('renderOffDayConversations'),/class="buyer-row-head"/);assert.match(fn('renderOffDayConversations'),/class="buyer-row-brief">Last contact/);assert.match(fn('renderOffDayConversations'),/class="buyer-row-location">Next contact/);assert.match(fn('renderOffDayConversations'),/class="buyer-card-actions off-day-conversation-actions"/);assert.doesNotMatch(fn('renderOffDayConversations'),/prospect-avatar|initials|off-day-conversation-row|off-day-conversation-profile/);
 assert(!index.includes('Who to speak to next'));assert(!index.includes('Prioritised from your existing appointments'));
 assert.match(cleanup,/v1\.41\.18 — Home reuses the proven Buyers list hierarchy/);assert.doesNotMatch(cleanup,/\.off-day-conversation-profile|\.off-day-conversation-copy|\.off-day-conversation-chevron/);
-assert.match(fn('completeBackupPayload'),/appVersion:'1\.41\.19'/);
+assert.match(fn('completeBackupPayload'),/appVersion:'1\.41\.20'/);
 assert(index.includes('id="offDayNextWorkdayTitle"'));assert(index.includes('id="openMarketPulseOffDay"'));
 for(const name of ['offDayNextWorkdayModel','renderOffDayNextWorkday','offDayConversationSmsMarkup','offDayConversationMoveMarkup','renderOffDayHome','openOffDayContactMove'])assert(source.includes('function '+name+'('));
 assert.match(fn('renderToday'),/\.dashboard \.score-week/);assert.match(fn('renderToday'),/renderOffDayHome\(\)/);
 assert.match(fn('offDayConversationMoveMarkup'),/data-off-day-move-appointment/);assert.match(fn('offDayConversationMoveMarkup'),/data-off-day-move-contact/);
 assert.match(fn('openOffDayContactMove'),/saveProspecting\(\{render:false,awaitCloud:false\}\)/);
 assert.match(cleanup,/grid-template-columns:repeat\(3,minmax\(0,1fr\)\)!important/);
-console.log('PASS: v1.41.19 adds the isolated day-off Home and retains all baseline regressions.');
+assert.equal((index.match(/data-off-day-quick=/g)||[]).length,5);
+for(const name of ['openOffDayQuickAppointment','openOffDayContactSearch','openOffDayBroadcast','runOffDayQuickAction'])assert(source.includes('function '+name+'('));
+assert.match(fn('runOffDayQuickAction'),/openManualDialler/);assert.match(fn('runOffDayQuickAction'),/openTaskComposer/);assert.match(fn('runOffDayQuickAction'),/openOffDayQuickAppointment/);assert.match(fn('runOffDayQuickAction'),/openOffDayContactSearch/);assert.match(fn('runOffDayQuickAction'),/openOffDayBroadcast/);
+assert.match(cleanup,/grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);assert.match(cleanup,/v1\.41\.20 — Existing AGNT actions/);
+console.log('PASS: v1.41.20 adds viewport-safe day-off quick actions and retains all baseline regressions.');
