@@ -1,3 +1,16 @@
+# AGNT v1.41.25 — Calendar Quick Action
+
+## v1.41.25 changes
+
+- Removes Search Contacts from both scheduled and non-scheduled Home quick menus after confirming a repeat-launch WebKit crash.
+- Retains Search Contacts in its established Prospector → Contacts location.
+- Replaces the shortcut with View Calendar using AGNT's existing calendar modal and `openCalendar()` function.
+- Keeps five equal Home actions: Call, Add Task, Book Appointment, View Calendar and Bulk SMS.
+- Keeps all five actions on the shared scheduled/non-scheduled handler introduced in v1.41.24.
+- Adds no Firebase path, storage key, query, save operation or background process.
+
+## Previous release — v1.41.24
+
 # AGNT v1.41.24 — Quick Actions Stability
 
 ## v1.41.24 changes
