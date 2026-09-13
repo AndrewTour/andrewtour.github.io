@@ -1,3 +1,15 @@
+# AGNT v1.41.17 — Off-Day Conversation Cleanup
+
+## v1.41.17 changes
+
+- Keeps only the `NEXT CONVERSATIONS` heading on an unscheduled day.
+- Removes the secondary title, explanatory paragraph, client initials and table-like boxed treatment.
+- Presents each person as a brief full-width divider row with role, name, last contact and next contact.
+- Keeps the existing profile and Call behaviour unchanged.
+- Adds no Firebase path, save key, query, startup request or background task.
+
+## Previous release — v1.41.16
+
 # AGNT v1.41.16 — Off-Day Conversations
 
 ## v1.41.16 changes
