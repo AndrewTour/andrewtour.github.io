@@ -1,3 +1,15 @@
+# AGNT v1.41.24 — Quick Actions Stability
+
+## v1.41.24 changes
+
+- Gives scheduled and non-scheduled Home quick actions one shared event route and identical workflow behaviour.
+- Fixes all five scheduled-day quick buttons: Call, Add Task, Book Appointment, Search Contacts and Bulk SMS.
+- Removes the unnecessary forced keyboard focus from Search Contacts to avoid an extra iPhone PWA focus/render transition.
+- Keeps Home-return behaviour limited to workflows opened from a Home quick button.
+- Adds no Firebase path, storage key, query, save operation or background process.
+
+## Previous release — v1.41.23
+
 # AGNT v1.41.23 — Scheduled-Day Visual Balance
 
 ## v1.41.23 changes

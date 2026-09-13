@@ -26,7 +26,7 @@ context.detailWasOpen=true;context.editorWasOpen=true;vm.runInContext(branch,con
 assert.match(fn('upsertProspect'),/saveProspecting\(\{render:false,awaitCloud:false\}\)/);
 assert.match(fn('saveManualCallAsContact'),/name:buyer\?\.name/);assert.match(fn('saveManualCallAsContact'),/address:buyer\?\.address/);
 const index=fs.readFileSync(__dirname+'/index.html','utf8'),sw=fs.readFileSync(__dirname+'/service-worker.js','utf8');
-for(const asset of ['styles.css?v=1.41.23-scheduled-day-visual-balance','cleanup.css?v=1.41.23-scheduled-day-visual-balance','app.js?v=1.41.23-scheduled-day-visual-balance']){assert(index.includes(asset));assert(sw.includes(asset))}
+for(const asset of ['styles.css?v=1.41.24-quick-actions-stability','cleanup.css?v=1.41.24-quick-actions-stability','app.js?v=1.41.24-quick-actions-stability']){assert(index.includes(asset));assert(sw.includes(asset))}
 for(const file of ['manifest.json','icons/icon-192.png','icons/icon-512.png','firebase-config.js','firestore.rules'])assert(fs.existsSync(__dirname+'/'+file));
 for(const name of ['dailyPlanWorkloadLane','dailyPlanWorkloadRank','dailyPlanBalancedWorkloadOrder'])vm.runInContext(fn(name),context);
 const balanced=Array.from(context.dailyPlanBalancedWorkloadOrder([{id:'seller-a',kind:'market',rank:0},{id:'seller-b',kind:'market',rank:1},{id:'buyer',kind:'buyer-match',rank:2},{id:'pipeline',kind:'pipeline-block',rank:3}]),item=>item.id);assert.deepEqual(balanced,['seller-a','buyer','seller-b','pipeline']);
@@ -119,7 +119,7 @@ assert.match(fn('offDayConversationState'),/latest=new Map/);assert.match(fn('of
 assert.match(fn('renderOffDayConversations'),/buyer-card off-day-conversation-card/);assert.match(fn('renderOffDayConversations'),/class="buyer-row-profile"/);assert.match(fn('renderOffDayConversations'),/class="buyer-row-head"/);assert.match(fn('renderOffDayConversations'),/class="buyer-row-brief">Last contact/);assert.match(fn('renderOffDayConversations'),/class="buyer-row-location">Next contact/);assert.match(fn('renderOffDayConversations'),/class="buyer-card-actions off-day-conversation-actions"/);assert.doesNotMatch(fn('renderOffDayConversations'),/prospect-avatar|initials|off-day-conversation-row|off-day-conversation-profile/);
 assert(!index.includes('Who to speak to next'));assert(!index.includes('Prioritised from your existing appointments'));
 assert.match(cleanup,/v1\.41\.18 — Home reuses the proven Buyers list hierarchy/);assert.doesNotMatch(cleanup,/\.off-day-conversation-profile|\.off-day-conversation-copy|\.off-day-conversation-chevron/);
-assert.match(fn('completeBackupPayload'),/appVersion:'1\.41\.23'/);
+assert.match(fn('completeBackupPayload'),/appVersion:'1\.41\.24'/);
 assert(index.includes('id="offDayNextWorkdayTitle"'));assert(index.includes('id="openMarketPulseOffDay"'));
 for(const name of ['offDayNextWorkdayModel','renderOffDayNextWorkday','offDayConversationSmsMarkup','offDayConversationMoveMarkup','renderOffDayHome','openOffDayContactMove'])assert(source.includes('function '+name+'('));
 assert.match(fn('renderToday'),/\.dashboard \.score-week/);assert.match(fn('renderToday'),/renderOffDayHome\(\)/);
@@ -156,4 +156,22 @@ assert.match(source,/#broadcastBack[\s\S]*homeQuickProspectorReturn[\s\S]*switch
 assert.match(source,/#broadcastBack[\s\S]*else\{setProspectorSection\('today'\);renderProspecting\(\)\}/,'The normal Broadcast Back route must remain inside Prospector');
 assert.match(source,/sellerPriorityReturnView=homeQuickProspectorReturn\?'todayView':''/);
 assert.match(source,/\[data-prospector-section\][\s\S]*homeQuickProspectorReturn=false/,'Opening a Prospector section normally must clear quick-action return context');
-console.log('PASS: v1.41.23 centres the scheduled-day controls, simplifies ranking and preserves Home return routing.');
+assert.equal((source.match(/\.closest\('\[data-off-day-quick\]'\)/g)||[]).length,1,'All Home quick buttons must use one shared click route');
+assert.match(source,/\$\('#todayView'\)\?\.addEventListener\('click',[\s\S]*runOffDayQuickAction\(quickAction\.dataset\.offDayQuick\)/,'The shared quick-action route must cover both scheduled and non-scheduled Home layouts');
+assert.doesNotMatch(fn('openOffDayContactSearch'),/focus\(/,'Contact Search must not force an iPhone keyboard focus during the view transition');
+assert.match(fn('openOffDayContactSearch'),/setProspectorSection\('contacts'\);switchView\('prospectingView'\)/);
+assert.equal((index.match(/data-off-day-quick="call"/g)||[]).length,2);
+assert.equal((index.match(/data-off-day-quick="task"/g)||[]).length,2);
+assert.equal((index.match(/data-off-day-quick="appointment"/g)||[]).length,2);
+assert.equal((index.match(/data-off-day-quick="search"/g)||[]).length,2);
+assert.equal((index.match(/data-off-day-quick="broadcast"/g)||[]).length,2);
+const quickCalls=[];
+const quickContext={openManualDialler:()=>quickCalls.push('call'),openTaskComposer:()=>quickCalls.push('task'),openOffDayQuickAppointment:()=>quickCalls.push('appointment'),openOffDayContactSearch:()=>quickCalls.push('search'),openOffDayBroadcast:()=>quickCalls.push('broadcast')};
+vm.createContext(quickContext);vm.runInContext(fn('runOffDayQuickAction'),quickContext);
+for(const action of ['call','task','appointment','search','broadcast'])quickContext.runOffDayQuickAction(action);
+assert.deepEqual(quickCalls,['call','task','appointment','search','broadcast'],'Every Home quick action must dispatch once to its existing workflow');
+const searchRoute=[];
+const searchContext={homeQuickProspectorReturn:false,setProspectorSection:value=>searchRoute.push(`section:${value}`),switchView:value=>searchRoute.push(`view:${value}`)};
+vm.createContext(searchContext);vm.runInContext(fn('openOffDayContactSearch'),searchContext);searchContext.openOffDayContactSearch();
+assert.equal(searchContext.homeQuickProspectorReturn,true);assert.deepEqual(searchRoute,['section:contacts','view:prospectingView']);
+console.log('PASS: v1.41.24 gives both Home layouts one stable quick-action route without changing destination workflows.');

@@ -1,5 +1,5 @@
-const CACHE='agnt-v1.41.23-scheduled-day-visual-balance';
-const ASSETS=['./','./index.html','./styles.css?v=1.41.23-scheduled-day-visual-balance','./app.js?v=1.41.23-scheduled-day-visual-balance','./cleanup.css?v=1.41.23-scheduled-day-visual-balance','./firebase-config.js','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
+const CACHE='agnt-v1.41.24-quick-actions-stability';
+const ASSETS=['./','./index.html','./styles.css?v=1.41.24-quick-actions-stability','./app.js?v=1.41.24-quick-actions-stability','./cleanup.css?v=1.41.24-quick-actions-stability','./firebase-config.js','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{
