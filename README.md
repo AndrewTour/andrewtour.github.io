@@ -1,3 +1,16 @@
+# AGNT v1.41.19 — Day-Off Home
+
+## v1.41.19 changes
+
+- Replaces the inactive score, graph, leaderboard and focus stack on the current unscheduled day with a concise Next Workday summary.
+- Shows the first timed commitment and existing appointment, follow-up and task counts for the next scheduled workday.
+- Relocates the existing MarketPulse shortcut and shows a count only when today’s import contains genuinely new events.
+- Keeps Next Conversations in the proven Buyers-list layout with equal Call, SMS and Move actions.
+- Move uses the existing prospect follow-up field or appointment editor and immediately clears a contact moved to a future date.
+- Adds no Firebase path, storage key, query, startup request or background process.
+
+## Previous release — v1.41.18
+
 # AGNT v1.41.18 — Buyer Pattern on Home
 
 ## v1.41.18 changes

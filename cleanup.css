@@ -694,6 +694,26 @@ html[data-theme="dark"] :is(.buyer-match-alert b,.buyer-property-matches-head>b,
   overflow:auto;
   scrollbar-width:none;
 }
+.dashboard.off-day-opportunity-mode{grid-template-rows:minmax(0,1fr)!important;gap:0!important}
+.dashboard.off-day-opportunity-mode .off-day-conversations{grid-row:1;align-self:stretch}
+.off-day-next-workday{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 44px;
+  align-items:center;
+  gap:16px;
+  min-width:0;
+  padding:15px 2px 17px;
+  border-bottom:1px solid #e6e9ee;
+}
+.off-day-next-workday-copy{display:grid;gap:4px;min-width:0}
+.off-day-next-workday-copy>span{color:var(--cleanup-accent);font-size:10px;font-weight:850;letter-spacing:.13em}
+.off-day-next-workday-copy h2{margin:0;color:var(--cleanup-ink);font-size:20px;line-height:1.18;letter-spacing:-.02em}
+.off-day-next-workday-copy strong{overflow:hidden;color:#3f4855;font-size:12.5px;line-height:1.4;text-overflow:ellipsis;white-space:nowrap}
+.off-day-next-workday-copy small{overflow:hidden;color:#697383;font-size:11.5px;line-height:1.4;text-overflow:ellipsis;white-space:nowrap}
+.off-day-next-workday-copy em{color:#32986d;font-size:10px;font-style:normal;font-weight:800;line-height:1.35}
+.off-day-next-workday .marketpulse-orb{position:relative;align-self:center;justify-self:center;width:38px;height:38px;min-width:38px;min-height:38px;transform:none!important}
+.off-day-next-workday .marketpulse-orb:active{transform:scale(.94)!important}
+.off-day-next-workday .marketpulse-orb b{position:absolute;right:-4px;top:-5px;display:grid;place-items:center;min-width:17px;height:17px;padding:0 4px;border:2px solid #fff;border-radius:9px;background:#397dff;color:#fff;font-size:8px;line-height:1}
 .off-day-conversations::-webkit-scrollbar{display:none}
 .off-day-conversations-head{
   min-height:44px!important;
@@ -788,7 +808,7 @@ html[data-theme="dark"] :is(.buyer-match-alert b,.buyer-property-matches-head>b,
 }
 #offDayConversations .buyer-card-actions{
   display:grid!important;
-  grid-template-columns:1fr!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
   gap:7px!important;
   width:100%!important;
 }
@@ -800,26 +820,37 @@ html[data-theme="dark"] :is(.buyer-match-alert b,.buyer-property-matches-head>b,
   min-width:0!important;
   min-height:44px!important;
   padding:0 8px!important;
-  border:1px solid #397dff!important;
+  border:1px solid #d9e3f1!important;
   border-radius:13px!important;
-  background:#397dff!important;
-  color:#fff!important;
+  background:#f5f8fc!important;
+  color:#2465be!important;
   font-size:11.5px!important;
   font-weight:780!important;
   text-decoration:none!important;
 }
+#offDayConversations .buyer-card-actions :first-child{border-color:#397dff!important;background:#397dff!important;color:#fff!important}
 .off-day-conversation-empty{padding:28px 2px;border-bottom:1px solid #e6e9ee}
 .off-day-conversation-empty strong,
 .off-day-conversation-empty small{display:block}
 .off-day-conversation-empty strong{color:var(--cleanup-ink);font-size:16px}
 .off-day-conversation-empty small{margin-top:6px;color:var(--cleanup-muted);font-size:12px;line-height:1.4}
 html[data-theme="dark"] .off-day-conversations-head,
-html[data-theme="dark"] #offDayConversations .buyer-card{border-bottom-color:#292e36!important}
+html[data-theme="dark"] #offDayConversations .buyer-card,
+html[data-theme="dark"] .off-day-next-workday{border-bottom-color:#292e36!important}
+html[data-theme="dark"] .off-day-next-workday-copy h2{color:#f5f6f7!important}
+html[data-theme="dark"] .off-day-next-workday-copy strong{color:#d7dbe1!important}
+html[data-theme="dark"] .off-day-next-workday-copy small{color:#a4abb6!important}
+html[data-theme="dark"] .off-day-next-workday .marketpulse-orb b{border-color:#0e1116!important}
 html[data-theme="dark"] #offDayConversations .buyer-row-head strong{color:#f5f6f7!important}
 html[data-theme="dark"] #offDayConversations .buyer-row-brief{color:#d7dbe1!important}
 html[data-theme="dark"] #offDayConversations .buyer-row-location{color:#a4abb6!important}
+html[data-theme="dark"] #offDayConversations .buyer-card-actions button,
+html[data-theme="dark"] #offDayConversations .buyer-card-actions a{border-color:#343b47!important;background:#1a1f27!important;color:#8fc2ff!important}
+html[data-theme="dark"] #offDayConversations .buyer-card-actions :first-child{border-color:#397dff!important;background:#397dff!important;color:#fff!important}
 @media(max-height:760px){
   #offDayConversations .buyer-card{padding:12px 2px 11px!important}
 }
 
 /* v1.41.18 — Home reuses the proven Buyers list hierarchy and controls. */
+
+/* v1.41.19 — Day-off Home uses the established AGNT schedule and Buyers patterns. */

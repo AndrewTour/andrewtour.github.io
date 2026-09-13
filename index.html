@@ -9,8 +9,8 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.41.18-buyer-pattern-home">
-<link rel="stylesheet" href="cleanup.css?v=1.41.18-buyer-pattern-home">
+<link rel="stylesheet" href="styles.css?v=1.41.19-day-off-home">
+<link rel="stylesheet" href="cleanup.css?v=1.41.19-day-off-home">
 <title>AGNT</title>
 </head>
 <body>
@@ -376,6 +376,19 @@
         </article>
       </section>
       <section id="offDayConversations" class="off-day-conversations hidden" aria-labelledby="offDayConversationsTitle">
+        <section class="off-day-next-workday" aria-labelledby="offDayNextWorkdayTitle">
+          <div class="off-day-next-workday-copy">
+            <span>NEXT WORKDAY</span>
+            <h2 id="offDayNextWorkdayTitle">Finding your next workday…</h2>
+            <strong id="offDayFirstCommitment">Your schedule is ready when you are.</strong>
+            <small id="offDayWorkload">Appointments, follow-ups and tasks will appear here.</small>
+            <em id="offDayReadiness">Ready to plan</em>
+          </div>
+          <button id="openMarketPulseOffDay" class="marketpulse-orb" type="button" aria-label="Open MarketPulse" title="MarketPulse">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17 9 10l4 5 7-9"/><path d="M15 6h5v5"/></svg>
+            <b id="offDayMarketPulseCount" class="hidden" aria-hidden="true">0</b>
+          </button>
+        </section>
         <header class="off-day-conversations-head">
           <span id="offDayConversationsTitle">NEXT CONVERSATIONS</span>
         </header>
@@ -1205,6 +1218,6 @@ Andrew Tour | McGrath</textarea></label>
 
 
 
-<script type="module" src="app.js?v=1.41.18-buyer-pattern-home"></script>
+<script type="module" src="app.js?v=1.41.19-day-off-home"></script>
 </body>
 </html>
