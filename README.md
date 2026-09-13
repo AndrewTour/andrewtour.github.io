@@ -1,3 +1,15 @@
+# AGNT v1.41.21 — Viewport Containment
+
+## v1.41.21 changes
+
+- Locks the Next Workday summary, quick actions and Next Conversations heading in place on an unscheduled day; only the conversation list scrolls.
+- Reduces all Next Conversations text by 20% while retaining the established Buyers-list structure and 44px-plus action targets.
+- Corrects the Home greeting line box so descenders and punctuation are not clipped.
+- Constrains appointment forms, contact results, type controls, destination cards, history headings and appointment action rows to the safe viewport.
+- Adds no Firebase path, storage key, query, save operation or background process.
+
+## Previous release — v1.41.20
+
 # AGNT v1.41.20 — Day-Off Quick Actions
 
 ## v1.41.20 changes
