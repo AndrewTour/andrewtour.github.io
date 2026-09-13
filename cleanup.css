@@ -667,3 +667,152 @@ html[data-theme="dark"] :is(.buyer-match-alert b,.buyer-property-matches-head>b,
   #app:has(#todayView.active) #viewTitle{font-size:1.28rem!important}
   #app:has(#todayView.active) .date-line{padding-right:min(222px,calc(100vw - 118px))!important}
 }
+
+/* v1.41.16 — Unscheduled-day opportunity mode; full-viewport rows, no card stack. */
+#app:has(#todayView.active):has(#dayScheduleStatus:not(.hidden)) .date-line{
+  position:relative!important;
+  padding-bottom:11px!important;
+}
+.day-schedule-status{
+  display:none;
+  position:absolute;
+  left:0;
+  top:calc(100% - 10px);
+  color:var(--cleanup-muted)!important;
+  font-size:9px;
+  font-weight:850;
+  line-height:1;
+  letter-spacing:.13em;
+  white-space:nowrap;
+}
+#app:has(#todayView.active) .day-schedule-status:not(.hidden){display:block}
+.off-day-conversations{
+  min-width:0;
+  min-height:0;
+  height:100%;
+  padding:0 0 10px;
+  overflow:auto;
+  scrollbar-width:none;
+}
+.off-day-conversations::-webkit-scrollbar{display:none}
+.off-day-conversations-head{
+  padding:18px 0 14px;
+  border-bottom:1px solid var(--cleanup-line);
+}
+.off-day-conversations-head>span{
+  display:block;
+  color:var(--cleanup-accent);
+  font-size:10px;
+  font-weight:850;
+  letter-spacing:.13em;
+}
+.off-day-conversations-head h2{
+  margin:5px 0 0;
+  color:var(--cleanup-ink);
+  font-size:22px;
+  line-height:1.08;
+  letter-spacing:-.035em;
+}
+.off-day-conversations-head p{
+  margin:6px 0 0;
+  color:var(--cleanup-muted);
+  font-size:12px;
+  line-height:1.35;
+}
+.off-day-conversation-list{display:block}
+.off-day-conversation-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 58px;
+  align-items:stretch;
+  min-width:0;
+  border-bottom:1px solid var(--cleanup-line);
+}
+.off-day-conversation-profile{
+  display:grid;
+  grid-template-columns:42px minmax(0,1fr) 14px;
+  align-items:center;
+  gap:11px;
+  min-width:0;
+  min-height:94px;
+  padding:13px 10px 13px 0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  color:var(--cleanup-ink);
+  text-align:left;
+  box-shadow:none;
+}
+.off-day-conversation-profile .prospect-avatar{
+  width:42px;
+  height:42px;
+  border-radius:50%;
+}
+.off-day-conversation-copy{display:block;min-width:0}
+.off-day-conversation-copy>span{
+  display:block;
+  color:var(--cleanup-accent);
+  font-size:9px;
+  font-weight:850;
+  line-height:1;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+.off-day-conversation-copy>strong{
+  display:block;
+  margin-top:5px;
+  overflow:hidden;
+  color:var(--cleanup-ink);
+  font-size:16px;
+  line-height:1.1;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.off-day-conversation-copy>small{
+  display:-webkit-box;
+  margin-top:5px;
+  overflow:hidden;
+  color:var(--cleanup-muted);
+  font-size:11px;
+  line-height:1.32;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+}
+.off-day-conversation-profile>b{
+  color:#9aa1ac;
+  font-size:23px;
+  font-weight:500;
+  line-height:1;
+}
+.off-day-conversation-row>a,
+.off-day-conversation-row>button{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-width:0;
+  min-height:44px;
+  padding:0;
+  border:0;
+  border-left:1px solid var(--cleanup-line);
+  border-radius:0;
+  background:transparent;
+  color:var(--cleanup-accent);
+  font-size:12px;
+  font-weight:800;
+  text-decoration:none;
+  box-shadow:none;
+}
+.off-day-conversation-empty{
+  padding:28px 0;
+  border-bottom:1px solid var(--cleanup-line);
+}
+.off-day-conversation-empty strong,
+.off-day-conversation-empty small{display:block}
+.off-day-conversation-empty strong{color:var(--cleanup-ink);font-size:16px}
+.off-day-conversation-empty small{margin-top:6px;color:var(--cleanup-muted);font-size:12px;line-height:1.4}
+html[data-theme="dark"] .off-day-conversation-profile,
+html[data-theme="dark"] .off-day-conversation-row>a,
+html[data-theme="dark"] .off-day-conversation-row>button{background:transparent!important}
+@media(max-height:760px){
+  .off-day-conversations-head{padding:12px 0 10px}
+  .off-day-conversation-profile{min-height:80px;padding-block:9px}
+}

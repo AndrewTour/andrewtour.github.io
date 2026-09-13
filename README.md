@@ -1,3 +1,15 @@
+# AGNT v1.41.16 — Off-Day Conversations
+
+## v1.41.16 changes
+
+- Moves the unscheduled-day status beneath the calendar date so it remains legible without competing for the fixed header controls.
+- Replaces locked activity metrics on the current unscheduled day with a full-viewport Next Conversations list.
+- Ranks up to three useful conversations from existing appointments, property matches, due follow-ups, sellers, buyers and pipeline contacts.
+- Uses AGNT's existing profile and call workflows, and clears contacts already attempted today or marked Do Not Contact.
+- Adds no Firebase collection, Firestore query, local-storage key, startup request or background task.
+
+## Previous release — v1.41.15
+
 # AGNT v1.41.15 — Home Viewport Balance
 
 ## v1.41.15 changes

@@ -9,8 +9,8 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.41.15-home-viewport-balance">
-<link rel="stylesheet" href="cleanup.css?v=1.41.15-home-viewport-balance">
+<link rel="stylesheet" href="styles.css?v=1.41.16-off-day-conversations">
+<link rel="stylesheet" href="cleanup.css?v=1.41.16-off-day-conversations">
 <title>AGNT</title>
 </head>
 <body>
@@ -304,6 +304,7 @@
       <div id="viewSubtitle" class="view-subtitle hidden"></div>
       <div class="date-line">
         <div id="dateLabel" class="date"></div>
+        <span id="dayScheduleStatus" class="day-schedule-status hidden">NOT SCHEDULED</span>
         <button id="syncBadge" class="sync-badge connecting" type="button" aria-label="Sync status: Connecting" aria-expanded="false"></button>
         <div id="syncPopover" class="sync-popover hidden" role="dialog" aria-label="Sync status guide">
           <div class="sync-popover-head"><strong>Sync status</strong><span id="syncCurrentText">Connecting</span></div>
@@ -373,6 +374,14 @@
           <div class="metric-copy"><span>KNOCKING</span><small id="knockTargetText">60 min remaining today</small><em id="knockRemaining">Start at 9:00am</em><strong id="knockValue">00:00</strong></div>
           <div class="actions knock-actions"><div id="knockPercent" class="metric-percent metric-ring" role="img" aria-label="Knocking: 0% complete, expected pace 0%, target 60 minutes">0%</div><button id="timerButton" class="timer" type="button" aria-label="Start knocking timer"><svg class="timer-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 6.5 17 12l-8.5 5.5Z"/></svg></button><button id="resetKnock" class="reset" aria-label="Reset today’s knocking">↶</button></div>
         </article>
+      </section>
+      <section id="offDayConversations" class="off-day-conversations hidden" aria-labelledby="offDayConversationsTitle">
+        <header class="off-day-conversations-head">
+          <span>NEXT CONVERSATIONS</span>
+          <h2 id="offDayConversationsTitle">Who to speak to next</h2>
+          <p>Prioritised from your existing appointments, buyers, sellers and pipeline.</p>
+        </header>
+        <div id="offDayConversationList" class="off-day-conversation-list"></div>
       </section>
     </section>
 
@@ -1198,6 +1207,6 @@ Andrew Tour | McGrath</textarea></label>
 
 
 
-<script type="module" src="app.js?v=1.41.15-home-viewport-balance"></script>
+<script type="module" src="app.js?v=1.41.16-off-day-conversations"></script>
 </body>
 </html>

@@ -26,7 +26,7 @@ context.detailWasOpen=true;context.editorWasOpen=true;vm.runInContext(branch,con
 assert.match(fn('upsertProspect'),/saveProspecting\(\{render:false,awaitCloud:false\}\)/);
 assert.match(fn('saveManualCallAsContact'),/name:buyer\?\.name/);assert.match(fn('saveManualCallAsContact'),/address:buyer\?\.address/);
 const index=fs.readFileSync(__dirname+'/index.html','utf8'),sw=fs.readFileSync(__dirname+'/service-worker.js','utf8');
-for(const asset of ['styles.css?v=1.41.15-home-viewport-balance','cleanup.css?v=1.41.15-home-viewport-balance','app.js?v=1.41.15-home-viewport-balance']){assert(index.includes(asset));assert(sw.includes(asset))}
+for(const asset of ['styles.css?v=1.41.16-off-day-conversations','cleanup.css?v=1.41.16-off-day-conversations','app.js?v=1.41.16-off-day-conversations']){assert(index.includes(asset));assert(sw.includes(asset))}
 for(const file of ['manifest.json','icons/icon-192.png','icons/icon-512.png','firebase-config.js','firestore.rules'])assert(fs.existsSync(__dirname+'/'+file));
 for(const name of ['dailyPlanWorkloadLane','dailyPlanWorkloadRank','dailyPlanBalancedWorkloadOrder'])vm.runInContext(fn(name),context);
 const balanced=Array.from(context.dailyPlanBalancedWorkloadOrder([{id:'seller-a',kind:'market',rank:0},{id:'seller-b',kind:'market',rank:1},{id:'buyer',kind:'buyer-match',rank:2},{id:'pipeline',kind:'pipeline-block',rank:3}]),item=>item.id);assert.deepEqual(balanced,['seller-a','buyer','seller-b','pipeline']);
@@ -108,4 +108,12 @@ assert.match(fn('settingsSyncCopy'),/Offline · saved on device/);assert.match(f
 for(const field of ['appearancePreference','prospects','prospectInteractions','marketPulseEvents','marketPulseHistory','campaignHistory','bulkSmsTestLaunches','buyerSession'])assert.match(fn('completeBackupPayload'),new RegExp(field));assert.match(fn('mergeBackupRecords'),/new Map/);assert.match(fn('restoreBuyerSessionBackup'),/saveBuyerSession/);assert.match(fn('syncImportedBackup'),/saveDay\(key,\{quiet:true,awaitCloud:false,render:false\}\)/);assert.match(source,/confirm\('Import this AGNT backup/);assert.match(source,/normaliseProspects\(mergeBackupRecords\(prospects,raw\.prospects\)\)/);
 assert.match(cleanup,/v1\.41\.14 — Stability, trustworthy states and accessible actions/);assert.match(cleanup,/min-height:44px!important/);assert.match(cleanup,/background:#075fc7!important/);assert.match(cleanup,/color:#4b2600!important/);
 assert.match(cleanup,/v1\.41\.15 — Home header and bottom viewport balance only/);assert.match(cleanup,/#app:has\(#todayView\.active\) #viewTitle/);assert.match(cleanup,/white-space:nowrap!important/);assert.match(cleanup,/padding-bottom:8px!important/);
-console.log('PASS: v1.41.15 home viewport checks plus v1.41.14 trust and baseline regressions.');
+assert(index.includes('id="dayScheduleStatus"'));assert(index.includes('id="offDayConversations"'));assert(index.includes('id="offDayConversationList"'));
+for(const name of ['offDayConversationState','offDayConversationRole','offDayConversationCandidates','offDayConversationCallMarkup','renderOffDayConversations'])assert(source.includes('function '+name+'('));
+assert.match(fn('renderToday'),/offDayOpportunityMode=!past&&!scheduled&&selectedDate===todayKey\(\)/);assert.match(fn('renderToday'),/renderOffDayConversations\(\)/);
+assert.match(fn('dailyCommandPriority'),/offDayConversationCandidates\(1\)/);assert.match(fn('dailyCommandPriority'),/kicker:'NEXT CONVERSATION'/);
+assert.match(fn('navigateDailyPlanAction'),/action==='open-buyer'/);assert.match(fn('offDayConversationCallMarkup'),/data-buyer-match-call/);assert.match(fn('offDayConversationCallMarkup'),/data-prospect-call/);assert.match(fn('offDayConversationCallMarkup'),/data-appointment-followup-call/);
+for(const name of ['offDayConversationState','offDayConversationCandidates','renderOffDayConversations']){assert.doesNotMatch(fn(name),/localStorage|sessionStorage|collection\(|getDoc|getDocs|onSnapshot|setDoc|updateDoc|addDoc/)}
+assert.match(cleanup,/v1\.41\.16 — Unscheduled-day opportunity mode/);assert.match(cleanup,/\.off-day-conversation-row/);assert.match(cleanup,/\.off-day-conversation-profile\{[\s\S]*border-radius:0/);assert.match(cleanup,/background:transparent/);
+assert.match(fn('completeBackupPayload'),/appVersion:'1\.41\.16'/);
+console.log('PASS: v1.41.16 off-day conversation checks plus v1.41.15 viewport, v1.41.14 trust and baseline regressions.');
