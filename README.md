@@ -1,3 +1,17 @@
+# AGNT v1.41.14 — Stability & Trust
+
+## v1.41.14 changes
+
+- Prepares the correct outcome workflow for every in-app Call link before iPhone leaves AGNT.
+- Adds a seven-second startup watchdog so Firebase authentication can never leave the loading gate covering the app indefinitely.
+- Makes the Settings sync description reflect offline, saving, error and live states accurately.
+- Expands Export Backup to include contacts, buyers, interaction history, MarketPulse data, campaigns and the imported Buyer List session, with confirmation before restore.
+- Improves the touch area of frequently used call, timeline, buyer filter and appointment controls without changing the established layout.
+- Corrects the lowest-contrast orange labels and key blue action states in light and dark appearance.
+- Preserves every v1.41.13 intelligence, data path, UID boundary, local-first queue, Firebase and PWA behaviour.
+
+## Previous release — v1.41.13
+
 # AGNT v1.41.13 — Balanced Right Now
 
 ## v1.41.13 changes

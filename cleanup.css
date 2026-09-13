@@ -610,3 +610,14 @@ body.seller-priority-deferral-open{overflow:hidden}
 .seller-priority-deferral-cancel{width:100%;min-height:48px;margin-top:4px}
 html[data-theme="dark"] #timelineDeferSeller.seller-priority-defer{border-color:#303640!important;color:#aab0ba!important}
 html[data-theme="dark"] .seller-priority-deferral-options button{border-color:#292e36;color:#f5f6f7}
+
+/* v1.41.14 — Stability, trustworthy states and accessible actions */
+.topbar .top-actions.date-nav-visible .topbar-nav-icon{position:relative;touch-action:manipulation}
+.topbar .top-actions.date-nav-visible .topbar-nav-icon::before{content:"";position:absolute;inset:-5px;background:transparent}
+:is(.appointment-call,.appointment-secondary-action,.scorecard-call,.timeline-call,.timeline-plan-action,.followup-record-action){min-height:44px!important}
+#prospectorBuyersPanel .buyer-card-actions :is(button,a){min-height:44px!important}
+:is(.buyer-quick-filters,.buyer-filter-features,.buyer-option-tags,.buyer-segment) button{min-height:44px!important}
+.timeline-item.current .timeline-plan-action{border-color:#075fc7!important;background:#075fc7!important;color:#fff!important}
+html[data-theme="dark"] :is(.timeline-item.current .timeline-plan-action,.timeline-command-action,.buyer-followup-actions .primary){border-color:#075fc7!important;background:#075fc7!important;color:#fff!important}
+:is(.buyer-match-alert b,.buyer-property-matches-head>b,.buyer-seller-opportunity-alert>b,.buyer-seller-opportunity-head>b),.buyer-match-time-alert::before{color:#4b2600!important}
+html[data-theme="dark"] :is(.buyer-match-alert b,.buyer-property-matches-head>b,.buyer-seller-opportunity-alert>b,.buyer-seller-opportunity-head>b),html[data-theme="dark"] .buyer-match-time-alert::before{color:#321900!important}
