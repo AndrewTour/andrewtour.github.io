@@ -1,3 +1,15 @@
+# AGNT v1.41.18 — Buyer Pattern on Home
+
+## v1.41.18 changes
+
+- Replaces the custom Home conversation rows with the proven Buyers-list hierarchy already used inside AGNT.
+- Uses the same full-width divider, name hierarchy, supporting lines and established blue action treatment.
+- Keeps one `NEXT CONVERSATIONS` heading with concise last-contact and next-contact information.
+- Retains the existing ranking, profile navigation and Call outcome workflows.
+- Adds no Firebase path, save key, query, startup request or background task.
+
+## Previous release — v1.41.17
+
 # AGNT v1.41.17 — Off-Day Conversation Cleanup
 
 ## v1.41.17 changes

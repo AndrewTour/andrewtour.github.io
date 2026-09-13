@@ -26,7 +26,7 @@ context.detailWasOpen=true;context.editorWasOpen=true;vm.runInContext(branch,con
 assert.match(fn('upsertProspect'),/saveProspecting\(\{render:false,awaitCloud:false\}\)/);
 assert.match(fn('saveManualCallAsContact'),/name:buyer\?\.name/);assert.match(fn('saveManualCallAsContact'),/address:buyer\?\.address/);
 const index=fs.readFileSync(__dirname+'/index.html','utf8'),sw=fs.readFileSync(__dirname+'/service-worker.js','utf8');
-for(const asset of ['styles.css?v=1.41.17-off-day-cleanup','cleanup.css?v=1.41.17-off-day-cleanup','app.js?v=1.41.17-off-day-cleanup']){assert(index.includes(asset));assert(sw.includes(asset))}
+for(const asset of ['styles.css?v=1.41.18-buyer-pattern-home','cleanup.css?v=1.41.18-buyer-pattern-home','app.js?v=1.41.18-buyer-pattern-home']){assert(index.includes(asset));assert(sw.includes(asset))}
 for(const file of ['manifest.json','icons/icon-192.png','icons/icon-512.png','firebase-config.js','firestore.rules'])assert(fs.existsSync(__dirname+'/'+file));
 for(const name of ['dailyPlanWorkloadLane','dailyPlanWorkloadRank','dailyPlanBalancedWorkloadOrder'])vm.runInContext(fn(name),context);
 const balanced=Array.from(context.dailyPlanBalancedWorkloadOrder([{id:'seller-a',kind:'market',rank:0},{id:'seller-b',kind:'market',rank:1},{id:'buyer',kind:'buyer-match',rank:2},{id:'pipeline',kind:'pipeline-block',rank:3}]),item=>item.id);assert.deepEqual(balanced,['seller-a','buyer','seller-b','pipeline']);
@@ -114,10 +114,10 @@ assert.match(fn('renderToday'),/offDayOpportunityMode=!past&&!scheduled&&selecte
 assert.match(fn('dailyCommandPriority'),/offDayConversationCandidates\(1\)/);assert.match(fn('dailyCommandPriority'),/kicker:'NEXT CONVERSATION'/);
 assert.match(fn('navigateDailyPlanAction'),/action==='open-buyer'/);assert.match(fn('offDayConversationCallMarkup'),/data-buyer-match-call/);assert.match(fn('offDayConversationCallMarkup'),/data-prospect-call/);assert.match(fn('offDayConversationCallMarkup'),/data-appointment-followup-call/);
 for(const name of ['offDayConversationState','offDayConversationCandidates','renderOffDayConversations']){assert.doesNotMatch(fn(name),/localStorage|sessionStorage|collection\(|getDoc|getDocs|onSnapshot|setDoc|updateDoc|addDoc/)}
-assert.match(cleanup,/v1\.41\.16 — Unscheduled-day opportunity mode/);assert.match(cleanup,/\.off-day-conversation-row/);assert.match(cleanup,/\.off-day-conversation-profile\{[\s\S]*border-radius:0/);assert.match(cleanup,/background:transparent/);
+assert.match(cleanup,/v1\.41\.16 — Unscheduled-day opportunity mode/);assert.match(cleanup,/#offDayConversations \.buyer-card/);assert.match(cleanup,/#offDayConversations \.buyer-row-profile/);assert.match(cleanup,/background:transparent/);
 assert.match(fn('offDayConversationState'),/latest=new Map/);assert.match(fn('offDayConversationLastContact'),/No contact recorded/);
-assert.match(fn('renderOffDayConversations'),/<b>Last<\/b>/);assert.match(fn('renderOffDayConversations'),/<b>Next<\/b>/);assert.doesNotMatch(fn('renderOffDayConversations'),/prospect-avatar|initials/);
+assert.match(fn('renderOffDayConversations'),/buyer-card off-day-conversation-card/);assert.match(fn('renderOffDayConversations'),/class="buyer-row-profile"/);assert.match(fn('renderOffDayConversations'),/class="buyer-row-head"/);assert.match(fn('renderOffDayConversations'),/class="buyer-row-brief">Last contact/);assert.match(fn('renderOffDayConversations'),/class="buyer-row-location">Next contact/);assert.match(fn('renderOffDayConversations'),/class="buyer-card-actions off-day-conversation-actions"/);assert.doesNotMatch(fn('renderOffDayConversations'),/prospect-avatar|initials|off-day-conversation-row|off-day-conversation-profile/);
 assert(!index.includes('Who to speak to next'));assert(!index.includes('Prioritised from your existing appointments'));
-assert.match(cleanup,/v1\.41\.17 — Brief off-day history rows/);assert.doesNotMatch(cleanup,/\.off-day-conversation-profile \.prospect-avatar/);assert.doesNotMatch(cleanup,/border-left:1px solid var\(--cleanup-line\)/);
-assert.match(fn('completeBackupPayload'),/appVersion:'1\.41\.17'/);
-console.log('PASS: v1.41.17 clean off-day history rows plus v1.41.16 logic and all baseline regressions.');
+assert.match(cleanup,/v1\.41\.18 — Home reuses the proven Buyers list hierarchy/);assert.doesNotMatch(cleanup,/\.off-day-conversation-profile|\.off-day-conversation-copy|\.off-day-conversation-chevron/);
+assert.match(fn('completeBackupPayload'),/appVersion:'1\.41\.18'/);
+console.log('PASS: v1.41.18 reuses the Buyers list pattern on Home and retains all baseline regressions.');
