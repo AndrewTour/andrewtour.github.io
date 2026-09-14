@@ -1,4 +1,13 @@
-# AGNT v1.41.26 — Weekly Appointments and Seller Actions
+# AGNT v1.41.27 — Hot Spotting SMS Flow
+
+## v1.41.27 changes
+
+- Hot Spotting no-answer and voicemail outcomes now save locally and update Home metrics immediately.
+- The saved outcome closes straight into a concise `SMS <client>` decision with `Send SMS` and `Skip`.
+- `Skip` advances directly to the next queued client.
+- `Send SMS` opens the existing contextual MarketPulse message, records its contact note locally, and prepares the next queued client before leaving AGNT.
+- Cloud persistence remains deferred in the existing background sync queue.
+- Firebase configuration, Firestore paths/rules, UID separation, data shapes, authentication, PWA navigation, and unrelated workflows are unchanged.
 
 ## v1.41.26 changes
 
