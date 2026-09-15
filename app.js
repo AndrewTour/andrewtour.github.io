@@ -272,7 +272,7 @@ function saveDirtyDays(){try{localStorage.setItem(storagePrefix(uid)+'dirty-days
 function markDayDirty(k){dirtyDayKeys.add(k);saveDirtyDays()}
 function clearDayDirty(k,clientUpdatedAt){if(Number(days[k]?.clientUpdatedAt)===Number(clientUpdatedAt)){dirtyDayKeys.delete(k);saveDirtyDays()}}
 function saveLocal(){const prefix=storagePrefix(uid);try{const serialised=JSON.stringify(normaliseDaysMap(days));const previous=localStorage.getItem(prefix+'days');if(previous)localStorage.setItem(prefix+'days-backup',previous);localStorage.setItem(prefix+'days',serialised);localStorage.setItem(prefix+'targets',JSON.stringify(targets));localStorage.setItem(prefix+'agent-name',agentName);localStorage.setItem(prefix+'work-days',JSON.stringify(workDays));localStorage.setItem(prefix+'calendar-preference',calendarPreference);localStorage.setItem(prefix+'prospects',JSON.stringify(prospects));localStorage.setItem(prefix+'prospect-interactions',JSON.stringify(prospectInteractions));localStorage.setItem(prefix+'market-pulse-events',JSON.stringify(marketPulseEvents));localStorage.setItem(prefix+'market-pulse-history',JSON.stringify(normaliseMarketPulseHistory(marketPulseHistory)));localStorage.setItem(prefix+'campaign-history',JSON.stringify(campaignHistory.slice(0,20)));localStorage.setItem(prefix+'bulk-sms-test-launches',JSON.stringify(bulkSmsTestLaunches.slice(0,10)));return true}catch(err){console.error('Local save failed',err);return false}}
-function clearActiveSession(){teamInitialisationToken++;unsubDays?.();unsubProfile?.();unsubLeaderboard?.();unsubProspecting?.();unsubMarketPulseInbox?.();unsubTeamMembership?.();unsubTeamMembers?.();unsubAppointmentAssignees?.();unsubAssignedTeamAppointments?.();unsubAssignedTeamTasks?.();unsubDays=unsubProfile=unsubLeaderboard=unsubProspecting=unsubMarketPulseInbox=unsubTeamMembership=unsubTeamMembers=unsubAppointmentAssignees=unsubAssignedTeamAppointments=unsubAssignedTeamTasks=null;hideTeamAppointmentNotice({acknowledge:false});hideTeamManager({restoreFocus:false});closeTeamMemberRemoval({force:true});hideTeamLeaveConfirmation({force:true,restoreFocus:false});hideTeamCodeRefreshConfirmation({force:true,restoreFocus:false});closeSellerPriorityDeferral();clearInterval(timerTick);clearInterval(returningSnapshotCountdownTimer);clearTimeout(syncTimer);clearTimeout(leaderboardPublishTimer);clearTimeout(prospectingSaveTimer);clearTimeout(prospectingRetryTimer);clearTimeout(returningSnapshotTimer);clearTimeout(appResumeTimer);appResumeTimer=null;returningSnapshotTimer=returningSnapshotCountdownTimer=null;returningSnapshotEndsAt=0;prospectingSaveTimer=prospectingRetryTimer=null;prospectingRetryDelay=2500;pendingProspectingPayload=null;pendingProspectingSignature='';pendingProspectingRevision=0;prospectingWriteInFlight=false;prospectingSaveWaiters.splice(0).forEach(({resolve})=>resolve());currentUser=null;uid='local';cloud=false;pendingSyncOperations=0;syncHasError=false;lastLeaderboardSignature='';lastTeamLeaderboardSignature='';lastProspectingSignature='';dirtyDayKeys=new Set();resetState()}
+function clearActiveSession(){teamInitialisationToken++;unsubDays?.();unsubProfile?.();unsubLeaderboard?.();unsubProspecting?.();unsubMarketPulseInbox?.();unsubTeamMembership?.();unsubTeamMembers?.();unsubAppointmentAssignees?.();unsubAssignedTeamAppointments?.();unsubAssignedTeamTasks?.();unsubDays=unsubProfile=unsubLeaderboard=unsubProspecting=unsubMarketPulseInbox=unsubTeamMembership=unsubTeamMembers=unsubAppointmentAssignees=unsubAssignedTeamAppointments=unsubAssignedTeamTasks=null;hideTeamAppointmentNotice({acknowledge:false});hideTeamManager({restoreFocus:false});closeTeamMemberRemoval({force:true});hideTeamLeaveConfirmation({force:true,restoreFocus:false});hideTeamCodeRefreshConfirmation({force:true,restoreFocus:false});closeSellerPriorityDeferral();clearInterval(timerTick);clearInterval(returningSnapshotCountdownTimer);clearTimeout(syncTimer);clearTimeout(leaderboardPublishTimer);clearTimeout(prospectingSaveTimer);clearTimeout(prospectingRetryTimer);clearTimeout(returningSnapshotTimer);clearTimeout(appResumeTimer);appResumeTimer=null;daySaveChains.clear();returningSnapshotTimer=returningSnapshotCountdownTimer=null;returningSnapshotEndsAt=0;prospectingSaveTimer=prospectingRetryTimer=null;prospectingRetryDelay=2500;pendingProspectingPayload=null;pendingProspectingSignature='';pendingProspectingRevision=0;prospectingWriteInFlight=false;prospectingSaveWaiters.splice(0).forEach(({resolve})=>resolve());currentUser=null;uid='local';cloud=false;pendingSyncOperations=0;syncHasError=false;lastLeaderboardSignature='';lastTeamLeaderboardSignature='';lastProspectingSignature='';dirtyDayKeys=new Set();resetState()}
 function displayAgentName(){return (agentName||currentUser?.displayName||currentUser?.email?.split('@')[0]||'Agent').trim()}
 function returningSnapshotReadyKey(){return `${storagePrefix(uid)}returning-snapshot-ready`}
 function returningSnapshotHasHistory(){
@@ -563,17 +563,17 @@ function scheduleLeaderboardPublish(){
 async function publishLeaderboard(){if(!cloud||!db||!uid||accountMode!=='solo')return;const payload=leaderboardPayload(),signature=leaderboardSignature(payload);if(signature===lastLeaderboardSignature){renderLeaderboardStatus();return}beginSyncOperation();try{await setDoc(doc(db,'leaderboard',uid),payload,{merge:true});lastLeaderboardSignature=signature;endSyncOperation();renderLeaderboardStatus()}catch(err){console.error('Leaderboard publish failed',err);endSyncOperation({error:true});renderLeaderboardStatus()}}
 async function persistDayToCloud(k,clean,{quiet=false}={}){
   if(!cloud||!db||!uid)return;
-  beginSyncOperation();
-  try{await setDoc(doc(db,'users',uid,'days',k),{...clean,updatedAt:serverTimestamp()},{merge:true});clearDayDirty(k,clean.clientUpdatedAt);if(k===todayKey())scheduleLeaderboardPublish();endSyncOperation()}
-  catch(err){console.error('Day sync failed',err);endSyncOperation({error:true});if(!quiet)toast('Saved on this device. Cloud sync failed.');throw err}
+  const savingUid=uid,savingUser=currentUser;beginSyncOperation();
+  try{await setDoc(doc(db,'users',savingUid,'days',k),{...clean,updatedAt:serverTimestamp()},{merge:true});if(uid!==savingUid||currentUser!==savingUser)return;clearDayDirty(k,clean.clientUpdatedAt);if(k===todayKey())scheduleLeaderboardPublish();endSyncOperation()}
+  catch(err){if(uid!==savingUid||currentUser!==savingUser)return;console.error('Day sync failed',err);endSyncOperation({error:true});if(!quiet)toast('Saved on this device. Cloud sync failed.');throw err}
 }
 async function saveDay(k,{quiet=false,awaitCloud=true,render=true}={}){
   if(!validDateKey(k))return;
   const clean={...dayData(k),clientUpdatedAt:Date.now()};days[k]=clean;markDayDirty(k);
   saveLocal();if(render)renderDayViews();
   if(!cloud)return;
-  const previous=daySaveChains.get(k)||Promise.resolve();
-  const next=previous.catch(()=>{}).then(()=>persistDayToCloud(k,{...days[k]},{quiet}));
+  const queuedUid=uid,queuedUser=currentUser,previous=daySaveChains.get(k)||Promise.resolve();
+  const next=previous.catch(()=>{}).then(()=>{if(!cloud||uid!==queuedUid||currentUser!==queuedUser)return;return persistDayToCloud(k,{...days[k]},{quiet})});
   daySaveChains.set(k,next);
   const release=()=>{if(daySaveChains.get(k)===next)daySaveChains.delete(k)};
   if(!awaitCloud){next.catch(err=>console.error('Deferred day sync failed',err)).finally(release);return}
@@ -807,7 +807,7 @@ function recentWeekHistory(){
 }
 function streak(){let n=0,d=new Date();for(let i=0;i<730;i++){if(workDays.includes(d.getDay())){const k=dateKey(d);if(k===todayKey()&&completion(k)<100){d.setDate(d.getDate()-1);continue}if(completion(k)>=100)n++;else break}d.setDate(d.getDate()-1)}return n}
 
-async function changeMetric(metric,delta){if(!canEditDate(selectedDate))return lockedToast();const d=dayData(selectedDate);d[metric]=Math.max(0,d[metric]+delta);addEvent(d,metric,`${metric} ${delta>0?'+1':'−1'}`,delta);days[selectedDate]=d;haptic();await saveDay(selectedDate)}
+async function changeMetric(metric,delta){if(!canEditDate(selectedDate))return lockedToast();const d=dayData(selectedDate);d[metric]=Math.max(0,d[metric]+delta);addEvent(d,metric,`${metric} ${delta>0?'+1':'−1'}`,delta);days[selectedDate]=d;haptic();await saveDay(selectedDate,{awaitCloud:false})}
 async function toggleTimer(){if(!canEditDate(selectedDate))return lockedToast();const d=dayData(selectedDate);if(d.timerStartedAt){d.knockSeconds=liveKnockSeconds(d);d.timerStartedAt=null;addEvent(d,'knock','Knocking paused')}else{d.timerStartedAt=Date.now();d.alarmPlayed=false;addEvent(d,'knock','Knocking started')}days[selectedDate]=d;haptic(18);await saveDay(selectedDate,{awaitCloud:false});ensureTick()}
 async function resetKnock(){if(!canEditDate(selectedDate))return lockedToast();if(!confirm('Reset knocking time for this date?'))return;const d=dayData(selectedDate);d.knockSeconds=0;d.timerStartedAt=null;d.alarmPlayed=false;addEvent(d,'knock','Knocking reset');days[selectedDate]=d;await saveDay(selectedDate);ensureTick()}
 async function finaliseExpiredTimers({awaitCloud=false}={}){const today=todayKey();for(const [k,raw] of Object.entries(days)){if(k<today&&raw?.timerStartedAt){const d=dayData(k);d.knockSeconds=liveKnockSeconds(d);d.timerStartedAt=null;d.alarmPlayed=true;addEvent(d,'knock','Knocking stopped automatically at day close');days[k]=d;await saveDay(k,{quiet:true,awaitCloud,render:false})}}}
@@ -1962,7 +1962,7 @@ async function updateAppointmentRecord(id,sourceDate,changes){
   const d=dayData(sourceDate),index=d.appointments.findIndex(a=>String(a.id)===String(id));
   if(index<0)return toast('Appointment could not be found');
   d.appointments[index]={...d.appointments[index],...changes,updatedAt:Date.now()};
-  days[sourceDate]=d;await saveDay(sourceDate);renderAll();
+  days[sourceDate]=d;await saveDay(sourceDate,{awaitCloud:false});renderAll();
 }
 let pendingFollowUpAppointment=null;
 let pendingOutcomeAppointment=null;
@@ -2341,7 +2341,7 @@ function renderTaskAssigneePicker(preferredUid=uid){
 }
 function openTaskComposer(){
   const modal=$('#taskComposerModal');if(!modal)return;const date=selectedDate>=todayKey()?selectedDate:todayKey(),now=new Date(),roundedMinutes=Math.ceil((now.getMinutes()+5)/5)*5,next=new Date(now);next.setMinutes(roundedMinutes,0,0);
-  $('#taskForm')?.reset();$('#taskDate').value=date;$('#taskDate').min=todayKey();$('#taskTime').value=date===todayKey()?`${String(next.getHours()).padStart(2,'0')}:${String(next.getMinutes()).padStart(2,'0')}`:'09:00';renderTaskAssigneePicker(uid);$('#taskFormError').textContent='';$('#taskFormError').classList.add('hidden');modal.classList.remove('hidden');modal.setAttribute('aria-hidden','false');document.body.classList.add('task-composer-open');requestAnimationFrame(()=>$('#taskTitle')?.focus({preventScroll:true}));
+  delete $('#taskForm').dataset.pendingTaskId;$('#taskForm')?.reset();$('#taskDate').value=date;$('#taskDate').min=todayKey();$('#taskTime').value=date===todayKey()?`${String(next.getHours()).padStart(2,'0')}:${String(next.getMinutes()).padStart(2,'0')}`:'09:00';renderTaskAssigneePicker(uid);$('#taskFormError').textContent='';$('#taskFormError').classList.add('hidden');modal.classList.remove('hidden');modal.setAttribute('aria-hidden','false');document.body.classList.add('task-composer-open');requestAnimationFrame(()=>$('#taskTitle')?.focus({preventScroll:true}));
 }
 function closeTaskComposer(){const modal=$('#taskComposerModal');modal?.classList.add('hidden');modal?.setAttribute('aria-hidden','true');document.body.classList.remove('task-composer-open')}
 function normaliseAssignedTeamTask(data={},id=''){const source=validDateKey(data.createdDate)?data.createdDate:todayKey(),task=normaliseTaskRecord({...data,id:data.taskId||data.id||id},source);return{...task,taskId:String(data.taskId||task.id),teamTaskId:String(id||data.teamTaskId||task.id),isTeamAssigned:true}}
@@ -2355,12 +2355,21 @@ function localTaskEntry(id){for(const [sourceDate,raw]of Object.entries(days)){c
 function teamTaskPayload(task){return{taskId:String(task.id),title:task.title,note:task.note||'',date:task.scheduledDate,time:task.time,scheduledDate:task.scheduledDate,scheduledAt:task.scheduledAt,createdDate:task.createdDate,at:task.at,setterUid:task.setterUid,setterName:task.setterName,assignedToUid:task.assignedToUid,assignedToName:task.assignedToName,completedAt:task.completedAt||null,updatedAt:serverTimestamp()}}
 async function syncTeamTaskAssignment(task){if(!cloud||!db||accountMode!=='team'||!teamId||!task?.id||!task.assignedToUid||task.assignedToUid===uid)return;await setDoc(doc(db,'teams',teamId,'tasks',String(task.id)),{...teamTaskPayload(task),createdAt:serverTimestamp()})}
 async function addTaskFromForm(form){
+  const submit=form.querySelector('button[type="submit"]');if(submit.disabled)return;
   const data=new FormData(form),title=cleanText(data.get('title'),160),note=cleanText(data.get('note'),1000),date=String(data.get('date')||''),time=String(data.get('time')||''),assignedToUid=String(data.get('assignedToUid')||uid),error=$('#taskFormError');
   if(!title||!validDateKey(date)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)){error.textContent='Add a task, date and time.';error.classList.remove('hidden');return}
-  const scheduledAt=new Date(`${date}T${time}`).getTime();if(!Number.isFinite(scheduledAt)){error.textContent='Choose a valid date and time.';error.classList.remove('hidden');return}
-  const submit=form.querySelector('button[type="submit"]');submit.disabled=true;submit.textContent='Saving…';const createdDate=todayKey(),member=appointmentAssignees.find(item=>String(item.uid)===assignedToUid),task=normaliseTaskRecord({id:uuid(),title,note,date,time,scheduledDate:date,scheduledAt,createdDate,assignedToUid,assignedToName:assignedToUid===uid?displayAgentName():teamAppointmentMemberName(member||{uid:assignedToUid}),setterUid:uid,setterName:displayAgentName(),at:Date.now()},createdDate),day=dayData(createdDate);day.tasks.push(task);days[createdDate]=day;
-  await saveDay(createdDate,{quiet:true,awaitCloud:false});closeTaskComposer();renderTimeline();haptic();toast(assignedToUid===uid?'Task added':`Task assigned to ${task.assignedToName}`);if(assignedToUid!==uid)syncTeamTaskAssignment(task).catch(err=>{console.error('Team task assignment failed',err);toast('Task saved. Team assignment needs sync.')});submit.disabled=false;submit.textContent='Add task';
+  const scheduledAt=new Date(`${date}T${time}`).getTime();if(!Number.isFinite(scheduledAt)||date<todayKey()){error.textContent='Choose a valid date and time.';error.classList.remove('hidden');return}
+  submit.disabled=true;submit.textContent='Saving…';
+  try{
+    const createdDate=todayKey(),member=appointmentAssignees.find(item=>String(item.uid)===assignedToUid),task=normaliseTaskRecord({id:form.dataset.pendingTaskId||(form.dataset.pendingTaskId=uuid()),title,note,date,time,scheduledDate:date,scheduledAt,createdDate,assignedToUid,assignedToName:assignedToUid===uid?displayAgentName():teamAppointmentMemberName(member||{uid:assignedToUid}),setterUid:uid,setterName:displayAgentName(),at:Date.now()},createdDate),day=dayData(createdDate);
+    day.tasks=day.tasks.filter(item=>item.id!==task.id);day.tasks.push(task);days[createdDate]=day;
+    await saveDay(createdDate,{quiet:true,awaitCloud:false,render:false});
+    closeTaskComposer();delete form.dataset.pendingTaskId;renderTimeline();haptic();toast(assignedToUid===uid?'Task added':`Task assigned to ${task.assignedToName}`);
+    if(assignedToUid!==uid)syncTeamTaskAssignment(task).catch(err=>{console.error('Team task assignment failed',err);toast('Task saved. Team assignment needs sync.')});
+  }catch(err){console.error('Task save failed',err);error.textContent='Could not finish saving. Please try again.';error.classList.remove('hidden')}
+  finally{submit.disabled=false;submit.textContent='Add task'}
 }
+
 async function toggleTimelineTask(id){
   const local=localTaskEntry(id),team=assignedTeamTasks.find(item=>String(item.id)===String(id)),current=team||local?.task;if(!current)return toast('Task could not be found');const completedAt=current.completedAt?0:Date.now(),updated=normaliseTaskRecord({...current,completedAt},current.createdDate||local?.sourceDate||todayKey());
   if(local){const day=dayData(local.sourceDate);day.tasks=day.tasks.map(task=>String(task.id)===String(id)?updated:task);days[local.sourceDate]=day;await saveDay(local.sourceDate,{quiet:true,awaitCloud:false})}
@@ -2390,12 +2399,13 @@ async function addAppointment({contactName,contactNumber,address,date,time,type,
   const d=dayData(createdDate);
   const recentDuplicate=d.appointments.find(a=>[appointmentCreatedDate(a,createdDate),appointmentScheduledDate(a,createdDate),a.time,appointmentType(a),String(a.contactName||'').trim().toLowerCase(),String(a.address||'').trim().toLowerCase()].join('|')===signature&&Date.now()-(Number(a.at)||0)<15000);
   if(recentDuplicate){appointmentSubmitLocks.delete(signature);return recentDuplicate}
+  try{
   let linkedProspect=null;if(normaliseAppointmentType(type)==='LAP')linkedProspect=await connectListingAppointmentToPipeline({contactName,contactNumber,address});
   const assignedMember=appointmentAssignees.find(entry=>String(entry.uid||'')===String(assignedToUid||''));const appointment=normaliseAppointmentRecord({id:uuid(),contactName,contactNumber,address,date,time,type,auction:type==='OFI'&&auction,types:[type],prospectId:linkedProspect?.id||prospectId||'',assignedToUid:String(assignedToUid||uid),assignedToName:String(assignedToUid||uid)===uid?displayAgentName():teamAppointmentMemberName(assignedMember||{uid:assignedToUid}),setterUid:uid,setterName:displayAgentName(),createdDate,logDate:createdDate,scheduledDate:date,scheduledAt,at:Date.now()},createdDate);
   d.appointments.push(appointment);
   const bookedForMeta=String(assignedToUid||uid)!==String(uid)&&appointment.assignedToName?` · Booked for ${teamAppointmentSetterFirstName(appointment.assignedToName)}`:'';addEvent(d,'appointment',`${type} · ${contactName} · ${address} · booked for ${date} ${time}${bookedForMeta}`);
   days[createdDate]=d;
-  try{await saveDay(createdDate);try{await syncTeamAppointmentAssignment(appointment)}catch(err){console.error('Team appointment assignment failed',err);toast('Appointment saved. Team assignment needs sync.')}renderAppointments();toast(date===createdDate?'Appointment logged':'Appointment logged and reminder created');return appointment}
+  await saveDay(createdDate,{awaitCloud:false});syncTeamAppointmentAssignment(appointment).catch(err=>{console.error('Team appointment assignment failed',err);toast('Appointment saved. Team assignment needs sync.')});renderAppointments();toast(date===createdDate?'Appointment logged':'Appointment logged and reminder created');return appointment}
   finally{appointmentSubmitLocks.delete(signature)}
 }
 function beginEditAppointment(id,sourceDate){
@@ -2427,7 +2437,7 @@ async function editAppointment({contactName,contactNumber,address,date,time,type
   const existing=d.appointments[index],scheduledAt=new Date(`${date}T${time}`).getTime();if(!validDateKey(date)||!Number.isFinite(scheduledAt))return toast('Appointment date or time is invalid');
   let prospectId=existing.prospectId||'';if(normaliseAppointmentType(type)==='LAP'){const linked=await connectListingAppointmentToPipeline({contactName,contactNumber,address});prospectId=linked?.id||prospectId}
   const previousAssignedToUid=String(existing.assignedToUid||uid),assignedMember=appointmentAssignees.find(entry=>String(entry.uid||'')===String(assignedToUid||''));d.appointments[index]=normaliseAppointmentRecord({...existing,contactName,contactNumber,address,date,scheduledDate:date,time,type,auction:type==='OFI'&&auction,types:[type],scheduledAt,prospectId,assignedToUid:String(assignedToUid||uid),assignedToName:String(assignedToUid||uid)===uid?displayAgentName():teamAppointmentMemberName(assignedMember||{uid:assignedToUid}),setterUid:existing.setterUid||uid,setterName:existing.setterName||displayAgentName(),updatedAt:Date.now()},sourceDate);
-  addEvent(d,'appointment',`${type} · ${contactName} · appointment updated for ${date} ${time}`);days[sourceDate]=d;await saveDay(sourceDate);try{await syncTeamAppointmentAssignment(d.appointments[index],previousAssignedToUid)}catch(err){console.error('Team appointment update failed',err);toast('Appointment updated. Team assignment needs sync.')}editingAppointment=null;renderAll();toast('Appointment updated');return d.appointments[index];
+  addEvent(d,'appointment',`${type} · ${contactName} · appointment updated for ${date} ${time}`);days[sourceDate]=d;await saveDay(sourceDate,{awaitCloud:false});syncTeamAppointmentAssignment(d.appointments[index],previousAssignedToUid).catch(err=>{console.error('Team appointment update failed',err);toast('Appointment updated. Team assignment needs sync.')});editingAppointment=null;renderAll();toast('Appointment updated');return d.appointments[index];
 }
 async function deleteAppointment(id,sourceDate=appointmentDate){
   const d=dayData(sourceDate),index=d.appointments.findIndex(a=>String(a.id)===String(id));
@@ -2435,7 +2445,7 @@ async function deleteAppointment(id,sourceDate=appointmentDate){
   const appointment=d.appointments[index],exportId=calendarExportId(appointment,sourceDate);
   d.appointments.splice(index,1);days[sourceDate]=d;
   const ids=calendarExportIds();ids.delete(exportId);localStorage.setItem(calendarExportStorageKey(),JSON.stringify([...ids]));
-  await saveDay(sourceDate);try{await removeTeamAppointmentAssignment(appointment)}catch(err){console.error('Team appointment delete failed',err)}renderAll();toast('Appointment deleted');
+  await saveDay(sourceDate,{awaitCloud:false});removeTeamAppointmentAssignment(appointment).catch(err=>console.error('Team appointment delete failed',err));renderAll();toast('Appointment deleted');
 }
 
 
@@ -2763,13 +2773,17 @@ function closeManualCallOutcome({clear=true}={}){const modal=$('#manualCallOutco
 function showManualCallOutcome(){const pending=readPendingManualCall();if(!pending?.number||pending.outcomeLogged)return false;const modal=$('#manualCallOutcomeModal');if(!modal)return false;$('#manualCallOutcomeNumber').textContent=displayDialNumber(pending.number);const buyerButton=$('#manualCallSaveBuyer');if(buyerButton)buyerButton.textContent=pending.buyerProspectId?'Update buyer':'Add as buyer';$('#manualCallOutcomeOptions').classList.remove('hidden');$('#manualCallPostActions').classList.add('hidden');modal.classList.add('open');modal.setAttribute('aria-hidden','false');document.body.classList.add('manual-call-outcome-open');return true}
 function maybeShowManualCallOutcome(){const pending=readPendingManualCall();if(!pending?.number||pending.outcomeLogged)return false;return showManualCallOutcome()}
 function launchManualCall(){const number=normaliseDialNumber(manualDiallerNumber);if(number.replace(/\D/g,'').length<6)return;const pending={id:prospectId(),number,launchedAt:Date.now(),outcomeLogged:false};writePendingManualCall(pending);closeManualDialler();showManualCallOutcome();window.location.href=`tel:${number}`}
-async function applyManualCallOutcome(outcome,pending){if(!pending?.id||outcome==='Cancelled')return;const key=todayKey(),d=dayData(key);if(d.events.some(event=>event?.sourceInteractionId===pending.id))return;const connected=outcome==='Connected',at=Date.now();d.calls=Math.max(0,d.calls+1);d.events.push({id:uuid(),type:'calls',label:`Quick Call · ${outcome}`,delta:1,at,sourceInteractionId:pending.id,phone:pending.number});if(connected){d.connects=Math.max(0,d.connects+1);d.events.push({id:uuid(),type:'connects',label:'Quick Call · Connected',delta:1,at,sourceInteractionId:pending.id,phone:pending.number})}d.events=d.events.slice(-500);days[key]=d;haptic();await saveDay(key)}
+let manualCallSaveBusy=false;
+async function applyManualCallOutcome(outcome,pending){if(!pending?.id||outcome==='Cancelled')return;const key=todayKey(),d=dayData(key);if(d.events.some(event=>event?.sourceInteractionId===pending.id))return;const connected=outcome==='Connected',at=Date.now();d.calls=Math.max(0,d.calls+1);d.events.push({id:uuid(),type:'calls',label:`Quick Call · ${outcome}`,delta:1,at,sourceInteractionId:pending.id,phone:pending.number});if(connected){d.connects=Math.max(0,d.connects+1);d.events.push({id:uuid(),type:'connects',label:'Quick Call · Connected',delta:1,at,sourceInteractionId:pending.id,phone:pending.number})}d.events=d.events.slice(-500);days[key]=d;haptic();await saveDay(key,{awaitCloud:false})}
 async function saveManualCallOutcome(outcome){
+  if(manualCallSaveBusy)return;manualCallSaveBusy=true;
+  try{
   const pending=readPendingManualCall();if(!pending?.number)return closeManualCallOutcome();manualCallOutcome=outcome;const buyerMatchId=cleanText(pending.buyerMatchId,180),buyerId=cleanText(pending.buyerProspectId,80),isBuyerMatch=Boolean(buyerId&&buyerMatchId);
   if(outcome!=='Cancelled'){try{await applyManualCallOutcome(outcome,pending)}catch(err){console.error('Quick call metrics failed to save',err);toast('Call logged locally. Please check sync.')}}
   completeBuyerSessionCall(outcome,pending);await logManualCallToBuyer(outcome,pending);const updated={...pending,outcome,outcomeLogged:true,loggedAt:Date.now()};writePendingManualCall(updated);renderAll();
   if(isBuyerMatch){closeManualCallOutcome();if(outcome==='Connected'){openBuyerMatchOutcome(buyerId,buyerMatchId,{contactMethod:'call'});return}if(outcome==='Cancelled'){toast('Property match left open');return}toast('Contact attempt saved · property stays open');return}
   $('#manualCallOutcomeOptions').classList.add('hidden');$('#manualCallPostActions').classList.remove('hidden');$('#manualCallResultIcon').textContent=outcome==='Cancelled'?'×':'✓';$('#manualCallResultTitle').textContent=outcome==='Cancelled'?'Call cancelled':'Call logged';$('#manualCallResultMeta').textContent=outcome==='Connected'?'+1 call · +1 connect':outcome==='Cancelled'?'No metrics added':'+1 call · No connect';
+  }finally{manualCallSaveBusy=false}
 }
 function manualCallPhone(){return readPendingManualCall()?.number||''}
 function saveManualCallAsContact(){const pending=readPendingManualCall(),phone=manualCallPhone(),buyer=pending?.source==='buyer-session'?buyerSession.contacts.find(item=>item.id===pending.buyerId):null;closeManualCallOutcome();switchView('prospectingView');setProspectorSection('contacts');openProspectEditor('',{prefill:{phone,name:buyer?.name||pending?.buyerName||'',address:buyer?.address||''}});requestAnimationFrame(()=>$('#prospectEditor input[name="name"]')?.focus({preventScroll:true}))}
@@ -3661,7 +3675,7 @@ async function connectListingAppointmentToPipeline(details){
   if(!p){p=normaliseProspect({id:prospectId(),name:details.contactName,phone:details.contactNumber,address:details.address,source:'Listing appointment',stage:'Appointment Booked',temperature:'Hot',motivation:5,sellingTimeframe:'Now',createdAt:Date.now(),updatedAt:Date.now()});prospects.unshift(p);created=true}
   else if(!p.sellingTimeframe||!prospectHasContactProfile(p)){const previous=p.sellingTimeframe,nextTimeframe=p.sellingTimeframe||'Now',positionTags=prospectHasActiveBuyerRole(p)?Array.from(new Set(['Buyer Seller',...buyerPositionTags(p)])):buyerPositionTags(p);prospects=prospects.map(x=>x.id===p.id?normaliseProspect({...x,sellerProfileActive:true,buyerPositionTags:positionTags,buyerSeller:positionTags.includes('Buyer Seller'),sellingTimeframe:nextTimeframe,stage:x.stage==='Nurture'?'Appointment Booked':x.stage,updatedAt:Date.now()}):x);prospectInteractions.push({id:prospectId(),prospectId:p.id,date:todayKey(),at:Date.now(),type:'Pipeline',outcome:'Selling timeframe updated',note:`Selling timeframe changed from ${previous||'Not set'} to ${nextTimeframe}.`,nextFollowUp:''});p=prospectById(p.id)}
   if(created)prospectInteractions.push({id:prospectId(),prospectId:p.id,date:todayKey(),at:Date.now(),type:'Pipeline',outcome:'Added to seller pipeline',note:'Added automatically from a listing appointment.',nextFollowUp:''});
-  await saveProspecting({render:false});return p;
+  await saveProspecting({render:false,awaitCloud:false});return p;
 }
 function filteredProspects(){const q=cleanText($('#prospectSearch')?.value||'',120).toLowerCase();let list=prospectSection==='contacts'?[...(prospectContactsMode==='archived'?archivedProspects():activeProspects())].sort((a,b)=>a.name.localeCompare(b.name,'en-AU',{sensitivity:'base'})):priorityProspects();if(prospectSection!=='contacts'){if(prospectFilter==='overdue')list=list.filter(p=>p.nextFollowUp&&p.nextFollowUp<todayKey());else if(prospectFilter==='today')list=list.filter(p=>p.nextFollowUp===todayKey());else if(prospectFilter==='hot')list=list.filter(p=>p.temperature==='Hot')}if(q)list=list.filter(p=>[p.name,p.phone,p.email,p.address,p.suburb,p.source,p.stage,...p.tags].join(' ').toLowerCase().includes(q));return list}
 function dueText(p){if(!p.nextFollowUp)return p.lastContact?`Last contacted ${fmtDate(p.lastContact)}`:'New contact';if(p.nextFollowUp<todayKey())return `Overdue · ${fmtDate(p.nextFollowUp)}`;if(p.nextFollowUp===todayKey())return 'Follow-up due today';return `Follow-up ${fmtDate(p.nextFollowUp)}`}
@@ -4275,19 +4289,19 @@ document.addEventListener('click',e=>{
   form.querySelector('[data-knock-contact-results]').innerHTML='';form.querySelector('[data-knock-contact-search]').value=p.name||'';form.elements.date?.focus({preventScroll:true});
 });
 function findKnockingProspect(name,phone,address){return findProspectForAppointment({contactName:name,contactNumber:phone,address})}
-async function addKnockingContact({name,phone,address,source}){let p=findKnockingProspect(name,phone,address);if(p)return p;p=normaliseProspect({id:prospectId(),name,phone,address,source,stage:'Nurture',temperature:'Cold',createdAt:Date.now(),updatedAt:Date.now()});prospects.unshift(p);prospects=normaliseProspects(prospects);await saveProspecting({render:false});return p}
+async function addKnockingContact({name,phone,address,source}){let p=findKnockingProspect(name,phone,address);if(p)return p;p=normaliseProspect({id:prospectId(),name,phone,address,source,stage:'Nurture',temperature:'Cold',createdAt:Date.now(),updatedAt:Date.now()});prospects.unshift(p);prospects=normaliseProspects(prospects);await saveProspecting({render:false,awaitCloud:false});return p}
 async function updateKnockingLogEntry(entry,values){
-  const p=prospects.find(x=>String(x.id)===String(entry.prospectId));if(p){p.name=values.name;p.phone=values.phone;p.address=values.address;p.updatedAt=Date.now();await saveProspecting({render:false})}
-  if(entry.appointmentId){const d=dayData(entry.createdDate),a=d.appointments.find(x=>String(x.id)===String(entry.appointmentId));if(a){a.contactName=values.name;a.contactNumber=values.phone;a.address=values.address;a.date=values.date;a.scheduledDate=values.date;a.time=values.time;a.scheduledAt=new Date(`${values.date}T${values.time}`).getTime();days[entry.createdDate]=d;await saveDay(entry.createdDate)}}
+  const p=prospects.find(x=>String(x.id)===String(entry.prospectId));if(p){p.name=values.name;p.phone=values.phone;p.address=values.address;p.updatedAt=Date.now();await saveProspecting({render:false,awaitCloud:false})}
+  if(entry.appointmentId){const d=dayData(entry.createdDate),a=d.appointments.find(x=>String(x.id)===String(entry.appointmentId));if(a){a.contactName=values.name;a.contactNumber=values.phone;a.address=values.address;a.date=values.date;a.scheduledDate=values.date;a.time=values.time;a.scheduledAt=new Date(`${values.date}T${values.time}`).getTime();days[entry.createdDate]=d;await saveDay(entry.createdDate,{awaitCloud:false})}}
   Object.assign(entry,values);saveKnockingSessionState();closeKnockingCapture();renderKnockingSession();toast('Session entry updated')
 }
 async function submitKnockingCapture(form){
   const f=new FormData(form),name=cleanText(f.get('name'),120),phone=cleanText(f.get('phone'),50),address=cleanText(f.get('address'),240),error=form.querySelector('[data-knock-capture-error]');
   if(!name||!phone||!address){error.textContent='Add the client name, phone number and property address.';error.classList.remove('hidden');return}
-  const submit=form.querySelector('button[type=submit]');submit.disabled=true;submit.textContent='Saving…';
+  const submit=form.querySelector('button[type=submit]');if(submit.disabled)return;submit.disabled=true;submit.textContent='Saving…';
   try{
     const type=knockingCaptureType,date=String(f.get('date')||''),time=String(f.get('time')||'');
-    if(knockingEditingLogId){const found=findDailyKnockingLogEntry(knockingEditingLogId);if(!found)throw new Error('Session entry not found');await updateKnockingLogEntry(found.entry,{name,phone,address,date,time});if(found.session){days[todayKey()]=dayData(todayKey());await saveDay(todayKey())}return}
+    if(knockingEditingLogId){const found=findDailyKnockingLogEntry(knockingEditingLogId);if(!found)throw new Error('Session entry not found');await updateKnockingLogEntry(found.entry,{name,phone,address,date,time});if(found.session){days[todayKey()]=dayData(todayKey());await saveDay(todayKey(),{awaitCloud:false})}return}
     const p=await addKnockingContact({name,phone,address,source:type==='data'?'Doorknocking data':`Doorknocking ${type}`});let appointment=null;
     if(type==='data'){await changeMetric('data',1);knockingSessionStats.data++}else{appointment=await addAppointment({contactName:name,contactNumber:phone,address,date,time,type,prospectId:p.id});if(!appointment){submit.disabled=false;submit.textContent=`Book ${type}`;return}knockingSessionStats[type]++}
     knockingSessionLog.push(normaliseKnockingLogEntry({type,name,phone,address,date,time,prospectId:p.id,appointmentId:appointment?.id||'',createdDate:todayKey(),at:Date.now()}));
@@ -4729,13 +4743,14 @@ function renderDayViews(){renderToday();renderTimeline();renderAppointments();re
 function renderAll(){renderDayViews();renderProspecting();const reviewButton=$('#openDayReview');if(reviewButton)reviewButton.classList.toggle('hidden',new Date().getHours()<17||selectedDate!==todayKey()||!isWorkDayKey(todayKey()));maybeShowDayReview()}
 
 async function startCloud(user,{promptTeamSetup=false}={}){
-  teamInitialisationToken++;unsubDays?.();unsubProfile?.();unsubLeaderboard?.();unsubProspecting?.();unsubMarketPulseInbox?.();unsubTeamMembership?.();unsubTeamMembers?.();unsubAppointmentAssignees?.();unsubAssignedTeamAppointments?.();unsubDays=unsubProfile=unsubLeaderboard=unsubProspecting=unsubMarketPulseInbox=unsubTeamMembership=unsubTeamMembers=unsubAppointmentAssignees=unsubAssignedTeamAppointments=null;currentUser=user;uid=user.uid;loadBuyerSession();cloud=true;loadLocal(uid);marketPulseAutomation={...marketPulseAutomation,state:'waiting',email:normaliseMarketPulseEmail(user.email)};
+  teamInitialisationToken++;unsubDays?.();unsubProfile?.();unsubLeaderboard?.();unsubProspecting?.();unsubMarketPulseInbox?.();unsubTeamMembership?.();unsubTeamMembers?.();unsubAppointmentAssignees?.();unsubAssignedTeamAppointments?.();unsubAssignedTeamTasks?.();unsubDays=unsubProfile=unsubLeaderboard=unsubProspecting=unsubMarketPulseInbox=unsubTeamMembership=unsubTeamMembers=unsubAppointmentAssignees=unsubAssignedTeamAppointments=unsubAssignedTeamTasks=null;currentUser=user;uid=user.uid;loadBuyerSession();cloud=true;loadLocal(uid);marketPulseAutomation={...marketPulseAutomation,state:'waiting',email:normaliseMarketPulseEmail(user.email)};
   const restoredTeamState=restoreCachedTeamState();
   leaderboardEntries=restoredTeamState&&accountMode==='team'?[]:[leaderboardPayload()];
   if(restoredTeamState&&accountMode==='team'){setTeamLayerStatus('connecting');subscribeSecureLeaderboard()}
   else if(restoredTeamState&&accountMode==='solo')setTeamLayerStatus('solo');
   else setTeamLayerStatus('connecting');
   await finaliseExpiredTimers();
+  if(!cloud||uid!==user.uid||currentUser!==user)return;
   syncHasError=false;pendingSyncOperations=0;setSync('','Connecting');clearTimeout(syncTimer);syncTimer=setTimeout(()=>{if($('#syncBadge').dataset.label==='Connecting')refreshSyncStatus()},3500);
   renderLeaderboard();
   unsubDays=onSnapshot(collection(db,'users',uid,'days'),{includeMetadataChanges:true},snap=>{
@@ -4799,14 +4814,15 @@ let viewportFrame=0;
 function updateAppViewport(){
   cancelAnimationFrame(viewportFrame);
   viewportFrame=requestAnimationFrame(()=>{
-    const standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
     const vv=window.visualViewport;
-    const candidates=[window.innerHeight,document.documentElement.clientHeight];
-    if(vv)candidates.push(vv.height+vv.offsetTop);
-    if(standalone)candidates.push(window.screen?.height||0,window.screen?.availHeight||0);
-    const height=Math.round(Math.max(...candidates.filter(Number.isFinite)));
+    // Layout height must follow the window, never the physical screen (rotation/split view).
+    const height=Math.round(window.innerHeight||document.documentElement.clientHeight);
+    const visualHeight=Math.round(vv?.height||height);
     document.documentElement.style.setProperty('--app-height',`${height}px`);
-    document.documentElement.style.setProperty('--visual-height',`${Math.round(vv?.height||window.innerHeight)}px`);
+    document.documentElement.style.setProperty('--visual-height',`${visualHeight}px`);
+    document.documentElement.style.setProperty('--visual-top',`${Math.round(vv?.offsetTop||0)}px`);
+    document.documentElement.classList.toggle('keyboard-open',height-visualHeight>120);
+
   });
 }
 function bindViewport(){
@@ -4818,9 +4834,25 @@ function bindViewport(){
 }
 function resumePendingExternalAction(){if(maybeShowManualCallOutcome())return true;if(resumeHotSpotSmsReturn())return true;if(resumeBuyerMatchSmsReturn())return true;if(resumeAppointmentFollowUpCallReturn())return true;return resumeProspectCallReturn()}
 function handleAppSuspend(){persistOpenContactDraft();if(buyerSession.active)saveBuyerSession();if(pendingProspectingPayload)flushProspectingSave()}
-async function handleAppResume(){updateAppViewport();const rolled=adoptCurrentDay(),resumedExternal=resumePendingExternalAction();try{await finaliseExpiredTimers()}catch(err){console.error('Lifecycle maintenance failed',err)}renderAll();if(rolled)switchView('todayView');if(!resumedExternal&&!resumePendingExternalAction()&&!document.body.classList.contains('daily-briefing-open'))restoreContactDraftWorkflow({silent:true})}
+async function handleAppResume(){
+  if(document.hidden||!startupReady||$('#app')?.classList.contains('hidden'))return;
+  updateAppViewport();const rolled=adoptCurrentDay();resumePendingExternalAction();
+  try{await finaliseExpiredTimers()}catch(err){console.error('Lifecycle maintenance failed',err)}
+  if(rolled){renderAll();switchView('todayView')}
+  else{renderToday();renderTimeline();renderKnockTimerOnly();refreshSyncStatus()}
+  // Keep live forms and workflow DOM intact on warm return; cold-start restoration lives in showApp.
+}
 function scheduleAppResume(delay=140){clearTimeout(appResumeTimer);appResumeTimer=setTimeout(()=>{appResumeTimer=null;handleAppResume().catch(err=>console.error('App resume failed',err))},delay)}
-function bindAppLifecycle(){document.addEventListener('visibilitychange',()=>{if(document.hidden)handleAppSuspend();else scheduleAppResume(120)});window.addEventListener('pagehide',handleAppSuspend);window.addEventListener('pageshow',()=>scheduleAppResume(140));window.addEventListener('focus',()=>scheduleAppResume(160))}
+function bindAppLifecycle(){
+  let suspended=false;
+  const suspend=()=>{if(suspended)return;suspended=true;handleAppSuspend()};
+  const resume=()=>{if(document.hidden||!suspended)return;suspended=false;scheduleAppResume(140)};
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)suspend();else resume()});
+  window.addEventListener('pagehide',suspend);
+  window.addEventListener('pageshow',event=>{if(event.persisted)suspended=true;resume()});
+  window.addEventListener('focus',resume);
+}
+
 function consumerAuthError(error,action='sign in'){
   const code=String(error?.code||'');
   if(code==='auth/invalid-credential'||code==='auth/user-not-found'||code==='auth/wrong-password')return 'Email or password is incorrect.';
@@ -4831,7 +4863,7 @@ function consumerAuthError(error,action='sign in'){
   if(code==='auth/network-request-failed')return 'You appear to be offline. Check your connection and try again.';
   return action==='create'?'We couldn’t create your account. Please try again.':'We couldn’t sign you in. Please try again.';
 }
-async function init(){bindViewport();bindAppLifecycle();loadLocal('local');await finaliseExpiredTimers();if(!configured()){revealStartupFallback('AGNT is temporarily unavailable. Please try again shortly.');return}startupReady=false;startupDeviceOnly=false;clearTimeout(startupWatchdog);startupWatchdog=setTimeout(()=>revealStartupFallback(),STARTUP_WATCHDOG_MS);try{const fb=initializeApp(firebaseConfig);auth=getAuth(fb);await setPersistence(auth,browserLocalPersistence);db=initializeFirestore(fb,{experimentalAutoDetectLongPolling:true,localCache:memoryLocalCache()});onAuthStateChanged(auth,u=>{if(startupDeviceOnly)return;if(u){if(creatingAccount){currentUser=u;return}startCloud(u).catch(err=>{console.error('Cloud session failed to start',err);revealStartupFallback('AGNT could not finish loading. Please check your connection and try again.')})}else{markStartupReady();clearActiveSession();$('#bootGate')?.classList.add('hidden');setAuthScreenActive(true);$('#app').classList.add('hidden');$('#authGate').classList.remove('hidden')}})}catch(err){console.error(err);revealStartupFallback('AGNT is temporarily unavailable. Please try again shortly.')}}
+async function init(){bindViewport();bindAppLifecycle();loadLocal('local');await finaliseExpiredTimers();if(!configured()){revealStartupFallback('AGNT is temporarily unavailable. Please try again shortly.');return}startupReady=false;startupDeviceOnly=false;clearTimeout(startupWatchdog);startupWatchdog=setTimeout(()=>revealStartupFallback(),STARTUP_WATCHDOG_MS);try{const fb=initializeApp(firebaseConfig);auth=getAuth(fb);await setPersistence(auth,browserLocalPersistence);db=initializeFirestore(fb,{experimentalAutoDetectLongPolling:true,localCache:memoryLocalCache()});onAuthStateChanged(auth,u=>{if(startupDeviceOnly)return;if(u){if(creatingAccount){currentUser=u;return}if(cloud&&uid===u.uid&&startupReady)return;startCloud(u).catch(err=>{console.error('Cloud session failed to start',err);revealStartupFallback('AGNT could not finish loading. Please check your connection and try again.')})}else{markStartupReady();clearActiveSession();$('#bootGate')?.classList.add('hidden');setAuthScreenActive(true);$('#app').classList.add('hidden');$('#authGate').classList.remove('hidden')}})}catch(err){console.error(err);revealStartupFallback('AGNT is temporarily unavailable. Please try again shortly.')}}
 function showAuthMessage(msg){$('#authMessage').textContent=msg}
 function switchView(id){if(!document.getElementById(id)?.classList.contains('view'))id='todayView';if(id!=='appointmentsView'&&appointmentHistoryMode){appointmentQuickReturnHome=false;setAppointmentHistoryScreen(null)}$$('.tabbar button').forEach(b=>b.classList.toggle('active',b.dataset.view===id));$$('.view').forEach(v=>v.classList.toggle('active',v.id===id));updateTopbar(id);updateBackTodayVisibility(id);if(id==='scheduleView'){renderTimeline();setTodayPage(todayPage);}if(id==='appointmentsView')renderAppointments();if(id==='prospectingView')renderProspecting();if(id==='insightsView')renderInsights()}
 
@@ -5228,7 +5260,7 @@ $$('[name=appearancePreference]').forEach(el=>el.addEventListener('change',()=>{
 $('#saveSettings').onclick=async()=>{const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;calendarPreference=$('[name=calendarPreference]:checked')?.value==='apple'?'apple':'outlook';appearancePreference=normaliseAppearance($('[name=appearancePreference]:checked')?.value);applyAppearance(appearancePreference);saveLocal();await saveTargets();if(cloud&&accountMode==='team'&&teamId&&uid){try{await setDoc(doc(db,'teams',teamId,'members',uid),{name:agentName,updatedAt:serverTimestamp()},{merge:true})}catch(err){console.error('Team profile name sync failed',err)}}renderAll();toast('Settings saved')};
 $('#signOut').onclick=async()=>{clearActiveSession();if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
 function mergeBackupRecords(current=[],incoming=[]){const byId=new Map();[...(Array.isArray(current)?current:[]),...(Array.isArray(incoming)?incoming:[])].forEach((item,index)=>{if(!item||typeof item!=='object')return;const id=cleanText(item.id,180)||`backup-record-${index}`;byId.set(id,item)});return[...byId.values()]}
-function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.41.27',exportedAt:new Date().toISOString(),targets,workDays,agentName,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
+function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.41.28',exportedAt:new Date().toISOString(),targets,workDays,agentName,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
 function restoreBuyerSessionBackup(value){if(!value||!Array.isArray(value.contacts))return false;buyerSession={contacts:value.contacts.map((contact,index)=>({id:cleanText(contact.id,80)||`buyer_${index}`,name:cleanText(contact.name,120)||'Unknown buyer',phone:normaliseDialNumber(contact.phone),address:cleanText(contact.address,240),doNotSms:Boolean(contact.doNotSms),status:cleanText(contact.status,40)})).filter(contact=>contact.phone),index:Math.max(0,Number(value.index)||0),active:Boolean(value.active),visible:false,fileName:cleanText(value.fileName,160),importedAt:Number(value.importedAt)||0};buyerSession.index=Math.min(buyerSession.index,buyerSession.contacts.length);return saveBuyerSession()}
 function syncImportedBackup(dayKeys=[],prospectingIncluded=false){if(!cloud)return;saveTargets().catch(err=>console.error('Imported settings sync failed',err));dayKeys.forEach(key=>saveDay(key,{quiet:true,awaitCloud:false,render:false}).catch?.(err=>console.error('Imported day sync failed',err)));if(prospectingIncluded)saveProspecting({render:false,awaitCloud:false}).catch(err=>console.error('Imported prospecting sync failed',err))}
 $('#exportData').onclick=()=>{const blob=new Blob([JSON.stringify(completeBackupPayload(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`agnt-complete-backup-${todayKey()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),0)};
@@ -5247,7 +5279,7 @@ window.addEventListener('error',event=>console.error('Unhandled app error',event
 window.addEventListener('unhandledrejection',event=>console.error('Unhandled promise rejection',event.reason));
 renderProspecting();
 if('serviceWorker'in navigator)window.addEventListener('load',async()=>{try{const reg=await navigator.serviceWorker.register('./service-worker.js');await reg.update()}catch(err){console.warn('Offline cache registration failed',err)}});
-setInterval(()=>{const rolled=adoptCurrentDay(),currentDay=todayKey();if(rolled){invalidateSellerPriorityCache({delay:200});finaliseExpiredTimers().then(()=>{renderAll();switchView('todayView')}).catch(err=>console.error('Daily maintenance failed',err))}if(selectedDate===currentDay){renderNowCard();if($('#scheduleView')?.classList.contains('active'))renderTimeline()}maybeShowDayReview();updateAppViewport();if(cloud)scheduleLeaderboardPublish()},30000);
+setInterval(()=>{if(document.hidden||!startupReady||$('#app')?.classList.contains('hidden'))return;const rolled=adoptCurrentDay(),currentDay=todayKey();if(rolled){invalidateSellerPriorityCache({delay:200});finaliseExpiredTimers().then(()=>{renderAll();switchView('todayView')}).catch(err=>console.error('Daily maintenance failed',err))}if(selectedDate===currentDay){renderNowCard();if($('#scheduleView')?.classList.contains('active'))renderTimeline()}maybeShowDayReview();updateAppViewport();if(cloud)scheduleLeaderboardPublish()},30000);
 init().catch(err=>{console.error('AGNT initialisation failed',err);$('#bootGate')?.classList.add('hidden');setAuthScreenActive(true);$('#authGate')?.classList.remove('hidden');showAuthMessage('AGNT could not finish loading. Please try again.')});
 
 loadBuyerSession();

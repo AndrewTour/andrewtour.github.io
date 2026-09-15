@@ -1101,3 +1101,31 @@ html[data-theme="dark"] .scheduled-day-quick-menu button:active{border-color:#39
 #openMarketPulseHome{transform:none!important}
 #openMarketPulseHome:active{transform:scale(.94)!important}
 .seller-priority-deferral-sheet{max-height:calc(100dvh - 20px);overflow-y:auto;overscroll-behavior:contain}
+
+/* v1.41.28: retain approved controls; allow intrinsic rows and visible-viewport sheets. */
+.task-composer-modal{
+  top:var(--visual-top,0px);bottom:auto;height:var(--visual-height,100dvh);
+  min-height:0;overflow-y:auto;box-sizing:border-box;
+}
+.task-composer-card{
+  min-height:0;max-height:calc(var(--visual-height,100dvh) - max(24px,env(safe-area-inset-top)) - max(24px,env(safe-area-inset-bottom)));
+  flex-shrink:0;overscroll-behavior:contain;
+}
+#taskForm{grid-auto-rows:max-content;align-content:start;min-width:0}
+#taskForm label,.task-schedule-grid{min-width:0}
+#taskForm :is(input,textarea,select){box-sizing:border-box;max-width:100%}
+.task-composer-head button{flex-shrink:0;padding:0;display:grid;place-items:center}
+@media(max-width:390px){.task-schedule-grid{grid-template-columns:minmax(0,1fr)!important}}
+/* Existing viewport pages scroll instead of clipping when vertical space runs out. */
+@media(max-height:740px){
+  #todayView.active{overflow-y:auto!important;overscroll-behavior:contain}
+  .returning-snapshot-screen .morning-live-content{overflow-y:auto!important}
+}
+html.keyboard-open :is(.modal,.buyer-followup-overlay,.appointment-assignment-modal){
+  top:var(--visual-top,0px)!important;bottom:auto!important;
+  height:var(--visual-height,100dvh)!important;max-height:var(--visual-height,100dvh)!important;
+  overflow-y:auto!important;
+}
+html.keyboard-open :is(.action-sheet,.buyer-followup-sheet,.appointment-assignment-card){
+  min-height:0!important;max-height:calc(var(--visual-height,100dvh) - 24px)!important;overflow-y:auto!important;
+}
