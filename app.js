@@ -4814,17 +4814,26 @@ let viewportFrame=0;
 function updateAppViewport(){
   cancelAnimationFrame(viewportFrame);
   viewportFrame=requestAnimationFrame(()=>{
+    const standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
     const vv=window.visualViewport;
-    // Layout height must follow the window, never the physical screen (rotation/split view).
-    const height=Math.round(window.innerHeight||document.documentElement.clientHeight);
-    const visualHeight=Math.round(vv?.height||height);
-    document.documentElement.style.setProperty('--app-height',`${height}px`);
-    document.documentElement.style.setProperty('--visual-height',`${visualHeight}px`);
-    document.documentElement.style.setProperty('--visual-top',`${Math.round(vv?.offsetTop||0)}px`);
-    document.documentElement.classList.toggle('keyboard-open',height-visualHeight>120);
-
+    // Restore the approved v1.41.27 shell measurements in portrait Home Screen mode.
+    const candidates=[window.innerHeight,document.documentElement.clientHeight];
+    if(vv)candidates.push(vv.height+vv.offsetTop);
+    const landscape=window.matchMedia('(orientation: landscape)').matches;
+    if(standalone&&!landscape)candidates.push(window.screen?.height||0,window.screen?.availHeight||0);
+    const height=Math.round(Math.max(...candidates.filter(Number.isFinite)));
+    const visualHeight=Math.round(vv?.height||window.innerHeight);
+    const keyboardOpen=height-visualHeight>180;
+    const root=document.documentElement;
+    root.style.setProperty('--app-height',`${height}px`);
+    root.style.setProperty('--visual-height',`${visualHeight}px`);
+    root.style.setProperty('--visual-top',`${Math.round(vv?.offsetTop||0)}px`);
+    root.style.setProperty('--sheet-height',`${keyboardOpen?visualHeight:height}px`);
+    root.style.setProperty('--sheet-top',`${keyboardOpen?Math.round(vv?.offsetTop||0):0}px`);
+    root.classList.toggle('keyboard-open',keyboardOpen);
   });
 }
+
 function bindViewport(){
   updateAppViewport();
   window.addEventListener('resize',updateAppViewport,{passive:true});
@@ -5260,7 +5269,7 @@ $$('[name=appearancePreference]').forEach(el=>el.addEventListener('change',()=>{
 $('#saveSettings').onclick=async()=>{const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;calendarPreference=$('[name=calendarPreference]:checked')?.value==='apple'?'apple':'outlook';appearancePreference=normaliseAppearance($('[name=appearancePreference]:checked')?.value);applyAppearance(appearancePreference);saveLocal();await saveTargets();if(cloud&&accountMode==='team'&&teamId&&uid){try{await setDoc(doc(db,'teams',teamId,'members',uid),{name:agentName,updatedAt:serverTimestamp()},{merge:true})}catch(err){console.error('Team profile name sync failed',err)}}renderAll();toast('Settings saved')};
 $('#signOut').onclick=async()=>{clearActiveSession();if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
 function mergeBackupRecords(current=[],incoming=[]){const byId=new Map();[...(Array.isArray(current)?current:[]),...(Array.isArray(incoming)?incoming:[])].forEach((item,index)=>{if(!item||typeof item!=='object')return;const id=cleanText(item.id,180)||`backup-record-${index}`;byId.set(id,item)});return[...byId.values()]}
-function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.41.28',exportedAt:new Date().toISOString(),targets,workDays,agentName,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
+function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.41.29',exportedAt:new Date().toISOString(),targets,workDays,agentName,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
 function restoreBuyerSessionBackup(value){if(!value||!Array.isArray(value.contacts))return false;buyerSession={contacts:value.contacts.map((contact,index)=>({id:cleanText(contact.id,80)||`buyer_${index}`,name:cleanText(contact.name,120)||'Unknown buyer',phone:normaliseDialNumber(contact.phone),address:cleanText(contact.address,240),doNotSms:Boolean(contact.doNotSms),status:cleanText(contact.status,40)})).filter(contact=>contact.phone),index:Math.max(0,Number(value.index)||0),active:Boolean(value.active),visible:false,fileName:cleanText(value.fileName,160),importedAt:Number(value.importedAt)||0};buyerSession.index=Math.min(buyerSession.index,buyerSession.contacts.length);return saveBuyerSession()}
 function syncImportedBackup(dayKeys=[],prospectingIncluded=false){if(!cloud)return;saveTargets().catch(err=>console.error('Imported settings sync failed',err));dayKeys.forEach(key=>saveDay(key,{quiet:true,awaitCloud:false,render:false}).catch?.(err=>console.error('Imported day sync failed',err)));if(prospectingIncluded)saveProspecting({render:false,awaitCloud:false}).catch(err=>console.error('Imported prospecting sync failed',err))}
 $('#exportData').onclick=()=>{const blob=new Blob([JSON.stringify(completeBackupPayload(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`agnt-complete-backup-${todayKey()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),0)};

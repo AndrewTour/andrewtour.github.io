@@ -1104,11 +1104,11 @@ html[data-theme="dark"] .scheduled-day-quick-menu button:active{border-color:#39
 
 /* v1.41.28: retain approved controls; allow intrinsic rows and visible-viewport sheets. */
 .task-composer-modal{
-  top:var(--visual-top,0px);bottom:auto;height:var(--visual-height,100dvh);
+  top:var(--sheet-top,0px);bottom:auto;height:var(--sheet-height,var(--app-height,100dvh));
   min-height:0;overflow-y:auto;box-sizing:border-box;
 }
 .task-composer-card{
-  min-height:0;max-height:calc(var(--visual-height,100dvh) - max(24px,env(safe-area-inset-top)) - max(24px,env(safe-area-inset-bottom)));
+  min-height:0;max-height:calc(var(--sheet-height,var(--app-height,100dvh)) - max(24px,env(safe-area-inset-top)) - max(24px,env(safe-area-inset-bottom)));
   flex-shrink:0;overscroll-behavior:contain;
 }
 #taskForm{grid-auto-rows:max-content;align-content:start;min-width:0}
@@ -1128,4 +1128,31 @@ html.keyboard-open :is(.modal,.buyer-followup-overlay,.appointment-assignment-mo
 }
 html.keyboard-open :is(.action-sheet,.buyer-followup-sheet,.appointment-assignment-card){
   min-height:0!important;max-height:calc(var(--visual-height,100dvh) - 24px)!important;overflow-y:auto!important;
+}
+
+/* v1.41.29 — reuse the Prospector/Buyer native date-control containment pattern. */
+#taskForm .task-schedule-grid{
+  width:100%;max-width:100%;min-width:0;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+}
+#taskForm .task-schedule-grid>label{
+  display:grid;grid-template-columns:minmax(0,1fr);width:100%;min-width:0;max-width:100%;
+}
+#taskForm :is(input[type="date"],input[type="time"]){
+  -webkit-appearance:none!important;appearance:none!important;display:block!important;
+  inline-size:100%!important;width:100%!important;
+  min-inline-size:0!important;min-width:0!important;
+  max-inline-size:100%!important;max-width:100%!important;
+  box-sizing:border-box!important;text-align:center;overflow:hidden;
+}
+#taskForm :is(input[type="date"],input[type="time"])::-webkit-date-and-time-value{
+  min-width:0;max-width:100%;text-align:center;
+}
+@media(max-width:520px){
+  #taskForm .task-schedule-grid{grid-template-columns:minmax(0,1fr)!important}
+}
+/* Short screens retain control dimensions and scroll content rather than compressing metric rows. */
+@media(max-height:740px){
+  #todayView.active:not(.off-day-opportunity-mode){grid-template-rows:auto minmax(min-content,1fr)!important}
+  #todayView:not(.off-day-opportunity-mode) .metrics{grid-template-rows:repeat(4,minmax(min-content,1fr))!important}
 }
