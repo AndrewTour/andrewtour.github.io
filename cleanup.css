@@ -1104,11 +1104,11 @@ html[data-theme="dark"] .scheduled-day-quick-menu button:active{border-color:#39
 
 /* v1.41.28: retain approved controls; allow intrinsic rows and visible-viewport sheets. */
 .task-composer-modal{
-  top:var(--sheet-top,0px);bottom:auto;height:var(--sheet-height,var(--app-height,100dvh));
+  top:var(--visual-top,0px);bottom:auto;height:var(--visual-height,100dvh);
   min-height:0;overflow-y:auto;box-sizing:border-box;
 }
 .task-composer-card{
-  min-height:0;max-height:calc(var(--sheet-height,var(--app-height,100dvh)) - max(24px,env(safe-area-inset-top)) - max(24px,env(safe-area-inset-bottom)));
+  min-height:0;max-height:calc(var(--visual-height,100dvh) - max(24px,env(safe-area-inset-top)) - max(24px,env(safe-area-inset-bottom)));
   flex-shrink:0;overscroll-behavior:contain;
 }
 #taskForm{grid-auto-rows:max-content;align-content:start;min-width:0}
@@ -1128,142 +1128,4 @@ html.keyboard-open :is(.modal,.buyer-followup-overlay,.appointment-assignment-mo
 }
 html.keyboard-open :is(.action-sheet,.buyer-followup-sheet,.appointment-assignment-card){
   min-height:0!important;max-height:calc(var(--visual-height,100dvh) - 24px)!important;overflow-y:auto!important;
-}
-
-/* v1.41.29 — reuse the Prospector/Buyer native date-control containment pattern. */
-#taskForm .task-schedule-grid{
-  width:100%;max-width:100%;min-width:0;
-  grid-template-columns:repeat(2,minmax(0,1fr))!important;
-}
-#taskForm .task-schedule-grid>label{
-  display:grid;grid-template-columns:minmax(0,1fr);width:100%;min-width:0;max-width:100%;
-}
-#taskForm :is(input[type="date"],input[type="time"]){
-  -webkit-appearance:none!important;appearance:none!important;display:block!important;
-  inline-size:100%!important;width:100%!important;
-  min-inline-size:0!important;min-width:0!important;
-  max-inline-size:100%!important;max-width:100%!important;
-  box-sizing:border-box!important;text-align:center;overflow:hidden;
-}
-#taskForm :is(input[type="date"],input[type="time"])::-webkit-date-and-time-value{
-  min-width:0;max-width:100%;text-align:center;
-}
-@media(max-width:520px){
-  #taskForm .task-schedule-grid{grid-template-columns:minmax(0,1fr)!important}
-}
-/* Short screens retain control dimensions and scroll content rather than compressing metric rows. */
-@media(max-height:740px){
-  #todayView.active:not(.off-day-opportunity-mode){grid-template-rows:auto minmax(min-content,1fr)!important}
-  #todayView:not(.off-day-opportunity-mode) .metrics{grid-template-rows:repeat(4,minmax(min-content,1fr))!important}
-}
-
-/* v1.41.31 — shared action controls, taken from the approved Appointments submit button.
-   Metrics, navigation, filters, icon-only controls, and the reference Appointments view are excluded. */
-:root{--agnt-action-height:50px;--agnt-action-radius:20px;--agnt-action-font-size:.84rem;--agnt-action-font-weight:850}
-:is(.primary,
-  .secondary,
-  .danger,
-  .danger-btn,
-  .file-btn,
-  .timeline-plan-action:not(.timeline-bulk-sms-action),
-  .send-today-stats,
-  .day-review-send-stats,
-  .welcome-start,
-  [id="endKnockingSession"],
-  .scorecard-call,
-  .scorecard-followup-actions > button,
-  .prospect-quick-actions > :is(button,a),
-  .buyer-card-actions > :is(button,a),
-  .buyer-match-actions > :is(button,a),
-  .timeline-buyer-match-actions > :is(button,a),
-  .timeline-buyer-match-list article > div > button,
-  .buyer-lifecycle-actions > :is(button,a),
-  .knocking-log-actions > button,
-  .market-pulse-card-actions > button:not(.market-bulk-sms-btn),
-  .prospect-session-refresh-bottom,
-  [data-manual-call-outcome]):not(#todayView .metrics *):not(#appointmentsView *):not(.hidden):not([hidden]):not(.market-bulk-sms-btn):not(.timeline-bulk-sms-action){
-  box-sizing:border-box!important;
-  display:inline-flex!important;align-items:center!important;justify-content:center!important;
-  min-height:var(--agnt-action-height)!important;height:auto!important;max-height:none!important;
-  min-width:0!important;max-width:100%!important;
-  padding:12px!important;border-radius:var(--agnt-action-radius)!important;
-  font-family:inherit!important;font-size:var(--agnt-action-font-size)!important;font-weight:var(--agnt-action-font-weight)!important;
-  font-style:normal!important;line-height:1.2!important;letter-spacing:normal!important;
-  text-align:center!important;text-decoration:none!important;
-  white-space:normal!important;overflow-wrap:anywhere;gap:6px;
-  box-shadow:none!important;
-}
-html:not([data-theme="dark"]) :is(.primary,
-  .secondary,
-  .danger,
-  .danger-btn,
-  .file-btn,
-  .timeline-plan-action:not(.timeline-bulk-sms-action),
-  .send-today-stats,
-  .day-review-send-stats,
-  .welcome-start,
-  [id="endKnockingSession"],
-  .scorecard-call,
-  .scorecard-followup-actions > button,
-  .prospect-quick-actions > :is(button,a),
-  .buyer-card-actions > :is(button,a),
-  .buyer-match-actions > :is(button,a),
-  .timeline-buyer-match-actions > :is(button,a),
-  .timeline-buyer-match-list article > div > button,
-  .buyer-lifecycle-actions > :is(button,a),
-  .knocking-log-actions > button,
-  .market-pulse-card-actions > button:not(.market-bulk-sms-btn),
-  .prospect-session-refresh-bottom,
-  [data-manual-call-outcome]):not(#todayView .metrics *):not(#appointmentsView *):not(.hidden):not([hidden]):not(.market-bulk-sms-btn):not(.timeline-bulk-sms-action){
-  background:#fff!important;border:1px solid #e3e5e9!important;color:#737985!important;
-}
-html:not([data-theme="dark"]) :is(.primary.primary.primary):not(#todayView .metrics *):not(#appointmentsView *):not(.hidden):not([hidden]):not(.market-bulk-sms-btn):not(.timeline-bulk-sms-action){
-  background:#050505!important;border:0!important;color:#fff!important;
-}
-html:not([data-theme="dark"]) :is(.danger.danger.danger,.danger-btn.danger-btn.danger-btn):not(#todayView .metrics *):not(#appointmentsView *):not(.hidden):not([hidden]):not(.market-bulk-sms-btn):not(.timeline-bulk-sms-action){
-  background:#fff1f0!important;border:1px solid #efc4c0!important;color:#c7352c!important;
-}
-html[data-theme="dark"] :is(.primary,
-  .secondary,
-  .danger,
-  .danger-btn,
-  .file-btn,
-  .timeline-plan-action:not(.timeline-bulk-sms-action),
-  .send-today-stats,
-  .day-review-send-stats,
-  .welcome-start,
-  [id="endKnockingSession"],
-  .scorecard-call,
-  .scorecard-followup-actions > button,
-  .prospect-quick-actions > :is(button,a),
-  .buyer-card-actions > :is(button,a),
-  .buyer-match-actions > :is(button,a),
-  .timeline-buyer-match-actions > :is(button,a),
-  .timeline-buyer-match-list article > div > button,
-  .buyer-lifecycle-actions > :is(button,a),
-  .knocking-log-actions > button,
-  .market-pulse-card-actions > button:not(.market-bulk-sms-btn),
-  .prospect-session-refresh-bottom,
-  [data-manual-call-outcome]):not(#todayView .metrics *):not(#appointmentsView *):not(.hidden):not([hidden]):not(.market-bulk-sms-btn):not(.timeline-bulk-sms-action){
-  background:var(--cleanup-surface)!important;border:1px solid #3b4554!important;color:var(--cleanup-ink)!important;
-}
-html[data-theme="dark"] .primary.primary.primary:not(#todayView .metrics *):not(#appointmentsView *):not(.hidden):not([hidden]):not(.market-bulk-sms-btn):not(.timeline-bulk-sms-action){background:#397dff!important;border:0!important;color:#fff!important}
-html[data-theme="dark"] :is(.danger.danger.danger,.danger-btn.danger-btn.danger-btn):not(#todayView .metrics *):not(#appointmentsView *):not(.hidden):not([hidden]):not(.market-bulk-sms-btn):not(.timeline-bulk-sms-action){background:#331b1e!important;border:1px solid #754149!important;color:#ff9c96!important}
-:is(.prospect-quick-actions,
-  .buyer-card-actions,
-  .buyer-match-actions,
-  .timeline-buyer-match-list article > div,
-  .buyer-lifecycle-actions,
-  .knocking-log-actions,
-  .followup-context-actions,
-  .pipeline-refresh-actions,
-  .buyer-followup-actions,
-  .team-remove-actions,
-  .team-leave-actions,
-  .team-code-refresh-actions,
-  .broadcast-step-actions,
-  .appointment-assignment-actions,
-  .team-appointment-notice-actions):not(#appointmentsView *):not(.hidden):not([hidden]){
-  display:grid!important;grid-template-columns:repeat(auto-fit,minmax(min(100%,110px),1fr))!important;
-  gap:10px!important;min-width:0;max-width:100%;align-items:stretch;
 }
