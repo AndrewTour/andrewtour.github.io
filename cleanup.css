@@ -1163,7 +1163,7 @@ html.keyboard-open :is(.action-sheet,.buyer-followup-sheet,.appointment-assignme
   #todayView:not(.off-day-opportunity-mode) .metrics{grid-template-rows:repeat(4,minmax(min-content,1fr))!important}
 }
 
-/* v1.41.36 — targeted control containment and scheduled-home alignment. */
+/* v1.41.37 — targeted control containment and scheduled-home alignment. */
 #taskForm :is(input[type="date"],input[type="time"]){
   height:48px!important;
   min-height:48px!important;
@@ -1202,7 +1202,7 @@ html.keyboard-open :is(.action-sheet,.buyer-followup-sheet,.appointment-assignme
   min-width:44px!important;
   min-height:44px!important;
   border-radius:50%!important;
-  background:var(--agnt-ink)!important;
+  background:#f05d3d!important;
   color:#fff!important;
   box-shadow:none!important;
 }
@@ -1224,8 +1224,8 @@ html.keyboard-open :is(.action-sheet,.buyer-followup-sheet,.appointment-assignme
   line-height:1;
 }
 html[data-theme="dark"] #todayView:not(.off-day-opportunity-mode) #openMarketPulseHome{
-  background:#f4f5f7!important;
-  color:#101217!important;
+  background:#f05d3d!important;
+  color:#fff!important;
 }
 html[data-theme="dark"] #todayView:not(.off-day-opportunity-mode) #openMarketPulseHome b{border-color:#0e1116!important;color:#fff!important}
 @media(max-width:390px){
