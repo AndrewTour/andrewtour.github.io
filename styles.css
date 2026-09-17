@@ -1711,7 +1711,7 @@ button:not(:disabled):active,a.appointment-call:active{transform:scale(.965)}
   background:#fff;
   box-shadow:0 10px 24px rgba(25,31,43,.07);
 }
-.appointment-card-premium:hover{box-shadow:0 12px 28px rgba(25,31,43,.09)}
+@media (hover:hover) and (pointer:fine){.appointment-card-premium:hover{box-shadow:0 12px 28px rgba(25,31,43,.09)}}
 .appointment-card-premium .appointment-card-copy{flex:1}
 .appointment-card-premium .appointment-card-top{justify-content:flex-start}
 .appointment-card-premium .appointment-card-top time{margin-left:auto;font-size:.68rem;color:#737b89}

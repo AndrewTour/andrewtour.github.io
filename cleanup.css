@@ -1,8 +1,14 @@
 /* v1.37.9: shared interaction polish; existing layouts and metric colours retained. */
 :root{--cleanup-surface:#f4f6f9;--cleanup-ink:#202938;--cleanup-muted:#566173;--cleanup-line:#c1c9d5;--cleanup-accent:#155fca}
+/* Platform-only refinements: retain the approved shell and control measurements. */
+html,body{overscroll-behavior:none}
+@media(pointer:coarse){
+  .prospecting-search-wrap input,.listing-activity-note textarea{font-size:16px!important}
+}
+#listingsView,.appointment-contact-suggestions,.appointment-contact-suggestions button{touch-action:pan-y pinch-zoom}
 html[data-theme="dark"]{--cleanup-surface:#202733;--cleanup-ink:#f1f5fb;--cleanup-muted:#b3bfd0;--cleanup-line:#64748b;--cleanup-accent:#93c5fd}
 button,a,input,select,textarea{touch-action:manipulation}
-button{cursor:pointer}
+button{cursor:pointer;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 button:disabled{cursor:not-allowed}
 :is(button,a,input,select,textarea,summary):focus-visible{outline:3px solid var(--cleanup-accent)!important;outline-offset:3px!important}
 input::placeholder,textarea::placeholder{color:var(--cleanup-muted)!important;opacity:1}
@@ -122,7 +128,7 @@ html[data-theme="dark"] #knockingMetricCard.complete #knockRemaining{color:#59c9
 #taskForm :is(input,select,textarea){
   min-width:0;width:100%;min-height:48px!important;height:48px;padding:0 13px!important;
   border:1px solid #cbd3df!important;border-radius:14px!important;background:#f4f6f9!important;
-  color:#202938!important;font-size:15px!important;font-weight:600!important;box-shadow:none!important;
+  color:#202938!important;font-size:16px!important;font-weight:600!important;box-shadow:none!important;
 }
 #taskForm textarea{height:86px!important;min-height:86px!important;padding-top:12px!important;resize:none}
 #taskForm :is(input,textarea)::placeholder{color:#687487!important;font-weight:550!important}
@@ -1155,4 +1161,79 @@ html.keyboard-open :is(.action-sheet,.buyer-followup-sheet,.appointment-assignme
 @media(max-height:740px){
   #todayView.active:not(.off-day-opportunity-mode){grid-template-rows:auto minmax(min-content,1fr)!important}
   #todayView:not(.off-day-opportunity-mode) .metrics{grid-template-rows:repeat(4,minmax(min-content,1fr))!important}
+}
+
+/* v1.41.36 — targeted control containment and scheduled-home alignment. */
+#taskForm :is(input[type="date"],input[type="time"]){
+  height:48px!important;
+  min-height:48px!important;
+  padding-block:0!important;
+  line-height:48px!important;
+}
+#taskForm :is(input[type="date"],input[type="time"])::-webkit-date-and-time-value{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  height:100%;
+  min-height:100%;
+  margin:0;
+  padding:0;
+  line-height:normal;
+  text-align:center;
+}
+
+#appointmentsView #appointmentForm :is(input,select,textarea):focus,
+#appointmentsView #appointmentForm :is(input,select,textarea):focus-visible{
+  outline:none!important;
+  outline-offset:0!important;
+  border-color:var(--cleanup-accent)!important;
+  box-shadow:inset 0 0 0 2px rgba(21,95,202,.24)!important;
+}
+
+#todayView:not(.off-day-opportunity-mode) .score-week{padding-bottom:0!important}
+#todayView:not(.off-day-opportunity-mode) .now-card-stack{
+  grid-template-columns:minmax(0,1fr) 44px!important;
+}
+#todayView:not(.off-day-opportunity-mode) #openMarketPulseHome{
+  position:relative;
+  width:44px!important;
+  height:44px!important;
+  min-width:44px!important;
+  min-height:44px!important;
+  border-radius:50%!important;
+  background:var(--agnt-ink)!important;
+  color:#fff!important;
+  box-shadow:none!important;
+}
+#todayView:not(.off-day-opportunity-mode) #openMarketPulseHome svg{width:18px;height:18px}
+#todayView:not(.off-day-opportunity-mode) #openMarketPulseHome b{
+  position:absolute;
+  right:-4px;
+  top:-5px;
+  display:grid;
+  place-items:center;
+  min-width:17px;
+  height:17px;
+  padding:0 4px;
+  border:2px solid #fff;
+  border-radius:9px;
+  background:#397dff;
+  color:#fff;
+  font-size:8px;
+  line-height:1;
+}
+html[data-theme="dark"] #todayView:not(.off-day-opportunity-mode) #openMarketPulseHome{
+  background:#f4f5f7!important;
+  color:#101217!important;
+}
+html[data-theme="dark"] #todayView:not(.off-day-opportunity-mode) #openMarketPulseHome b{border-color:#0e1116!important;color:#fff!important}
+@media(max-width:390px){
+  #todayView:not(.off-day-opportunity-mode) .now-card-stack{grid-template-columns:minmax(0,1fr) 42px!important}
+  #todayView:not(.off-day-opportunity-mode) #openMarketPulseHome{width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important}
+}
+@media(max-height:760px){
+  #todayView:not(.off-day-opportunity-mode) .score-week{padding-bottom:0!important}
+  #todayView:not(.off-day-opportunity-mode) .now-card-stack{grid-template-columns:minmax(0,1fr) 38px!important}
+  #todayView:not(.off-day-opportunity-mode) #openMarketPulseHome{width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important}
 }
