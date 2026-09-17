@@ -1163,7 +1163,7 @@ html.keyboard-open :is(.action-sheet,.buyer-followup-sheet,.appointment-assignme
   #todayView:not(.off-day-opportunity-mode) .metrics{grid-template-rows:repeat(4,minmax(min-content,1fr))!important}
 }
 
-/* v1.41.37 — targeted control containment and scheduled-home alignment. */
+/* v1.41.38 — targeted control containment and scheduled-home alignment. */
 #taskForm :is(input[type="date"],input[type="time"]){
   height:48px!important;
   min-height:48px!important;
@@ -1197,16 +1197,17 @@ html.keyboard-open :is(.action-sheet,.buyer-followup-sheet,.appointment-assignme
 }
 #todayView:not(.off-day-opportunity-mode) #openMarketPulseHome{
   position:relative;
-  width:44px!important;
-  height:44px!important;
-  min-width:44px!important;
-  min-height:44px!important;
+  width:36px!important;
+  height:36px!important;
+  min-width:36px!important;
+  min-height:36px!important;
   border-radius:50%!important;
   background:#f05d3d!important;
   color:#fff!important;
   box-shadow:none!important;
 }
-#todayView:not(.off-day-opportunity-mode) #openMarketPulseHome svg{width:18px;height:18px}
+#todayView:not(.off-day-opportunity-mode) #openMarketPulseHome::before{inset:-7px}
+#todayView:not(.off-day-opportunity-mode) #openMarketPulseHome svg{width:16px;height:16px}
 #todayView:not(.off-day-opportunity-mode) #openMarketPulseHome b{
   position:absolute;
   right:-4px;
@@ -1230,10 +1231,11 @@ html[data-theme="dark"] #todayView:not(.off-day-opportunity-mode) #openMarketPul
 html[data-theme="dark"] #todayView:not(.off-day-opportunity-mode) #openMarketPulseHome b{border-color:#0e1116!important;color:#fff!important}
 @media(max-width:390px){
   #todayView:not(.off-day-opportunity-mode) .now-card-stack{grid-template-columns:minmax(0,1fr) 42px!important}
-  #todayView:not(.off-day-opportunity-mode) #openMarketPulseHome{width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important}
+  #todayView:not(.off-day-opportunity-mode) #openMarketPulseHome{width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important}
 }
 @media(max-height:760px){
   #todayView:not(.off-day-opportunity-mode) .score-week{padding-bottom:0!important}
   #todayView:not(.off-day-opportunity-mode) .now-card-stack{grid-template-columns:minmax(0,1fr) 38px!important}
-  #todayView:not(.off-day-opportunity-mode) #openMarketPulseHome{width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important}
+  #todayView:not(.off-day-opportunity-mode) #openMarketPulseHome{width:30px!important;height:30px!important;min-width:30px!important;min-height:30px!important}
+  #todayView:not(.off-day-opportunity-mode) #openMarketPulseHome svg{width:15px;height:15px}
 }

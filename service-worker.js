@@ -1,5 +1,5 @@
-const CACHE='agnt-v1.41.37-orange-marketpulse';
-const ASSETS=['./','./index.html','./styles.css?v=1.41.37-orange-marketpulse','./app.js?v=1.41.37-orange-marketpulse','./cleanup.css?v=1.41.37-orange-marketpulse','./firebase-config.js','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
+const CACHE='agnt-v1.41.38-marketpulse-badge-alignment';
+const ASSETS=['./','./index.html','./styles.css?v=1.41.38-marketpulse-badge-alignment','./app.js?v=1.41.38-marketpulse-badge-alignment','./cleanup.css?v=1.41.38-marketpulse-badge-alignment','./firebase-config.js','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{
