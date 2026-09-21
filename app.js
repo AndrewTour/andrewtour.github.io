@@ -128,7 +128,7 @@ function configured(){return firebaseConfig?.apiKey&&!firebaseConfig.apiKey.star
 function isPastDate(k){return k<todayKey()}
 function canEditDate(k){return !isPastDate(k)&&isWorkDayKey(k)}
 function lockedToast(){haptic(20);toast(isPastDate(selectedDate)?'This day is complete and locked':'This day is not in your accountability schedule')}
-function toast(msg){if(localStorageFailures.size&&/saved|restored|synced/i.test(msg))msg+=' · device save needs attention';const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove('show'),1800)}
+function toast(msg){if(localStorageFailures.size&&(!cloud||!navigator.onLine||syncHasError)&&/saved|restored|synced/i.test(msg))msg+=' · device save needs attention';const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove('show'),1800)}
 function syncVisualState(state,label){
   if(state)return state;
   if(label==='Saving')return 'saving';
@@ -270,15 +270,23 @@ function restoreContactDraftWorkflow({silent=false}={}){
 
 // Runtime stability: retain existing keys and synchronously persist required data.
 const localStorageFailures=new Set(),settingsDraftFields=new Set();
-let localWarningAt=0,cloudVisualTimer=null;
+let localWarningAt=0,localWarningTimer=null,cloudVisualTimer=null;
 const pendingCloudVisuals=new Set(),renderedMarkup=new WeakMap();
 function safeAppearance(){try{return localStorage.getItem('agnt:appearance')||'system'}catch{return 'system'}}
-function localWrite(key,value){
-  try{if(localStorage.getItem(key)!==value)localStorage.setItem(key,value);localStorageFailures.delete(key);return true}
-  catch(error){localStorageFailures.add(key);console.error('Device save failed',error);window.agntRuntime?.record('storage-error',error?.name);
-    if(Date.now()-localWarningAt>30000){localWarningAt=Date.now();toast('Device save failed. Keep AGNT open and check sync before closing.')}return false}
+function clearLocalWarningIfResolved(){if(!localStorageFailures.size){clearTimeout(localWarningTimer);localWarningTimer=null}}
+function scheduleLocalWarning(){
+  clearTimeout(localWarningTimer);localWarningTimer=setTimeout(()=>{
+    localWarningTimer=null;
+    if(!localStorageFailures.size||(cloud&&navigator.onLine&&!syncHasError)||Date.now()-localWarningAt<30000)return;
+    localWarningAt=Date.now();toast('Device save is still unavailable. Keep AGNT open until sync reconnects.');
+  },4000);
 }
-function writeRecord(key,read){try{return localWrite(key,read())}catch(error){localStorageFailures.add(key);window.agntRuntime?.record('storage-error',error?.name);console.error('Device record could not be saved',error);return false}}
+function localWrite(key,value){
+  try{if(localStorage.getItem(key)!==value)localStorage.setItem(key,value);localStorageFailures.delete(key);clearLocalWarningIfResolved();return true}
+  catch(error){localStorageFailures.add(key);console.error('Device save failed',error);window.agntRuntime?.record('storage-error',error?.name);scheduleLocalWarning();return false}
+}
+function writeRecord(key,read){try{return localWrite(key,read())}catch(error){localStorageFailures.add(key);window.agntRuntime?.record('storage-error',error?.name);console.error('Device record could not be saved',error);scheduleLocalWarning();return false}}
+function writeOptionalRecord(key,read){try{const value=read();if(localStorage.getItem(key)!==value)localStorage.setItem(key,value);return true}catch(error){console.warn('Optional device backup could not be saved',error);window.agntRuntime?.record('storage-backup-error',error?.name);return false}}
 function setRenderedMarkup(element,html){if(element&&renderedMarkup.get(element)!==html){element.innerHTML=html;renderedMarkup.set(element,html)}}
 function setRenderedText(selector,value){const element=$(selector),text=String(value??'');if(element&&element.textContent!==text)element.textContent=text}
 function settingsFieldEditable(element){return !settingsDraftFields.has(element.name||element.id)&&document.activeElement!==element}
@@ -312,7 +320,7 @@ function saveLocal(scope='all'){
   const put=(name,read)=>{if(!writeRecord(prefix+name,read))ok=false};
   if(scope==='all'||scope==='days'){
     put('days',()=>{const value=JSON.stringify(normaliseDaysMap(days));let previous=null;try{previous=localStorage.getItem(prefix+'days')}catch{}
-      if(previous&&previous!==value)put('days-backup',()=>previous);return value});
+      if(previous&&previous!==value)writeOptionalRecord(prefix+'days-backup',()=>previous);return value});
     put('dirty-days',()=>JSON.stringify([...dirtyDayKeys]));
   }
   if(scope==='all'||scope==='profile'){
@@ -324,7 +332,7 @@ function saveLocal(scope='all'){
   }
   return ok;
 }
-function clearActiveSession(){resetCloudVisuals();settingsDraftFields.clear();localStorageFailures.clear();cloudStartPending=null;teamInitialisationToken++;unsubDays?.();unsubProfile?.();unsubLeaderboard?.();unsubProspecting?.();unsubMarketPulseInbox?.();unsubTeamMembership?.();unsubTeamMembers?.();unsubAppointmentAssignees?.();unsubAssignedTeamAppointments?.();unsubAssignedTeamTasks?.();unsubDays=unsubProfile=unsubLeaderboard=unsubProspecting=unsubMarketPulseInbox=unsubTeamMembership=unsubTeamMembers=unsubAppointmentAssignees=unsubAssignedTeamAppointments=unsubAssignedTeamTasks=null;hideTeamAppointmentNotice({acknowledge:false});hideTeamManager({restoreFocus:false});closeTeamMemberRemoval({force:true});hideTeamLeaveConfirmation({force:true,restoreFocus:false});hideTeamCodeRefreshConfirmation({force:true,restoreFocus:false});closeSellerPriorityDeferral();clearInterval(timerTick);clearInterval(returningSnapshotCountdownTimer);clearTimeout(syncTimer);clearTimeout(leaderboardPublishTimer);clearTimeout(prospectingSaveTimer);clearTimeout(prospectingRetryTimer);clearTimeout(returningSnapshotTimer);clearTimeout(appResumeTimer);appResumeTimer=null;daySaveChains.clear();returningSnapshotTimer=returningSnapshotCountdownTimer=null;returningSnapshotEndsAt=0;prospectingSaveTimer=prospectingRetryTimer=null;prospectingRetryDelay=2500;pendingProspectingPayload=null;pendingProspectingSignature='';pendingProspectingRevision=0;prospectingWriteInFlight=false;prospectingSaveWaiters.splice(0).forEach(({resolve})=>resolve());currentUser=null;uid='local';cloud=false;pendingSyncOperations=0;syncHasError=false;lastLeaderboardSignature='';lastTeamLeaderboardSignature='';lastProspectingSignature='';dirtyDayKeys=new Set();resetState()}
+function clearActiveSession(){resetCloudVisuals();clearTimeout(localWarningTimer);localWarningTimer=null;settingsDraftFields.clear();localStorageFailures.clear();cloudStartPending=null;teamInitialisationToken++;unsubDays?.();unsubProfile?.();unsubLeaderboard?.();unsubProspecting?.();unsubMarketPulseInbox?.();unsubTeamMembership?.();unsubTeamMembers?.();unsubAppointmentAssignees?.();unsubAssignedTeamAppointments?.();unsubAssignedTeamTasks?.();unsubDays=unsubProfile=unsubLeaderboard=unsubProspecting=unsubMarketPulseInbox=unsubTeamMembership=unsubTeamMembers=unsubAppointmentAssignees=unsubAssignedTeamAppointments=unsubAssignedTeamTasks=null;hideTeamAppointmentNotice({acknowledge:false});hideTeamManager({restoreFocus:false});closeTeamMemberRemoval({force:true});hideTeamLeaveConfirmation({force:true,restoreFocus:false});hideTeamCodeRefreshConfirmation({force:true,restoreFocus:false});closeSellerPriorityDeferral();clearInterval(timerTick);clearInterval(returningSnapshotCountdownTimer);clearTimeout(syncTimer);clearTimeout(leaderboardPublishTimer);clearTimeout(prospectingSaveTimer);clearTimeout(prospectingRetryTimer);clearTimeout(returningSnapshotTimer);clearTimeout(appResumeTimer);appResumeTimer=null;daySaveChains.clear();returningSnapshotTimer=returningSnapshotCountdownTimer=null;returningSnapshotEndsAt=0;prospectingSaveTimer=prospectingRetryTimer=null;prospectingRetryDelay=2500;pendingProspectingPayload=null;pendingProspectingSignature='';pendingProspectingRevision=0;prospectingWriteInFlight=false;prospectingSaveWaiters.splice(0).forEach(({resolve})=>resolve());currentUser=null;uid='local';cloud=false;pendingSyncOperations=0;syncHasError=false;lastLeaderboardSignature='';lastTeamLeaderboardSignature='';lastProspectingSignature='';dirtyDayKeys=new Set();resetState()}
 function displayAgentName(){return (agentName||currentUser?.displayName||currentUser?.email?.split('@')[0]||'Agent').trim()}
 function returningSnapshotReadyKey(){return `${storagePrefix(uid)}returning-snapshot-ready`}
 function returningSnapshotHasHistory(){
@@ -5389,7 +5397,7 @@ $('#settingsView').addEventListener('change',event=>{const field=event.target;if
 $('#saveSettings').onclick=async()=>{const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;calendarPreference=$('[name=calendarPreference]:checked')?.value==='apple'?'apple':'outlook';appearancePreference=normaliseAppearance($('[name=appearancePreference]:checked')?.value);applyAppearance(appearancePreference);settingsDraftFields.clear();await saveTargets();if(cloud&&accountMode==='team'&&teamId&&uid){try{await setDoc(doc(db,'teams',teamId,'members',uid),{name:agentName,updatedAt:serverTimestamp()},{merge:true})}catch(err){console.error('Team profile name sync failed',err)}}renderAll();toast('Settings saved')};
 $('#signOut').onclick=async()=>{clearActiveSession();if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
 function mergeBackupRecords(current=[],incoming=[]){const byId=new Map();[...(Array.isArray(current)?current:[]),...(Array.isArray(incoming)?incoming:[])].forEach((item,index)=>{if(!item||typeof item!=='object')return;const id=cleanText(item.id,180)||`backup-record-${index}`;byId.set(id,item)});return[...byId.values()]}
-function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.41.41',exportedAt:new Date().toISOString(),targets,workDays,agentName,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
+function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.41.42',exportedAt:new Date().toISOString(),targets,workDays,agentName,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
 function restoreBuyerSessionBackup(value){if(!value||!Array.isArray(value.contacts))return false;buyerSession={contacts:value.contacts.map((contact,index)=>({id:cleanText(contact.id,80)||`buyer_${index}`,name:cleanText(contact.name,120)||'Unknown buyer',phone:normaliseDialNumber(contact.phone),address:cleanText(contact.address,240),doNotSms:Boolean(contact.doNotSms),status:cleanText(contact.status,40)})).filter(contact=>contact.phone),index:Math.max(0,Number(value.index)||0),active:Boolean(value.active),visible:false,fileName:cleanText(value.fileName,160),importedAt:Number(value.importedAt)||0};buyerSession.index=Math.min(buyerSession.index,buyerSession.contacts.length);return saveBuyerSession()}
 function syncImportedBackup(dayKeys=[],prospectingIncluded=false){if(!cloud)return;saveTargets().catch(err=>console.error('Imported settings sync failed',err));dayKeys.forEach(key=>saveDay(key,{quiet:true,awaitCloud:false,render:false}).catch?.(err=>console.error('Imported day sync failed',err)));if(prospectingIncluded)saveProspecting({render:false,awaitCloud:false}).catch(err=>console.error('Imported prospecting sync failed',err))}
 $('#exportData').onclick=()=>{const blob=new Blob([JSON.stringify(completeBackupPayload(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`agnt-complete-backup-${todayKey()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),0)};
