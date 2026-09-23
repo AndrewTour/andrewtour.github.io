@@ -9,8 +9,8 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.42.1-css-consolidation">
-<link rel="stylesheet" href="cleanup.css?v=1.42.1-css-consolidation">
+<link rel="stylesheet" href="styles.css?v=1.44.4-core-controls">
+<link rel="stylesheet" href="cleanup.css?v=1.44.4-core-controls">
 <title>AGNT</title>
 </head>
 <body>
@@ -654,12 +654,12 @@
 
 
     <section id="prospectingView" class="view prospecting-view">
-      <nav class="prospector-sections glass" aria-label="Prospector sections">
-        <button class="active" type="button" data-prospector-section="today" aria-current="page">Today</button>
-        <button type="button" data-prospector-section="contacts">Contacts</button>
+      <nav class="prospector-sections glass" aria-label="Core sections">
+        <button class="active" type="button" data-prospector-section="market" aria-current="page">Market</button>
+        <button type="button" data-prospector-section="today">Reach</button>
         <button type="button" data-prospector-section="buyers">Buyers</button>
+        <button type="button" data-prospector-section="contacts">Contacts</button>
         <button type="button" data-prospector-section="pipeline">Pipeline</button>
-        <button type="button" data-prospector-section="insights">Insights</button>
       </nav>
       <div class="prospecting-toolbar glass">
         <div class="prospecting-search-wrap">
@@ -774,6 +774,15 @@
         </section>
 
         <section id="prospectorMarketPanel" class="prospector-market-panel hidden" aria-live="polite">
+          <div id="myMarketHub" class="my-market-hub">
+            <section id="myMarketSignal" class="my-market-signal" aria-label="Market snapshot"><div class="my-market-signal-head"><div><span class="eyebrow">MARKET SNAPSHOT</span><p id="myMarketCounts" class="my-market-counts"></p></div><button class="marketpulse-orb my-market-pulse" type="button" data-my-market-open="marketpulse" aria-label="MarketPulse — view today’s activity"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17 9 10l4 5 7-9"/><path d="M15 6h5v5"/></svg></button></div><div id="myMarketAnalytics"></div></section>
+            <div class="my-market-controls"><details class="my-market-refine"><summary><span>REFINE</span><small id="myMarketRefineSummary">All suburbs · All categories</small></summary><div class="my-market-selects"><label><span class="my-market-field-title">Suburb</span><select id="myMarketSuburb"><option value="">All suburbs</option></select></label><label><span class="my-market-field-title">Category</span><select id="myMarketCategory"><option value="">All categories</option><option value="House">House</option><option value="Strata">Strata</option><option value="Unknown">Not recorded</option></select></label></div></details><label><span class="my-market-field-title">Show</span><select id="myMarketStatus"><option value="current">Current listings</option><option value="aged60">60+ days</option><option value="aged90">90+ days</option><option value="aged120">120+ days</option><option value="withdrawn">Withdrawn · last 6 months</option><option value="sold">Sold · last 6 months</option><option value="price">Price changes</option><option value="auction">Auction results</option></select></label></div>
+            <div id="myMarketProperties" class="my-market-properties"></div>
+            <button id="myMarketMore" class="secondary hidden" type="button">Show more properties</button>
+            <details class="my-market-disclosure"><summary>Agency activity in these reports</summary><h4>Agencies</h4><div id="myMarketAgencyShares"></div><h4>Agents</h4><div id="myMarketAgentShares"></div><p class="my-market-muted">Share of imported properties in this selection. Joint agents split credit equally. This does not represent the whole market.</p></details>
+            <details class="my-market-disclosure"><summary>Estimate for a seller contact</summary><label class="my-market-estimate-label"><span class="my-market-field-title">Contact property</span><select id="myMarketEstimateContact"><option value="">Choose a configured contact property</option></select></label><div id="myMarketEstimate"></div></details>
+          </div>
+          <section id="myMarketPropertyScreen" class="my-market-property-screen hidden" aria-label="Property details"></section>
           <div id="hotSpottingPanel" class="hotspotting-panel">
             <button id="backFromMarketPulse" class="market-pulse-back text-btn" type="button">‹ Back to Sessions</button>
             <section class="market-pulse-results glass">
@@ -1078,7 +1087,7 @@ Andrew Tour | McGrath</textarea></label>
     </button>
     <button data-view="prospectingView">
       <b class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.25"/><path d="M3.5 19c.4-4 2.2-6 5.5-6s5.1 2 5.5 6"/><path d="M16 8h5M18.5 5.5v5"/><path d="M16 15h5M16 18h5"/></svg></b>
-      <span>Prospector</span>
+      <span>Core</span>
     </button>
     <button data-view="appointmentsView">
       <b class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="15" rx="3"/><path d="M7.5 3.5v4M16.5 3.5v4M3.5 9.5h17"/><path d="M8 13h3M13 13h3M8 17h3"/></svg></b>
@@ -1233,7 +1242,7 @@ Andrew Tour | McGrath</textarea></label>
 
 
 
-<script src="runtime.js?v=1.42.1-css-consolidation"></script>
-<script type="module" src="app.js?v=1.42.1-css-consolidation"></script>
+<script src="runtime.js?v=1.44.4-core-controls"></script>
+<script type="module" src="app.js?v=1.44.4-core-controls"></script>
 </body>
 </html>
