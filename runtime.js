@@ -1,7 +1,7 @@
-/* AGNT 1.42.0: independent startup protection; no authentication or data access. */
+/* AGNT 1.42.1: independent startup protection; no authentication or data access. */
 (()=>{
   'use strict';
-  const version='1.42.0',key='agnt:runtime-events-v1',boot=Date.now().toString(36);
+  const version='1.42.1',key='agnt:runtime-events-v1',boot=Date.now().toString(36);
   const codes=new Set(['Error','TypeError','ReferenceError','RangeError','SyntaxError','SecurityError','QuotaExceededError','AbortError']);
   const events=new Set(['boot','ready','hidden','visible','pagehide','pageshow','pageshow-restored','online','offline','runtime-error','promise-error','module-error','startup-timeout','storage-error','render-error','worker-change']);
   let rows=[],timer=null,ready=false,navigation='';

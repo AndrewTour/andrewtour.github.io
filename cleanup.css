@@ -1278,35 +1278,4 @@ html[data-theme="dark"] #todayView:not(.off-day-opportunity-mode) #openMarketPul
   background:var(--cleanup-surface);color:var(--cleanup-ink);padding:12px 13px;
   font:inherit;font-size:16px;line-height:1.35;
 }
-.appointment-context-note,.appointment-outcome-note{
-  display:grid!important;grid-template-columns:auto minmax(0,1fr);align-items:start;
-  gap:8px;margin-top:9px!important;padding:9px 10px!important;border-radius:11px;
-  background:var(--cleanup-soft);color:var(--cleanup-ink)!important;
-  font-size:11px!important;line-height:1.4!important;white-space:pre-line;
-}
-.appointment-context-note b,.appointment-outcome-note b{
-  color:var(--cleanup-muted);font-size:8px;line-height:1.75;letter-spacing:.12em;
-}
-.appointment-outcome-note{font-style:normal!important}
-#appointmentHistoryList{display:grid!important;gap:18px!important}
-.appointment-history-group{display:grid;gap:8px;min-width:0}
-.appointment-history-group-head{
-  display:flex;align-items:center;justify-content:space-between;min-height:24px;
-  padding:0 4px;border-bottom:1px solid var(--cleanup-line);
-}
-.appointment-history-group-head span{
-  color:var(--cleanup-muted);font-size:9px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;
-}
-.appointment-history-group-head small{
-  display:grid;place-items:center;min-width:20px;height:20px;margin:0!important;padding:0 5px;
-  border-radius:10px;background:var(--cleanup-soft);color:var(--cleanup-muted);font-size:9px!important;font-weight:850;
-}
-.appointment-message-action{color:var(--cleanup-accent)!important}
 html[data-theme="dark"] #appointmentForm #appointmentContext{background:#171a20;border-color:#2b3039;color:#f5f6f7}
-html[data-theme="dark"] .appointment-context-note,
-html[data-theme="dark"] .appointment-outcome-note,
-html[data-theme="dark"] .appointment-history-group-head small{background:#1a1e25!important;color:#e9ebef!important}
-html[data-theme="dark"] .appointment-history-group-head{border-color:#282d35}
-@media(max-width:390px){
-  .appointment-context-note,.appointment-outcome-note{grid-template-columns:1fr;gap:3px}
-}

@@ -2864,11 +2864,44 @@ button:not(:disabled):active,.file-btn:active{
 .appointment-followup-card{display:block}
 .appointment-status-badge{margin-left:auto;font-size:.58rem;font-weight:800;color:var(--muted);text-transform:none}
 .appointment-status-badge.follow-up{color:#d88522}.appointment-status-badge.completed{color:#18a879}.appointment-status-badge.upcoming{color:var(--blue)}
+#appointmentsView .appointment-card .appointment-card-copy .appointment-context-note,
+#appointmentsView .appointment-card .appointment-card-copy .appointment-outcome-note{
+  display:grid;grid-template-columns:auto minmax(0,1fr);align-items:start;
+  gap:8px;margin-top:9px;padding:9px 10px;border-radius:11px;
+  background:var(--cleanup-soft);color:var(--cleanup-ink);
+  font-size:11px;line-height:1.4;white-space:pre-line;
+}
+.appointment-context-note b,.appointment-outcome-note b{
+  color:var(--cleanup-muted);font-size:8px;line-height:1.75;letter-spacing:.12em;
+}
+.appointment-outcome-note{font-style:normal}
+#appointmentHistoryList{display:grid;gap:18px}
+.appointment-history-group{display:grid;gap:8px;min-width:0}
+.appointment-history-group-head{
+  display:flex;align-items:center;justify-content:space-between;min-height:24px;
+  padding:0 4px;border-bottom:1px solid var(--cleanup-line);
+}
+.appointment-history-group-head span{
+  color:var(--cleanup-muted);font-size:9px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;
+}
+.appointment-history-group-head small{
+  display:grid;place-items:center;min-width:20px;height:20px;margin:0;padding:0 5px;
+  border-radius:10px;background:var(--cleanup-soft);color:var(--cleanup-muted);font-size:9px;font-weight:850;
+}
+/* Overrides the existing .appointment-secondary-action color:var(--ink)!important. */
+#appointmentsView .appointment-message-action{color:var(--cleanup-accent)!important}
+html[data-theme="dark"] #appointmentsView .appointment-card .appointment-card-copy .appointment-context-note,
+html[data-theme="dark"] #appointmentsView .appointment-card .appointment-card-copy .appointment-outcome-note,
+html[data-theme="dark"] .appointment-history-group-head small{background:#1a1e25;color:#e9ebef}
+html[data-theme="dark"] .appointment-history-group-head{border-color:#282d35}
+@media(max-width:390px){
+  #appointmentsView .appointment-card .appointment-card-copy .appointment-context-note,
+  #appointmentsView .appointment-card .appointment-card-copy .appointment-outcome-note{grid-template-columns:1fr;gap:3px}
+}
 .appointment-followup-actions,.scorecard-followup-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
 .appointment-followup-actions a,.appointment-followup-actions button,.scorecard-followup-actions a,.scorecard-followup-actions button{min-height:38px;border:0;border-radius:12px;padding:0 13px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-size:.68rem;font-weight:800}
 .appointment-action-wide,.scorecard-call{background:#111318!important;color:#fff!important;width:auto;height:auto}
 .appointment-secondary-action,.scorecard-followup-actions button{background:rgba(91,145,255,.12)!important;color:var(--ink)!important}
-.appointment-outcome-note{padding-top:4px;font-style:italic}
 
 
 /* v1.36.1 — requested login copy, appointment time and action alignment refinements only. */
