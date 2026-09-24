@@ -3162,6 +3162,7 @@ function normaliseMarketPulseHistory(list=[]){
 }
 // My Market keeps compact property snapshots; the daily Hot Spotting queue stays separate.
 let myMarketFilter='current',myMarketSuburb='',myMarketCategory='',myMarketLimit=30,myMarketDetailKey='',myMarketListScroll=0;
+let myMarketDataCache=null,myMarketViewCache=null;
 function myMarketCutoff(months=6){
   const date=parseKey(todayKey()),day=date.getDate();date.setDate(1);date.setMonth(date.getMonth()-months);
   date.setDate(Math.min(day,new Date(date.getFullYear(),date.getMonth()+1,0).getDate()));return dateKey(date);
@@ -3212,6 +3213,12 @@ function myMarketPropertyRows(history=marketPulseHistory,events=marketPulseEvent
     output.push({key,rows,event:latest,status,statusDate:statusDate||latest.receivedDate,statusEvent:statusEvent||latest,sold,price,auction});}
   return output.sort((a,b)=>marketPulseEventSortNewest(a.event,b.event)||a.key.localeCompare(b.key));
 }
+function myMarketDataSnapshot(){
+  const day=todayKey(),prior=myMarketDataCache;
+  if(prior&&prior.day===day&&prior.history===marketPulseHistory&&prior.historyLength===marketPulseHistory.length&&prior.events===marketPulseEvents&&prior.eventLength===marketPulseEvents.length)return prior;
+  const snapshot={day,history:marketPulseHistory,historyLength:marketPulseHistory.length,events:marketPulseEvents,eventLength:marketPulseEvents.length,rows:myMarketPropertyRows()};
+  myMarketDataCache=snapshot;myMarketViewCache=null;return snapshot;
+}
 function myMarketContactIndex(rows){
   const eventKeys=new Map(),result=new Map();for(const row of rows)for(const event of row.rows){eventKeys.set(event.id,row.key);for(const id of event.historyEventIds||[])eventKeys.set(id,row.key)}
   for(const item of prospectInteractions){const key=item.marketPropertyKey||eventKeys.get(item.marketEventId)||eventKeys.get(item.marketFollowUpSourceEventId);if(!key)continue;const contacts=result.get(key)||new Map(),existing=contacts.get(item.prospectId)||{id:item.prospectId,records:[],latest:null};existing.records.push(item);if(!existing.latest||Number(item.at)>Number(existing.latest.at))existing.latest=item;contacts.set(item.prospectId,existing);result.set(key,contacts)}return result;
@@ -3221,15 +3228,24 @@ function myMarketShareRows(rows,agents=false){
   return [...shares.values()].sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name)).map(item=>({...item,percent:rows.length?Math.round(item.count/rows.length*1000)/10:0}));
 }
 function myMarketShareMarkup(rows){return rows.length?rows.map(row=>`<div class="my-market-share-row"><span>${escapeHtml(row.name)}</span><strong>${row.percent}%</strong></div>`).join(''):'<p class="my-market-muted">No imported records in this selection.</p>'}
+function myMarketOutreachEvidence(contact){
+  const records=contact.records||[],connected=records.some(x=>x.type==='Call'&&PROSPECT_CONNECTED_OUTCOMES.has(x.outcome)),sent=records.some(x=>x.type==='SMS'&&x.outcome==='Sent SMS'),attempted=records.some(x=>x.type==='Call'&&!PROSPECT_CONNECTED_OUTCOMES.has(x.outcome)),launched=records.some(x=>x.type==='SMS'&&x.outcome==='Bulk SMS launched'),pending=records.some(x=>x.marketFollowUpStatus==='pending');
+  return{kind:connected?'connected':sent?'sent':attempted?'attempted':launched?'launched':'other',pending};
+}
+function myMarketOutreachSummary(contacts){
+  const counts={connected:0,sent:0,attempted:0,launched:0,pending:0};
+  for(const contact of contacts){const evidence=myMarketOutreachEvidence(contact);if(evidence.kind!=='other')counts[evidence.kind]++;if(evidence.pending)counts.pending++}
+  return[[counts.connected,'connected'],[counts.sent,'SMS sent'],[counts.attempted,'call attempted'],[counts.launched,'bulk SMS launched'],[counts.pending,'follow-up pending']].filter(([count])=>count).map(([count,label])=>`${count} ${label}`).join(' · ');
+}
 function myMarketOutreachRank(contact){
-  return contact.records.some(x=>x.type==='Call'&&PROSPECT_CONNECTED_OUTCOMES.has(x.outcome))?0:contact.records.some(x=>x.type==='SMS'&&x.outcome==='Sent SMS')?1:2;
+  return{connected:0,sent:1,attempted:2,launched:3,other:4}[myMarketOutreachEvidence(contact).kind];
 }
 function myMarketPersonMarkup(p,contact=null){
-  const last=contact?.latest,pending=contact?.records.filter(x=>x.marketFollowUpStatus==='pending')||[],triggered=contact?.records.filter(x=>x.marketFollowUpStatus==='triggered')||[];
+  const last=contact?.latest,pending=contact?.records.filter(x=>x.marketFollowUpStatus==='pending')||[],triggered=contact?.records.filter(x=>x.marketFollowUpStatus==='triggered')||[],lastOutreach=contact?.records.filter(x=>x.type==='Call'||x.type==='SMS').sort((a,b)=>Number(b.at||0)-Number(a.at||0))[0];
   if(!p)return'<div class="my-market-person-row"><span class="my-market-person-copy"><strong>Contact no longer available</strong></span></div>';
   const address=formatProspectAddress(p.address||p.company,p.suburb)||'No property address',phone=primaryProspectPhone(p)||'No mobile number';
-  const activity=last?[last.type==='SMS'&&last.outcome==='Sent SMS'?'SMS sent':last.outcome||last.type||'Recorded outreach',validDateKey(last.date)?fmtDate(last.date):''].filter(Boolean).join(' · '):'';
-  const connected=contact?.records.some(x=>x.type==='Call'&&PROSPECT_CONNECTED_OUTCOMES.has(x.outcome))&&!(last?.type==='Call'&&PROSPECT_CONNECTED_OUTCOMES.has(last.outcome));
+  const activity=lastOutreach?[lastOutreach.type==='SMS'&&lastOutreach.outcome==='Sent SMS'?'SMS sent':lastOutreach.outcome||lastOutreach.type,validDateKey(lastOutreach.date)?fmtDate(lastOutreach.date):''].filter(Boolean).join(' · '):last?`Property-linked activity · ${last.outcome||last.type||'Recorded'}`:'';
+  const connected=contact?.records.some(x=>x.type==='Call'&&PROSPECT_CONNECTED_OUTCOMES.has(x.outcome))&&!(lastOutreach?.type==='Call'&&PROSPECT_CONNECTED_OUTCOMES.has(lastOutreach.outcome));
   const context=[activity,connected?'Previously connected':'',pending.length?`Waiting for ${[...new Set(pending.map(x=>x.marketFollowUpTrigger))].join(', ')}`:'',triggered.length?'Requested market follow-up triggered':''].filter(Boolean).join(' · ');
   return`<button type="button" class="my-market-person-row" data-open-prospect="${escapeHtml(p.id)}"><span class="my-market-person-copy"><strong>${escapeHtml(p.name)}</strong><small>${escapeHtml(address)}</small><small>${escapeHtml(phone)}</small>${context?`<em>${escapeHtml(context)}</em>`:''}</span><span class="prospect-temp temp-${escapeHtml(String(p.temperature||'Cold').toLowerCase())}">${escapeHtml(p.temperature||'Cold')}</span><b aria-hidden="true">›</b></button>`;
 }
@@ -3245,7 +3261,7 @@ function myMarketAddressContacts(row){
 }
 function myMarketConfirmedContacts(row){return activeProspects().filter(p=>p.marketConfirmedProperties?.includes(row.key))}
 async function updateMyMarketConfirmedContact(id,key,confirmLink){
-  const p=prospectById(id),row=myMarketPropertyRows().find(item=>item.key===key);
+  const p=prospectById(id),row=myMarketDataSnapshot().rows.find(item=>item.key===key);
   if(!p||!row||p.archived)return;
   const old=p.marketConfirmedProperties||[];
   if(confirmLink&&!old.includes(key)&&!myMarketAddressContacts(row).some(item=>item.id===p.id))return toast('Check the contact address before confirming');
@@ -3258,7 +3274,7 @@ async function updateMyMarketConfirmedContact(id,key,confirmLink){
   toast(confirmLink?'Property link confirmed':'Property link removed');
 }
 function openMyMarketAppointment(id,key){
-  const p=prospectById(id),row=myMarketPropertyRows().find(item=>item.key===key);
+  const p=prospectById(id),row=myMarketDataSnapshot().rows.find(item=>item.key===key);
   if(!p||!row||!p.marketConfirmedProperties?.includes(key))return;
   editingAppointment=null;appointmentEditReturnState=null;appointmentHistoryMode=null;pendingProspectAppointmentFlow=null;appointmentDate=todayKey();appointmentLinkedProspectId=p.id;
   $('#appointmentForm').reset();
@@ -3335,32 +3351,42 @@ function myMarketPropertyMarkup(row,recorded,{detail=false}={}){
   facts.push(['Recorded price changes',String(stats.changes)]);if(stats.days!=null)facts.push(['Reported days on market',`${stats.days} days`]);
   const history=stats.events.map(event=>{const kind=myMarketEventKind(event),value=kind==='sold'?event.price:event.guide||event.price;return`<li><time datetime="${escapeHtml(event.receivedDate)}">${escapeHtml(fmtDate(event.receivedDate))}</time><div><strong>${escapeHtml(event.eventType)}</strong>${value?`<span>${escapeHtml(value)}</span>`:''}${event.priorPrice?`<small>Previous price reported: ${escapeHtml(event.priorPrice)}</small>`:''}${event.auctionText?`<small>${escapeHtml(event.auctionText)}</small>`:''}</div></li>`}).join('');
   const streetContacts=knockingStreetContacts(e),addressContacts=myMarketAddressContacts(row),confirmedContacts=detail?myMarketConfirmedContacts(row):[],signal=myMarketPropertySignal(row),canMessage=['long60','long90','long120','withdrawn'].includes(signal.code),opportunity=streetContacts.length?`${streetContacts.length} saved contact${streetContacts.length===1?'':'s'} on this street`:'No saved street contacts yet';
+  const outreachSummary=myMarketOutreachSummary(recorded);
+  const signalMarkup=`<span class="my-market-signal-tag signal-${signal.code}">${escapeHtml(signal.label)}</span>`,addressMarkup=addressContacts.length?`<span class="my-market-address-tag">${addressContacts.length} contact${addressContacts.length===1?'':'s'} at address</span>`:'',smsReady=canMessage&&addressContacts.some(myMarketOwnerSmsEligible)?'<span class="my-market-sms-ready">SMS ready</span>':'';
+  if(!detail)return`<button class="my-market-property" type="button" data-open-market-property="${escapeHtml(row.key)}"><span class="my-market-property-copy"><strong>${escapeHtml(e.address)}</strong><small>${escapeHtml(e.suburb)} · ${escapeHtml(e.propertyDetails||marketPulseEventPropertyCategory(e)||'Details not recorded')}</small><span class="my-market-result"><b>${escapeHtml(price)}</b><small>${escapeHtml(label)} · ${escapeHtml(fmtDate(e.receivedDate))}</small></span><span class="my-market-signals">${signalMarkup}${addressMarkup}${smsReady}</span><em>${outreachSummary?`${escapeHtml(outreachSummary)} · `:''}${escapeHtml(opportunity)}</em></span><b aria-hidden="true">›</b></button>`;
   const recordedOrdered=[...recorded].sort((a,b)=>myMarketOutreachRank(a)-myMarketOutreachRank(b)||Number(b.latest?.at||0)-Number(a.latest?.at||0)||String(prospectById(a.id)?.name||'').localeCompare(String(prospectById(b.id)?.name||'')));
   const workedIds=new Set(recorded.map(contact=>contact.id)),otherStreetContacts=streetContacts.filter(p=>!workedIds.has(p.id));
-  const signalMarkup=`<span class="my-market-signal-tag signal-${signal.code}">${escapeHtml(signal.label)}</span>`,addressMarkup=addressContacts.length?`<span class="my-market-address-tag">${addressContacts.length} contact${addressContacts.length===1?'':'s'} at address</span>`:'',smsReady=canMessage&&addressContacts.some(myMarketOwnerSmsEligible)?'<span class="my-market-sms-ready">SMS ready</span>':'';
-  if(!detail)return`<button class="my-market-property" type="button" data-open-market-property="${escapeHtml(row.key)}"><span class="my-market-property-copy"><strong>${escapeHtml(e.address)}</strong><small>${escapeHtml(e.suburb)} · ${escapeHtml(e.propertyDetails||marketPulseEventPropertyCategory(e)||'Details not recorded')}</small><span class="my-market-result"><b>${escapeHtml(price)}</b><small>${escapeHtml(label)} · ${escapeHtml(fmtDate(e.receivedDate))}</small></span><span class="my-market-signals">${signalMarkup}${addressMarkup}${smsReady}</span><em>${recorded.length?`${recorded.length} recorded outreach · `:''}${escapeHtml(opportunity)}</em></span><b aria-hidden="true">›</b></button>`;
   const conversation=signal.code==='withdrawn'?'Reopen the conversation after withdrawal':signal.code==='long120'?'Review a campaign reset':signal.code==='long90'?'A fresh plan for buyer competition':signal.code==='long60'?'Check campaign momentum':sold?'Use the result to reconnect':'Track the campaign and nearby owners';
   const confirmedIds=new Set(confirmedContacts.map(p=>p.id)),unconfirmed=addressContacts.filter(p=>!confirmedIds.has(p.id));
   const contactRow=(p,linked)=>`<div class="my-market-owner-row"><span><strong>${escapeHtml(p.name)}</strong><small>${linked?'Confirmed property contact':'Address match · relationship unconfirmed'} · ${escapeHtml(primaryProspectPhone(p)||'No mobile number')}</small>${linked?`<small>${p.nextFollowUp?`Next follow-up · ${escapeHtml(fmtDate(p.nextFollowUp))}`:'No next follow-up set'}</small>`:''}</span><div><button class="text-btn" type="button" data-open-prospect="${escapeHtml(p.id)}">View contact</button>${linked?`<button class="text-btn" type="button" data-edit-prospect="${escapeHtml(p.id)}">Next step</button><button class="text-btn" type="button" data-market-book-contact="${escapeHtml(p.id)}" data-market-property-key="${escapeHtml(row.key)}">Book</button><button class="text-btn" type="button" data-market-confirm-contact="${escapeHtml(p.id)}" data-market-property-key="${escapeHtml(row.key)}" data-confirm="0">Unlink</button>`:`<button class="text-btn" type="button" data-market-confirm-contact="${escapeHtml(p.id)}" data-market-property-key="${escapeHtml(row.key)}" data-confirm="1">Confirm link</button>`}${canMessage&&myMarketOwnerSmsEligible(p)?`<button class="secondary" type="button" data-market-owner-sms="${escapeHtml(p.id)}" data-market-property-key="${escapeHtml(row.key)}">SMS next step</button>`:''}</div></div>`;
   const addressSection=confirmedContacts.length||unconfirmed.length?`<section class="my-market-detail-section"><span class="eyebrow">CONTACTS AT THIS ADDRESS</span><p class="my-market-muted">Confirm a relationship only when you know it. An address match alone does not establish ownership.</p>${confirmedContacts.map(p=>contactRow(p,true)).join('')}${unconfirmed.map(p=>contactRow(p,false)).join('')}</section>`:'';
-  return`<button class="my-market-back" type="button" data-back-market-property>‹ Back to My Market</button><header class="my-market-detail-head"><span class="eyebrow">${escapeHtml(label.toUpperCase())}</span><h2>${escapeHtml(e.address)}</h2><p>${escapeHtml(e.suburb)} · ${escapeHtml(e.propertyDetails||marketPulseEventPropertyCategory(e)||'Details not recorded')}</p><strong>${escapeHtml(price)}</strong><small>${escapeHtml(fmtDate(e.receivedDate))} · ${escapeHtml(agency)}${e.agents?.length?` · ${escapeHtml(e.agents.join(', '))}`:''}</small><div class="my-market-signals">${signalMarkup}${addressMarkup}</div></header><section class="my-market-detail-section"><span class="eyebrow">NEXT CONVERSATION</span><h3>${escapeHtml(conversation)}</h3><p class="my-market-muted">${escapeHtml(signal.context)}. ${row.status==='current'?'AGNT has no later sold or withdrawn report; verify the live campaign before outreach.':row.status==='withdrawn'?'Confirm the owner’s next plans before proposing a new campaign.':'Check contact history before reaching out.'}</p></section>${addressSection}<section class="my-market-detail-section"><span class="eyebrow">CAMPAIGN</span>${myMarketFactsMarkup(facts)}<h3>Reported history</h3><p class="my-market-muted">Dates are report dates. Earlier or unreported steps may be missing.</p><ol class="my-market-history">${history}</ol></section><section class="my-market-detail-section"><span class="eyebrow">RECORDED OUTREACH · ${recorded.length}</span><p class="my-market-muted">Attempts and requested follow-ups do not confirm successful contact.</p>${recordedOrdered.length?recordedOrdered.map(myMarketContactMarkup).join(''):'<p class="my-market-muted">No property-linked outreach recorded.</p>'}</section><section class="my-market-detail-section"><details class="my-market-street-disclosure" data-market-street-disclosure><summary><span class="eyebrow">PEOPLE ON THIS STREET</span><small>${otherStreetContacts.length} other saved contact${otherStreetContacts.length===1?'':'s'}</small></summary><p class="my-market-muted">Street matches do not establish ownership.</p>${otherStreetContacts.length?otherStreetContacts.map(p=>myMarketPersonMarkup(p)).join(''):'<p class="my-market-muted">No other street contacts. Add or update contacts in the existing Contacts workflow.</p>'}</details></section>`;
+  return`<button class="my-market-back" type="button" data-back-market-property>‹ Back to My Market</button><header class="my-market-detail-head"><span class="eyebrow">${escapeHtml(label.toUpperCase())}</span><h2>${escapeHtml(e.address)}</h2><p>${escapeHtml(e.suburb)} · ${escapeHtml(e.propertyDetails||marketPulseEventPropertyCategory(e)||'Details not recorded')}</p><strong>${escapeHtml(price)}</strong><small>${escapeHtml(fmtDate(e.receivedDate))} · ${escapeHtml(agency)}${e.agents?.length?` · ${escapeHtml(e.agents.join(', '))}`:''}</small><div class="my-market-signals">${signalMarkup}${addressMarkup}</div></header><section class="my-market-detail-section"><span class="eyebrow">NEXT CONVERSATION</span><h3>${escapeHtml(conversation)}</h3><p class="my-market-muted">${escapeHtml(signal.context)}. ${row.status==='current'?'AGNT has no later sold or withdrawn report; verify the live campaign before outreach.':row.status==='withdrawn'?'Confirm the owner’s next plans before proposing a new campaign.':'Check contact history before reaching out.'}</p></section>${addressSection}<section class="my-market-detail-section"><span class="eyebrow">CAMPAIGN</span>${myMarketFactsMarkup(facts)}<h3>Reported history</h3><p class="my-market-muted">Dates are report dates. Earlier or unreported steps may be missing.</p><ol class="my-market-history">${history}</ol></section><section class="my-market-detail-section"><span class="eyebrow">PROPERTY-LINKED ACTIVITY · ${recorded.length}</span><p class="my-market-muted">${outreachSummary?`${escapeHtml(outreachSummary)}. `:''}Calls without a connected outcome and requested follow-ups do not confirm a conversation.</p>${recordedOrdered.length?recordedOrdered.map(myMarketContactMarkup).join(''):'<p class="my-market-muted">No property-linked activity recorded.</p>'}</section><section class="my-market-detail-section"><details class="my-market-street-disclosure" data-market-street-disclosure><summary><span class="eyebrow">PEOPLE ON THIS STREET</span><small>${otherStreetContacts.length} other saved contact${otherStreetContacts.length===1?'':'s'}</small></summary><p class="my-market-muted">Street matches do not establish ownership.</p>${otherStreetContacts.length?otherStreetContacts.map(p=>myMarketPersonMarkup(p)).join(''):'<p class="my-market-muted">No other street contacts. Add or update contacts in the existing Contacts workflow.</p>'}</details></section>`;
 }
-function renderMyMarketHub(){
-  const host=$('#myMarketHub');if(!host||prospectSection!=='market'||marketPageMode!=='hub')return;
-  const rows=myMarketPropertyRows(),cutoff=myMarketCutoff(),suburbs=[...new Set(rows.map(row=>row.event.suburb))].sort((a,b)=>a.localeCompare(b));
-  const select=$('#myMarketSuburb'),options='<option value="">All suburbs</option>'+suburbs.map(suburb=>`<option value="${escapeHtml(suburb)}">${escapeHtml(suburb)}</option>`).join('');if(select.innerHTML!==options){select.innerHTML=options;if(myMarketSuburb&&!suburbs.includes(myMarketSuburb))myMarketSuburb='';select.value=myMarketSuburb}
-  select.value=myMarketSuburb;$('#myMarketCategory').value=myMarketCategory;
-  $('#myMarketRefineSummary').textContent=`${myMarketSuburb||'All suburbs'} · ${$('#myMarketCategory').selectedOptions[0]?.textContent||'All categories'}`;
+function myMarketViewSnapshot(){
+  const data=myMarketDataSnapshot(),prior=myMarketViewCache,day=data.day;
+  if(prior&&prior.data===data&&prior.day===day&&prior.filter===myMarketFilter&&prior.suburb===myMarketSuburb&&prior.category===myMarketCategory&&prior.prospects===prospects&&prior.prospectCount===prospects.length&&prior.interactions===prospectInteractions&&prior.interactionCount===prospectInteractions.length)return prior;
+  const rows=data.rows,cutoff=myMarketCutoff(),suburbs=[...new Set(rows.map(row=>row.event.suburb))].sort((a,b)=>a.localeCompare(b));
   const scope=rows.filter(row=>(!myMarketSuburb||row.event.suburb===myMarketSuburb)&&(!myMarketCategory||(marketPulseEventPropertyCategory(row.event)||'Unknown')===myMarketCategory));
   const filtered=scope.filter(row=>myMarketFilter==='current'?row.status==='current':myMarketFilter==='aged60'||myMarketFilter==='aged90'||myMarketFilter==='aged120'?row.status==='current'&&(myMarketCampaignAge(row)?.days||0)>=Number(myMarketFilter.slice(4)):myMarketFilter==='sold'?row.sold?.receivedDate>=cutoff:myMarketFilter==='withdrawn'?row.status==='withdrawn'&&row.statusDate>=cutoff:myMarketFilter==='price'?row.price?.receivedDate>=cutoff:myMarketFilter==='auction'?row.auction?.receivedDate>=cutoff:row.status==='current'||row.statusDate>=cutoff).map(row=>myMarketFilter==='sold'?{...row,status:'sold',statusDate:row.sold.receivedDate,statusEvent:row.sold,event:row.sold}:row);
   const counts=[['Current',scope.filter(x=>x.status==='current').length],['Sold · 6 months',scope.filter(x=>x.sold?.receivedDate>=cutoff).length],['Withdrawn · 6 months',scope.filter(x=>x.status==='withdrawn'&&x.statusDate>=cutoff).length]];
   filtered.sort((a,b)=>marketPulseEventSortNewest(a.event,b.event)||a.key.localeCompare(b.key));
-  const analytics=myMarketAnalyticsMarkup(filtered);if($('#myMarketAnalytics').innerHTML!==analytics)$('#myMarketAnalytics').innerHTML=analytics;
+  const snapshot={data,day,filter:myMarketFilter,suburb:myMarketSuburb,category:myMarketCategory,prospects,prospectCount:prospects.length,interactions:prospectInteractions,interactionCount:prospectInteractions.length,suburbs,filtered,counts,analytics:myMarketAnalyticsMarkup(filtered),agencyMarkup:myMarketShareMarkup(myMarketShareRows(filtered)),agentMarkup:myMarketShareMarkup(myMarketShareRows(filtered,true)),contacts:myMarketContactIndex(rows),listLimit:0,listMarkup:''};
+  myMarketViewCache=snapshot;return snapshot;
+}
+function renderMyMarketHub(){
+  const host=$('#myMarketHub');if(!host||prospectSection!=='market'||marketPageMode!=='hub')return;
+  if(myMarketSuburb&&!myMarketDataSnapshot().rows.some(row=>row.event.suburb===myMarketSuburb))myMarketSuburb='';
+  const snapshot=myMarketViewSnapshot(),{suburbs,filtered,counts,contacts}=snapshot;
+  const select=$('#myMarketSuburb'),options='<option value="">All suburbs</option>'+suburbs.map(suburb=>`<option value="${escapeHtml(suburb)}">${escapeHtml(suburb)}</option>`).join('');if(select.innerHTML!==options){select.innerHTML=options;select.value=myMarketSuburb}
+  select.value=myMarketSuburb;$('#myMarketCategory').value=myMarketCategory;
+  $('#myMarketRefineSummary').textContent=`${myMarketSuburb||'All suburbs'} · ${$('#myMarketCategory').selectedOptions[0]?.textContent||'All categories'}`;
+  if($('#myMarketAnalytics').innerHTML!==snapshot.analytics)$('#myMarketAnalytics').innerHTML=snapshot.analytics;
   $('#myMarketCounts').textContent=`${counts[0][1]} current · ${counts[1][1]} sold · ${counts[2][1]} withdrawn`;
   $('#myMarketStatus').value=myMarketFilter;
-  const agencyMarkup=myMarketShareMarkup(myMarketShareRows(filtered)),agentMarkup=myMarketShareMarkup(myMarketShareRows(filtered,true));if($('#myMarketAgencyShares').innerHTML!==agencyMarkup)$('#myMarketAgencyShares').innerHTML=agencyMarkup;if($('#myMarketAgentShares').innerHTML!==agentMarkup)$('#myMarketAgentShares').innerHTML=agentMarkup;
-  const contacts=myMarketContactIndex(rows),list=$('#myMarketProperties');
-  const markup=filtered.slice(0,myMarketLimit).map(row=>myMarketPropertyMarkup(row,[...(contacts.get(row.key)?.values()||[])])).join('')||'<div class="prospect-empty"><strong>No properties in this view</strong><small>New MarketPulse imports will appear here.</small></div>';
+  if($('#myMarketAgencyShares').innerHTML!==snapshot.agencyMarkup)$('#myMarketAgencyShares').innerHTML=snapshot.agencyMarkup;if($('#myMarketAgentShares').innerHTML!==snapshot.agentMarkup)$('#myMarketAgentShares').innerHTML=snapshot.agentMarkup;
+  const list=$('#myMarketProperties');
+  if(snapshot.listLimit!==myMarketLimit){snapshot.listMarkup=filtered.slice(0,myMarketLimit).map(row=>myMarketPropertyMarkup(row,[...(contacts.get(row.key)?.values()||[])])).join('')||'<div class="prospect-empty"><strong>No properties in this view</strong><small>New MarketPulse imports will appear here.</small></div>';snapshot.listLimit=myMarketLimit}
+  const markup=snapshot.listMarkup;
   if(list.dataset.markup!==markup){list.innerHTML=markup;list.dataset.markup=markup}
   $('#myMarketMore').classList.toggle('hidden',filtered.length<=myMarketLimit);
   const screen=$('#myMarketPropertyScreen'),detailRow=filtered.find(row=>row.key===myMarketDetailKey);
@@ -3369,10 +3395,10 @@ function renderMyMarketHub(){
   if(detailRow){const detail=myMarketPropertyMarkup(detailRow,[...(contacts.get(detailRow.key)?.values()||[])],{detail:true});if(screen.dataset.markup!==detail){const streetOpen=screen.dataset.propertyKey===detailRow.key&&Boolean(screen.querySelector('[data-market-street-disclosure]')?.open);screen.innerHTML=detail;screen.dataset.markup=detail;screen.dataset.propertyKey=detailRow.key;if(streetOpen)screen.querySelector('[data-market-street-disclosure]').open=true}}
   const estimateSelect=$('#myMarketEstimateContact'),selected=estimateSelect.value,configured=activeProspects().filter(sellerPropertyConfigured),estimateOptions='<option value="">Choose a configured contact property</option>'+configured.map(p=>`<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)} · ${escapeHtml(p.address||p.suburb||'')}</option>`).join('');if(estimateSelect.innerHTML!==estimateOptions){estimateSelect.innerHTML=estimateOptions;estimateSelect.value=configured.some(p=>p.id===selected)?selected:''}renderMyMarketEstimate();
 }
-function renderMyMarketEstimate(){const p=prospectById($('#myMarketEstimateContact')?.value);const target=$('#myMarketEstimate');if(target)target.innerHTML=p?sellerEstimateMarkup(p):'<p class="my-market-muted">Select an existing contact with property details to view AGNT’s comparable-sold estimate. Configure property details in Contacts.</p>'}
+function renderMyMarketEstimate(){const p=prospectById($('#myMarketEstimateContact')?.value);const target=$('#myMarketEstimate');if(target){const markup=p?sellerEstimateMarkup(p):'<p class="my-market-muted">Select an existing contact with property details to view AGNT’s comparable-sold estimate. Configure property details in Contacts.</p>';if(target.innerHTML!==markup)target.innerHTML=markup}}
 function openMyMarketHub(){myMarketDetailKey='';marketPageMode='hub';setProspectorSection('market');renderProspecting()}
 function openMyMarketProperty(key){
-  if(!key||!myMarketPropertyRows().some(row=>row.key===key))return;
+  if(!key||!myMarketDataSnapshot().rows.some(row=>row.key===key))return;
   myMarketListScroll=$('#prospectingView').scrollTop;myMarketDetailKey=key;renderMyMarketHub();$('#prospectingView').scrollTop=0;
 }
 function closeMyMarketProperty(){myMarketDetailKey='';renderMyMarketHub();requestAnimationFrame(()=>{$('#prospectingView').scrollTop=myMarketListScroll})}
@@ -3391,7 +3417,7 @@ function showMyMarketOwnerSmsConfirmation(pending=loadMyMarketOwnerSmsPending())
 }
 function launchMyMarketOwnerSms(prospectIdValue,propertyKey){
   const previous=loadMyMarketOwnerSmsPending();if(previous){if(Date.now()-Number(previous.openedAt||0)<10*60*1000)return;saveMyMarketOwnerSmsPending(null)}
-  const row=myMarketPropertyRows().find(item=>item.key===propertyKey),p=prospectById(prospectIdValue);
+  const row=myMarketDataSnapshot().rows.find(item=>item.key===propertyKey),p=prospectById(prospectIdValue);
   if(!row||!p||!myMarketAddressContacts(row).some(item=>item.id===p.id)||!['long60','long90','long120','withdrawn'].includes(myMarketPropertySignal(row).code)||!myMarketOwnerSmsEligible(p))return toast('Check the contact and campaign before messaging');
   const message=myMarketOwnerSmsMessage(p,row),pending={id:prospectId(),prospectId:p.id,propertyKey:row.key,eventId:row.event.id,address:row.event.address,name:p.name,message,openedAt:Date.now()};
   saveMyMarketOwnerSmsPending(pending);window.location.href=smsHref(primaryProspectPhone(p),message);setTimeout(resumeMyMarketOwnerSmsReturn,2600);
@@ -4156,6 +4182,7 @@ function openHotSpottingArea(){
 }
 function closeMarketPulseDataArea(){if(marketPulseReturnTarget==='hub'){marketPulseReturnTarget='hotspotting';openMyMarketHub();return}const returnHome=marketPulseReturnTarget==='home';marketPulseReturnTarget='hotspotting';if(returnHome){marketPageMode='hotspotting';setProspectorSection('today');switchView('todayView');return}openHotSpottingArea()}
 function setProspectorSection(section='market',{resetSubview=true,todayMode=null}={}){
+  const previousSection=prospectSection,previousTodayMode=prospectTodayMode;
   prospectSection=['today','contacts','buyers','pipeline','market','broadcast','insights'].includes(section)?section:'market';
   if(todayMode)prospectTodayMode=todayMode;
   $$('[data-prospector-section]').forEach(button=>{const active=button.dataset.prospectorSection===prospectSection;button.classList.toggle('active',active);if(active)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current')});
@@ -4171,7 +4198,16 @@ function setProspectorSection(section='market',{resetSubview=true,todayMode=null
   if(document.querySelector('.view.active')?.id==='prospectingView')updateTopbar();
   const searchVisible=['contacts','buyers','pipeline'].includes(prospectSection),quickActionsVisible=prospectSection==='today'&&prospectTodayMode==='dashboard';const toolbar=$('.prospecting-toolbar');toolbar?.classList.toggle('hidden',!searchVisible&&!quickActionsVisible);toolbar?.classList.toggle('quick-actions-only',quickActionsVisible&&!searchVisible);$('.prospecting-search-wrap')?.classList.toggle('hidden',!searchVisible);
   const input=$('#prospectSearch');if(input)input.placeholder=prospectSection==='contacts'?'Search name, street, suburb, phone etc.':prospectSection==='buyers'?'Search buyers':'Search seller pipeline';const addButton=$('#addProspectButton');if(addButton)addButton.setAttribute('aria-label',prospectSection==='buyers'?'Add buyer':'Add contact');
-  if(prospectSection==='market')renderMarketPulse();if(prospectSection==='broadcast')renderBroadcastScreen();if(!resetSubview||prospectSessionActive&&prospectSection==='today')return;
+  if(prospectSection==='market')renderMarketPulse();if(prospectSection==='broadcast')renderBroadcastScreen();
+  // Direct section changes must populate the newly visible panel without rebuilding hidden panels.
+  if($('#prospectingView')?.classList.contains('active')&&(previousSection!==prospectSection||prospectSection==='today'&&previousTodayMode!==prospectTodayMode)){
+    if(prospectSection==='contacts')renderContactsList();
+    else if(prospectSection==='buyers')renderBuyerProfiles();
+    else if(prospectSection==='pipeline')renderSellerPipeline();
+    else if(prospectSection==='insights')renderProspectorInsights();
+    else if(prospectSection==='today'&&prospectTodayMode==='followups')renderTodayFollowUpQueue();
+  }
+  if(!resetSubview||prospectSessionActive&&prospectSection==='today')return;
   $('#prospectDetail')?.classList.add('hidden');
   $('#prospectingSession')?.classList.add('hidden');
   $('#prospectingDashboard')?.classList.remove('hidden');
@@ -4423,9 +4459,10 @@ function renderContactsList(){
 }
 function renderProspecting(){
   if(!$('#prospectingView')?.classList.contains('active'))return;
-  renderBuyerSessionHero();
+  if(prospectSection==='today'&&prospectTodayMode==='dashboard')renderBuyerSessionHero();
   if(!$('#prospectingView'))return;
   const detail=$('#prospectDetail'),dashboard=$('#prospectingDashboard'),session=$('#prospectingSession'),detailWasOpen=Boolean(detail&&!detail.classList.contains('hidden')),sessionWasOpen=Boolean(session&&!session.classList.contains('hidden')),editorWasOpen=Boolean(detail?.querySelector('form'));
+  if(prospectSection==='today'&&prospectTodayMode==='dashboard'){
   const today=todayKey(),active=activeProspects(),overdue=active.filter(p=>p.nextFollowUp&&p.nextFollowUp<today).length,due=active.filter(p=>p.nextFollowUp===today).length,hot=active.filter(p=>p.temperature==='Hot').length,followUps=dueProspectFollowUps(),pipeline=getDailyProspectPipeline(),remainingPipeline=pipeline.filter(id=>!prospectContactedToday(id));
   $('#prospectingOverdue').textContent=overdue;$('#prospectingToday').textContent=due;$('#prospectingHot').textContent=hot;$('#prospectingDueCount').textContent=remainingPipeline.length;$('#prospectingDueLabel').textContent=remainingPipeline.length===1?'client ready':'clients ready';
   const pipelineSessionActive=prospectSessionActive&&!cleanText(prospectSessionContext?.eventId,160),pipelineSessionComplete=Boolean(pipeline.length)&&remainingPipeline.length===0,pipelineSessionButton=$('#startProspectingSession');if(pipelineSessionButton){pipelineSessionButton.textContent=pipelineSessionComplete?'Session Complete':pipelineSessionActive?'Active Session':'Start Session';pipelineSessionButton.classList.remove('market-session-start-btn','market-session-active-btn','market-session-complete-btn');pipelineSessionButton.classList.add(pipelineSessionComplete?'market-session-complete-btn':pipelineSessionActive?'market-session-active-btn':'market-session-start-btn');pipelineSessionButton.disabled=pipelineSessionComplete}
@@ -4435,10 +4472,12 @@ function renderProspecting(){
   if($('#hotSpottingWorkState'))$('#hotSpottingWorkState').textContent=hotSpottingActive?'Live street session in progress':hotSpottingComplete?'All current opportunities completed':hotSpottingReady?`${hotSpottingEvents.length} opportunit${hotSpottingEvents.length===1?'y':'ies'} · ${formatEstimatedTime(estimatedMinutes(hotSpottingReady))}`:'No matching neighbours yet';
   const draftCount=selectedBroadcastRecipientIds.size;if($('#broadcastWorkState'))$('#broadcastWorkState').textContent=selectedBroadcastType?`${draftCount||'No'} recipient${draftCount===1?'':'s'} selected`:(campaignHistory.length?`${campaignHistory.length} campaign${campaignHistory.length===1?'':'s'} launched`:'Choose an audience to begin');
   $('#prospectQueue').innerHTML=followUps.length?followUps.map(followUpChecklistCard).join(''):'<div class="prospect-empty"><strong>Follow-ups cleared</strong><small>You’re up to date. New due and overdue follow-ups will appear here.</small></div>';
-  renderContactsList();
-  renderBuyerProfiles();
-  renderSellerPipeline();
-  renderTodayFollowUpQueue();
+  }
+  if(prospectSection==='contacts')renderContactsList();
+  else if(prospectSection==='buyers')renderBuyerProfiles();
+  else if(prospectSection==='pipeline')renderSellerPipeline();
+  else if(prospectSection==='insights')renderProspectorInsights();
+  else if(prospectSection==='today'&&prospectTodayMode==='followups')renderTodayFollowUpQueue();
   const sessionLogOpen=prospectSessionActive&&$('#prospectLogForm')?.dataset.fromSession==='1'&&detailWasOpen;
   setProspectorSection(prospectSection,{resetSubview:false});
   if(sessionLogOpen||detailWasOpen&&editorWasOpen){
@@ -5766,7 +5805,7 @@ $('#settingsView').addEventListener('change',event=>{const field=event.target;if
 $('#saveSettings').onclick=async()=>{const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;calendarPreference=$('[name=calendarPreference]:checked')?.value==='apple'?'apple':'outlook';appearancePreference=normaliseAppearance($('[name=appearancePreference]:checked')?.value);applyAppearance(appearancePreference);settingsDraftFields.clear();await saveTargets();if(cloud&&accountMode==='team'&&teamId&&uid){try{await setDoc(doc(db,'teams',teamId,'members',uid),{name:agentName,updatedAt:serverTimestamp()},{merge:true})}catch(err){console.error('Team profile name sync failed',err)}}renderAll();toast('Settings saved')};
 $('#signOut').onclick=async()=>{clearActiveSession();if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
 function mergeBackupRecords(current=[],incoming=[]){const byId=new Map();[...(Array.isArray(current)?current:[]),...(Array.isArray(incoming)?incoming:[])].forEach((item,index)=>{if(!item||typeof item!=='object')return;const id=cleanText(item.id,180)||`backup-record-${index}`;byId.set(id,item)});return[...byId.values()]}
-function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.44.8',exportedAt:new Date().toISOString(),targets,workDays,agentName,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
+function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.44.9',exportedAt:new Date().toISOString(),targets,workDays,agentName,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
 function restoreBuyerSessionBackup(value){if(!value||!Array.isArray(value.contacts))return false;buyerSession={contacts:value.contacts.map((contact,index)=>({id:cleanText(contact.id,80)||`buyer_${index}`,name:cleanText(contact.name,120)||'Unknown buyer',phone:normaliseDialNumber(contact.phone),address:cleanText(contact.address,240),doNotSms:Boolean(contact.doNotSms),status:cleanText(contact.status,40)})).filter(contact=>contact.phone),index:Math.max(0,Number(value.index)||0),active:Boolean(value.active),visible:false,fileName:cleanText(value.fileName,160),importedAt:Number(value.importedAt)||0};buyerSession.index=Math.min(buyerSession.index,buyerSession.contacts.length);return saveBuyerSession()}
 function syncImportedBackup(dayKeys=[],prospectingIncluded=false){if(!cloud)return;saveTargets().catch(err=>console.error('Imported settings sync failed',err));dayKeys.forEach(key=>saveDay(key,{quiet:true,awaitCloud:false,render:false}).catch?.(err=>console.error('Imported day sync failed',err)));if(prospectingIncluded)saveProspecting({render:false,awaitCloud:false}).catch(err=>console.error('Imported prospecting sync failed',err))}
 $('#exportData').onclick=()=>{const blob=new Blob([JSON.stringify(completeBackupPayload(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`agnt-complete-backup-${todayKey()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),0)};

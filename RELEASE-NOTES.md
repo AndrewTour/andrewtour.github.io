@@ -1,6 +1,6 @@
-# AGNT v1.44.8 — Action logic
+# AGNT v1.44.9 — Core speed and market clarity
 
-- Buyer Update now keeps untouched property matches actionable after another match for the same buyer was worked. A match contacted or attempted today leaves today’s queue; a newly matched property can still appear.
-- Today’s buyer follow-up handoff uses the same actionable match set. Reviewing or dismissing a match without outreach no longer counts as contacting the buyer.
-- Reach’s 21-day cooldown now uses outreach interactions instead of profile edits, pipeline updates, scheduling and other administrative history. Off-day conversation recency uses the same definition while explicit completed/cleared work stays cleared for today.
-- No saved-data fields, Firestore paths, rules, Firebase configuration, visual styles or service-worker lifecycle changed. Only app.js and release identity files changed; this file contains the current release notes.
+- Core now builds the visible Contacts, Buyers, Pipeline or Reach panel when it is needed instead of rendering all hidden panels on every refresh. Existing navigation and editor state remain in place.
+- My Market reuses campaign rows, filtered analytics, contact links and list markup while their source data and filters are unchanged. Imports, contact/interactions updates, filter changes and a new calendar day invalidate the cached view.
+- Property activity distinguishes connected calls, sent SMS, call attempts, launched bulk SMS and pending follow-ups. Administrative property links remain visible in the detail without being presented as outreach.
+- Firebase configuration, Firestore paths and rules, stored record formats, matching and ranking rules, and service-worker lifecycle behaviour remain unchanged.
