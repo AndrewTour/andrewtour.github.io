@@ -1,6 +1,5 @@
-# AGNT v1.44.10 — Tab return
+# AGNT v1.44.11 — Appointment form and rendering
 
-- Tapping the selected bottom-navigation tab returns that tab to its main screen. Home and Today return to the current day; Core returns to My Market; Appointments returns from history to its main screen; Leaderboard returns to the current daily view; Settings returns to the top.
-- Switching between different tabs continues to preserve the open workflow, including calling sessions. A second tap on the selected tab is the explicit return action.
-- An unfinished new contact draft is retained. An open edit or outcome form asks before discarding unsaved work; an appointment draft stays in its form. Active call and knocking sessions are hidden without being ended.
-- No Firebase configuration, Firestore paths, storage formats, business logic, visual styles or service-worker lifecycle behaviour changed.
+- Removed the visible Appointment Context box from the booking form. Existing saved context and context supplied by other appointment workflows remain in appointment records and messages.
+- Day-screen updates now redraw only the visible Home, Today, Appointments, Leaderboard or Settings screen. Opening a tab refreshes its current view; returning from another app updates the active day screen without rebuilding hidden ones.
+- Removed the unused textarea styling. Firebase configuration, Firestore paths, local data shapes, sync logic, navigation destinations and service-worker behaviour are unchanged. The service-worker cache version was advanced to deliver this release coherently.

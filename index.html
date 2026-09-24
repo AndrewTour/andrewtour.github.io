@@ -9,8 +9,8 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.44.10-tab-return">
-<link rel="stylesheet" href="cleanup.css?v=1.44.10-tab-return">
+<link rel="stylesheet" href="styles.css?v=1.44.11-appointment-render">
+<link rel="stylesheet" href="cleanup.css?v=1.44.11-appointment-render">
 <title>AGNT</title>
 </head>
 <body>
@@ -577,7 +577,7 @@
         <label class="appointment-contact-picker">Contact name<div class="appointment-contact-input"><input id="appointmentContactName" type="text" placeholder="Search contacts or enter a name" autocomplete="off" autocapitalize="words" required><div id="appointmentContactSuggestions" class="appointment-contact-suggestions hidden" role="listbox"></div></div></label>
         <label>Contact number<input id="appointmentContactNumber" type="tel" placeholder="04xx xxx xxx" autocomplete="tel" inputmode="tel" required></label>
         <label>Property address<input id="appointmentAddress" type="text" placeholder="14 Calla Grove, Pendle Hill" autocomplete="street-address" required></label>
-        <label>Appointment context<textarea id="appointmentContext" rows="3" maxlength="1000" placeholder="Reason for the appointment, client priorities or agreed next step"></textarea></label>
+        <input id="appointmentContext" type="hidden">
         <div class="appointment-schedule">
           <label>Booking date<input id="appointmentDatePicker" type="date" required></label>
           <label>Booking time<input id="appointmentTime" type="time" value="12:00" required></label>
@@ -1242,7 +1242,7 @@ Andrew Tour | McGrath</textarea></label>
 
 
 
-<script src="runtime.js?v=1.44.10-tab-return"></script>
-<script type="module" src="app.js?v=1.44.10-tab-return"></script>
+<script src="runtime.js?v=1.44.11-appointment-render"></script>
+<script type="module" src="app.js?v=1.44.11-appointment-render"></script>
 </body>
 </html>
