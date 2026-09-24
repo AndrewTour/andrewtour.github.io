@@ -1478,7 +1478,7 @@ function prospectFollowUpReason(prospect={}){
   return{why:cleanText(why,240),last:cleanText(last,320),lastDate:latest?.date||prospect.lastContact||''}
 }
 function todayFollowUpQueueModel(viewDate=todayKey()){
-  const buyersWithMatches=new Set(activeBuyerProspects().filter(buyer=>buyerOpenPropertyMatches(buyer).length).map(buyer=>buyer.id)),rows=[];
+  const buyersWithMatches=new Set(viewDate===todayKey()?buyerMatchContactEnvelopes(viewDate).map(row=>row.buyer.id):[]),rows=[];
   scheduledFollowUpsForDate(viewDate).forEach(({appointment:a,sourceDate})=>{
     const rawPhone=cleanText(a.contactNumber||a.phone,80),address=cleanText(a.address,240),outcome=appointmentOutcomeLabel(a.outcome),note=cleanText(a.outcomeNote,320),id=calendarExportId(a,sourceDate);
     rows.push({id:`appointment-${id}`,recordId:id,sourceDate,type:'appointment',name:cleanText(a.contactName||a.name,120)||'Contact not recorded',phone:rawPhone,dial:rawPhone.replace(/[^+\d]/g,''),dueDate:a.followUpDate||viewDate,overdue:Boolean(a.followUpDate&&a.followUpDate<viewDate),role:`${appointmentType(a)} appointment`,why:note||outcome||`Outcome follow-up for ${address||'the appointment'}`,last:[outcome,address,appointmentScheduledDate(a,sourceDate)?fmtDate(appointmentScheduledDate(a,sourceDate)):''].filter(Boolean).join(' · '),appointment:a});
@@ -1783,7 +1783,7 @@ function sellerNextBestAction(now=new Date()){
 }
 function offDayConversationState(date=todayKey()){
   const contacted=new Set(),doNotContact=new Set(),lastAt=new Map(),latest=new Map();
-  for(const item of prospectInteractions){const id=cleanText(item?.prospectId,80);if(!id)continue;const at=Number(item.at)||0;if(at>Number(lastAt.get(id)||0)){lastAt.set(id,at);latest.set(id,item)}if(item.outcome==='Do not contact')doNotContact.add(id);if(item.date===date&&['Call','SMS','Appointment','Follow-up','Buyer match'].includes(item.type))contacted.add(id)}
+  for(const item of prospectInteractions){const id=cleanText(item?.prospectId,80);if(!id)continue;const at=Number(item.at)||0;if(prospectInteractionCountsForReach(item)&&at>Number(lastAt.get(id)||0)){lastAt.set(id,at);latest.set(id,item)}if(item.outcome==='Do not contact')doNotContact.add(id);if(item.date===date&&(prospectInteractionCountsForReach(item)||item.type==='Follow-up'&&['Follow-up completed','Seller follow-up cleared as not required.'].includes(item.outcome)))contacted.add(id)}
   return{contacted,doNotContact,lastAt,latest}
 }
 function offDayConversationRole(prospect={},sellerSignal=false){if(prospectIsBuyerSeller(prospect))return'Buyer + Seller';if(prospectHasActiveBuyerRole(prospect)&&sellerSignal)return'Buyer + Seller';if(prospectHasActiveBuyerRole(prospect))return'Buyer';if(sellerSignal)return'Seller';return'Pipeline'}
@@ -3000,7 +3000,9 @@ const PROSPECT_CONNECTED_OUTCOMES=new Set(['Connected','Appraisal opportunity','
 function prospectLastConnectedDate(id){const interaction=interactionsFor(id).find(x=>PROSPECT_CONNECTED_OUTCOMES.has(x.outcome));return interaction?.date||''}
 function prospectContactedToday(id){const today=todayKey();return prospectInteractions.some(x=>x.prospectId===id&&x.date===today&&x.type==='Call')}
 const PROSPECT_SESSION_COOLDOWN_MS=21*24*60*60*1000;
-function prospectLastLoggedAt(id){return interactionsFor(id).reduce((latest,interaction)=>Math.max(latest,Number(interaction.at)||0),0)}
+const REACH_BUYER_MATCH_OUTCOMES=new Set(['Interested','Details sent','Inspection arranged','Maybe','No answer','Property match contacted']);
+function prospectInteractionCountsForReach(interaction){return interaction.type==='Call'||interaction.type==='SMS'||interaction.type==='Appointment'||interaction.type==='Buyer match'&&REACH_BUYER_MATCH_OUTCOMES.has(interaction.outcome)||interaction.type==='Follow-up'&&interaction.outcome==='Seller priority cleared after contact.'}
+function prospectLastLoggedAt(id){return prospectInteractions.reduce((latest,interaction)=>interaction.prospectId===id&&prospectInteractionCountsForReach(interaction)?Math.max(latest,Number(interaction.at)||0):latest,0)}
 function prospectRecentlyLogged(id){const lastLoggedAt=prospectLastLoggedAt(id);return lastLoggedAt>0&&Date.now()-lastLoggedAt<PROSPECT_SESSION_COOLDOWN_MS}
 function prospectPipelineEligible(p){if(!p||!primaryProspectPhone(p))return false;if(interactionsFor(p.id).some(x=>x.outcome==='Do not contact'))return false;if(p.nextFollowUp&&p.nextFollowUp<=todayKey())return false;return !prospectRecentlyLogged(p.id)}
 function dailyProspectPipelineKey(){return`${storagePrefix(uid)}prospect-pipeline-v105-${todayKey()}`}
@@ -3821,12 +3823,20 @@ function buyerSellerOpportunityFor(buyer={},match={}){
 function allOpenBuyerPropertyMatches(){return activeBuyerProspects().flatMap(buyer=>buyerOpenPropertyMatches(buyer).map(match=>({buyer,match}))).sort((a,b)=>b.match.receivedDate.localeCompare(a.match.receivedDate)||a.buyer.name.localeCompare(b.buyer.name,'en-AU',{sensitivity:'base'}))}
 function buyerContactedOnDate(buyerId,date=todayKey()){
   return prospectInteractions.some(item=>item.prospectId===buyerId&&item.date===date&&(
-    item.type==='Call'||item.type==='SMS'||(item.type==='Buyer match'&&Boolean(item.buyerMatchId))
+    item.type==='Call'||item.type==='SMS'||(item.type==='Buyer match'&&Boolean(item.buyerMatchId)&&REACH_BUYER_MATCH_OUTCOMES.has(item.outcome))
   ));
 }
 function buyerMatchContactEnvelopes(viewDate=todayKey(),{includeContacted=false}={}){
+  const worked=new Map();
+  if(!includeContacted)prospectInteractions.forEach(item=>{
+    if(item.date!==viewDate||!['Call','SMS'].includes(item.type)&&!(item.type==='Buyer match'&&REACH_BUYER_MATCH_OUTCOMES.has(item.outcome)))return;
+    const state=worked.get(item.prospectId)||{matchIds:new Set(),generalAt:0};
+    if(item.buyerMatchId)state.matchIds.add(item.buyerMatchId);
+    else if(item.type==='Call'||item.type==='SMS')state.generalAt=Math.max(state.generalAt,Number(item.at)||0);
+    worked.set(item.prospectId,state);
+  });
   return activeBuyerProspects().map(buyer=>{
-    const matches=buyerOpenPropertyMatches(buyer);if(!matches.length)return null;
+    const state=worked.get(buyer.id),matches=buyerOpenPropertyMatches(buyer).filter(match=>includeContacted||!state||!state.matchIds.has(match.id)&&!(state.generalAt&&state.generalAt>=Number(match.matchedAt||0)));if(!matches.length)return null;
     const primary=matches[0],urgency=buyerMatchTimeAlert(buyer,primary,viewDate),followUpDate=validDateKey(buyer.nextFollowUp)?buyer.nextFollowUp:'',followUpDue=Boolean(followUpDate&&followUpDate<=viewDate),followUpLabel=followUpDue?(followUpDate<viewDate?`Follow-up overdue · ${fmtDate(followUpDate)}`:'Follow-up due today'):'',followUpScore=followUpDate<viewDate?112:followUpDue?106:0,priorityScore=Math.max(Number(urgency?.score)||0,followUpScore);
     return{buyer,primary,matches,propertyCount:matches.length,urgency,priorityScore,followUpDate,followUpDue,followUpLabel,phone:primaryProspectPhone(buyer)};
   }).filter(Boolean).sort((a,b)=>b.priorityScore-a.priorityScore||Number(b.followUpDue)-Number(a.followUpDue)||b.primary.receivedDate.localeCompare(a.primary.receivedDate)||a.buyer.name.localeCompare(b.buyer.name,'en-AU',{sensitivity:'base'}));
@@ -5756,7 +5766,7 @@ $('#settingsView').addEventListener('change',event=>{const field=event.target;if
 $('#saveSettings').onclick=async()=>{const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;calendarPreference=$('[name=calendarPreference]:checked')?.value==='apple'?'apple':'outlook';appearancePreference=normaliseAppearance($('[name=appearancePreference]:checked')?.value);applyAppearance(appearancePreference);settingsDraftFields.clear();await saveTargets();if(cloud&&accountMode==='team'&&teamId&&uid){try{await setDoc(doc(db,'teams',teamId,'members',uid),{name:agentName,updatedAt:serverTimestamp()},{merge:true})}catch(err){console.error('Team profile name sync failed',err)}}renderAll();toast('Settings saved')};
 $('#signOut').onclick=async()=>{clearActiveSession();if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
 function mergeBackupRecords(current=[],incoming=[]){const byId=new Map();[...(Array.isArray(current)?current:[]),...(Array.isArray(incoming)?incoming:[])].forEach((item,index)=>{if(!item||typeof item!=='object')return;const id=cleanText(item.id,180)||`backup-record-${index}`;byId.set(id,item)});return[...byId.values()]}
-function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.44.7',exportedAt:new Date().toISOString(),targets,workDays,agentName,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
+function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.44.8',exportedAt:new Date().toISOString(),targets,workDays,agentName,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
 function restoreBuyerSessionBackup(value){if(!value||!Array.isArray(value.contacts))return false;buyerSession={contacts:value.contacts.map((contact,index)=>({id:cleanText(contact.id,80)||`buyer_${index}`,name:cleanText(contact.name,120)||'Unknown buyer',phone:normaliseDialNumber(contact.phone),address:cleanText(contact.address,240),doNotSms:Boolean(contact.doNotSms),status:cleanText(contact.status,40)})).filter(contact=>contact.phone),index:Math.max(0,Number(value.index)||0),active:Boolean(value.active),visible:false,fileName:cleanText(value.fileName,160),importedAt:Number(value.importedAt)||0};buyerSession.index=Math.min(buyerSession.index,buyerSession.contacts.length);return saveBuyerSession()}
 function syncImportedBackup(dayKeys=[],prospectingIncluded=false){if(!cloud)return;saveTargets().catch(err=>console.error('Imported settings sync failed',err));dayKeys.forEach(key=>saveDay(key,{quiet:true,awaitCloud:false,render:false}).catch?.(err=>console.error('Imported day sync failed',err)));if(prospectingIncluded)saveProspecting({render:false,awaitCloud:false}).catch(err=>console.error('Imported prospecting sync failed',err))}
 $('#exportData').onclick=()=>{const blob=new Blob([JSON.stringify(completeBackupPayload(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`agnt-complete-backup-${todayKey()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),0)};
