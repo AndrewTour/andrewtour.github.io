@@ -5387,6 +5387,38 @@ function consumerAuthError(error,action='sign in'){
 async function init(){bindViewport();bindAppLifecycle();loadLocal('local');await finaliseExpiredTimers();if(!configured()){revealStartupFallback('AGNT is temporarily unavailable. Please try again shortly.');return}startupReady=false;startupDeviceOnly=false;clearTimeout(startupWatchdog);startupWatchdog=setTimeout(()=>revealStartupFallback(),STARTUP_WATCHDOG_MS);try{const fb=initializeApp(firebaseConfig);auth=getAuth(fb);await setPersistence(auth,browserLocalPersistence);db=initializeFirestore(fb,{experimentalAutoDetectLongPolling:true,localCache:memoryLocalCache()});onAuthStateChanged(auth,u=>{if(startupDeviceOnly)return;if(u){if(creatingAccount){currentUser=u;return}if(cloud&&uid===u.uid&&startupReady)return;startCloud(u).catch(err=>{console.error('Cloud session failed to start',err);revealStartupFallback('AGNT could not finish loading. Please check your connection and try again.')})}else{markStartupReady();clearActiveSession();$('#bootGate')?.classList.add('hidden');setAuthScreenActive(true);$('#app').classList.add('hidden');$('#authGate').classList.remove('hidden')}})}catch(err){console.error(err);revealStartupFallback('AGNT is temporarily unavailable. Please try again shortly.')}}
 function showAuthMessage(msg){$('#authMessage').textContent=msg}
 function switchView(id){if(!document.getElementById(id)?.classList.contains('view'))id='todayView';if(id!=='appointmentsView'&&appointmentHistoryMode){appointmentQuickReturnHome=false;setAppointmentHistoryScreen(null)}$$('.tabbar button').forEach(b=>b.classList.toggle('active',b.dataset.view===id));$$('.view').forEach(v=>v.classList.toggle('active',v.id===id));updateTopbar(id);updateBackTodayVisibility(id);if(id==='scheduleView'){renderTimeline();setTodayPage(todayPage);}if(id==='appointmentsView')renderAppointments();if(id==='prospectingView')renderProspecting();if(id==='insightsView')renderInsights()}
+function returnToActiveTabRoot(id){
+  if(id==='prospectingView'){
+    const detail=$('#prospectDetail'),form=detail?.classList.contains('hidden')?null:detail?.querySelector('form');
+    if(form?.matches('#prospectEditor[data-contact-draft="1"]')){if(!saveContactDraftFromForm(form)){toast('Contact draft could not be saved. Keep this screen open.');return}}
+    else if(form&&!confirm('Discard unsaved changes and return to My Market?'))return;
+    const session=$('#prospectingSession');if(session){session.classList.add('hidden');delete session.dataset.sessionView;delete session.dataset.sessionKind}
+    if(buyerSession.visible){buyerSession.visible=false;saveBuyerSession()}
+    if(detail){detail.classList.add('hidden');detail.innerHTML=''}
+    activeProspectId=null;pendingBuyerEditorContext=null;sellerPriorityReturnView='';homeQuickProspectorReturn=false;
+    $('#prospectingDashboard')?.classList.remove('hidden');
+    myMarketDetailKey='';marketPageMode='hub';prospectTodayMode='dashboard';setProspectorSection('market');
+  }else if(id==='appointmentsView'){
+    if(editingAppointment){if(!confirm('Discard unsaved appointment changes?'))return;closeAppointmentEditor()}
+    appointmentQuickReturnHome=false;setAppointmentHistoryScreen(null);
+    const formHasDraft=['#appointmentContactName','#appointmentContactNumber','#appointmentAddress','#appointmentContext'].some(selector=>Boolean($(selector)?.value.trim()));
+    if(!formHasDraft){appointmentDate=todayKey();$('#appointmentDatePicker').value=appointmentDate}
+  }else if(id==='todayView'||id==='scheduleView'){
+    selectedDate=todayKey();appointmentDate=selectedDate;
+    if(id==='scheduleView'){
+      setTodayPage('overview');closeKnockingHistory();
+      if(knockingSessionVisible){knockingSessionVisible=false;saveKnockingSessionState();renderKnockingSession()}
+    }
+    renderAll();ensureTick();
+  }else if(id==='insightsView'){
+    leaderboardMode='day';leaderboardDayOffset=0;leaderboardWeekOffset=0;
+    document.querySelector('.leaderboard-agent-summary-overlay')?.remove();document.body.classList.remove('leaderboard-agent-summary-open');
+    renderUnifiedLeaderboard();
+  }
+  switchView(id);
+  const view=document.getElementById(id);if(view)view.scrollTop=0;
+  window.scrollTo({top:0,behavior:'auto'});
+}
 
 function shiftHeaderDate(delta){
   const id=activeViewId();
@@ -5473,7 +5505,7 @@ $('#offDayConversations')?.addEventListener('click',event=>{
   const planAction=event.target.closest('[data-plan-action]');if(planAction){event.preventDefault();navigateDailyPlanAction(planAction.dataset.planAction,planAction.dataset.eventId)}
 });
 $('#resetKnock').onclick=resetKnock;$('#knockingMetricCard').onclick=e=>{if(e.target.closest('button'))return;openKnockingHistory()};$('#knockingMetricCard').onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.closest('button')){e.preventDefault();openKnockingHistory()}};$('#closeKnockingHistory').onclick=closeKnockingHistory;$('#previousDay').onclick=()=>shiftHeaderDate(-1);$('#nextDay').onclick=()=>shiftHeaderDate(1);$('#leaderboardModeShortcut').onclick=()=>{leaderboardMode=leaderboardMode==='week'?'day':'week';renderUnifiedLeaderboard()};$('#backToday').onclick=()=>{selectedDate=todayKey();appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()};
-$('.tabbar').onclick=e=>{const b=e.target.closest('button[data-view]');if(b){if(b.dataset.view!=='prospectingView')homeQuickProspectorReturn=false;switchView(b.dataset.view)}};
+$('.tabbar').onclick=e=>{const b=e.target.closest('button[data-view]');if(!b)return;if(activeViewId()===b.dataset.view){returnToActiveTabRoot(b.dataset.view);return}if(b.dataset.view!=='prospectingView')homeQuickProspectorReturn=false;switchView(b.dataset.view)};
 $('#timelineCurrentAction')?.addEventListener('click',e=>navigateDailyPlanAction(e.currentTarget.dataset.planAction,e.currentTarget.dataset.eventId));
 $('#timelineDeferSeller')?.addEventListener('click',e=>openSellerPriorityDeferral(e.currentTarget.dataset.prospectId));
 $('#closeSellerPriorityDeferral')?.addEventListener('click',closeSellerPriorityDeferral);
@@ -5805,7 +5837,7 @@ $('#settingsView').addEventListener('change',event=>{const field=event.target;if
 $('#saveSettings').onclick=async()=>{const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;calendarPreference=$('[name=calendarPreference]:checked')?.value==='apple'?'apple':'outlook';appearancePreference=normaliseAppearance($('[name=appearancePreference]:checked')?.value);applyAppearance(appearancePreference);settingsDraftFields.clear();await saveTargets();if(cloud&&accountMode==='team'&&teamId&&uid){try{await setDoc(doc(db,'teams',teamId,'members',uid),{name:agentName,updatedAt:serverTimestamp()},{merge:true})}catch(err){console.error('Team profile name sync failed',err)}}renderAll();toast('Settings saved')};
 $('#signOut').onclick=async()=>{clearActiveSession();if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
 function mergeBackupRecords(current=[],incoming=[]){const byId=new Map();[...(Array.isArray(current)?current:[]),...(Array.isArray(incoming)?incoming:[])].forEach((item,index)=>{if(!item||typeof item!=='object')return;const id=cleanText(item.id,180)||`backup-record-${index}`;byId.set(id,item)});return[...byId.values()]}
-function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.44.9',exportedAt:new Date().toISOString(),targets,workDays,agentName,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
+function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.44.10',exportedAt:new Date().toISOString(),targets,workDays,agentName,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
 function restoreBuyerSessionBackup(value){if(!value||!Array.isArray(value.contacts))return false;buyerSession={contacts:value.contacts.map((contact,index)=>({id:cleanText(contact.id,80)||`buyer_${index}`,name:cleanText(contact.name,120)||'Unknown buyer',phone:normaliseDialNumber(contact.phone),address:cleanText(contact.address,240),doNotSms:Boolean(contact.doNotSms),status:cleanText(contact.status,40)})).filter(contact=>contact.phone),index:Math.max(0,Number(value.index)||0),active:Boolean(value.active),visible:false,fileName:cleanText(value.fileName,160),importedAt:Number(value.importedAt)||0};buyerSession.index=Math.min(buyerSession.index,buyerSession.contacts.length);return saveBuyerSession()}
 function syncImportedBackup(dayKeys=[],prospectingIncluded=false){if(!cloud)return;saveTargets().catch(err=>console.error('Imported settings sync failed',err));dayKeys.forEach(key=>saveDay(key,{quiet:true,awaitCloud:false,render:false}).catch?.(err=>console.error('Imported day sync failed',err)));if(prospectingIncluded)saveProspecting({render:false,awaitCloud:false}).catch(err=>console.error('Imported prospecting sync failed',err))}
 $('#exportData').onclick=()=>{const blob=new Blob([JSON.stringify(completeBackupPayload(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`agnt-complete-backup-${todayKey()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),0)};

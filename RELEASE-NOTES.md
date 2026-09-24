@@ -1,6 +1,6 @@
-# AGNT v1.44.9 — Core speed and market clarity
+# AGNT v1.44.10 — Tab return
 
-- Core now builds the visible Contacts, Buyers, Pipeline or Reach panel when it is needed instead of rendering all hidden panels on every refresh. Existing navigation and editor state remain in place.
-- My Market reuses campaign rows, filtered analytics, contact links and list markup while their source data and filters are unchanged. Imports, contact/interactions updates, filter changes and a new calendar day invalidate the cached view.
-- Property activity distinguishes connected calls, sent SMS, call attempts, launched bulk SMS and pending follow-ups. Administrative property links remain visible in the detail without being presented as outreach.
-- Firebase configuration, Firestore paths and rules, stored record formats, matching and ranking rules, and service-worker lifecycle behaviour remain unchanged.
+- Tapping the selected bottom-navigation tab returns that tab to its main screen. Home and Today return to the current day; Core returns to My Market; Appointments returns from history to its main screen; Leaderboard returns to the current daily view; Settings returns to the top.
+- Switching between different tabs continues to preserve the open workflow, including calling sessions. A second tap on the selected tab is the explicit return action.
+- An unfinished new contact draft is retained. An open edit or outcome form asks before discarding unsaved work; an appointment draft stays in its form. Active call and knocking sessions are hidden without being ended.
+- No Firebase configuration, Firestore paths, storage formats, business logic, visual styles or service-worker lifecycle behaviour changed.
