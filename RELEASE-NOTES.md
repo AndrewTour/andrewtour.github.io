@@ -1,11 +1,11 @@
-# AGNT v1.44.4 — Core controls
+# AGNT v1.44.5 — Contacts search responsiveness
 
-Baseline: v1.44.3 My Market Contacts.
+Baseline: v1.44.4 Core Controls.
 
-My Market Show, Refine choices and the seller estimate contact picker now display as full-width flat rows with the same straightforward label and chevron hierarchy as the contact-detail actions. They remain native select controls. The My Market MarketPulse button and glyph are exactly 20% smaller than their previous 44 px / 15 px measurements (35.2 px / 12 px); its transparent tap extension remains. The property list also shows the number of recorded outreach contacts beside the existing street-contact count, making already worked properties visible before opening them.
+Contacts search now refreshes only the visible Contacts results and selection controls on input. Rapid keystrokes are coalesced into one animation frame. Buyer search updates Buyers, and Pipeline search updates Pipeline; the full Core renderer still runs for data changes and navigation. Contact matching fields, A–Z order, archived mode, bulk selection, row design and all contact actions remain the same. Filtering precedes the A–Z sort, so narrow results do not sort the entire database on each keystroke.
 
-Changed: index.html (field-label wrappers/release references); styles.css (scoped My Market row control and icon sizing); app.js (property-row outreach count and release metadata); runtime.js and service-worker.js (matching release identifiers); RELEASE-NOTES.md (current notes only).
+Changed: app.js (isolated search render and filter order); index.html, runtime.js and service-worker.js (release identifiers); RELEASE-NOTES.md (current notes only). No visual files changed.
 
-Contacts, Buyers and Pipeline editor fields keep their existing approved form treatment. Firebase configuration, authentication, UID and Firestore paths/rules, saved data shapes, MarketPulse parsing, matching, metrics, SMS actions, navigation, service-worker behaviour, manifest and icons remain unchanged. No Firebase Console, Firestore rules or GitHub settings changes are required.
+Firebase configuration/auth/UID separation, Firestore paths/rules, local data shapes, sync, MarketPulse, metrics, all other workflows, manifest and icons are unchanged. No Firebase Console, Firestore rules or GitHub settings changes are required.
 
-Validation: JavaScript syntax, local file references, unique HTML IDs, control structure, release coherence, protected-file comparison and ZIP integrity. A physical iPhone, live Firebase and production were not tested.
+Validation: JavaScript syntax, search-result parity on representative data, handler routing, unique IDs, local references, protected-file comparison and ZIP integrity. A physical iPhone, live Firebase and production were not tested.
