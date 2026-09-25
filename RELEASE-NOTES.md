@@ -1,5 +1,6 @@
-# AGNT v1.44.11 — Appointment form and rendering
+# AGNT v1.44.13 — Reach session layout
 
-- Removed the visible Appointment Context box from the booking form. Existing saved context and context supplied by other appointment workflows remain in appointment records and messages.
-- Day-screen updates now redraw only the visible Home, Today, Appointments, Leaderboard or Settings screen. Opening a tab refreshes its current view; returning from another app updates the active day screen without rebuilding hidden ones.
-- Removed the unused textarea styling. Firebase configuration, Firestore paths, local data shapes, sync logic, navigation destinations and service-worker behaviour are unchanged. The service-worker cache version was advanced to deliver this release coherently.
+- The Reach seller calling screen uses open, divider-led rows like My Market for its context and contact data, without nested data pills or an initials circle.
+- Last contact and its note have the full available width. Next follow-up sits below: subdued when unset, green when scheduled.
+- Call, SMS, outcome, skip and session workflows are unchanged. Dark-mode contrast and narrow screens retain the same hierarchy.
+- Firebase, data formats, business rules and service-worker behaviour are unchanged; the release cache identifier advances.

@@ -14097,3 +14097,34 @@ html[data-theme="dark"] .my-market-hub select{background:transparent;color:var(-
 .my-market-owner-row .secondary,.my-market-owner-row .text-btn{width:auto;min-width:0;min-height:44px;margin:0;font-size:12px}
 @media(max-width:390px){.my-market-owner-row{align-items:flex-start;flex-direction:column}.my-market-owner-row>div{justify-content:flex-start;width:100%}}
 @media(max-width:390px){.my-market-result{display:grid}.my-market-property{gap:6px}.my-market-history li{grid-template-columns:85px minmax(0,1fr);gap:10px}}
+
+/* Reach seller session: My Market's open rows, with room for contact context. */
+#prospectingSession[data-session-kind="pipeline"] .market-session-context{
+  background:transparent!important;border:0!important;border-bottom:1px solid var(--line)!important;
+  border-radius:0!important;box-shadow:none!important;padding:14px 0 18px;margin:0 0 16px;
+}
+.seller-session-card{
+  background:transparent!important;border:0!important;border-radius:0!important;
+  box-shadow:none!important;backdrop-filter:none;-webkit-backdrop-filter:none;
+  padding:0 0 24px;text-align:left;
+}
+.seller-session-card>.seller-session-status{display:block;color:var(--agnt-blue,#3266d6);font-size:12px;font-weight:750;letter-spacing:0}
+.seller-session-card h2{margin:6px 0;font-size:30px;line-height:1.18}
+.seller-session-card>p{margin:0 0 18px;line-height:1.4}
+.seller-session-card .market-followup-prompt,.seller-session-card .seller-close-match{
+  background:transparent!important;border:0!important;border-top:1px solid var(--line)!important;
+  border-radius:0!important;padding:14px 0;margin:12px 0 0;
+}
+.seller-session-card .seller-close-match>span{display:none}
+.seller-session-context{display:block;background:transparent;border-radius:0;overflow:visible;margin:16px 0 22px}
+.seller-session-context>div{min-width:0;background:transparent;padding:16px 0;border-top:1px solid var(--line)}
+.seller-session-context>div:last-child{border-bottom:1px solid var(--line)}
+.seller-session-context span{font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--muted)}
+.seller-session-context strong{font-size:16px;font-weight:700;line-height:1.35;margin-top:6px;overflow-wrap:anywhere}
+.seller-session-context small{font-size:13px;line-height:1.45;margin-top:7px;color:var(--muted);overflow-wrap:anywhere}
+.seller-session-followup.is-empty strong{font-size:13px;font-weight:500;color:var(--muted)}
+.seller-session-followup.is-set strong{color:#29815a}
+html[data-theme="dark"] #prospectingSession[data-session-kind="pipeline"] .market-session-context{background:transparent!important;border:0!important;border-bottom:1px solid var(--line)!important}
+html[data-theme="dark"] .seller-session-context{background:transparent!important}
+html[data-theme="dark"] .seller-session-context>div{background:transparent!important}
+html[data-theme="dark"] .seller-session-followup.is-set strong{color:#78cf9d!important}
