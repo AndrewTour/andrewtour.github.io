@@ -1,6 +1,5 @@
-# AGNT v1.44.16 — Contacts list refinement
+# AGNT v1.44.17 — Contacts index alignment
 
-- Shows only a linework up/down arrow or a neutral dash for available MarketPulse estimates. No value or estimate-building text appears in list rows. The comparison uses the indicative median before the latest eligible sale.
-- Keeps Import CSV, Manage Contacts and Archived as compact inline actions without pill backgrounds.
-- A–Z index is fixed to the viewport and supports drag-to-jump.
-- Contact data, import, archives, management, estimate details and Firebase behaviour remain unchanged.
+- Lowered the fixed A–Z rail to the visible Contacts content area and highlighted the first visible letter as the list scrolls. Finger drag continues to jump through letters.
+- Reserved a fixed-width temperature column so every available MarketPulse movement indicator sits on the same vertical line, regardless of Cold, Warm or Hot text.
+- No contact data, Firebase, MarketPulse estimate rules or other workflows changed.

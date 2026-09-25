@@ -1279,19 +1279,21 @@ html[data-theme="dark"] #todayView:not(.off-day-opportunity-mode) #openMarketPul
 #prospectorContactsPanel .contacts-head-actions :is(.prospect-import-button,.manage-contacts-btn)::after{content:none!important}
 #prospectorContactsPanel .contacts-head-actions :is(.prospect-import-button,.manage-contacts-btn):active{opacity:.6}
 #prospectorContactsPanel .contacts-list{padding-right:29px}
-#prospectorContactsPanel .contact-card-v156{grid-template-columns:minmax(0,1fr) 20px auto 10px!important;gap:10px!important;min-height:76px;scroll-margin-top:72px}
-#prospectorContactsPanel .contact-card-v156:not(:has(.contact-value)){grid-template-columns:minmax(0,1fr) auto 10px!important}
-#prospectorContactsPanel .contact-card-v156.bulk-mode{grid-template-columns:26px minmax(0,1fr) 20px auto!important}
-#prospectorContactsPanel .contact-card-v156.bulk-mode:not(:has(.contact-value)){grid-template-columns:26px minmax(0,1fr) auto!important}
+#prospectorContactsPanel .contact-card-v156{grid-template-columns:minmax(0,1fr) 20px 52px 10px!important;gap:10px!important;min-height:76px;scroll-margin-top:72px}
+#prospectorContactsPanel .contact-card-v156:not(:has(.contact-value)){grid-template-columns:minmax(0,1fr) 52px 10px!important}
+#prospectorContactsPanel .contact-card-v156.bulk-mode{grid-template-columns:26px minmax(0,1fr) 20px 52px!important}
+#prospectorContactsPanel .contact-card-v156.bulk-mode:not(:has(.contact-value)){grid-template-columns:26px minmax(0,1fr) 52px!important}
 #prospectorContactsPanel .contact-card-v156 .prospect-card-copy{min-width:0}
-#prospectorContactsPanel .contact-card-v156 .prospect-temp{justify-self:end;margin-left:5px;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;white-space:nowrap;font-size:11px!important}
+#prospectorContactsPanel .contact-card-v156 .prospect-temp{justify-self:center;margin:0;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;white-space:nowrap;font-size:11px!important}
 #prospectorContactsPanel .contact-value{display:inline-grid;place-items:center;justify-self:center;width:20px;height:24px;margin:0;color:#8b929d;font-size:15px;font-weight:750;line-height:1}
 #prospectorContactsPanel .trend-up{color:#258255}
 #prospectorContactsPanel .trend-down{color:#ca4545}
-#contactAlphabet{position:fixed;top:50%;right:max(3px,env(safe-area-inset-right));z-index:6;display:grid;grid-template-rows:repeat(26,minmax(0,1fr));width:26px;height:min(60dvh,430px);max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 150px);transform:translateY(-50%);touch-action:none;user-select:none;-webkit-user-select:none}
+#contactAlphabet{position:fixed;top:calc(50% + min(10dvh,90px));right:max(3px,env(safe-area-inset-right));z-index:6;display:grid;grid-template-rows:repeat(26,minmax(0,1fr));width:26px;height:min(52dvh,390px);max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 150px);transform:translateY(-50%);touch-action:none;user-select:none;-webkit-user-select:none}
 #contactAlphabet.hidden,body:not(:has(#prospectingView.active #prospectingDashboard:not(.hidden) #prospectorContactsPanel:not(.hidden))) #contactAlphabet{display:none!important}
 #contactAlphabet button{display:grid;place-items:center;min-width:0;min-height:0;padding:0;border:0;background:transparent;color:var(--agnt-blue,#1769ff);font-size:10px;font-weight:800;line-height:1;cursor:pointer}
+#contactAlphabet button.active{border-radius:5px;background:#e5efff;color:#145bd5;font-size:11px}
 #contactAlphabet button:disabled{color:#c3c9d0;cursor:default}
 html[data-theme="dark"] #prospectorContactsPanel .contacts-head-actions .manage-contacts-btn{color:#aeb6c1!important}
+html[data-theme="dark"] #contactAlphabet button.active{background:#253b60;color:#a5c7ff}
 html[data-theme="dark"] #contactAlphabet button:disabled{color:#555d68}
-@media(max-width:390px){#prospectorContactsPanel .contact-card-v156{gap:7px!important}#prospectorContactsPanel .contact-card-v156 .prospect-temp{margin-left:3px}}
+@media(max-width:390px){#prospectorContactsPanel .contact-card-v156{gap:7px!important}}
