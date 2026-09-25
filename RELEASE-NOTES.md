@@ -1,5 +1,5 @@
-# AGNT v1.44.17 — Contacts index alignment
+# AGNT v1.44.18 — Leaderboard presentation
 
-- Lowered the fixed A–Z rail to the visible Contacts content area and highlighted the first visible letter as the list scrolls. Finger drag continues to jump through letters.
-- Reserved a fixed-width temperature column so every available MarketPulse movement indicator sits on the same vertical line, regardless of Cold, Warm or Hot text.
-- No contact data, Firebase, MarketPulse estimate rules or other workflows changed.
+- Replaced the Day/Week, date navigation, live-status and rank-circle pill styling with open, flat controls and plain ranks matching My Market.
+- Preserved the leaderboard score ring, spacing, agent metrics, ranking rules, day/week history and agent summary actions.
+- No Firebase, team permissions, data shapes or scoring logic changed.

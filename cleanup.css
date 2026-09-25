@@ -1297,3 +1297,47 @@ html[data-theme="dark"] #prospectorContactsPanel .contacts-head-actions .manage-
 html[data-theme="dark"] #contactAlphabet button.active{background:#253b60;color:#a5c7ff}
 html[data-theme="dark"] #contactAlphabet button:disabled{color:#555d68}
 @media(max-width:390px){#prospectorContactsPanel .contact-card-v156{gap:7px!important}}
+
+/* Leaderboard: use My Market's open rows and plain controls. */
+#leaderboardModeShortcut{
+  min-width:58px!important;min-height:44px!important;width:auto!important;height:44px!important;
+  padding:0 8px!important;border:0!important;border-radius:0!important;
+  background:transparent!important;box-shadow:none!important;color:var(--agnt-ink,#151922)!important;
+}
+#leaderboardInsights .leaderboard-live{
+  display:inline-flex;align-items:center;gap:6px;min-height:34px;
+  padding:0!important;border:0!important;border-radius:0!important;
+  background:transparent!important;box-shadow:none!important;
+}
+#leaderboardInsights .leaderboard-live::before{
+  content:'';width:6px;height:6px;flex:none;border-radius:50%;background:currentColor;
+}
+#leaderboardInsights .leaderboard-period-controls{
+  gap:0!important;border-bottom:1px solid var(--line,#e6e9ee);
+}
+#leaderboardInsights .leaderboard-period-controls button{
+  min-width:40px!important;min-height:44px!important;height:44px!important;
+  padding:0 9px!important;border:0!important;border-radius:0!important;
+  background:transparent!important;box-shadow:none!important;
+  color:var(--agnt-ink,#151922)!important;
+}
+#leaderboardInsights .leaderboard-period-controls button:disabled{color:var(--agnt-muted,#8b929d)!important}
+#leaderboardInsights .leaderboard-viewport-row .rank,
+#leaderboardInsights .leaderboard-viewport-row.leader .rank{
+  display:flex;align-items:center;justify-content:flex-start;
+  width:100%!important;height:auto!important;min-height:44px;
+  padding:0 0 0 2px!important;border:0!important;border-radius:0!important;
+  background:transparent!important;box-shadow:none!important;
+  color:var(--agnt-ink,#151922)!important;font-size:.79rem!important;font-weight:850!important;
+}
+#leaderboardInsights .leaderboard-viewport-row.me{background:transparent!important}
+#leaderboardInsights .leaderboard-viewport-row.leader:not(.me){background:transparent!important}
+html[data-theme="dark"] #leaderboardModeShortcut{color:#f5f6f7!important}
+html[data-theme="dark"] #leaderboardInsights .leaderboard-period-controls{border-bottom-color:#292e36}
+html[data-theme="dark"] #leaderboardInsights .leaderboard-period-controls button{background:transparent!important;color:#f5f6f7!important}
+html[data-theme="dark"] #leaderboardInsights .leaderboard-period-controls button:disabled{color:#727b88!important}
+html[data-theme="dark"] #leaderboardInsights .leaderboard-viewport-row .rank,
+html[data-theme="dark"] #leaderboardInsights .leaderboard-viewport-row.leader .rank{background:transparent!important;color:#f5f6f7!important}
+html[data-theme="dark"] #leaderboardInsights .leaderboard-viewport-row.me,
+html[data-theme="dark"] #leaderboardInsights .leaderboard-viewport-row.leader:not(.me){background:transparent!important}
+@media(max-width:390px){#leaderboardInsights .leaderboard-live{display:none}}
