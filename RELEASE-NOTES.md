@@ -1,6 +1,5 @@
-# AGNT v1.44.13 — Reach session layout
+# AGNT v1.44.14 — Buyer MarketPulse recommendations
 
-- The Reach seller calling screen uses open, divider-led rows like My Market for its context and contact data, without nested data pills or an initials circle.
-- Last contact and its note have the full available width. Next follow-up sits below: subdued when unset, green when scheduled.
-- Call, SMS, outcome, skip and session workflows are unchanged. Dark-mode contrast and narrow screens retain the same hierarchy.
-- Firebase, data formats, business rules and service-worker behaviour are unchanged; the release cache identifier advances.
+- Buyer recommendations now draw from the retained, current My Market campaigns as well as the latest daily MarketPulse feed. A new or updated buyer can match a listing from an earlier day while it remains current.
+- A price update with no repeated property configuration uses the configuration already recorded for that campaign, and the latest stated guide. Sold, withdrawn, under-offer and auction-result updates close earlier open recommendations.
+- Existing buyer eligibility, budget, suburb and configuration rules and outcomes remain unchanged. No data format, Firebase path or service-worker lifecycle change; only the release cache identifier advances.
