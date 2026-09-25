@@ -9,8 +9,8 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.44.14-buyer-market-matches">
-<link rel="stylesheet" href="cleanup.css?v=1.44.14-buyer-market-matches">
+<link rel="stylesheet" href="styles.css?v=1.44.15-contacts-list">
+<link rel="stylesheet" href="cleanup.css?v=1.44.15-contacts-list">
 <title>AGNT</title>
 </head>
 <body>
@@ -717,6 +717,7 @@
           <div class="prospecting-section-head contacts-head"><div><span id="prospectContactsEyebrow">CONTACTS</span><h3 id="prospectContactsHeading">Your database</h3><small id="prospectContactCount">0 contacts · Sorted A–Z</small></div><div class="contacts-head-actions"><label class="prospect-import-button">Import CSV<input id="prospectCsvImport" type="file" accept=".csv,text/csv"></label><button id="toggleProspectBulk" class="text-btn manage-contacts-btn" type="button">Manage Contacts</button><button id="toggleArchivedContacts" class="text-btn manage-contacts-btn" type="button">Archived</button></div></div>
           <div class="prospect-bulk-bar"><span id="prospectSelectedCount">0 selected</span><button id="selectAllProspects" class="text-btn" type="button">Select All</button><button id="restoreSelectedProspects" class="primary hidden" type="button" disabled>Restore</button><button id="deleteSelectedProspects" class="danger-btn" type="button" disabled>Delete</button></div>
           <div id="prospectContactList" class="prospect-list contacts-list"></div>
+          <nav id="contactAlphabet" class="contact-alphabet hidden" aria-label="Jump to contact by first letter"></nav>
         </section>
         <section id="prospectorBuyersPanel" class="prospector-buyers-panel hidden" aria-live="polite">
           <section class="buyer-overview">
@@ -1242,7 +1243,7 @@ Andrew Tour | McGrath</textarea></label>
 
 
 
-<script src="runtime.js?v=1.44.14-buyer-market-matches"></script>
-<script type="module" src="app.js?v=1.44.14-buyer-market-matches"></script>
+<script src="runtime.js?v=1.44.15-contacts-list"></script>
+<script type="module" src="app.js?v=1.44.15-contacts-list"></script>
 </body>
 </html>

@@ -1,5 +1,6 @@
-# AGNT v1.44.14 — Buyer MarketPulse recommendations
+# AGNT v1.44.15 — Contacts list
 
-- Buyer recommendations now draw from the retained, current My Market campaigns as well as the latest daily MarketPulse feed. A new or updated buyer can match a listing from an earlier day while it remains current.
-- A price update with no repeated property configuration uses the configuration already recorded for that campaign, and the latest stated guide. Sold, withdrawn, under-offer and auction-result updates close earlier open recommendations.
-- Existing buyer eligibility, budget, suburb and configuration rules and outcomes remain unchanged. No data format, Firebase path or service-worker lifecycle change; only the release cache identifier advances.
+- Flat Contacts management actions and temperature labels match the existing contact-detail row treatment.
+- Removed initials from Contacts list rows and added an A–Z jump rail for long databases.
+- Shows the existing MarketPulse indicative range when the contact has sufficient configured property and comparable sold evidence. The arrow compares its indicative median with the same comparable set before the latest eligible sale; a dash means no confirmed movement or too little earlier evidence.
+- Contacts search, archives, bulk management, import and all contact-detail workflows remain available.
