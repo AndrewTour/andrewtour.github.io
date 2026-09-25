@@ -1,4 +1,4 @@
-const RELEASE='1.44.15-contacts-list';
+const RELEASE='1.44.16-contacts-index';
 const CACHE=`agnt-v${RELEASE}`;
 const SDK_CACHE='agnt-sdk-11.10.0';
 const SDK_BASE='https://www.gstatic.com/firebasejs/11.10.0/';
@@ -14,8 +14,8 @@ self.addEventListener('install',event=>event.waitUntil((async()=>{
   await Promise.all(ASSETS.map(async path=>{
     const response=await boundedFetch(new URL(path,self.location.href).href,{cache:'reload'});
     if(path==='./index.html'&&!(await response.clone().text()).includes(`app.js?v=${RELEASE}`))throw new Error('Release HTML mismatch');
-    if(path.startsWith('./app.js?')&&!(await response.clone().text()).includes("appVersion:'1.44.15'"))throw new Error('Release script mismatch');
-    if(path.startsWith('./runtime.js?')&&!(await response.clone().text()).includes("version='1.44.15'"))throw new Error('Runtime script mismatch');
+    if(path.startsWith('./app.js?')&&!(await response.clone().text()).includes("appVersion:'1.44.16'"))throw new Error('Release script mismatch');
+    if(path.startsWith('./runtime.js?')&&!(await response.clone().text()).includes("version='1.44.16'"))throw new Error('Runtime script mismatch');
     await cache.put(path,response);
   }));
   const sdkCache=await caches.open(SDK_CACHE);

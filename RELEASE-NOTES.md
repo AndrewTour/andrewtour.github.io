@@ -1,6 +1,6 @@
-# AGNT v1.44.15 — Contacts list
+# AGNT v1.44.16 — Contacts list refinement
 
-- Flat Contacts management actions and temperature labels match the existing contact-detail row treatment.
-- Removed initials from Contacts list rows and added an A–Z jump rail for long databases.
-- Shows the existing MarketPulse indicative range when the contact has sufficient configured property and comparable sold evidence. The arrow compares its indicative median with the same comparable set before the latest eligible sale; a dash means no confirmed movement or too little earlier evidence.
-- Contacts search, archives, bulk management, import and all contact-detail workflows remain available.
+- Shows only a linework up/down arrow or a neutral dash for available MarketPulse estimates. No value or estimate-building text appears in list rows. The comparison uses the indicative median before the latest eligible sale.
+- Keeps Import CSV, Manage Contacts and Archived as compact inline actions without pill backgrounds.
+- A–Z index is fixed to the viewport and supports drag-to-jump.
+- Contact data, import, archives, management, estimate details and Firebase behaviour remain unchanged.
