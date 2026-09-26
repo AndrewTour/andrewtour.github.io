@@ -1,3 +1,5 @@
-# AGNT v1.44.20 — Rollback to v1.44.18
+# AGNT v1.44.22 — Morning live update
 
-Restores the exact application behavior and interface of v1.44.18 after sync and restart issues were reported with v1.44.19. The new release identifier prompts a coherent PWA asset install. No data formats, Firebase configuration, security rules, or metrics logic changed.
+- The alternating morning live update remains a four-second introduction and is now eligible through 11:59 am.
+- MarketPulse and the daily summary use open sections and dividers in the Core design language, while retaining the existing information, Review action and live countdown.
+- No changes to contact choices, sync, metrics, authentication or data persistence.
