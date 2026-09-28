@@ -1,0 +1,124 @@
+/* AGNT v1.44.25 — visual refinement. Existing layout and workflow rules stay in place. */
+:root{
+  --ref-ink:#17202c;--ref-secondary:#526071;--ref-tertiary:#687587;
+  --ref-line:#dfe5ec;--ref-blue:#1768d4;--ref-soft:#f5f8fc;
+  --ref-surface:#fff;--ref-green:#168052;
+}
+html[data-theme="dark"]{
+  --ref-ink:#f3f6fa;--ref-secondary:#b8c3d0;--ref-tertiary:#9caabd;
+  --ref-line:#35404e;--ref-blue:#90bfff;--ref-soft:#1b2531;
+  --ref-surface:#121a24;--ref-green:#76d4a2;
+}
+
+/* A single hierarchy across headers, data and supporting text. */
+.topbar h1{font-weight:780!important;letter-spacing:-.035em!important;color:var(--ref-ink)!important}
+.topbar .date,.view-subtitle{color:var(--ref-secondary)!important}
+:is(.view-head,.prospecting-section-head,.leaderboard-head,.appointment-history-head) h2,
+:is(.view-head,.prospecting-section-head,.leaderboard-head,.appointment-history-head) h3{
+  color:var(--ref-ink)!important;letter-spacing:-.025em!important;font-weight:760!important;
+}
+:is(.view-head,.prospecting-section-head,.leaderboard-head,.appointment-history-head) span,
+:is(.score-copy,.trend-wrap,.timeline-command-head,.prospecting-hero) > span{
+  color:var(--ref-tertiary)!important;letter-spacing:.1em!important;
+}
+:is(.view-head,.prospecting-section-head,.leaderboard-head,.appointment-history-head) small{
+  color:var(--ref-secondary)!important;line-height:1.4!important;
+}
+
+/* Flat content surfaces; real controls retain their familiar shapes. */
+#todayView :is(.score-week,.metrics),
+#scheduleView :is(.timeline-overview,.daily-timeline,.scorecard-hero,.day-log-card),
+#prospectingView :is(.prospecting-hero,.prospecting-section,.market-review-panel,.buyer-list-shell),
+#insightsView :is(.leaderboard-card,.leaderboard-dashboard),
+#appointmentsView :is(.appointment-form,.appointment-card-premium),
+#settingsView :is(.settings,.profile-hero){
+  background:transparent!important;border-color:transparent!important;
+  box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+}
+#todayView .score-week,
+#scheduleView :is(.timeline-overview,.daily-timeline,.scorecard-hero),
+#prospectingView .prospecting-hero,
+#prospectingView .buyer-list-shell,
+#insightsView .leaderboard-card,
+#appointmentsView :is(.appointment-form,.appointment-card-premium),
+#settingsView :is(.settings,.profile-hero){border-bottom:1px solid var(--ref-line)!important;border-radius:0!important}
+#todayView .metrics{border-radius:0!important}
+#todayView .metric{
+  background:transparent!important;border:0!important;border-bottom:1px solid var(--ref-line)!important;
+  border-radius:0!important;box-shadow:none!important;
+}
+#todayView .metric:last-child{border-bottom:0!important}
+#todayView .metric.complete::before{width:2px!important;background:var(--ref-green)!important}
+#todayView .metric-copy>span{color:var(--ref-secondary)!important;letter-spacing:.09em!important}
+#todayView .metric-copy>small{color:var(--ref-secondary)!important}
+#todayView .metric-copy>strong{color:var(--ref-ink)!important;font-weight:760!important;letter-spacing:-.035em!important}
+#todayView .metric-copy>em{color:var(--ref-blue)!important;font-weight:680!important}
+#todayView .score-copy>strong{color:var(--ref-ink)!important;letter-spacing:-.065em!important;font-weight:770!important}
+#todayView .trend-wrap>strong{color:var(--ref-ink)!important;font-weight:760!important}
+#todayView :is(.now-card,.off-day-next-workday){box-shadow:none!important}
+
+/* Section selectors read as navigation rather than another stack of cards. */
+#prospectingView .prospector-sections,
+#scheduleView .today-page-tabs{
+  background:transparent!important;border:0!important;border-bottom:1px solid var(--ref-line)!important;
+  box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+  border-radius:0!important;
+}
+#prospectingView .prospector-sections button,
+#scheduleView .today-page-tabs button{
+  background:transparent!important;box-shadow:none!important;border-radius:0!important;
+  color:var(--ref-secondary)!important;
+}
+#prospectingView .prospector-sections button.active,
+#scheduleView .today-page-tabs button.active{
+  color:var(--ref-blue)!important;border-bottom:2px solid var(--ref-blue)!important;
+}
+#prospectingView .prospecting-toolbar:not(.quick-actions-only){
+  background:transparent!important;border:0!important;box-shadow:none!important;
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+}
+
+/* Record and opportunity rows use one visual rhythm. */
+#prospectingView :is(.contact-card-v156,.my-market-property,.my-market-person-row,.buyer-profile-list>*,.market-review-list>*,.prospecting-list>*){
+  background:transparent!important;box-shadow:none!important;border-radius:0!important;
+  border-bottom-color:var(--ref-line)!important;
+}
+#prospectingView :is(.contact-card-v156,.my-market-property,.my-market-person-row) strong{
+  letter-spacing:-.012em!important;
+}
+#prospectingView :is(.my-market-property,.my-market-person-row) small{
+  color:var(--ref-secondary)!important;line-height:1.45!important;
+}
+#prospectingView :is(.my-market-detail-section,.seller-session-context>div){border-color:var(--ref-line)!important}
+#prospectingView :is(.buyer-list-shell,.buyer-overview,.buyer-results-head){border-color:var(--ref-line)!important}
+#insightsView :is(.leaderboard-viewport-row,.leaderboard-summary-line){border-color:var(--ref-line)!important}
+#appointmentsView .appointments-list .appointment-card-premium{border-left:0!important;border-right:0!important;border-top:0!important}
+#settingsView :is(.team-account-settings,.marketpulse-automation-settings,.profile-kpis){border-color:var(--ref-line)!important}
+#settingsView :is(.profile-hero-copy h2,.team-account-heading strong){color:var(--ref-ink)!important}
+#settingsView :is(.profile-hero-copy span,.marketpulse-automation-card p){color:var(--ref-secondary)!important}
+
+/* Consistent action, form and navigation contrast. */
+:is(.primary,.prospecting-add,.send-today-stats){box-shadow:none!important}
+:is(button,a,input,select,textarea,summary):focus-visible{
+  outline:2px solid var(--ref-blue)!important;outline-offset:2px!important;
+}
+:is(input,select,textarea){accent-color:var(--ref-blue)}
+#settingsView :is(input,select,textarea),
+#appointmentsView :is(input,select,textarea){border-color:var(--ref-line)!important}
+.tabbar{
+  box-shadow:none!important;border-color:var(--ref-line)!important;
+  backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important;
+}
+.tabbar button.active{color:var(--ref-blue)!important}
+.tabbar button:active,:is(.my-market-property,.my-market-person-row,.contact-card-v156):active{opacity:.68}
+
+/* Keep the dark appearance just as quiet as the light one. */
+html[data-theme="dark"] #todayView :is(.score-week,.metrics,.metric),
+html[data-theme="dark"] #scheduleView :is(.timeline-overview,.daily-timeline,.scorecard-hero),
+html[data-theme="dark"] #prospectingView :is(.prospecting-hero,.my-market-property,.my-market-person-row),
+html[data-theme="dark"] #insightsView .leaderboard-card,
+html[data-theme="dark"] #appointmentsView :is(.appointment-form,.appointment-card-premium),
+html[data-theme="dark"] #settingsView :is(.settings,.profile-hero){
+  background:transparent!important;box-shadow:none!important;
+}
+@media(prefers-reduced-motion:reduce){.tabbar button,:is(.my-market-property,.my-market-person-row,.contact-card-v156){transition:none!important}}

@@ -44,7 +44,8 @@ let appointmentAssignees=[],assignedTeamAppointments=[],assignedTeamTasks=[],pen
 let teamLeaveBusy=false,teamLeaveReturnFocus=null;
 let teamInviteRefreshBusy=false,teamInviteRefreshReturnFocus=null;
 let teamDeleteBusy=false,teamDeleteReturnFocus=null;
-let pendingSyncOperations=0, syncHasError=false, lastLeaderboardSignature='', lastTeamLeaderboardSignature='', lastProspectingSignature='';
+let pendingSyncOperations=0, syncHasError=false, cloudServerConfirmed=false, lastLeaderboardSignature='', lastTeamLeaderboardSignature='', lastProspectingSignature='';
+let leaderboardPublishInFlight=false, leaderboardPublishPending=false;
 let subscribedTeamId='',teamLeaderboardDataSignature='',teamInitialisationToken=0;
 let leaderboardListRenderMarkup='';
 let pendingProspectingPayload=null, pendingProspectingSignature='', pendingProspectingRevision=0, prospectingWriteInFlight=false, prospectingSaveWaiters=[],prospectingRetryTimer=null,prospectingRetryDelay=2500;
@@ -151,6 +152,7 @@ function refreshSyncStatus(){
   if(!navigator.onLine)return setSync('offline','Offline');
   if(syncHasError)return setSync('error','Sync error');
   if(pendingSyncOperations>0)return setSync('','Saving');
+  if(!cloudServerConfirmed)return setSync('','Connecting');
   setSync('live','Live');
 }
 function beginSyncOperation(){pendingSyncOperations++;refreshSyncStatus()}
@@ -624,7 +626,16 @@ function scheduleLeaderboardPublish(){
     else if(accountMode==='solo')publishLeaderboard();
   },180);
 }
-async function publishLeaderboard(){if(!cloud||!db||!uid||accountMode!=='solo')return;const payload=leaderboardPayload(),signature=leaderboardSignature(payload);if(signature===lastLeaderboardSignature){renderLeaderboardStatus();return}beginSyncOperation();try{await setDoc(doc(db,'leaderboard',uid),payload,{merge:true});lastLeaderboardSignature=signature;endSyncOperation();renderLeaderboardStatus()}catch(err){console.error('Leaderboard publish failed',err);endSyncOperation({error:true});renderLeaderboardStatus()}}
+async function publishLeaderboard(){
+  if(!cloud||!db||!uid||accountMode!=='solo')return;
+  if(leaderboardPublishInFlight){leaderboardPublishPending=true;return}
+  const payload=leaderboardPayload(),signature=leaderboardSignature(payload);
+  if(signature===lastLeaderboardSignature){renderLeaderboardStatus();return}
+  const savingUid=uid,savingUser=currentUser;leaderboardPublishInFlight=true;beginSyncOperation();
+  try{await setDoc(doc(db,'leaderboard',savingUid),payload,{merge:true});if(uid===savingUid&&currentUser===savingUser){lastLeaderboardSignature=signature;endSyncOperation();renderLeaderboardStatus()}}
+  catch(err){console.error('Leaderboard publish failed',err);if(uid===savingUid&&currentUser===savingUser){endSyncOperation({error:true});renderLeaderboardStatus()}}
+  finally{if(uid===savingUid&&currentUser===savingUser){leaderboardPublishInFlight=false;if(leaderboardPublishPending){leaderboardPublishPending=false;scheduleLeaderboardPublish()}}}
+}
 async function persistDayToCloud(k,clean,{quiet=false}={}){
   if(!cloud||!db||!uid)return;
   const savingUid=uid,savingUser=currentUser;beginSyncOperation();
@@ -1753,6 +1764,9 @@ function writeSellerPriorityDeferrals(rows=[]){try{localStorage.setItem(sellerPr
 function sellerPriorityDateDistance(date='',base=todayKey()){if(!validDateKey(date)||!validDateKey(base))return 0;return Math.round((parseKey(base)-parseKey(date))/(24*60*60*1000))}
 function sellerPriorityYield(){return new Promise(resolve=>{if(typeof window.requestIdleCallback==='function')window.requestIdleCallback(()=>resolve(),{timeout:350});else setTimeout(resolve,0)})}
 function sellerPriorityTimeframe(prospect={}){return SELLING_TIMEFRAMES.includes(prospect.sellingTimeframe)?prospect.sellingTimeframe:prospect.stage==='Appointment Booked'?'Now':''}
+function sellerPriorityResolvedToday(id,date=todayKey()){
+  return prospectInteractions.some(item=>item.prospectId===id&&item.date===date&&item.type==='Follow-up'&&['Contacted','Not required'].includes(item.outcome));
+}
 async function sellerPriorityBuildContext(now=new Date(),token=sellerPriorityBuildToken){
   const today=todayKey(),interactionState=new Map(),deferralState=new Map(),marketByStreet=new Map(),eventsById=new Map();
   for(let index=0;index<prospectInteractions.length;index++){if(token!==sellerPriorityBuildToken)return null;const item=prospectInteractions[index],id=cleanText(item.prospectId,80);if(id){const state=interactionState.get(id)||{workedToday:false,doNotContact:false};if(item.date===today&&['Call','SMS','Appointment','Follow-up'].includes(item.type))state.workedToday=true;if(item.outcome==='Do not contact')state.doNotContact=true;interactionState.set(id,state)}if(index&&index%250===0)await sellerPriorityYield()}
@@ -1783,7 +1797,7 @@ async function rebuildSellerPriorityCache(token){
 function scheduleSellerPriorityRefresh(delay=180){if(sellerPriorityCache.ready||sellerPriorityRefreshTimer||sellerPriorityBuilding&&sellerPriorityBuildingToken===sellerPriorityBuildToken)return;sellerPriorityRefreshTimer=setTimeout(()=>{sellerPriorityRefreshTimer=null;const token=++sellerPriorityBuildToken;rebuildSellerPriorityCache(token)},Math.max(0,delay))}
 function invalidateSellerPriorityCache({schedule=true,delay=180,retain=false}={}){sellerPriorityBuildToken++;const previous=retain&&sellerPriorityCache.expiresAt>Date.now()?sellerPriorityCache.value:null,expiresAt=previous?sellerPriorityCache.expiresAt:0;sellerPriorityCache={ready:false,value:previous,expiresAt};if(sellerPriorityRefreshTimer){clearTimeout(sellerPriorityRefreshTimer);sellerPriorityRefreshTimer=null}if(schedule)scheduleSellerPriorityRefresh(delay)}
 function sellerNextBestAction(now=new Date()){
-  if(selectedDate!==todayKey())return null;if(sellerPriorityCache.expiresAt&&Number(sellerPriorityCache.expiresAt)<=now.getTime())invalidateSellerPriorityCache({delay:0});if(!sellerPriorityCache.ready)scheduleSellerPriorityRefresh();const cached=sellerPriorityCache.value,immediateUntil=Number(sellerPriorityImmediateDeferrals.get(cached?.eventId))||0;if(immediateUntil>now.getTime())return null;return cached
+  if(selectedDate!==todayKey())return null;if(sellerPriorityCache.expiresAt&&Number(sellerPriorityCache.expiresAt)<=now.getTime())invalidateSellerPriorityCache({delay:0});if(!sellerPriorityCache.ready)scheduleSellerPriorityRefresh();const cached=sellerPriorityCache.value,immediateUntil=Number(sellerPriorityImmediateDeferrals.get(cached?.eventId))||0;if(cached&&(immediateUntil>now.getTime()||sellerPriorityResolvedToday(cached.eventId))){invalidateSellerPriorityCache({delay:0});return null}return cached
 }
 function offDayConversationState(date=todayKey()){
   const contacted=new Set(),doNotContact=new Set(),lastAt=new Map(),latest=new Map();
@@ -5148,7 +5162,7 @@ function subscribeSecureLeaderboard(){
     if(accountMode!=='team'||teamId!==listeningTeamId||subscribedTeamId!==listeningTeamId)return;
     const documents=snap.docs.map(d=>({uid:d.id,...d.data()})),next=documents.length?documents:[leaderboardPayload()],signature=teamLeaderboardEntriesSignature(next),dataChanged=signature!==teamLeaderboardDataSignature;
     if(dataChanged){leaderboardEntries=next;teamLeaderboardDataSignature=signature}
-    const own=documents.find(entry=>entry.uid===uid);if(own)lastTeamLeaderboardSignature=leaderboardSignature(own);
+    const own=documents.find(entry=>entry.uid===uid);if(own&&!snap.metadata.hasPendingWrites&&!snap.metadata.fromCache&&!leaderboardPublishInFlight)lastTeamLeaderboardSignature=leaderboardSignature(own);
     setTeamLayerStatus(snap.metadata.fromCache?'cached':'live');if(dataChanged){renderLeaderboard();renderTeamManager();if(!$('#appointmentAssignmentModal')?.classList.contains('hidden'))renderAppointmentAssignmentPopup($('#appointmentAssignmentSelect')?.value||uid);refreshReturningSnapshotIfVisible()}
   },err=>{if(teamId!==listeningTeamId)return;console.error('Team leaderboard read failed',err);unsubLeaderboard=null;subscribedTeamId='';teamLeaderboardDataSignature='';leaderboardEntries=[leaderboardPayload()];setTeamLayerStatus('error',consumerSyncError(err,'Team leaderboard is temporarily unavailable.'));renderLeaderboard()});
 }
@@ -5179,10 +5193,12 @@ async function initialiseTeamLayer(profile={}, {promptNew=false}={}){
 }
 async function publishTeamLeaderboard(){
   if(!cloud||!db||!uid||accountMode!=='team'||!teamId)return;
+  if(leaderboardPublishInFlight){leaderboardPublishPending=true;return}
   const payload=leaderboardPayload(),signature=leaderboardSignature(payload);if(signature===lastTeamLeaderboardSignature)return;
-  beginSyncOperation();
-  try{await setDoc(doc(db,'teams',teamId,'leaderboard',uid),payload,{merge:true});lastTeamLeaderboardSignature=signature;if(teamLayerStatus==='error')setTeamLayerStatus('live');endSyncOperation()}
-  catch(err){console.error('Team leaderboard publish failed',err);endSyncOperation({error:true});setTeamLayerStatus('error',consumerSyncError(err,'Team leaderboard could not update.'))}
+  const savingUid=uid,savingUser=currentUser,savingTeam=teamId;leaderboardPublishInFlight=true;beginSyncOperation();
+  try{await setDoc(doc(db,'teams',savingTeam,'leaderboard',savingUid),payload,{merge:true});if(uid===savingUid&&currentUser===savingUser){if(teamId===savingTeam){lastTeamLeaderboardSignature=signature;if(teamLayerStatus==='error')setTeamLayerStatus('live')}endSyncOperation()}}
+  catch(err){console.error('Team leaderboard publish failed',err);if(uid===savingUid&&currentUser===savingUser){endSyncOperation({error:true});if(teamId===savingTeam)setTeamLayerStatus('error',consumerSyncError(err,'Team leaderboard could not update.'))}}
+  finally{if(uid===savingUid&&currentUser===savingUser){leaderboardPublishInFlight=false;if(leaderboardPublishPending){leaderboardPublishPending=false;scheduleLeaderboardPublish()}}}
 }
 async function completeSoloSetup(){
   if(!cloud||!uid||teamSetupBusy)return;if(accountMode==='team'&&teamId)return teamSetupMessage('Leave your current team before continuing Solo.','error');if(!navigator.onLine)return teamSetupMessage('Connect to the internet to save your setup.','error');
@@ -5320,7 +5336,7 @@ async function startCloudSession(user,{promptTeamSetup=false}={}){
   else setTeamLayerStatus('connecting');
   await finaliseExpiredTimers();
   if(!cloud||uid!==user.uid||currentUser!==user)return;
-  syncHasError=false;pendingSyncOperations=0;setSync('','Connecting');clearTimeout(syncTimer);syncTimer=setTimeout(()=>{if($('#syncBadge').dataset.label==='Connecting')refreshSyncStatus()},3500);
+  syncHasError=false;pendingSyncOperations=0;cloudServerConfirmed=false;leaderboardPublishInFlight=false;leaderboardPublishPending=false;setSync('','Connecting');clearTimeout(syncTimer);
   renderLeaderboard();
   unsubDays=onSnapshot(collection(db,'users',uid,'days'),{includeMetadataChanges:true},snap=>{
     if(!cloud||uid!==user.uid||currentUser!==user)return;
@@ -5336,7 +5352,7 @@ async function startCloudSession(user,{promptTeamSetup=false}={}){
     });
     if(dataChanged){saveLocal('days');queueCloudVisuals('days');ensureTick()}else saveDirtyDays();
     if(!snap.metadata.fromCache){dailyBriefingDaysReady=true;refreshReturningSnapshotIfVisible()}
-    clearTimeout(syncTimer);if(!snap.metadata.hasPendingWrites&&!snap.metadata.fromCache)syncHasError=false;refreshSyncStatus();
+    clearTimeout(syncTimer);if(!snap.metadata.hasPendingWrites&&!snap.metadata.fromCache){cloudServerConfirmed=true;syncHasError=false}refreshSyncStatus();
   },err=>{console.error(err);syncHasError=true;refreshSyncStatus();toast('Firestore access failed. Check rules and login.');showAuthMessage(err.message)});
   let observedTeamProfileSignature=null,teamProfileBootstrapComplete=false;
   unsubProfile=onSnapshot(doc(db,'users',uid),{includeMetadataChanges:true},snap=>{
@@ -5912,7 +5928,7 @@ $('#settingsView').addEventListener('change',event=>{const field=event.target;if
 $('#saveSettings').onclick=async()=>{const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;calendarPreference=$('[name=calendarPreference]:checked')?.value==='apple'?'apple':'outlook';appearancePreference=normaliseAppearance($('[name=appearancePreference]:checked')?.value);applyAppearance(appearancePreference);settingsDraftFields.clear();await saveTargets();if(cloud&&accountMode==='team'&&teamId&&uid){try{await setDoc(doc(db,'teams',teamId,'members',uid),{name:agentName,updatedAt:serverTimestamp()},{merge:true})}catch(err){console.error('Team profile name sync failed',err)}}renderAll();toast('Settings saved')};
 $('#signOut').onclick=async()=>{clearActiveSession();if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
 function mergeBackupRecords(current=[],incoming=[]){const byId=new Map();[...(Array.isArray(current)?current:[]),...(Array.isArray(incoming)?incoming:[])].forEach((item,index)=>{if(!item||typeof item!=='object')return;const id=cleanText(item.id,180)||`backup-record-${index}`;byId.set(id,item)});return[...byId.values()]}
-function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.44.22',exportedAt:new Date().toISOString(),targets,workDays,agentName,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
+function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.44.24',exportedAt:new Date().toISOString(),targets,workDays,agentName,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
 function restoreBuyerSessionBackup(value){if(!value||!Array.isArray(value.contacts))return false;buyerSession={contacts:value.contacts.map((contact,index)=>({id:cleanText(contact.id,80)||`buyer_${index}`,name:cleanText(contact.name,120)||'Unknown buyer',phone:normaliseDialNumber(contact.phone),address:cleanText(contact.address,240),doNotSms:Boolean(contact.doNotSms),status:cleanText(contact.status,40)})).filter(contact=>contact.phone),index:Math.max(0,Number(value.index)||0),active:Boolean(value.active),visible:false,fileName:cleanText(value.fileName,160),importedAt:Number(value.importedAt)||0};buyerSession.index=Math.min(buyerSession.index,buyerSession.contacts.length);return saveBuyerSession()}
 function syncImportedBackup(dayKeys=[],prospectingIncluded=false){if(!cloud)return;saveTargets().catch(err=>console.error('Imported settings sync failed',err));dayKeys.forEach(key=>saveDay(key,{quiet:true,awaitCloud:false,render:false}).catch?.(err=>console.error('Imported day sync failed',err)));if(prospectingIncluded)saveProspecting({render:false,awaitCloud:false}).catch(err=>console.error('Imported prospecting sync failed',err))}
 $('#exportData').onclick=()=>{const blob=new Blob([JSON.stringify(completeBackupPayload(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`agnt-complete-backup-${todayKey()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),0)};
@@ -5926,7 +5942,7 @@ $('#syncBadge').onclick=e=>{e.stopPropagation();const p=$('#syncPopover'),openin
 $('#syncPopover').onclick=e=>e.stopPropagation();
 document.addEventListener('click',closeSyncPopover);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSyncPopover()});
-window.addEventListener('online',()=>{renderBuyerSessionHero();if(cloud){clearSyncError();setSync('','Connecting');renderLeaderboardStatus();renderTeamSettings();renderTeamManager();scheduleLeaderboardPublish();if(readProspectingDirtyAt())queueProspectingSave().catch(err=>console.error('Prospecting reconnect sync failed',err));for(const k of [...dirtyDayKeys]){const clean=dayData(k);if(clean.clientUpdatedAt)persistDayToCloud(k,{...clean},{quiet:true}).catch(()=>{})}}});window.addEventListener('offline',()=>{refreshSyncStatus();renderLeaderboardStatus();renderTeamSettings();renderTeamManager();renderBuyerSessionHero()});
+window.addEventListener('online',()=>{renderBuyerSessionHero();if(cloud){cloudServerConfirmed=false;clearSyncError();renderLeaderboardStatus();renderTeamSettings();renderTeamManager();scheduleLeaderboardPublish();if(readProspectingDirtyAt())queueProspectingSave().catch(err=>console.error('Prospecting reconnect sync failed',err));for(const k of [...dirtyDayKeys]){const clean=dayData(k);if(clean.clientUpdatedAt)persistDayToCloud(k,{...clean},{quiet:true}).catch(()=>{})}}});window.addEventListener('offline',()=>{cloudServerConfirmed=false;refreshSyncStatus();renderLeaderboardStatus();renderTeamSettings();renderTeamManager();renderBuyerSessionHero()});
 if('serviceWorker'in navigator)window.addEventListener('load',async()=>{try{const reg=await navigator.serviceWorker.register('./service-worker.js');await reg.update()}catch(err){console.warn('Offline cache registration failed',err)}});
 setInterval(()=>{if(document.hidden||!startupReady||$('#app')?.classList.contains('hidden'))return;const rolled=adoptCurrentDay(),currentDay=todayKey();if(rolled){invalidateSellerPriorityCache({delay:200});finaliseExpiredTimers().then(()=>{renderAll();switchView('todayView')}).catch(err=>console.error('Daily maintenance failed',err))}if(selectedDate===currentDay){if($('#todayView')?.classList.contains('active'))renderNowCard();if($('#scheduleView')?.classList.contains('active'))renderTimeline()}maybeShowDayReview();updateAppViewport();if(cloud)scheduleLeaderboardPublish()},30000);
 init().catch(err=>{console.error('AGNT initialisation failed',err);$('#bootGate')?.classList.add('hidden');setAuthScreenActive(true);$('#authGate')?.classList.remove('hidden');showAuthMessage('AGNT could not finish loading. Please try again.')});
