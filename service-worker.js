@@ -1,9 +1,9 @@
-const RELEASE='1.44.27-visual-system-production';
+const RELEASE='1.44.22-morning-core';
 const CACHE=`agnt-v${RELEASE}`;
 const SDK_CACHE='agnt-sdk-11.10.0';
 const SDK_BASE='https://www.gstatic.com/firebasejs/11.10.0/';
 const SDK=['firebase-app.js','firebase-auth.js','firebase-firestore.js'].map(name=>SDK_BASE+name);
-const ASSETS=['./index.html','./styles.css?v=1.44.24-trust-continuity','./cleanup.css?v=1.44.24-trust-continuity',`./refinement.css?v=${RELEASE}`,'./app.js?v=1.44.24-trust-continuity','./runtime.js?v=1.44.24-trust-continuity','./firebase-config.js','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
+const ASSETS=['./index.html',`./styles.css?v=${RELEASE}`,`./cleanup.css?v=${RELEASE}`,`./app.js?v=${RELEASE}`,`./runtime.js?v=${RELEASE}`,'./firebase-config.js','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
 async function boundedFetch(request,options={}){
   const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),15000);
   try{const response=await fetch(request,{...options,signal:controller.signal});if(!response.ok)throw new Error('Asset request failed');return response}finally{clearTimeout(timeout)}
@@ -13,9 +13,9 @@ self.addEventListener('install',event=>event.waitUntil((async()=>{
   const cache=await caches.open(CACHE);
   await Promise.all(ASSETS.map(async path=>{
     const response=await boundedFetch(new URL(path,self.location.href).href,{cache:'reload'});
-    if(path==='./index.html'&&!(await response.clone().text()).includes(`refinement.css?v=${RELEASE}`))throw new Error('Release HTML mismatch');
-    if(path.startsWith('./app.js?')&&!(await response.clone().text()).includes("appVersion:'1.44.24'"))throw new Error('Release script mismatch');
-    if(path.startsWith('./runtime.js?')&&!(await response.clone().text()).includes("version='1.44.24'"))throw new Error('Runtime script mismatch');
+    if(path==='./index.html'&&!(await response.clone().text()).includes(`app.js?v=${RELEASE}`))throw new Error('Release HTML mismatch');
+    if(path.startsWith('./app.js?')&&!(await response.clone().text()).includes("appVersion:'1.44.22'"))throw new Error('Release script mismatch');
+    if(path.startsWith('./runtime.js?')&&!(await response.clone().text()).includes("version='1.44.22'"))throw new Error('Runtime script mismatch');
     await cache.put(path,response);
   }));
   const sdkCache=await caches.open(SDK_CACHE);
