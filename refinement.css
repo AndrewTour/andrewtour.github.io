@@ -1,124 +1,336 @@
-/* AGNT v1.44.25 — visual refinement. Existing layout and workflow rules stay in place. */
+/* AGNT visual system — operational clarity, September 2026.
+   One presentation layer over the approved layout and working behaviours. */
 :root{
-  --ref-ink:#17202c;--ref-secondary:#526071;--ref-tertiary:#687587;
-  --ref-line:#dfe5ec;--ref-blue:#1768d4;--ref-soft:#f5f8fc;
-  --ref-surface:#fff;--ref-green:#168052;
+  --rev-page:#f6f8fb;--rev-surface:#fff;--rev-ink:#142033;
+  --rev-muted:#506176;--rev-quiet:#63748a;--rev-rule:#dce4ee;
+  --rev-blue:#155ac6;--rev-blue-soft:#eaf2ff;--rev-hero:#142744;
+  --rev-hero-ink:#fff;--rev-hero-muted:#c1d2e9;--rev-success:#147b54;
+  --rev-orange:#d9573f;--rev-focus:#155ac6;
+  --agnt-page:var(--rev-page);--agnt-ink:var(--rev-ink);
+  --agnt-subtle:var(--rev-muted);--agnt-faint:var(--rev-quiet);
+  --agnt-rule:var(--rev-rule);--agnt-soft:#eef2f7;
+  --agnt-blue:var(--rev-blue);--agnt-green:var(--rev-success);
+  --cleanup-surface:var(--rev-surface);--cleanup-ink:var(--rev-ink);
+  --cleanup-muted:var(--rev-muted);--cleanup-line:var(--rev-rule);
+  --cleanup-accent:var(--rev-blue);
 }
-html[data-theme="dark"]{
-  --ref-ink:#f3f6fa;--ref-secondary:#b8c3d0;--ref-tertiary:#9caabd;
-  --ref-line:#35404e;--ref-blue:#90bfff;--ref-soft:#1b2531;
-  --ref-surface:#121a24;--ref-green:#76d4a2;
+html[data-theme="dark"]:not([data-auth="true"]){
+  --rev-page:#0d1520;--rev-surface:#162231;--rev-ink:#f3f6fa;
+  --rev-muted:#becada;--rev-quiet:#a5b6ca;--rev-rule:#314255;
+  --rev-blue:#a8cbff;--rev-blue-soft:#1c3557;--rev-hero:#203a5b;
+  --rev-hero-ink:#fff;--rev-hero-muted:#d1e1f4;--rev-success:#83d8ad;
+  --rev-focus:#a8cbff;--agnt-soft:#213144;
+}
+html:not([data-auth="true"]),html:not([data-auth="true"]) body,
+html:not([data-auth="true"]) .app{background:var(--rev-page)!important;color:var(--rev-ink)!important}
+html:not([data-auth="true"]) .app{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif}
+button,a,summary{touch-action:manipulation}
+button:disabled{cursor:default!important;opacity:.46!important}
+:is(button,a,input,select,textarea,summary):focus-visible{
+  outline:2px solid var(--rev-focus)!important;outline-offset:2px!important;
+}
+input,select,textarea{accent-color:var(--rev-blue)}
+:is(.score-copy strong,.metric-copy strong,.profile-kpis strong,.leaderboard-summary-line strong,
+    .my-market-property strong,.my-market-counts strong,.market-review-counts strong){
+  font-variant-numeric:tabular-nums;
 }
 
-/* A single hierarchy across headers, data and supporting text. */
-.topbar h1{font-weight:780!important;letter-spacing:-.035em!important;color:var(--ref-ink)!important}
-.topbar .date,.view-subtitle{color:var(--ref-secondary)!important}
-:is(.view-head,.prospecting-section-head,.leaderboard-head,.appointment-history-head) h2,
-:is(.view-head,.prospecting-section-head,.leaderboard-head,.appointment-history-head) h3{
-  color:var(--ref-ink)!important;letter-spacing:-.025em!important;font-weight:760!important;
+/* Brand and persistent chrome: a clear frame, not a floating collection of pills. */
+.topbar{
+  border-bottom:1px solid var(--rev-rule)!important;
+  background:var(--rev-page)!important;
 }
-:is(.view-head,.prospecting-section-head,.leaderboard-head,.appointment-history-head) span,
-:is(.score-copy,.trend-wrap,.timeline-command-head,.prospecting-hero) > span{
-  color:var(--ref-tertiary)!important;letter-spacing:.1em!important;
+.topbar h1{color:var(--rev-ink)!important;font-weight:790!important;letter-spacing:-.047em!important}
+.topbar .date,.view-subtitle{color:var(--rev-muted)!important}
+.topbar :is(.icon-btn,.back-today){
+  background:transparent!important;border:1px solid var(--rev-rule)!important;
+  color:var(--rev-ink)!important;box-shadow:none!important;
+}
+.tabbar{
+  background:var(--rev-surface)!important;border-top:1px solid var(--rev-rule)!important;
+  box-shadow:0 -8px 30px rgba(15,34,59,.045)!important;
+  backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important;
+}
+.tabbar button,.tabbar button .tab-icon,.tabbar button span{color:var(--rev-quiet)!important}
+.tabbar button.active,.tabbar button.active .tab-icon,.tabbar button.active span{
+  color:var(--rev-blue)!important;opacity:1!important;font-weight:780!important;
+}
+.tabbar button.active::before{background:var(--rev-blue)!important}
+.tabbar button:active:not(:disabled){opacity:.68!important;transform:none!important}
+.view-head h2,.prospecting-section-head h3,.leaderboard-head h2,.appointment-history-head h2{
+  color:var(--rev-ink)!important;font-weight:780!important;letter-spacing:-.035em!important;
+}
+:is(.view-head,.prospecting-section-head,.leaderboard-head,.appointment-history-head) span{
+  color:var(--rev-blue)!important;letter-spacing:.105em!important;
 }
 :is(.view-head,.prospecting-section-head,.leaderboard-head,.appointment-history-head) small{
-  color:var(--ref-secondary)!important;line-height:1.4!important;
+  color:var(--rev-muted)!important;line-height:1.4!important;
 }
 
-/* Flat content surfaces; real controls retain their familiar shapes. */
-#todayView :is(.score-week,.metrics),
-#scheduleView :is(.timeline-overview,.daily-timeline,.scorecard-hero,.day-log-card),
-#prospectingView :is(.prospecting-hero,.prospecting-section,.market-review-panel,.buyer-list-shell),
-#insightsView :is(.leaderboard-card,.leaderboard-dashboard),
-#appointmentsView :is(.appointment-form,.appointment-card-premium),
-#settingsView :is(.settings,.profile-hero){
-  background:transparent!important;border-color:transparent!important;
-  box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+/* Home: one command surface followed by one continuous metric ledger. */
+#todayView .score-week{
+  background:var(--rev-hero)!important;border:0!important;border-radius:20px!important;
+  box-shadow:0 9px 24px rgba(11,31,57,.10)!important;
+  padding:15px 16px 13px!important;
 }
-#todayView .score-week,
-#scheduleView :is(.timeline-overview,.daily-timeline,.scorecard-hero),
-#prospectingView .prospecting-hero,
-#prospectingView .buyer-list-shell,
-#insightsView .leaderboard-card,
-#appointmentsView :is(.appointment-form,.appointment-card-premium),
-#settingsView :is(.settings,.profile-hero){border-bottom:1px solid var(--ref-line)!important;border-radius:0!important}
-#todayView .metrics{border-radius:0!important}
+#todayView .score-copy>span,#todayView .trend-wrap>span{
+  color:var(--rev-hero-muted)!important;font-size:10px!important;letter-spacing:.11em!important;
+}
+#todayView .score-copy>strong{
+  color:var(--rev-hero-ink)!important;font-size:clamp(3rem,13vw,3.8rem)!important;
+  line-height:.9!important;font-weight:770!important;letter-spacing:-.075em!important;
+}
+#todayView .score-copy #momentumWhisper,#todayView #leaderboardPositionMeta{
+  color:var(--rev-hero-muted)!important;font-size:11px!important;line-height:1.35!important;
+}
+#todayView #leaderboardPosition{color:#fff!important;font-weight:760!important}
+#todayView .score-week>.bar{
+  background:rgba(255,255,255,.22)!important;height:4px!important;border:0!important;
+}
+#todayView .score-week>.bar i{background:#83bbff!important}
+#todayView .scheduled-day-quick-menu{
+  border-color:rgba(255,255,255,.18)!important;background:transparent!important;
+}
+#todayView .scheduled-day-quick-menu button{
+  color:#fff!important;background:rgba(255,255,255,.085)!important;
+  border:1px solid rgba(255,255,255,.16)!important;box-shadow:none!important;
+}
+#todayView .now-card-stack .now-card{
+  background:transparent!important;border:0!important;
+  border-top:1px solid rgba(255,255,255,.18)!important;
+  border-radius:0!important;box-shadow:none!important;
+}
+#todayView .now-card-label{color:#9bc5ff!important}
+#todayView .now-card-copy strong{color:#fff!important;font-weight:740!important}
+#todayView .now-card-copy small,#todayView .now-card svg{color:var(--rev-hero-muted)!important}
+#todayView .metrics{
+  margin-top:10px!important;padding:1px 14px!important;
+  background:var(--rev-surface)!important;border:1px solid var(--rev-rule)!important;
+  border-radius:17px!important;box-shadow:none!important;
+}
 #todayView .metric{
-  background:transparent!important;border:0!important;border-bottom:1px solid var(--ref-line)!important;
+  background:transparent!important;border:0!important;border-bottom:1px solid var(--rev-rule)!important;
   border-radius:0!important;box-shadow:none!important;
 }
 #todayView .metric:last-child{border-bottom:0!important}
-#todayView .metric.complete::before{width:2px!important;background:var(--ref-green)!important}
-#todayView .metric-copy>span{color:var(--ref-secondary)!important;letter-spacing:.09em!important}
-#todayView .metric-copy>small{color:var(--ref-secondary)!important}
-#todayView .metric-copy>strong{color:var(--ref-ink)!important;font-weight:760!important;letter-spacing:-.035em!important}
-#todayView .metric-copy>em{color:var(--ref-blue)!important;font-weight:680!important}
-#todayView .score-copy>strong{color:var(--ref-ink)!important;letter-spacing:-.065em!important;font-weight:770!important}
-#todayView .trend-wrap>strong{color:var(--ref-ink)!important;font-weight:760!important}
-#todayView :is(.now-card,.off-day-next-workday){box-shadow:none!important}
+#todayView .metrics>.metric + .metric::after{display:none!important}
+#todayView .metric.complete::before{background:var(--rev-success)!important;width:3px!important}
+#todayView .metric-copy>span{
+  color:var(--rev-muted)!important;font-size:10px!important;letter-spacing:.09em!important;
+}
+#todayView .metric-copy>small{color:var(--rev-muted)!important}
+#todayView .metric-copy>strong,#todayView #knockValue{
+  color:var(--rev-ink)!important;font-weight:770!important;letter-spacing:-.045em!important;
+}
+#todayView .metric-copy>em{color:var(--rev-blue)!important;font-weight:700!important}
+#todayView .metric.complete .metric-copy>em{color:var(--rev-success)!important}
+#todayView .actions button,#todayView .metric-percent{
+  box-shadow:none!important;border:1px solid var(--rev-rule)!important;
+}
+#todayView .actions button:last-child,#todayView .knock-actions .timer{
+  background:var(--rev-blue)!important;color:#fff!important;border-color:var(--rev-blue)!important;
+}
+#todayView .metric-percent{background:var(--rev-blue-soft)!important;color:var(--rev-blue)!important}
+#todayView .off-day-next-workday{background:var(--rev-hero)!important;color:#fff!important}
+#todayView .off-day-next-workday :is(h2,strong){color:#fff!important}
+#todayView .off-day-next-workday :is(span,small){color:var(--rev-hero-muted)!important}
+#todayView .off-day-conversations-head{border-color:var(--rev-rule)!important}
 
-/* Section selectors read as navigation rather than another stack of cards. */
-#prospectingView .prospector-sections,
-#scheduleView .today-page-tabs{
-  background:transparent!important;border:0!important;border-bottom:1px solid var(--ref-line)!important;
+/* Today: command, timeline and reflection read in a consistent vertical sequence. */
+#scheduleView .today-page-tabs,#prospectingView .prospector-sections{
+  background:transparent!important;border:0!important;
+  border-bottom:1px solid var(--rev-rule)!important;border-radius:0!important;
   box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
-  border-radius:0!important;
 }
-#prospectingView .prospector-sections button,
-#scheduleView .today-page-tabs button{
-  background:transparent!important;box-shadow:none!important;border-radius:0!important;
-  color:var(--ref-secondary)!important;
+#scheduleView .today-page-tabs button,#prospectingView .prospector-sections button{
+  background:transparent!important;border:0!important;border-radius:0!important;
+  box-shadow:none!important;color:var(--rev-muted)!important;
 }
-#prospectingView .prospector-sections button.active,
-#scheduleView .today-page-tabs button.active{
-  color:var(--ref-blue)!important;border-bottom:2px solid var(--ref-blue)!important;
+#scheduleView .today-page-tabs button.active,#prospectingView .prospector-sections button.active{
+  background:transparent!important;color:var(--rev-blue)!important;
+  border-bottom:2px solid var(--rev-blue)!important;box-shadow:none!important;
 }
-#prospectingView .prospecting-toolbar:not(.quick-actions-only){
-  background:transparent!important;border:0!important;box-shadow:none!important;
-  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+#scheduleView .timeline-overview{
+  background:var(--rev-blue-soft)!important;border:0!important;
+  border-left:3px solid var(--rev-blue)!important;border-radius:0 13px 13px 0!important;
+  box-shadow:none!important;
+}
+#scheduleView .timeline-overview-label{color:var(--rev-blue)!important}
+#scheduleView .timeline-overview>strong{color:var(--rev-ink)!important;letter-spacing:-.025em!important}
+#scheduleView .timeline-overview>small{color:var(--rev-muted)!important}
+#scheduleView .daily-timeline,#scheduleView .day-log-card{
+  background:var(--rev-surface)!important;border:1px solid var(--rev-rule)!important;
+  border-radius:15px!important;box-shadow:none!important;
+}
+#scheduleView .timeline-item,#scheduleView .day-log-card article{border-color:var(--rev-rule)!important}
+#scheduleView :is(.scorecard-hero,.scorecard-metrics,.scorecard-focus,.scorecard-trends,
+  .scorecard-momentum,.scorecard-recommendations,.scorecard-personal-bests,.scorecard-productivity,
+  .scorecard-achievements){
+  background:transparent!important;border:0!important;
+  border-bottom:1px solid var(--rev-rule)!important;border-radius:0!important;box-shadow:none!important;
+}
+#scheduleView .scorecard-score{color:var(--rev-blue)!important}
+
+/* Core: utility is discoverable, records stay flat and readable. */
+#prospectingView .prospecting-toolbar:not(.quick-actions-only),
+#prospectingView :is(.prospecting-section,.buyer-list-shell,.market-review-panel){
+  background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;
+}
+#prospectingView .prospecting-search-wrap{
+  background:var(--rev-surface)!important;border:1px solid var(--rev-rule)!important;
+  border-radius:12px!important;box-shadow:none!important;
+}
+#prospectingView .prospecting-search-wrap input{color:var(--rev-ink)!important}
+#prospectingView .prospecting-hero{
+  background:var(--rev-surface)!important;border:1px solid var(--rev-rule)!important;
+  border-radius:15px!important;box-shadow:none!important;
+}
+#prospectingView .prospecting-hero>div>span{color:var(--rev-blue)!important}
+#prospectingView .prospecting-hero strong{color:var(--rev-ink)!important;font-weight:780!important}
+#prospectingView .prospecting-hero small,#prospectingView .prospector-work-state{color:var(--rev-muted)!important}
+#prospectingView .prospecting-hero button.primary{
+  background:var(--rev-blue)!important;color:#fff!important;box-shadow:none!important;
+}
+#prospectingView :is(.contact-card-v156,.my-market-property,.my-market-person-row,
+  .buyer-profile-list>*,.market-review-list>*,.prospect-list>*){
+  background:transparent!important;border-radius:0!important;box-shadow:none!important;
+  border-bottom-color:var(--rev-rule)!important;
+}
+#prospectingView :is(.contact-card-v156,.my-market-property,.my-market-person-row,
+  .buyer-profile-list>*) strong{color:var(--rev-ink)!important;font-weight:730!important}
+#prospectingView :is(.my-market-property,.my-market-person-row,.buyer-profile-list>*) small{
+  color:var(--rev-muted)!important;line-height:1.4!important;
+}
+#prospectingView :is(.my-market-detail-section,.buyer-results-head,.market-review-head,
+  .market-review-counts,.market-review-filters,.seller-session-context>div){
+  border-color:var(--rev-rule)!important;
+}
+#prospectingView .market-review-hero{
+  background:var(--rev-blue-soft)!important;border:0!important;border-radius:13px!important;
+}
+#prospectingView .market-review-hero :is(h3,strong){color:var(--rev-ink)!important}
+#prospectingView :is(.my-market-property,.my-market-person-row,.contact-card-v156):active{opacity:.7}
+#prospectingView :is(.prospect-profile,.buyer-detail-card,.prospect-session-card){
+  background:transparent!important;border:0!important;border-radius:0!important;
+  box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+}
+#prospectingView :is(.prospect-profile-top,.buyer-detail-head,.prospect-session-head){
+  border-bottom:1px solid var(--rev-rule)!important;
+}
+#prospectingView :is(.buyer-detail-section,.prospect-profile-grid>*,.prospect-session-context>div){
+  border-color:var(--rev-rule)!important;
+}
+#prospectingView :is(.buyer-detail-head,.prospect-profile-top,.prospect-session-head) strong{
+  color:var(--rev-ink)!important;letter-spacing:-.025em!important;
+}
+#prospectingView :is(.buyer-detail-head,.prospect-profile-top,.prospect-session-head) small{
+  color:var(--rev-muted)!important;
+}
+#prospectingView :is(.marketpulse-page-entry-icon,.marketpulse-orb){
+  background:var(--rev-orange)!important;color:#fff!important;box-shadow:none!important;
 }
 
-/* Record and opportunity rows use one visual rhythm. */
-#prospectingView :is(.contact-card-v156,.my-market-property,.my-market-person-row,.buyer-profile-list>*,.market-review-list>*,.prospecting-list>*){
-  background:transparent!important;box-shadow:none!important;border-radius:0!important;
-  border-bottom-color:var(--ref-line)!important;
+/* Appointments: calm form surface, clear history and outcomes. */
+#appointmentsView .appointment-form{
+  background:var(--rev-surface)!important;border:1px solid var(--rev-rule)!important;
+  border-radius:16px!important;box-shadow:none!important;
 }
-#prospectingView :is(.contact-card-v156,.my-market-property,.my-market-person-row) strong{
-  letter-spacing:-.012em!important;
+#appointmentsView .appointment-form label{color:var(--rev-muted)!important;font-weight:700!important}
+#appointmentsView .appointment-form :is(input,select,textarea){
+  background:var(--rev-page)!important;border:1px solid var(--rev-rule)!important;
+  color:var(--rev-ink)!important;min-height:44px;
 }
-#prospectingView :is(.my-market-property,.my-market-person-row) small{
-  color:var(--ref-secondary)!important;line-height:1.45!important;
+#appointmentsView :is(.appointment-history-tab,.appointment-card-premium,.appointment-reminder){
+  background:var(--rev-surface)!important;border-color:var(--rev-rule)!important;box-shadow:none!important;
 }
-#prospectingView :is(.my-market-detail-section,.seller-session-context>div){border-color:var(--ref-line)!important}
-#prospectingView :is(.buyer-list-shell,.buyer-overview,.buyer-results-head){border-color:var(--ref-line)!important}
-#insightsView :is(.leaderboard-viewport-row,.leaderboard-summary-line){border-color:var(--ref-line)!important}
-#appointmentsView .appointments-list .appointment-card-premium{border-left:0!important;border-right:0!important;border-top:0!important}
-#settingsView :is(.team-account-settings,.marketpulse-automation-settings,.profile-kpis){border-color:var(--ref-line)!important}
-#settingsView :is(.profile-hero-copy h2,.team-account-heading strong){color:var(--ref-ink)!important}
-#settingsView :is(.profile-hero-copy span,.marketpulse-automation-card p){color:var(--ref-secondary)!important}
+#appointmentsView .appointment-history-tab.active{border-color:var(--rev-blue)!important}
+#appointmentsView .appointments-list .appointment-card-premium{
+  border-left:0!important;border-right:0!important;border-top:0!important;border-radius:0!important;
+}
+#appointmentsView .appointment-log-heading{color:var(--rev-blue)!important}
 
-/* Consistent action, form and navigation contrast. */
-:is(.primary,.prospecting-add,.send-today-stats){box-shadow:none!important}
-:is(button,a,input,select,textarea,summary):focus-visible{
-  outline:2px solid var(--ref-blue)!important;outline-offset:2px!important;
+/* Leaderboard: competition is legible without trophies or ornamental tiles. */
+#insightsView .leaderboard-dashboard{
+  background:var(--rev-hero)!important;border:0!important;border-radius:18px!important;
+  box-shadow:none!important;color:#fff!important;
 }
-:is(input,select,textarea){accent-color:var(--ref-blue)}
-#settingsView :is(input,select,textarea),
-#appointmentsView :is(input,select,textarea){border-color:var(--ref-line)!important}
-.tabbar{
-  box-shadow:none!important;border-color:var(--ref-line)!important;
-  backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important;
+#insightsView .leaderboard-dashboard :is(.leaderboard-hero-copy strong,.leaderboard-weekly-leader strong,
+  .leaderboard-summary-line strong){color:#fff!important}
+#insightsView .leaderboard-dashboard :is(.leaderboard-hero-copy span,.leaderboard-hero-copy small,
+  .leaderboard-weekly-leader span,.leaderboard-weekly-leader small,.leaderboard-summary-line span){
+  color:var(--rev-hero-muted)!important;
 }
-.tabbar button.active{color:var(--ref-blue)!important}
-.tabbar button:active,:is(.my-market-property,.my-market-person-row,.contact-card-v156):active{opacity:.68}
+#insightsView .leaderboard-card{
+  background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;
+}
+#insightsView :is(.leaderboard-metric-head,.leaderboard-viewport-row,.leaderboard-summary-line){
+  border-color:var(--rev-rule)!important;
+}
+#insightsView .leaderboard-viewport-row.me{
+  background:var(--rev-blue-soft)!important;border-radius:8px!important;
+}
+#insightsView .leaderboard-viewport-row .rank{color:var(--rev-blue)!important}
+#insightsView .leaderboard-period-controls button{color:var(--rev-ink)!important}
+#insightsView .leaderboard-note{color:var(--rev-muted)!important}
 
-/* Keep the dark appearance just as quiet as the light one. */
-html[data-theme="dark"] #todayView :is(.score-week,.metrics,.metric),
-html[data-theme="dark"] #scheduleView :is(.timeline-overview,.daily-timeline,.scorecard-hero),
-html[data-theme="dark"] #prospectingView :is(.prospecting-hero,.my-market-property,.my-market-person-row),
-html[data-theme="dark"] #insightsView .leaderboard-card,
-html[data-theme="dark"] #appointmentsView :is(.appointment-form,.appointment-card-premium),
-html[data-theme="dark"] #settingsView :is(.settings,.profile-hero){
-  background:transparent!important;box-shadow:none!important;
+/* Settings: profile identity, one system of fields and section dividers. */
+#settingsView .settings{
+  background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;
 }
-@media(prefers-reduced-motion:reduce){.tabbar button,:is(.my-market-property,.my-market-person-row,.contact-card-v156){transition:none!important}}
+#settingsView .profile-hero{
+  background:var(--rev-hero)!important;border:0!important;border-radius:17px!important;
+  padding:16px!important;box-shadow:none!important;
+}
+#settingsView .profile-hero-copy h2{color:#fff!important}
+#settingsView .profile-hero-copy :is(.account-email,span){color:var(--rev-hero-muted)!important}
+#settingsView .profile-avatar{background:rgba(255,255,255,.18)!important;color:#fff!important}
+#settingsView .profile-kpis{border-color:var(--rev-rule)!important}
+#settingsView .profile-kpis strong{color:var(--rev-ink)!important}
+#settingsView :is(.team-account-settings,.marketpulse-automation-settings){
+  border-color:var(--rev-rule)!important;background:transparent!important;box-shadow:none!important;
+}
+#settingsView fieldset legend{color:var(--rev-blue)!important}
+#settingsView label{color:var(--rev-muted)!important;font-weight:700!important}
+#settingsView :is(input,select,textarea){
+  background:var(--rev-surface)!important;border:1px solid var(--rev-rule)!important;
+  color:var(--rev-ink)!important;min-height:44px;
+}
+#settingsView .team-account-heading strong{color:var(--rev-ink)!important}
+#settingsView .marketpulse-automation-card p{color:var(--rev-muted)!important}
+
+/* Dialogs are intentionally contained; information lists are not. */
+:is(.modal .glass,.action-sheet.glass,.task-composer-card,.calendar-shell.glass,
+  .day-review-card,.buyer-match-sms-sheet){
+  background:var(--rev-surface)!important;border-color:var(--rev-rule)!important;
+  color:var(--rev-ink)!important;box-shadow:0 18px 54px rgba(6,17,34,.22)!important;
+}
+:is(.modal,.task-composer-modal){backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+:is(.primary,.prospecting-add,.send-today-stats){
+  background:var(--rev-blue)!important;color:#fff!important;box-shadow:none!important;
+}
+:is(.primary,.secondary,.text-btn,.icon-btn,summary):active:not(:disabled){
+  filter:brightness(.93);transform:none!important;
+}
+:is(.danger,[data-action="delete"]){color:#bb3544!important}
+html[data-auth="true"] .auth-card{border-color:var(--rev-rule)!important;box-shadow:none!important}
+html[data-auth="true"] .auth-card .brand-mark{
+  background:var(--rev-hero)!important;color:#fff!important;border-radius:12px!important;
+}
+html[data-auth="true"] .auth-card h1{font-weight:780!important;letter-spacing:-.04em!important}
+html[data-auth="true"] .auth-card .primary{background:var(--rev-hero)!important}
+
+@media(max-width:390px){
+  #todayView .score-week{padding:12px 13px 10px!important}
+  #todayView .metrics{margin-top:7px!important;padding-inline:10px!important}
+  #todayView .score-copy>strong{font-size:3rem!important}
+  #todayView .trend-wrap>span{font-size:9px!important}
+}
+@media(max-height:760px){
+  #todayView .score-week{padding-top:10px!important;padding-bottom:8px!important}
+  #todayView .metrics{margin-top:5px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  :is(.tabbar button,.metric,.contact-card-v156,.my-market-property,.my-market-person-row){
+    transition:none!important;animation:none!important;
+  }
+}
