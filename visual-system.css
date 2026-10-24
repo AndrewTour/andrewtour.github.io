@@ -579,3 +579,138 @@ html body :is(.action-sheet-close,.team-close,.team-manager-close,#closeManualDi
   border:1px solid var(--ds-rule)!important;color:var(--ds-ink)!important;box-shadow:none!important;
   min-height:44px!important;min-width:44px!important;
 }
+/* v1.46.0 — four destinations, one working rhythm. */
+html body #app main {display:flex!important;flex-direction:column;min-height:0!important;overflow:hidden!important}
+html body #app main>.view {flex:1 1 0;min-height:0!important;height:auto!important}
+html body #app .today-page-tabs,html body #app .prospector-sections {display:none!important}
+html body #app .workspace-toolbar {
+  display:flex;flex:0 0 auto;gap:16px;align-items:stretch;min-width:0;max-width:100%;
+  min-height:44px;margin:0 0 12px;padding:0;border-bottom:1px solid var(--ds-rule);
+  overflow-x:auto;scrollbar-width:none;background:var(--ds-canvas);
+}
+html body #app .workspace-toolbar.hidden {display:none!important}
+html body #app .workspace-toolbar::-webkit-scrollbar {display:none}
+html body #app .workspace-toolbar button {
+  flex:0 0 auto;min-height:44px;padding:8px 0;border:0;border-radius:0;background:transparent;
+  color:var(--ds-muted);font-size:12px!important;font-weight:500!important;white-space:nowrap;box-shadow:none;
+}
+html body #app .workspace-toolbar button.active {color:var(--ds-ink);box-shadow:inset 0 -2px var(--ds-ink)}
+html body #app[data-workspace-area="market"] .workspace-toolbar button.active {box-shadow:inset 0 -2px var(--ds-marketpulse)}
+html body #app .tabbar.workspace-navigation {grid-template-columns:repeat(4,minmax(0,1fr))!important}
+html body #app .tabbar.workspace-navigation button {min-height:58px!important;padding:8px 4px!important}
+html body #app .tabbar.workspace-navigation span {font-size:11px!important;line-height:1.2!important;margin-top:4px!important;letter-spacing:0!important}
+html body #app .tabbar.workspace-navigation .tab-icon svg {width:21px!important;height:21px!important}
+html body #app .tabbar.workspace-navigation [data-workspace-area="market"].active {color:var(--ds-marketpulse)!important}
+/* A quiet, consistent header, including the profile entry point. */
+html body #app .topbar,html body #app:has(#todayView.active) .topbar {
+  display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:10px!important;
+  align-items:center!important;min-height:74px!important;padding:4px 0 12px!important;position:relative!important;
+}
+html body #app .topbar>div:first-child,html body #app:has(#todayView.active) .topbar>div:first-child {width:auto!important;min-width:0!important;overflow:hidden!important}
+html body #app .topbar .top-actions,html body #app:has(#todayView.active) .topbar .top-actions {
+  position:static!important;display:flex!important;align-items:center;gap:5px!important;
+  width:auto!important;max-width:none!important;
+}
+html body #app:has(#todayView.active) .date-line {min-height:0!important;padding:0!important}
+html body #app .topbar #viewTitle,html body #app:has(#todayView.active) #viewTitle {
+  width:auto!important;margin:0 0 4px!important;padding:0!important;font-size:24px!important;
+  line-height:1.15!important;font-weight:600!important;letter-spacing:-.035em!important;
+}
+html body #app .topbar #viewSubtitle {max-width:100%!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px!important}
+html body #app .workspace-profile {
+  position:relative;flex:0 0 36px;width:36px;height:36px;padding:8px;display:grid;place-items:center;
+  border:1px solid var(--ds-rule);border-radius:50%;background:var(--ds-soft);color:var(--ds-ink);
+}
+html body #app .workspace-profile::before {content:"";position:absolute;inset:-4px}
+html body #app .workspace-profile svg {width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+html body #app[data-workspace-screen="settingsView"] .workspace-profile {border-color:var(--ds-ink)}
+/* Today leads with the conversation, then progress and familiar utility actions. */
+html body #app #todayView.dashboard.active {
+  display:block!important;overflow-y:auto!important;padding-bottom:16px!important;
+}
+html body #app #todayView .score-week {
+  display:flex!important;flex-direction:column!important;gap:0!important;padding:0!important;
+  border:0!important;background:transparent!important;
+}
+html body #app #todayView .workspace-greeting {order:-4;margin:2px 0 16px;color:var(--ds-muted);font-size:12px;line-height:1.4}
+html body #app #todayView .now-card-stack {
+  order:-3;grid-template-columns:minmax(0,1fr) 40px!important;gap:12px!important;
+  margin:0!important;padding:0 7px 16px 0!important;background:transparent!important;
+  border:0!important;border-bottom:1px solid var(--ds-rule)!important;border-radius:0!important;
+}
+html body #app #todayView .now-card {padding:0!important;min-height:90px!important}
+html body #app #todayView .now-card-label {display:block;margin-bottom:8px;font-size:10px!important;font-weight:500!important;letter-spacing:.11em!important}
+html body #app #todayView #nowCardTitle {
+  display:-webkit-box!important;-webkit-box-orient:vertical;-webkit-line-clamp:2;white-space:normal!important;
+  overflow:hidden!important;font-size:22px!important;line-height:1.2!important;font-weight:600!important;letter-spacing:-.03em!important;
+}
+html body #app #todayView #nowCardMeta {display:block;margin-top:8px;font-size:11px!important;line-height:1.4!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html body #app #todayView .score-overview {order:-2;padding:16px 0 0!important;grid-template-columns:minmax(0,1fr) auto!important;gap:20px!important}
+html body #app #todayView #dailyScore {font-size:36px!important;line-height:1.05!important}
+html body #app #todayView #leaderboardPosition {font-size:24px!important;line-height:1.1!important}
+html body #app #todayView #momentumWhisper {font-size:11px!important;line-height:1.3!important;max-width:220px}
+html body #app #todayView .score-week>.bar {order:-1;margin-top:12px!important}
+html body #app #todayView .scheduled-day-quick-menu {order:0;margin:12px 0 8px!important}
+html body #app #todayView .metrics {min-height:392px!important;grid-template-rows:repeat(4,minmax(98px,auto))!important}
+html body #app #todayView .metric {min-height:98px!important}
+/* Record views and editors share one full-page identity and action rhythm. */
+html body #app:has(#prospectDetail:not(.hidden)) .prospecting-toolbar,
+html body #app:has(#prospectingSession:not(.hidden)) .prospecting-toolbar {display:none!important}
+html body #app #prospectDetail .person-profile {padding:0!important;margin:0!important}
+html body #app #prospectDetail .person-profile-head {
+  display:grid!important;grid-template-columns:48px minmax(0,1fr) auto!important;gap:12px!important;
+  align-items:center!important;padding:24px 0!important;border-bottom:1px solid var(--ds-rule)!important;
+}
+html body #app #prospectDetail .person-profile-head .prospect-avatar {width:48px!important;height:48px!important;min-width:48px!important;background:var(--ds-soft)!important;color:var(--ds-ink)!important;font-size:16px!important;border-radius:50%!important;box-shadow:none!important}
+html body #app #prospectDetail .person-profile-head h2 {font-size:26px!important;font-weight:600!important;line-height:1.15!important;margin:6px 0!important;letter-spacing:-.04em!important}
+html body #app #prospectDetail .person-profile-head :is(small,.buyer-detail-contact) {font-size:12px!important;line-height:1.4!important;color:var(--ds-muted)!important}
+html body #app #prospectDetail .person-profile-head>div {min-width:0}
+html body #app #prospectDetail .person-profile-head>div>span {color:var(--ds-muted)!important;font-size:11px!important;font-weight:500!important}
+html body #app #prospectDetail .person-profile-actions {display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;padding:16px 0!important;margin:0!important;border-bottom:1px solid var(--ds-rule)!important}
+html body #app #prospectDetail .person-profile-actions :is(a,button) {min-width:0!important;min-height:44px!important;padding:10px 4px!important;font-size:12px!important}
+html body #app #prospectDetail :is(.prospect-detail-nav,.buyer-detail-nav) {padding:4px 0 16px!important;margin:0!important;border-bottom:1px solid var(--ds-rule)!important}
+html body #app #prospectDetail :is(.prospect-editor,.buyer-editor) {padding:0 0 24px!important}
+html body #app #prospectDetail :is(.buyer-editor-intro,.buyer-editor-section) {padding-block:20px!important}
+/* Booking is one editor, separate from browsing meeting history. */
+html body #app .workspace-bookings-heading {display:flex;align-items:center;justify-content:space-between;gap:16px;margin:8px 0 16px}
+html body #app .workspace-bookings-heading h2 {font-size:22px!important;margin:5px 0 0;letter-spacing:-.03em}
+html body #app .workspace-bookings-heading .primary {width:auto;min-height:40px!important;margin:0!important;padding:10px 14px!important}
+html body #app .workspace-eyebrow {font-size:10px;color:var(--ds-muted);letter-spacing:.1em;font-weight:500}
+html body #app .workspace-booking-heading {display:flex;align-items:center;gap:16px;margin:4px 0 20px}
+html body #app .workspace-booking-heading h2 {font-size:20px!important;letter-spacing:-.03em;margin:0!important}
+html body #app .workspace-back {background:transparent;border:0;color:var(--ds-secondary);min-height:44px;padding:0 8px 0 0;font-size:13px;font-weight:500}
+html body #app[data-booking-editor="false"] #appointmentForm,
+html body #app[data-booking-editor="false"] .workspace-booking-heading {display:none!important}
+html body #app[data-booking-editor="true"] #appointmentsView>.view-head,
+html body #app[data-booking-editor="true"] .workspace-bookings-heading,
+html body #app[data-booking-editor="true"] .appointment-destination-grid,
+html body #app[data-booking-editor="true"] .appointment-daily-log,
+html body #app[data-booking-editor="true"] #appointmentEditHeader {display:none!important}
+html body #app[data-booking-editor="true"] #appointmentForm {display:block!important;padding:0 0 24px!important;border:0!important}
+html body #app #appointmentForm>label,html body #app #appointmentForm>.appointment-schedule {margin-top:0!important;margin-bottom:18px!important}
+html body #app #appointmentForm label {font-size:12px!important;font-weight:500!important;line-height:1.4!important;color:var(--ds-secondary)!important}
+html body #app #appointmentForm :is(input[type="text"],input[type="tel"],input[type="date"],input[type="time"]) {min-height:48px!important;padding:12px!important;font-size:16px!important;border-radius:8px!important;background:var(--ds-surface)!important}
+html body #app #appointmentForm .appointment-types {margin:6px 0 20px!important}
+html body #app #appointmentForm>.primary {min-height:48px!important;margin:0!important}
+@media(max-width:374px) {
+  html body #app .topbar #viewTitle,html body #app:has(#todayView.active) #viewTitle {font-size:22px!important}
+  html body #app .workspace-toolbar {gap:14px}
+  html body #app #todayView #nowCardTitle {font-size:20px!important}
+  html body #app .tabbar.workspace-navigation span {font-size:10px!important}
+}
+html body #app #todayView.off-day-opportunity-mode .score-week {display:none!important}
+html body #app #todayView .now-card-stack {height:auto!important;min-height:112px!important;flex:0 0 auto!important}
+html body #app #todayView .now-card {height:auto!important;min-height:96px!important;align-self:stretch!important}
+html body #app #scheduleView .scorecard-metric:disabled {opacity:1!important;cursor:default!important}
+html body #app #scheduleView .scorecard-metric {background:transparent!important;border:0!important;border-bottom:1px solid var(--ds-rule)!important;border-radius:0!important;padding:16px 0!important;color:var(--ds-ink)!important}
+html body #app #scheduleView .scorecard-metric strong {color:var(--ds-ink)!important;font-size:20px!important;font-weight:600!important}
+html body #app #scheduleView .scorecard-metric :is(span,small) {color:var(--ds-muted)!important}
+html body #app .market-pulse-back {width:fit-content!important;max-width:calc(100% - 8px)!important;margin-inline:4px!important}
+html body #app #prospectDetail .person-profile-head h2 {overflow-wrap:anywhere}
+html body #app[data-workspace-area="performance"] #backToday {display:none!important}
+html body #app #prospectorPipelinePanel {width:100%!important;min-width:0!important;grid-template-columns:minmax(0,1fr)!important}
+html body #app #prospectorPipelinePanel .pipeline-overview-head>div {min-width:0!important}
+html body #app #prospectorPipelinePanel .pipeline-controls {flex-direction:column!important;align-items:stretch!important;min-width:0!important}
+html body #app #prospectorPipelinePanel .pipeline-controls label {min-width:0!important;justify-content:space-between!important}
+html body #app #prospectorPipelinePanel .pipeline-controls select {flex:1;min-width:0!important;max-width:100%!important}
+html body #app.broadcast-fullscreen #workspaceToolbar {display:none!important}

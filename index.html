@@ -9,9 +9,9 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.45.2-balance">
-<link rel="stylesheet" href="cleanup.css?v=1.45.2-balance">
-<link rel="stylesheet" href="visual-system.css?v=1.45.2-balance">
+<link rel="stylesheet" href="styles.css?v=1.46.0-workspace">
+<link rel="stylesheet" href="cleanup.css?v=1.46.0-workspace">
+<link rel="stylesheet" href="visual-system.css?v=1.46.0-workspace">
 <title>AGNT</title>
 </head>
 <body>
@@ -324,13 +324,15 @@
         <button id="previousDay" class="icon-btn topbar-nav-icon" type="button" aria-label="Previous day"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6.5 9 12l5.5 5.5"/></svg></button>
         <button id="nextDay" class="icon-btn topbar-nav-icon" type="button" aria-label="Next day"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 6.5 5.5 5.5-5.5 5.5"/></svg></button>
       </div>
+      <button id="workspaceProfile" class="workspace-profile" type="button" aria-label="Open profile and settings" title="Profile and settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 21v-1a7 7 0 0 1 14 0v1"/></svg></button>
       <button id="leaderboardModeShortcut" class="icon-btn leaderboard-mode-shortcut hidden" type="button" aria-label="Switch leaderboard to weekly view" title="Daily leaderboard">DAY</button>
     </div>
   </header>
 
   <main>
+    <nav id="workspaceToolbar" class="workspace-toolbar" aria-label="Today views"></nav>
     <section id="todayView" class="view active dashboard">
-      <section class="score-week glass">
+      <section class="score-week glass"><p id="workspaceGreeting" class="workspace-greeting"></p>
         <div class="score-overview">
           <div class="score-copy">
             <span id="welcomeMessage">DAILY COMPLETION</span>
@@ -564,6 +566,8 @@
         <div><h2 id="appointmentDateLabel"></h2></div>
       </div>
       <div id="appointmentMainContent">
+        <div class="workspace-bookings-heading"><div><span class="workspace-eyebrow">YOUR MEETINGS</span><h2>Appointments</h2></div><button class="primary" type="button" data-workspace-route="new-booking">New booking</button></div>
+        <div class="workspace-booking-heading"><button type="button" class="workspace-back" data-workspace-route="booking-back">‹ Back</button><h2 id="workspaceBookingTitle">Book an appointment</h2></div>
         <div class="appointment-destination-grid appointment-history-tabs" aria-label="Appointment history">
           <button class="appointment-destination-card appointment-history-tab" type="button" data-open-appointment-history="past">
             <span>PAST</span><strong>Past Appointments</strong><small id="pastAppointmentSummary">View completed appointments and follow-ups</small><small id="pastAppointmentReminderMetric" class="appointment-card-reminder-metric hidden" role="status"></small>
@@ -655,7 +659,7 @@
 
 
     <section id="prospectingView" class="view prospecting-view">
-      <nav class="prospector-sections glass" aria-label="Core sections">
+      <nav class="prospector-sections glass" aria-label="People sections">
         <button class="active" type="button" data-prospector-section="market" aria-current="page">Market</button>
         <button type="button" data-prospector-section="today">Reach</button>
         <button type="button" data-prospector-section="buyers">Buyers</button>
@@ -704,7 +708,7 @@
         </section>
         </div>
         <section id="prospectorFollowUpPanel" class="prospector-followup-panel hidden" aria-live="polite">
-          <button id="backFromFollowUps" class="market-pulse-back text-btn" type="button">‹ Back to Prospector</button>
+          <button id="backFromFollowUps" class="market-pulse-back text-btn" type="button">‹ Back to People</button>
           <section class="followup-queue-hero glass">
             <div><span>TODAY’S FOLLOW-UPS</span><h3>Every due conversation, in context</h3><p id="followUpQueueSummary">Loading the exact records behind this task.</p></div>
             <strong id="followUpQueueCount">0</strong>
@@ -996,6 +1000,7 @@ Andrew Tour | McGrath</textarea></label>
 
 
     <section id="settingsView" class="view">
+      <button class="workspace-back" type="button" data-workspace-route="profile-back">‹ Back</button>
       <div class="settings glass">
         <div class="profile-hero">
           <div id="profileAvatar" class="profile-avatar" aria-hidden="true">A</div>
@@ -1074,36 +1079,16 @@ Andrew Tour | McGrath</textarea></label>
         <label class="file-btn secondary">Import backup<input id="importData" type="file" accept="application/json"></label>
         <button id="signOut" class="danger">Sign out</button>
         <p id="modeNote"></p>
-        <small class="release-version">AGNT v1.45.2</small>
+        <small class="release-version">AGNT v1.46.0</small>
       </div>
     </section>
   </main>
 
-  <nav class="tabbar glass">
-    <button class="active" data-view="todayView">
-      <b class="tab-icon tab-icon-home" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3.5 10 8.5-7 8.5 7v10H15v-6H9v6H3.5Z"/></svg></b>
-      <span>Home</span>
-    </button>
-    <button data-view="scheduleView">
-      <b class="tab-icon tab-icon-today" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4.5" width="16" height="15.5" rx="3"/><path d="M8 2.75v4M16 2.75v4M4 8.5h16"/><path d="m8.25 14 2.2 2.2 5.3-5.4"/></svg></b>
-      <span>Today</span>
-    </button>
-    <button data-view="prospectingView">
-      <b class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.25"/><path d="M3.5 19c.4-4 2.2-6 5.5-6s5.1 2 5.5 6"/><path d="M16 8h5M18.5 5.5v5"/><path d="M16 15h5M16 18h5"/></svg></b>
-      <span>Core</span>
-    </button>
-    <button data-view="appointmentsView">
-      <b class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="15" rx="3"/><path d="M7.5 3.5v4M16.5 3.5v4M3.5 9.5h17"/><path d="M8 13h3M13 13h3M8 17h3"/></svg></b>
-      <span>Appointments</span>
-    </button>
-    <button data-view="insightsView">
-      <b class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 18.5h16"/><path d="M5.5 16l4.25-4.25 3.1 2.8L18.5 8.5"/><path d="M14.5 8.5h4v4"/></svg></b>
-      <span>Leaderboard</span>
-    </button>
-    <button data-view="settingsView">
-      <b class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9.6 3.4l.55-1.4h3.7l.55 1.4a2 2 0 0 0 2.55 1.15l1.38-.57 2.62 2.62-.57 1.38a2 2 0 0 0 1.15 2.55l1.4.55v3.7l-1.4.55a2 2 0 0 0-1.15 2.55l.57 1.38-2.62 2.62-1.38-.57a2 2 0 0 0-2.55 1.15l-.55 1.4h-3.7l-.55-1.4a2 2 0 0 0-2.55-1.15l-1.38.57-2.62-2.62.57-1.38a2 2 0 0 0-1.15-2.55l-1.4-.55v-3.7l1.4-.55a2 2 0 0 0 1.15-2.55L3.05 6.6l2.62-2.62 1.38.57A2 2 0 0 0 9.6 3.4Z"/><circle cx="12" cy="12.85" r="3.15"/></svg></b>
-      <span>Settings</span>
-    </button>
+  <nav class="tabbar glass workspace-navigation" aria-label="Main navigation">
+    <button class="active" type="button" data-view="todayView" data-workspace-area="today" aria-current="page"><b class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4.5" width="16" height="16" rx="3"/><path d="M8 2.5v4M16 2.5v4M4 9h16m-11 6 2 2 5-5"/></svg></b><span>Today</span></button>
+    <button type="button" data-view="prospectingView" data-workspace-area="people"><b class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M3 20v-1a6 6 0 0 1 12 0v1M16 4.5a3.5 3.5 0 0 1 0 7M18 15a5 5 0 0 1 3 5"/></svg></b><span>People</span></button>
+    <button type="button" data-view="prospectingView" data-workspace-area="market"><b class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3.5 18.5 9 12l4 3.5L20.5 5M14.5 5h6v6"/></svg></b><span>Market</span></button>
+    <button type="button" data-view="insightsView" data-workspace-area="performance"><b class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20h16M6 16v-5M12 16V4M18 16V8"/></svg></b><span>Performance</span></button>
   </nav>
 </div>
 
@@ -1245,7 +1230,7 @@ Andrew Tour | McGrath</textarea></label>
 
 
 
-<script src="runtime.js?v=1.45.2-balance"></script>
-<script type="module" src="app.js?v=1.45.2-balance"></script>
+<script src="runtime.js?v=1.46.0-workspace"></script>
+<script type="module" src="app.js?v=1.46.0-workspace"></script>
 </body>
 </html>

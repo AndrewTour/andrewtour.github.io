@@ -1,3 +1,105 @@
+# AGNT v1.46.0 — Conversation-first workspace
+
+Built from the v1.45.2 Progress and Contrast ZIP provided in this conversation.
+Source lineage remains approved GitHub main v1.44.22, commit
+2f2a24d3929f6e49a5912cc0ad8bb8b2bfae8792. No beta or older recovery code used.
+
+## New application structure
+
+- Today: Focus, Schedule, Log and Bookings. Focus leads with the next action and
+  contact context, then daily completion, leaderboard position, utilities and
+  the existing metric rings/pacing. Content scrolls on compact/installed viewports.
+- People: All people, Buyers, Sellers, Follow-ups and Reach. All people includes
+  active contact records and active buyer-only records without duplicating or
+  migrating them. Opening a buyer-only record from All people uses the existing
+  buyer profile and returns to All people.
+- Market: Overview, MarketPulse and Hot Spotting, retaining the established
+  import, matching, outreach, property and entry-aware return workflows.
+- Performance: weekly scorecard/trends and Leaderboard. Existing period controls,
+  statistics and ranking calculations are retained.
+- Settings is behind the persistent profile button with an explicit contextual
+  return. The greeting becomes quiet supporting copy on Today.
+
+## Person and booking interfaces
+
+Contact and buyer profiles share identity, spacing and three-action layout while
+retaining their role-specific fields, lifecycle actions and activity history.
+The duplicate buyer Update action is removed from the main action row; Edit stays
+in the profile header. No fields or records are migrated or removed.
+
+Booking history is separate from a single full-page appointment editor. Existing
+quick-book/contextual paths use that same editor. Back retains an unfinished new
+booking; successful normal save returns to browsing; edit save returns to its
+existing history context and retains the appointment ID. Seller/buyer session
+booking, assignment and calendar logic remain the existing workflows.
+
+The four-destination header/navigation is presentation state only. It introduces
+no new storage keys, collections or persistent record fields. Existing per-UID
+local caches, drafts, session state and cloud sync remain authoritative.
+
+## Changed files
+
+- index.html: four main destinations, subview navigation host, profile entry,
+  booking browse/editor headings and release references.
+- app.js: presentation routing/chrome, UI-only booking browse/editor state,
+  People list scope, role-profile presentation and release identifier. Existing
+  save/cancel/contextual-entry operations are reused.
+- visual-system.css: new navigation, conversation-first Today hierarchy, shared
+  profile/booking/editor layout, responsive refinements and readonly scorecard
+  legibility. Original styles.css and cleanup.css are not modified.
+- runtime.js: release identifiers only.
+- service-worker.js: release/cache identifiers only; asset/lifecycle/fetch policy
+  unchanged.
+- RELEASE-NOTES.md: this entry, with previous release history retained below.
+
+## Protected systems
+
+Firebase configuration, Authentication, Firestore paths/rules, UID separation,
+normalisation, save functions, storage keys, data formats, offline queue and cloud
+sync remain unchanged. Original CSS files, manifest, icons, firebase-config.js,
+firebase.json and firestore.rules are byte-identical to v1.45.2.
+
+Compared unchanged source for startCloudSession, loadLocal, saveLocal, saveDay,
+saveProspecting, flushProspectingSave, normaliseProspect,
+normaliseAppointmentRecord, addAppointment and editAppointment.
+
+No Firebase Console, Firestore rules/indexes or GitHub settings changes required.
+Nothing has been pushed or deployed.
+
+## Validation
+
+Passed:
+- JavaScript syntax and CSS syntax/standard selector checks. The native WebKit
+  scrollbar selector was exercised in the browser rather than cssselect2.
+- Protected-file/function comparisons and required asset checks.
+- 118 headless Chromium navigation/layout checks across 320, 390 and 430px in both
+  themes, including all main destinations and their working subviews, profiles,
+  profile returns and unfinished booking retention. No horizontal page overflow.
+- Five additional workflow checks: create booking once, edit without duplicating
+  its ID and return to history, contextual quick booking, contact draft retention
+  across profile navigation, counter and ring connection.
+- Off-day Today visibility and quick booking entry with the original work-day
+  configuration.
+- Screenshots inspected for main destinations, profiles, booking editor/history,
+  Follow-ups, Reach and relevant light/dark states.
+- Worker install/cached navigation/visual CSS precache using local asset fixtures.
+- ZIP integrity and complete 14-file package.
+
+Browser checks used synthetic local records and Firebase SDK stubs in device-only
+mode, Australia/Sydney timezone, with a fixed 24 October morning fixture.
+Live Firebase sign-in/team permissions, real offline transitions, Safari/WebKit,
+physical installed iPhone PWA, external phone/calendar handoffs and live deployment
+were not tested. The inherited regression scripts omitted from the clean package
+retain their earlier baseline fixture failures; they are not represented as passing.
+
+## Deployment
+
+Replace the existing GitHub Pages source with all 14 files, including icons/,
+using the established workflow. No build step or additional configuration.
+Uploading these files does not delete older documentation already in GitHub.
+
+---
+
 # AGNT v1.45.2 — Progress rings and balanced controls
 
 Built directly from v1.45.1 Bright Visual System. This is a presentation-only
