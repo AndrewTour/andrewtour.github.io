@@ -714,3 +714,83 @@ html body #app #prospectorPipelinePanel .pipeline-controls {flex-direction:colum
 html body #app #prospectorPipelinePanel .pipeline-controls label {min-width:0!important;justify-content:space-between!important}
 html body #app #prospectorPipelinePanel .pipeline-controls select {flex:1;min-width:0!important;max-width:100%!important}
 html body #app.broadcast-fullscreen #workspaceToolbar {display:none!important}
+/* v1.46.1 — Focus is one viewport: progress, actions and four metrics. */
+html body #app:has(#todayView.active) .topbar {
+  grid-template-columns:minmax(0,1fr) auto!important;row-gap:4px!important;
+}
+html body #app:has(#todayView.active) .topbar>div:first-child {display:contents!important}
+html body #app:has(#todayView.active) #viewTitle {
+  grid-column:1 / -1;font-size:24px!important;line-height:1.15!important;
+  overflow-wrap:anywhere;margin-bottom:0!important;
+}
+html body #app:has(#todayView.active) .date-line {grid-column:1;grid-row:2}
+html body #app:has(#todayView.active) .top-actions {grid-column:2;grid-row:2}
+html body #app #todayView.dashboard.active:not(.off-day-opportunity-mode) {
+  display:grid!important;grid-template-rows:auto minmax(0,1fr)!important;
+  gap:0!important;overflow:hidden!important;padding-bottom:0!important;
+}
+html body #app #todayView .now-card-stack {display:none!important}
+html body #app #todayView .score-week {min-height:0!important;flex:none!important}
+html body #app #todayView .score-overview {padding-top:4px!important;gap:12px!important}
+html body #app #todayView .scheduled-day-quick-menu {margin:10px 0 4px!important;min-height:44px!important}
+html body #app #todayView .metrics {
+  min-height:0!important;height:100%!important;grid-template-rows:repeat(4,minmax(0,1fr))!important;
+  gap:0!important;margin:0!important;padding-block:0!important;overflow:hidden!important;
+}
+html body #app #todayView .metric {min-height:0!important;padding-block:8px!important;overflow:hidden!important}
+html body #app #todayView .metric-copy {min-width:0!important}
+html body #app #todayView .metric-copy>:is(small,em) {
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+@media(max-height:740px) {
+  html body #app:has(#todayView.active) .topbar {min-height:68px!important;padding-bottom:4px!important}
+  html body #app:has(#todayView.active) #viewTitle {font-size:22px!important}
+  html body #app:has(#todayView.active) .workspace-toolbar {margin-bottom:6px!important}
+  html body #app #todayView #dailyScore {font-size:32px!important}
+  html body #app #todayView #momentumWhisper {font-size:10px!important;max-width:190px}
+  html body #app #todayView .score-week>.bar {margin-top:8px!important}
+  html body #app #todayView .scheduled-day-quick-menu {margin-top:8px!important;margin-bottom:2px!important}
+  html body #app #todayView .metric {padding-block:5px!important}
+  html body #app #todayView .metric-copy>small {margin-top:2px!important;font-size:10px!important}
+  html body #app #todayView .metric-copy>em {margin-top:2px!important;font-size:10px!important}
+  html body #app #todayView .metric-copy>strong {font-size:25px!important;margin-top:3px!important}
+}
+html body #app:has(#todayView.active) #viewSubtitle {grid-column:1;grid-row:2;align-self:center}
+html body #app:has(#todayView.active) .date-line {grid-column:1 / -1;grid-row:3}
+html body #app:has(#todayView.active) .date-line:not(:has(#dayScheduleStatus:not(.hidden))) {display:none!important}
+html body #app #todayView .metric {padding-inline:0!important}
+html body #app #todayView .metric-copy>em {min-height:0!important;height:auto!important}
+html body #app #todayView .actions {grid-template-columns:44px 46px 44px!important;gap:6px!important}
+html body #app #todayView .actions button {width:44px!important;min-width:44px!important;height:44px!important;min-height:44px!important;padding:0!important}
+html body #app #todayView .knock-actions {grid-template-columns:46px 72px 44px!important}
+html body #app #todayView .knock-actions .timer {width:72px!important}
+@media(max-height:620px) {
+  html body #app:has(#todayView.active) .topbar {min-height:58px!important;padding-block:0!important}
+  html body #app:has(#todayView.active) #viewTitle {font-size:20px!important}
+  html body #app:has(#todayView.active) .workspace-toolbar {margin-bottom:2px!important}
+  html body #app #todayView #dailyScore {font-size:26px!important}
+  html body #app #todayView .score-overview {padding-top:0!important}
+  html body #app #todayView .scheduled-day-quick-menu {margin-block:4px 0!important;padding:0!important}
+  html body #app #todayView .metric {padding-block:2px!important}
+  html body #app #todayView .metric-copy>span {font-size:10px!important}
+  html body #app #todayView .metric-copy>small,html body #app #todayView .metric-copy>em {font-size:9px!important;line-height:1.1!important;margin-top:1px!important}
+  html body #app #todayView .metric-copy>strong {font-size:22px!important;margin-top:2px!important}
+}
+html body #app:has(#todayView.active) #todayView .metrics {padding:0!important}
+@media(max-height:740px) {
+  html body #app #todayView .metric-copy {display:grid!important;grid-template-columns:minmax(0,1fr) auto;gap:1px 3px;align-items:baseline}
+  html body #app #todayView .metric-copy>span {grid-column:1;grid-row:1;font-size:9px!important}
+  html body #app #todayView .metric-copy>strong {grid-column:2;grid-row:1;font-size:18px!important;margin:0!important}
+  html body #app #todayView .metric-copy>small {grid-column:1 / -1;grid-row:2;margin:0!important}
+  html body #app #todayView .metric-copy>em {grid-column:1 / -1;grid-row:3;margin:0!important}
+  html body #app #todayView .score-week>.bar {margin-top:4px!important}
+}
+@media(max-height:740px) {
+  html body #app #todayView .metric-copy {grid-template-rows:auto auto auto!important}
+}
+
+html body #app #todayView .metric-copy>span {display:block!important;line-height:1.2!important}
+
+@media(max-height:620px) {html body #app #todayView .metric {padding-block:0!important}}
+html body #app:has(#todayView.active) .topbar {transform:none!important}
+html body #app:has(#todayView.active) .topbar>div:first-child {overflow:visible!important}

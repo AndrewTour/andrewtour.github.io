@@ -1,3 +1,32 @@
+# AGNT v1.46.1 — Fixed Focus dashboard
+
+Built incrementally from the approved v1.46.0 Conversation Workspace.
+
+- Greeting replaces the Today heading on Focus, with the date below.
+- Removed the next-action / appointment block from Focus. Schedule and booking
+  workflows remain available through their existing tabs.
+- Daily progress, leaderboard summary, quick actions and all four metrics fit
+  within the available viewport without scrolling on scheduled Focus days.
+- Kept actual-progress and expected-pace rings, counters and timer controls.
+- Equal metric rows adapt to screen height; short screens use compact metric copy.
+- Other destinations and off-day opportunity workflows retain their existing layout.
+
+Changed files: index.html, app.js, visual-system.css, runtime.js,
+service-worker.js and RELEASE-NOTES.md. Runtime and worker changes are release
+identifiers only. No Firebase, rules, indexes or GitHub settings changes required.
+Original styles.css and cleanup.css are unchanged. No deployment performed.
+
+Validation: 118 browser navigation/layout checks; five booking/draft/counter
+workflow checks; 12 fixed-layout checks across six viewport sizes in both themes
+with simulated 47px top and 34px bottom safe areas; off-day workflow checks.
+Browser checks used local fixture data and Firebase stubs. Physical iPhone,
+installed Safari PWA and live Firebase authentication have not been tested.
+On compact screens long metric descriptions are ellipsised to preserve controls.
+
+Upload all 14 files, including icons/, via the established deployment workflow.
+
+---
+
 # AGNT v1.46.0 — Conversation-first workspace
 
 Built from the v1.45.2 Progress and Contrast ZIP provided in this conversation.
