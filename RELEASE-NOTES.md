@@ -1,3 +1,49 @@
+# AGNT v1.46.2 — Clear Schedule
+
+Baseline: AGNT v1.46.1 Fixed Focus Dashboard, carried forward in full.
+
+Schedule now uses one date in the header, a compact current priority, a labelled
+Add task action and flat time/content rows. The vertical rail, warning circles,
+large repeated date and colour-coded category headings have been removed.
+
+- Clear status text: Now, Planned, Needs attention, Done or Elapsed.
+- A street lacking qualifying data reads Waiting for data rather than Done.
+- The day-plan summary shows block count and blocks needing attention.
+- Time allocations, priority selection, task state and eligibility are unchanged.
+- Existing row actions, call links, booking editor, bulk SMS, buyer opportunities,
+  street details, seller deferral and day-review workflow are retained.
+- Buttons use the shared control radius and minimum 44px touch target.
+- White/grey/near-black surfaces and small status dots adapt to both themes.
+- The fixed Focus screen and other workspace destinations are retained.
+
+Changed files: index.html, app.js, visual-system.css, runtime.js,
+service-worker.js, RELEASE-NOTES.md. Runtime/worker changes are release markers
+only. Original styles.css and cleanup.css are byte-identical to the baseline.
+
+No Firebase Console, Firestore rules/indexes or GitHub settings changes needed.
+Authentication, user/team separation, data shapes, storage keys, local saves,
+offline queues and sync functions are unchanged. No deployment performed.
+
+Validation: JavaScript syntax checks; 14 browser checks covering six themed
+viewport layouts, identical baseline planning/status output, task add/complete/
+reopen, booking entry, wrap-up navigation, retained Focus, past/future dates,
+morning priority and empty off-day state. Six additional browser checks covered
+long street and buyer-match content at 320/390/430px in both themes. Local test
+fixtures and Firebase stubs were used; no real client records were changed.
+Function comparisons verify protected code is unchanged. Service-worker install
+was tested with mocked fetch/cache and all 10 release assets resolve. ZIP CRC,
+manifest icons and local HTML references were checked.
+
+Physical iPhone/installed Safari PWA, live Firebase authentication/team access,
+external telephone/SMS handoffs and deployed-site testing were not performed.
+The clean deployment baseline includes no legacy standalone regression scripts;
+its earlier documented fixture failures are not claimed as passing.
+
+Replace all 14 deployment files, including icons/, through the established
+GitHub Pages workflow. Uploading this ZIP does not remove old repository docs.
+
+---
+
 # AGNT v1.46.1 — Fixed Focus dashboard
 
 Built incrementally from the approved v1.46.0 Conversation Workspace.

@@ -9,9 +9,9 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.46.1-workspace">
-<link rel="stylesheet" href="cleanup.css?v=1.46.1-workspace">
-<link rel="stylesheet" href="visual-system.css?v=1.46.1-workspace">
+<link rel="stylesheet" href="styles.css?v=1.46.2-workspace">
+<link rel="stylesheet" href="cleanup.css?v=1.46.2-workspace">
+<link rel="stylesheet" href="visual-system.css?v=1.46.2-workspace">
 <title>AGNT</title>
 </head>
 <body>
@@ -419,7 +419,7 @@
       </nav>
       <div id="todayOverviewPanel" class="today-page-panel today-overview-panel active">
         <div class="view-head timeline-view-head">
-          <div><span>TODAY</span><h2 id="timelineDateLabel"></h2></div>
+          <div><span>YOUR DAY</span><h2 id="timelineDateLabel"></h2></div>
         </div>
         <section class="timeline-overview glass">
           <div class="timeline-command-head">
@@ -432,10 +432,11 @@
             <button id="timelineCurrentAction" class="timeline-command-action" type="button" hidden>Open AGNT</button>
             <button id="timelineDeferSeller" class="timeline-command-action seller-priority-defer" type="button" hidden>Not now</button>
             <button id="timelineCurrentBulkSms" class="timeline-command-action timeline-command-bulk-sms" type="button" aria-label="Open Bulk SMS" title="Bulk SMS" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg></button>
-            <button id="openTaskComposer" class="timeline-task-add" type="button" aria-label="Add task" title="Add task">+</button>
+            
           </div>
         </section>
-        <section id="dailyTimeline" class="daily-timeline glass" aria-live="polite"></section>
+        <div class="schedule-plan-heading"><div><h3>Day plan</h3><p id="schedulePlanSummary"></p></div><button id="openTaskComposer" class="schedule-add-task" type="button"><span aria-hidden="true">+</span> Add task</button></div>
+        <section id="dailyTimeline" class="daily-timeline glass" aria-label="Day plan" aria-live="polite"></section>
         <button id="openDayReview" class="open-day-review hidden" type="button"><span>DAY IN REVIEW</span><strong>Review Day and Send Stats</strong><b aria-hidden="true">›</b></button>
       </div>
       <div id="todayInsightsPanel" class="today-page-panel today-insights-panel" aria-hidden="true">
@@ -1079,7 +1080,7 @@ Andrew Tour | McGrath</textarea></label>
         <label class="file-btn secondary">Import backup<input id="importData" type="file" accept="application/json"></label>
         <button id="signOut" class="danger">Sign out</button>
         <p id="modeNote"></p>
-        <small class="release-version">AGNT v1.46.1</small>
+        <small class="release-version">AGNT v1.46.2</small>
       </div>
     </section>
   </main>
@@ -1230,7 +1231,7 @@ Andrew Tour | McGrath</textarea></label>
 
 
 
-<script src="runtime.js?v=1.46.1-workspace"></script>
-<script type="module" src="app.js?v=1.46.1-workspace"></script>
+<script src="runtime.js?v=1.46.2-workspace"></script>
+<script type="module" src="app.js?v=1.46.2-workspace"></script>
 </body>
 </html>

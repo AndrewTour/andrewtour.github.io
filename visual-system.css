@@ -794,3 +794,84 @@ html body #app #todayView .metric-copy>span {display:block!important;line-height
 @media(max-height:620px) {html body #app #todayView .metric {padding-block:0!important}}
 html body #app:has(#todayView.active) .topbar {transform:none!important}
 html body #app:has(#todayView.active) .topbar>div:first-child {overflow:visible!important}
+/* v1.46.2 — Schedule: a quiet priority and an open, readable agenda. */
+html body #app #scheduleView #todayOverviewPanel {padding:0 0 24px!important;min-width:0}
+html body #app #scheduleView #todayOverviewPanel>.timeline-view-head {display:none!important}
+html body #app #scheduleView #todayOverviewPanel>.timeline-overview {
+  display:grid!important;gap:8px!important;margin:0!important;padding:8px 0 20px!important;
+  border:0!important;border-bottom:1px solid var(--ds-rule)!important;
+  border-radius:0!important;box-shadow:none!important;background:transparent!important;min-width:0!important;
+}
+html body #app #scheduleView .timeline-command-head {display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin:0!important}
+html body #app #scheduleView .timeline-command-head>span {
+  display:flex;align-items:center;gap:7px;color:var(--ds-secondary)!important;
+  font-size:11px!important;font-weight:500!important;line-height:1.4!important;letter-spacing:0!important;text-transform:none!important;
+}
+html body #app #scheduleView .timeline-command-head>span::before {content:'';width:6px;height:6px;border-radius:50%;background:var(--ds-accent);flex:none}
+html body #app #scheduleView #timelineCurrentTime {font-size:11px!important;font-weight:400!important;line-height:1.4!important;color:var(--ds-muted)!important;white-space:normal!important}
+html body #app #scheduleView #timelineCurrentTitle {font-size:20px!important;line-height:1.25!important;letter-spacing:-.03em!important;font-weight:600!important;color:var(--ds-ink)!important;overflow-wrap:anywhere}
+html body #app #scheduleView #timelineCurrentMeta {font-size:12px!important;font-weight:400!important;line-height:1.5!important;color:var(--ds-muted)!important;overflow-wrap:anywhere}
+html body #app #scheduleView .timeline-command-actions {display:flex;flex-wrap:wrap;gap:8px!important;margin:4px 0 0!important;padding:0!important}
+html body #app #scheduleView :is(.timeline-command-action,.timeline-plan-action,.timeline-call,.schedule-add-task) {
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  width:auto!important;min-width:44px!important;min-height:44px!important;height:auto!important;
+  padding:10px 12px!important;border-radius:var(--ds-control-radius)!important;
+  font-size:12px!important;font-weight:500!important;line-height:1.3!important;
+  letter-spacing:0!important;text-transform:none!important;text-decoration:none!important;box-shadow:none!important;
+}
+html body #app #scheduleView #timelineCurrentAction {background:var(--ds-action)!important;border:1px solid var(--ds-action)!important;color:var(--ds-on-action)!important}
+html body #app #scheduleView :is(#timelineDeferSeller,#timelineCurrentBulkSms) {background:var(--ds-soft)!important;border:1px solid var(--ds-rule)!important;color:var(--ds-ink)!important}
+html body #app #scheduleView .schedule-plan-heading {display:flex;align-items:center;justify-content:space-between;gap:16px;margin:20px 0 0;min-width:0}
+html body #app #scheduleView .schedule-plan-heading h3 {margin:0;font-size:16px;font-weight:600;line-height:1.3;letter-spacing:-.02em;color:var(--ds-ink)}
+html body #app #scheduleView .schedule-plan-heading p {margin:4px 0 0;font-size:11px;line-height:1.4;color:var(--ds-muted)}
+html body #app #scheduleView .schedule-add-task {flex:none;background:var(--ds-soft);border:1px solid var(--ds-rule);color:var(--ds-ink)}
+html body #app #scheduleView .schedule-add-task span {font-size:18px;font-weight:400;color:inherit;line-height:1;letter-spacing:0}
+html body #app #scheduleView #dailyTimeline {position:relative!important;margin:4px 0 0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important}
+html body #app #scheduleView #dailyTimeline::before {display:none!important}
+html body #app #scheduleView #dailyTimeline .timeline-item {
+  display:grid!important;grid-template-columns:60px minmax(0,1fr)!important;
+  align-items:start!important;gap:0 16px!important;min-height:0!important;
+  margin:0!important;padding:20px 0!important;border:0!important;border-bottom:1px solid var(--ds-rule)!important;
+  border-radius:0!important;box-shadow:none!important;background:transparent!important;opacity:1!important;min-width:0!important;
+}
+html body #app #scheduleView #dailyTimeline .timeline-item::after {display:none!important}
+html body #app #scheduleView #dailyTimeline .timeline-item>time {grid-column:1;grid-row:1;display:grid;gap:4px;padding:0!important;margin:0!important;text-align:left!important;white-space:nowrap;color:var(--ds-secondary)!important;font-size:11px!important;font-weight:500!important;line-height:1.4!important;font-variant-numeric:tabular-nums}
+html body #app #scheduleView #dailyTimeline .timeline-item>time b {font-size:11px!important;line-height:1.4!important;color:var(--ds-secondary)!important;font-weight:500!important}
+html body #app #scheduleView #dailyTimeline .timeline-item>time i {font-size:10px!important;line-height:1.4!important;color:var(--ds-muted)!important;font-weight:400!important;font-style:normal}
+html body #app #scheduleView #dailyTimeline .timeline-item>div {grid-column:2;grid-row:1;min-width:0;display:grid;gap:6px}
+html body #app #scheduleView #dailyTimeline .timeline-item>span.timeline-marker {display:none!important}
+html body #app #scheduleView #dailyTimeline .timeline-item>button.timeline-marker {
+  grid-column:1;grid-row:1;align-self:start;justify-self:start;margin:44px 0 0!important;
+  width:44px!important;height:44px!important;min-height:44px!important;
+  border:1px solid var(--ds-rule)!important;border-radius:8px!important;
+  background:var(--ds-soft)!important;color:var(--ds-ink)!important;transform:none!important;box-shadow:none!important;font-size:16px!important;
+}
+html body #app #scheduleView #dailyTimeline .schedule-row-labels {display:flex;align-items:center;flex-wrap:wrap;gap:4px 12px;min-width:0}
+html body #app #scheduleView #dailyTimeline .timeline-item-kicker {color:var(--ds-muted)!important;font-size:10px!important;font-weight:400!important;line-height:1.4!important;letter-spacing:0!important;text-transform:none!important;overflow-wrap:anywhere}
+html body #app #scheduleView #dailyTimeline .schedule-status {display:inline-flex;align-items:center;gap:5px;color:var(--ds-secondary);font-size:10px;font-weight:400;line-height:1.4;letter-spacing:0;text-transform:none}
+html body #app #scheduleView #dailyTimeline .schedule-status::before {content:'';width:5px;height:5px;border-radius:50%;background:var(--ds-muted);flex:none}
+html body #app #scheduleView #dailyTimeline .schedule-status-current::before {background:var(--ds-accent)}
+html body #app #scheduleView #dailyTimeline .schedule-status-attention::before {background:#bf841e}
+html body #app #scheduleView #dailyTimeline .schedule-status-complete::before {background:var(--ds-success)}
+html body #app #scheduleView #dailyTimeline .timeline-item>div>strong {font-size:15px!important;font-weight:500!important;line-height:1.35!important;letter-spacing:-.015em!important;color:var(--ds-ink)!important;overflow-wrap:anywhere}
+html body #app #scheduleView #dailyTimeline .timeline-item>div>small {font-size:12px!important;line-height:1.5!important;color:var(--ds-muted)!important;overflow-wrap:anywhere}
+html body #app #scheduleView #dailyTimeline .timeline-plan-actions {display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 0!important}
+html body #app #scheduleView #dailyTimeline :is(.timeline-plan-action,.timeline-call) {background:var(--ds-soft)!important;border:1px solid var(--ds-rule)!important;color:var(--ds-ink)!important}
+html body #app #scheduleView #dailyTimeline .timeline-item.current .timeline-plan-action {background:var(--ds-action)!important;border-color:var(--ds-action)!important;color:var(--ds-on-action)!important}
+html body #app #scheduleView #dailyTimeline .timeline-item.complete .timeline-plan-action {background:transparent!important;color:var(--ds-secondary)!important}
+html body #app #scheduleView #dailyTimeline .timeline-street-list {margin:4px 0!important;border-color:var(--ds-rule)!important;min-width:0}
+html body #app #scheduleView #dailyTimeline .timeline-street-list>div {border-color:var(--ds-rule)!important}
+html body #app #scheduleView #dailyTimeline .timeline-street-list span>strong {font-size:12px!important;font-weight:500!important}
+html body #app #scheduleView #dailyTimeline .timeline-street-list :is(em,span>small) {font-size:10px!important;font-weight:400!important;color:var(--ds-muted)!important}
+html body #app #scheduleView #dailyTimeline .timeline-buyer-match-list {min-width:0;margin:4px 0!important}
+html body #app #scheduleView #dailyTimeline .timeline-buyer-match-list article {border-radius:0!important;background:transparent!important;box-shadow:none!important;min-width:0;padding:12px 0!important}
+html body #app #scheduleView #dailyTimeline .timeline-buyer-match-list article>div {display:flex;flex-wrap:wrap;gap:6px}
+html body #app #scheduleView #dailyTimeline .timeline-buyer-match-list button {min-height:44px!important;font-size:12px!important;font-weight:500!important;border-radius:8px!important;background:var(--ds-soft)!important;border-color:var(--ds-rule)!important;color:var(--ds-ink)!important}
+html body #app #scheduleView :is(.timeline-command-action,.timeline-plan-action,.timeline-call,.schedule-add-task,.timeline-marker):focus-visible {outline:2px solid var(--ds-focus)!important;outline-offset:3px!important}
+@media(max-width:374px) {
+  html body #app #scheduleView #dailyTimeline .timeline-item {grid-template-columns:54px minmax(0,1fr)!important;column-gap:12px!important}
+  html body #app #scheduleView #timelineCurrentTitle {font-size:18px!important}
+}
+html body #app #scheduleView #dailyTimeline>.empty {display:grid!important;gap:6px!important;text-align:left!important;margin:0!important;padding:24px 0!important;min-height:0!important;background:transparent!important;border:0!important;border-radius:0!important}
+html body #app #scheduleView #dailyTimeline>.empty strong {font-size:14px!important;font-weight:500!important;line-height:1.4!important;color:var(--ds-secondary)!important}
+html body #app #scheduleView #dailyTimeline>.empty small {font-size:12px!important;line-height:1.5!important;color:var(--ds-muted)!important}
