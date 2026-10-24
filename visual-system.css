@@ -875,3 +875,13 @@ html body #app #scheduleView :is(.timeline-command-action,.timeline-plan-action,
 html body #app #scheduleView #dailyTimeline>.empty {display:grid!important;gap:6px!important;text-align:left!important;margin:0!important;padding:24px 0!important;min-height:0!important;background:transparent!important;border:0!important;border-radius:0!important}
 html body #app #scheduleView #dailyTimeline>.empty strong {font-size:14px!important;font-weight:500!important;line-height:1.4!important;color:var(--ds-secondary)!important}
 html body #app #scheduleView #dailyTimeline>.empty small {font-size:12px!important;line-height:1.5!important;color:var(--ds-muted)!important}
+
+/* v1.46.4 — keep page navigation out of the compositor animation pipeline. */
+html body #app main>.view,
+html body #app :is(.today-page-panel,.insights-page) {
+  animation:none!important;transition:none!important;transform:none!important;
+  filter:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+  will-change:auto!important;
+}
+/* Retain the old page stacking boundary without a transform-backed layer. */
+html body #app main>.view {isolation:isolate;position:relative;z-index:0}

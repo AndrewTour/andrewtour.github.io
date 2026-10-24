@@ -4237,6 +4237,7 @@ function setProspectorSection(section='market',{resetSubview=true,todayMode=null
   const previousSection=prospectSection,previousTodayMode=prospectTodayMode;
   prospectSection=['today','contacts','buyers','pipeline','market','broadcast','insights'].includes(section)?section:'market';
   if(todayMode)prospectTodayMode=todayMode;
+  if(!workspaceNavigationDepth&&previousSection!==prospectSection)releaseInactiveWorkspaceLists(prospectSection==='market'?(marketPageMode==='hub'?'market':marketPageMode):prospectSection);
   $$('[data-prospector-section]').forEach(button=>{const active=button.dataset.prospectorSection===prospectSection;button.classList.toggle('active',active);if(active)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current')});
   $('#prospectorTodayPanel')?.classList.toggle('hidden',prospectSection!=='today'||prospectTodayMode!=='dashboard');
   $('#prospectorFollowUpPanel')?.classList.toggle('hidden',prospectSection!=='today'||prospectTodayMode!=='followups');
@@ -5432,7 +5433,7 @@ function bindViewport(){
 }
 function resumePendingExternalAction(){if(maybeShowManualCallOutcome())return true;if(resumeMyMarketOwnerSmsReturn())return true;if(resumeHotSpotSmsReturn())return true;if(resumeBuyerMatchSmsReturn())return true;if(resumeAppointmentSmsReturn())return true;if(resumeAppointmentFollowUpCallReturn())return true;return resumeProspectCallReturn()}
 let resumeEpoch=0;
-function handleAppSuspend(){resumeEpoch++;persistOpenContactDraft();if(buyerSession.active)saveBuyerSession();if(pendingProspectingPayload)flushProspectingSave()}
+function handleAppSuspend(){cancelPendingWorkspaceRoute();resumeEpoch++;persistOpenContactDraft();if(buyerSession.active)saveBuyerSession();if(pendingProspectingPayload)flushProspectingSave()}
 async function handleAppResume(){
   if(document.hidden||!startupReady||$('#app')?.classList.contains('hidden'))return;
   const epoch=resumeEpoch,owner=uid;updateAppViewport();const rolled=adoptCurrentDay();resumePendingExternalAction();
@@ -5471,7 +5472,7 @@ function consumerAuthError(error,action='sign in'){
 }
 async function init(){bindViewport();bindAppLifecycle();loadLocal('local');await finaliseExpiredTimers();if(!configured()){revealStartupFallback('AGNT is temporarily unavailable. Please try again shortly.');return}startupReady=false;startupDeviceOnly=false;clearTimeout(startupWatchdog);startupWatchdog=setTimeout(()=>revealStartupFallback(),STARTUP_WATCHDOG_MS);try{const fb=initializeApp(firebaseConfig);auth=getAuth(fb);await setPersistence(auth,browserLocalPersistence);db=initializeFirestore(fb,{experimentalAutoDetectLongPolling:true,localCache:memoryLocalCache()});onAuthStateChanged(auth,u=>{if(startupDeviceOnly)return;if(u){if(creatingAccount){currentUser=u;return}if(cloud&&uid===u.uid&&startupReady)return;startCloud(u).catch(err=>{console.error('Cloud session failed to start',err);revealStartupFallback('AGNT could not finish loading. Please check your connection and try again.')})}else{markStartupReady();clearActiveSession();$('#bootGate')?.classList.add('hidden');setAuthScreenActive(true);$('#app').classList.add('hidden');$('#authGate').classList.remove('hidden')}})}catch(err){console.error(err);revealStartupFallback('AGNT is temporarily unavailable. Please try again shortly.')}}
 function showAuthMessage(msg){$('#authMessage').textContent=msg}
-// v1.46.3 — presentation routing over the existing workflow screens.
+// v1.46.4 — presentation routing over the existing workflow screens.
 function workspaceAreaForView(id=activeViewId()){
   if(id==='settingsView')return workspaceLastArea;
   if(id==='prospectingView')return prospectSection==='market'?'market':'people';
@@ -5519,9 +5520,47 @@ function syncWorkspaceChrome(id=activeViewId()){
   if(toolbar.innerHTML!==markup)toolbar.innerHTML=markup;
   setWorkspaceAttribute(toolbar,'aria-label',`${titles[area]} views`);
 }
+// User navigation settles before expensive rendering. Internal workflows stay synchronous.
+let workspaceRouteTimer=0,workspaceRouteFrame=0,pendingWorkspaceRoute=null;
+function cancelPendingWorkspaceRoute(){
+  clearTimeout(workspaceRouteTimer);workspaceRouteTimer=0;
+  if(workspaceRouteFrame)cancelAnimationFrame(workspaceRouteFrame);
+  workspaceRouteFrame=0;pendingWorkspaceRoute=null;
+}
+function requestWorkspaceRoute(route){
+  cancelPendingWorkspaceRoute();
+  const owner=uid;pendingWorkspaceRoute={route,owner};
+  workspaceRouteTimer=setTimeout(()=>{
+    workspaceRouteTimer=0;
+    workspaceRouteFrame=requestAnimationFrame(()=>{
+      workspaceRouteFrame=0;const next=pendingWorkspaceRoute;pendingWorkspaceRoute=null;
+      if(!next||next.owner!==uid||document.hidden||!startupReady||$('#app')?.classList.contains('hidden'))return;
+      openWorkspaceRoute(next.route);
+    });
+  },60);
+}
+function releaseWorkspaceList(element){
+  if(!element||!element.childNodes.length||element.querySelector('form,textarea,select,input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),[contenteditable="true"]'))return;
+  element.replaceChildren();renderedMarkup.delete(element);delete element.dataset.markup;
+}
+function releaseInactiveWorkspaceLists(route){
+  const effective=route==='people'&&activeViewId()==='prospectingView'&&workspaceAreaForView()==='people'?prospectSection:route;
+  const keep=effective==='people'||effective==='contacts'?'contacts':effective==='buyers'?'buyers':effective==='pipeline'?'pipeline':['market','marketpulse','hotspotting'].includes(effective)?'market':'';
+  if(keep!=='contacts')releaseWorkspaceList($('#prospectContactList'));
+  if(keep!=='buyers')releaseWorkspaceList($('#buyerProfileList'));
+  if(keep!=='pipeline')for(let i=0;i<4;i++)releaseWorkspaceList($('#pipelineList'+i));
+  if(keep!=='market'){
+    releaseWorkspaceList($('#marketPulseList'));releaseWorkspaceList($('#myMarketProperties'));
+    if(myMarketViewCache){myMarketViewCache.listLimit=0;myMarketViewCache.listMarkup='';}
+  }else if(route==='market')releaseWorkspaceList($('#marketPulseList'));
+  else releaseWorkspaceList($('#myMarketProperties'));
+}
 function openWorkspaceRoute(route){
+  cancelPendingWorkspaceRoute();
+  window.agntRuntime?.record('navigation-start');
+  releaseInactiveWorkspaceLists(route);
   workspaceNavigationDepth++;
-  try{return applyWorkspaceRoute(route)}finally{workspaceNavigationDepth--;if(!workspaceNavigationDepth)syncWorkspaceChrome()}
+  try{const result=applyWorkspaceRoute(route);window.agntRuntime?.record('navigation-ready');return result}finally{workspaceNavigationDepth--;if(!workspaceNavigationDepth)syncWorkspaceChrome()}
 }
 function applyWorkspaceRoute(route){
   if(route==='profile'){
@@ -5559,7 +5598,7 @@ function applyWorkspaceRoute(route){
   }
 }
 
-function switchView(id,{bookingMode='editor'}={}){if(id==='appointmentsView')workspaceBookingEditor=bookingMode!=='browse';if(!document.getElementById(id)?.classList.contains('view'))id='todayView';$$('.view').forEach(v=>setWorkspaceClass(v,'active',v.id===id));updateTopbar(id);updateBackTodayVisibility(id);if(id==='todayView')renderToday();if(id==='scheduleView'){setTodayPage(todayPage);if(todayPage==='overview')renderTimeline();}if(id==='appointmentsView'){$('#appointmentMainContent')?.classList.toggle('hidden',Boolean(appointmentHistoryMode));$('#appointmentHistoryScreen')?.classList.toggle('hidden',!appointmentHistoryMode);renderAppointments()}if(id==='prospectingView')renderProspecting();if(id==='insightsView')renderInsights();if(id==='settingsView')renderSettings();syncWorkspaceChrome(id)}
+function switchView(id,{bookingMode='editor'}={}){if(!workspaceNavigationDepth){cancelPendingWorkspaceRoute();releaseInactiveWorkspaceLists(id==='prospectingView'?(prospectSection==='market'?(marketPageMode==='hub'?'market':marketPageMode):prospectSection):id);}if(id==='appointmentsView')workspaceBookingEditor=bookingMode!=='browse';if(!document.getElementById(id)?.classList.contains('view'))id='todayView';$$('.view').forEach(v=>setWorkspaceClass(v,'active',v.id===id));updateTopbar(id);updateBackTodayVisibility(id);if(id==='todayView')renderToday();if(id==='scheduleView'){setTodayPage(todayPage);if(todayPage==='overview')renderTimeline();}if(id==='appointmentsView'){$('#appointmentMainContent')?.classList.toggle('hidden',Boolean(appointmentHistoryMode));$('#appointmentHistoryScreen')?.classList.toggle('hidden',!appointmentHistoryMode);renderAppointments()}if(id==='prospectingView')renderProspecting();if(id==='insightsView')renderInsights();if(id==='settingsView')renderSettings();syncWorkspaceChrome(id)}
 function returnToActiveTabRoot(id){
   if(id==='prospectingView'){
     const detail=$('#prospectDetail'),form=detail?.classList.contains('hidden')?null:detail?.querySelector('form');
@@ -5678,9 +5717,9 @@ $('#offDayConversations')?.addEventListener('click',event=>{
   const planAction=event.target.closest('[data-plan-action]');if(planAction){event.preventDefault();navigateDailyPlanAction(planAction.dataset.planAction,planAction.dataset.eventId)}
 });
 $('#resetKnock').onclick=resetKnock;$('#knockingMetricCard').onclick=e=>{if(e.target.closest('button'))return;openKnockingHistory()};$('#knockingMetricCard').onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.closest('button')){e.preventDefault();openKnockingHistory()}};$('#closeKnockingHistory').onclick=closeKnockingHistory;$('#previousDay').onclick=()=>shiftHeaderDate(-1);$('#nextDay').onclick=()=>shiftHeaderDate(1);$('#leaderboardModeShortcut').onclick=()=>{leaderboardMode=leaderboardMode==='week'?'day':'week';renderUnifiedLeaderboard()};$('#backToday').onclick=()=>{selectedDate=todayKey();appointmentDate=selectedDate;$('#appointmentDatePicker').value=appointmentDate;renderAll();ensureTick()};
-$('.tabbar').onclick=e=>{const button=e.target.closest('[data-workspace-area]');if(button)openWorkspaceRoute(button.dataset.workspaceArea)};
-$('#workspaceProfile').onclick=()=>openWorkspaceRoute(activeViewId()==='settingsView'?'profile-back':'profile');
-document.addEventListener('click',event=>{const button=event.target.closest('[data-workspace-route]');if(button){event.preventDefault();openWorkspaceRoute(button.dataset.workspaceRoute)}});
+$('.tabbar').onclick=e=>{const button=e.target.closest('[data-workspace-area]');if(button)requestWorkspaceRoute(button.dataset.workspaceArea)};
+$('#workspaceProfile').onclick=()=>requestWorkspaceRoute(activeViewId()==='settingsView'?'profile-back':'profile');
+document.addEventListener('click',event=>{const button=event.target.closest('[data-workspace-route]');if(button){event.preventDefault();requestWorkspaceRoute(button.dataset.workspaceRoute)}});
 const workspaceDetailObserver=new MutationObserver(scheduleWorkspaceChrome);
 workspaceDetailObserver.observe($('#prospectDetail'),{attributes:true,attributeFilter:['class'],childList:true});
 workspaceDetailObserver.observe($('#prospectingSession'),{attributes:true,attributeFilter:['class'],childList:true});
@@ -6021,9 +6060,10 @@ $('#settingsView').addEventListener('change',event=>{const field=event.target;if
 $('#saveSettings').onclick=async()=>{const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;calendarPreference=$('[name=calendarPreference]:checked')?.value==='apple'?'apple':'outlook';appearancePreference=normaliseAppearance($('[name=appearancePreference]:checked')?.value);applyAppearance(appearancePreference);settingsDraftFields.clear();await saveTargets();if(cloud&&accountMode==='team'&&teamId&&uid){try{await setDoc(doc(db,'teams',teamId,'members',uid),{name:agentName,updatedAt:serverTimestamp()},{merge:true})}catch(err){console.error('Team profile name sync failed',err)}}renderAll();toast('Settings saved')};
 $('#signOut').onclick=async()=>{clearActiveSession();if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
 function mergeBackupRecords(current=[],incoming=[]){const byId=new Map();[...(Array.isArray(current)?current:[]),...(Array.isArray(incoming)?incoming:[])].forEach((item,index)=>{if(!item||typeof item!=='object')return;const id=cleanText(item.id,180)||`backup-record-${index}`;byId.set(id,item)});return[...byId.values()]}
-function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.46.3',exportedAt:new Date().toISOString(),targets,workDays,agentName,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
+function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.46.4',exportedAt:new Date().toISOString(),targets,workDays,agentName,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
 function restoreBuyerSessionBackup(value){if(!value||!Array.isArray(value.contacts))return false;buyerSession={contacts:value.contacts.map((contact,index)=>({id:cleanText(contact.id,80)||`buyer_${index}`,name:cleanText(contact.name,120)||'Unknown buyer',phone:normaliseDialNumber(contact.phone),address:cleanText(contact.address,240),doNotSms:Boolean(contact.doNotSms),status:cleanText(contact.status,40)})).filter(contact=>contact.phone),index:Math.max(0,Number(value.index)||0),active:Boolean(value.active),visible:false,fileName:cleanText(value.fileName,160),importedAt:Number(value.importedAt)||0};buyerSession.index=Math.min(buyerSession.index,buyerSession.contacts.length);return saveBuyerSession()}
 function syncImportedBackup(dayKeys=[],prospectingIncluded=false){if(!cloud)return;saveTargets().catch(err=>console.error('Imported settings sync failed',err));dayKeys.forEach(key=>saveDay(key,{quiet:true,awaitCloud:false,render:false}).catch?.(err=>console.error('Imported day sync failed',err)));if(prospectingIncluded)saveProspecting({render:false,awaitCloud:false}).catch(err=>console.error('Imported prospecting sync failed',err))}
+$('#exportDiagnostics')?.addEventListener('click',()=>{const data=window.agntRuntime?.export?.()||'[]',blob=new Blob([data],{type:'application/json'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='AGNT-runtime-diagnostics.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)});
 $('#exportData').onclick=()=>{const blob=new Blob([JSON.stringify(completeBackupPayload(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`agnt-complete-backup-${todayKey()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),0)};
 $('#importData').onchange=async e=>{const file=e.target.files?.[0];e.target.value='';if(!file)return;try{const raw=JSON.parse(await file.text());if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('Invalid backup');if(!confirm('Import this AGNT backup?\n\nExisting records with the same date or ID may be updated.'))return;const importedDays=normaliseDaysMap(raw.days||{}),dayKeys=Object.keys(importedDays),prospectingIncluded=Array.isArray(raw.prospects)||Array.isArray(raw.prospectInteractions)||Array.isArray(raw.marketPulseEvents)||Array.isArray(raw.marketPulseHistory);if(raw.targets&&typeof raw.targets==='object')targets={...DEFAULTS,...raw.targets};if(Array.isArray(raw.workDays)&&raw.workDays.length)workDays=normaliseWorkDays(raw.workDays);if(typeof raw.agentName==='string'&&raw.agentName.trim())agentName=cleanText(raw.agentName,120);if(raw.calendarPreference==='apple'||raw.calendarPreference==='outlook')calendarPreference=raw.calendarPreference;if(['system','light','dark'].includes(raw.appearancePreference))applyAppearance(raw.appearancePreference);days={...days,...importedDays};if(Array.isArray(raw.prospects))prospects=normaliseProspects(mergeBackupRecords(prospects,raw.prospects));if(Array.isArray(raw.prospectInteractions))prospectInteractions=normaliseProspectInteractions(mergeBackupRecords(prospectInteractions,raw.prospectInteractions));if(Array.isArray(raw.marketPulseEvents))marketPulseEvents=normaliseMarketPulseEvents(mergeBackupRecords(marketPulseEvents,raw.marketPulseEvents));if(Array.isArray(raw.marketPulseHistory))marketPulseHistory=normaliseMarketPulseHistory(mergeBackupRecords(marketPulseHistory,raw.marketPulseHistory));if(Array.isArray(raw.campaignHistory))campaignHistory=mergeBackupRecords(campaignHistory,raw.campaignHistory).sort((a,b)=>(Number(b.createdAt)||0)-(Number(a.createdAt)||0)).slice(0,20);if(Array.isArray(raw.bulkSmsTestLaunches))bulkSmsTestLaunches=mergeBackupRecords(bulkSmsTestLaunches,raw.bulkSmsTestLaunches).sort((a,b)=>(Number(b.createdAt)||0)-(Number(a.createdAt)||0)).slice(0,10);saveLocal();restoreBuyerSessionBackup(raw.buyerSession);renderAll();syncImportedBackup(dayKeys,prospectingIncluded);toast('Backup restored · cloud sync running')}catch(err){console.error('Backup import failed',err);toast('Backup could not be read')}};
 $('#openCalendarFromInsights')&&($('#openCalendarFromInsights').onclick=openCalendar);$('#closeCalendar').onclick=()=>$('#calendarModal').classList.remove('open');$('#calendarPrev').onclick=()=>{year--;renderCalendar();renderInsights()};$('#calendarNext').onclick=()=>{year++;renderCalendar();renderInsights()};$('#prevYear')&&($('#prevYear').onclick=()=>{year--;renderCalendar();renderInsights()});$('#nextYear')&&($('#nextYear').onclick=()=>{year++;renderCalendar();renderInsights()});
