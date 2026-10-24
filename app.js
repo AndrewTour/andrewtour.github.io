@@ -51,6 +51,7 @@ let pendingProspectingPayload=null, pendingProspectingSignature='', pendingProsp
 let editingAppointment=null;
 let todayPage='overview';
 let workspaceBookingEditor=true;
+let workspaceNavigationDepth=0,workspaceChromeFrame=0;
 let workspaceLastArea='today';
 let workspaceProfileReturnView='todayView';
 let prospectTodayMode='dashboard';
@@ -1049,7 +1050,7 @@ function dayLogItems(k=selectedDate){
   }
   const seen=new Set();return items.filter(item=>{const key=item.id||`${item.kind}|${item.title}|${item.detail}|${Math.round(item.at/60000)}`;if(seen.has(key))return false;seen.add(key);return true}).sort((a,b)=>a.at-b.at);
 }
-function setTodayPage(page='overview'){
+function setTodayPage(page='overview',{render=true}={}){
   todayPage=['overview','insights','log'].includes(page)?page:'overview';
   document.querySelectorAll('[data-today-page]').forEach(button=>{const active=button.dataset.todayPage===todayPage;button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active))});
   $('#todayOverviewPanel')?.classList.toggle('active',todayPage==='overview');
@@ -1058,8 +1059,8 @@ function setTodayPage(page='overview'){
   $('#todayOverviewPanel')?.setAttribute('aria-hidden',String(todayPage!=='overview'));
   $('#todayInsightsPanel')?.setAttribute('aria-hidden',String(todayPage!=='insights'));
   $('#todayLogPanel')?.setAttribute('aria-hidden',String(todayPage!=='log'));
-  if(todayPage==='insights')renderScorecard();
-  if(todayPage==='log')renderDayLog();
+  if(render&&todayPage==='insights')renderScorecard();
+  if(render&&todayPage==='log')renderDayLog();
   syncWorkspaceChrome();
 }
 function dayStatsLines(k=selectedDate){
@@ -4232,7 +4233,7 @@ function openHotSpottingArea(){
   marketPulseReturnTarget='hotspotting';marketPageMode='hotspotting';setProspectorSection('market');setMarketPageMode('hotspotting');renderProspecting();requestAnimationFrame(()=>{const view=$('#prospectingView');if(view)view.scrollTop=0});
 }
 function closeMarketPulseDataArea(){if(marketPulseReturnTarget==='hub'){marketPulseReturnTarget='hotspotting';openMyMarketHub();return}const returnHome=marketPulseReturnTarget==='home';marketPulseReturnTarget='hotspotting';if(returnHome){marketPageMode='hotspotting';setProspectorSection('today');switchView('todayView');return}openHotSpottingArea()}
-function setProspectorSection(section='market',{resetSubview=true,todayMode=null}={}){
+function setProspectorSection(section='market',{resetSubview=true,todayMode=null,render=true}={}){
   const previousSection=prospectSection,previousTodayMode=prospectTodayMode;
   prospectSection=['today','contacts','buyers','pipeline','market','broadcast','insights'].includes(section)?section:'market';
   if(todayMode)prospectTodayMode=todayMode;
@@ -4246,12 +4247,12 @@ function setProspectorSection(section='market',{resetSubview=true,todayMode=null
   $('#prospectorInsightsPanel')?.classList.toggle('hidden',!['pipeline','insights'].includes(prospectSection));
   $('#prospectorBroadcastPanel')?.classList.toggle('hidden',prospectSection!=='broadcast');
   if(prospectSection==='market')setMarketPageMode(marketPageMode,{refreshHeader:false});
-  if(document.querySelector('.view.active')?.id==='prospectingView')updateTopbar();
+  if(render&&document.querySelector('.view.active')?.id==='prospectingView')updateTopbar();
   const searchVisible=['contacts','buyers','pipeline'].includes(prospectSection),quickActionsVisible=prospectSection==='today'&&prospectTodayMode==='dashboard';const toolbar=$('.prospecting-toolbar');toolbar?.classList.toggle('hidden',!searchVisible&&!quickActionsVisible);toolbar?.classList.toggle('quick-actions-only',quickActionsVisible&&!searchVisible);$('.prospecting-search-wrap')?.classList.toggle('hidden',!searchVisible);
   const input=$('#prospectSearch');if(input)input.placeholder=prospectSection==='contacts'?'Search name, street, suburb, phone etc.':prospectSection==='buyers'?'Search buyers':'Search seller pipeline';const addButton=$('#addProspectButton');if(addButton)addButton.setAttribute('aria-label',prospectSection==='buyers'?'Add buyer':'Add contact');
-  if(prospectSection==='market')renderMarketPulse();if(prospectSection==='broadcast')renderBroadcastScreen();
+  if(render&&prospectSection==='market')renderMarketPulse();if(render&&prospectSection==='broadcast')renderBroadcastScreen();
   // Direct section changes must populate the newly visible panel without rebuilding hidden panels.
-  if($('#prospectingView')?.classList.contains('active')&&(previousSection!==prospectSection||prospectSection==='today'&&previousTodayMode!==prospectTodayMode)){
+  if(render&&$('#prospectingView')?.classList.contains('active')&&(previousSection!==prospectSection||prospectSection==='today'&&previousTodayMode!==prospectTodayMode)){
     if(prospectSection==='contacts')renderContactsList();
     else if(prospectSection==='buyers')renderBuyerProfiles();
     else if(prospectSection==='pipeline')renderSellerPipeline();
@@ -4546,10 +4547,12 @@ function renderProspecting(){
   if(prospectSection==='contacts')renderContactsList();
   else if(prospectSection==='buyers')renderBuyerProfiles();
   else if(prospectSection==='pipeline')renderSellerPipeline();
+  else if(prospectSection==='market')renderMarketPulse();
+  else if(prospectSection==='broadcast')renderBroadcastScreen();
   else if(prospectSection==='insights')renderProspectorInsights();
   else if(prospectSection==='today'&&prospectTodayMode==='followups')renderTodayFollowUpQueue();
   const sessionLogOpen=prospectSessionActive&&$('#prospectLogForm')?.dataset.fromSession==='1'&&detailWasOpen;
-  setProspectorSection(prospectSection,{resetSubview:false});
+  setProspectorSection(prospectSection,{resetSubview:false,render:false});
   if(sessionLogOpen||detailWasOpen&&editorWasOpen){
     dashboard?.classList.add('hidden');session?.classList.add('hidden');detail?.classList.remove('hidden');
   }else if(buyerSession.active&&sessionWasOpen&&session?.dataset.sessionKind==='buyer'){
@@ -5468,58 +5471,69 @@ function consumerAuthError(error,action='sign in'){
 }
 async function init(){bindViewport();bindAppLifecycle();loadLocal('local');await finaliseExpiredTimers();if(!configured()){revealStartupFallback('AGNT is temporarily unavailable. Please try again shortly.');return}startupReady=false;startupDeviceOnly=false;clearTimeout(startupWatchdog);startupWatchdog=setTimeout(()=>revealStartupFallback(),STARTUP_WATCHDOG_MS);try{const fb=initializeApp(firebaseConfig);auth=getAuth(fb);await setPersistence(auth,browserLocalPersistence);db=initializeFirestore(fb,{experimentalAutoDetectLongPolling:true,localCache:memoryLocalCache()});onAuthStateChanged(auth,u=>{if(startupDeviceOnly)return;if(u){if(creatingAccount){currentUser=u;return}if(cloud&&uid===u.uid&&startupReady)return;startCloud(u).catch(err=>{console.error('Cloud session failed to start',err);revealStartupFallback('AGNT could not finish loading. Please check your connection and try again.')})}else{markStartupReady();clearActiveSession();$('#bootGate')?.classList.add('hidden');setAuthScreenActive(true);$('#app').classList.add('hidden');$('#authGate').classList.remove('hidden')}})}catch(err){console.error(err);revealStartupFallback('AGNT is temporarily unavailable. Please try again shortly.')}}
 function showAuthMessage(msg){$('#authMessage').textContent=msg}
-// v1.46.2 — presentation routing over the existing workflow screens.
+// v1.46.3 — presentation routing over the existing workflow screens.
 function workspaceAreaForView(id=activeViewId()){
   if(id==='settingsView')return workspaceLastArea;
   if(id==='prospectingView')return prospectSection==='market'?'market':'people';
   if(id==='insightsView'||id==='scheduleView'&&todayPage==='insights')return'performance';
   return'today';
 }
+function setWorkspaceAttribute(element,name,value){if(element&&element.getAttribute(name)!==value)element.setAttribute(name,value)}
+function setWorkspaceClass(element,name,value){if(element&&element.classList.contains(name)!==Boolean(value))element.classList.toggle(name,Boolean(value))}
+function scheduleWorkspaceChrome(){if(workspaceNavigationDepth||workspaceChromeFrame)return;workspaceChromeFrame=requestAnimationFrame(()=>{workspaceChromeFrame=0;syncWorkspaceChrome()})}
 function syncWorkspaceChrome(id=activeViewId()){
+  if(workspaceNavigationDepth)return;
+  if(workspaceChromeFrame){cancelAnimationFrame(workspaceChromeFrame);workspaceChromeFrame=0;}
   id=activeViewId();
   const app=$('#app');if(!app)return;
   const area=workspaceAreaForView(id);if(id!=='settingsView')workspaceLastArea=area;
-  app.dataset.workspaceArea=area;
+  setWorkspaceAttribute(app,'data-workspace-area',area);
   const editor=id==='appointmentsView'&&!appointmentHistoryMode&&Boolean(workspaceBookingEditor||editingAppointment||pendingProspectAppointmentFlow);
-  app.dataset.bookingEditor=String(editor);
-  app.dataset.workspaceScreen=id;
+  setWorkspaceAttribute(app,'data-booking-editor',String(editor));
+  setWorkspaceAttribute(app,'data-workspace-screen',id);
+  const isDetail=id==='prospectingView'&&(!$('#prospectDetail').classList.contains('hidden')||!$('#prospectingSession').classList.contains('hidden'));
   const titles={today:'Today',people:'People',market:'Market',performance:'Performance'};
-  if(id==='prospectingView'&&prospectSection==='contacts'&&prospectContactsMode!=='archived'){const count=filteredProspects().length;$('#prospectContactsHeading').textContent='Your people';$('#prospectContactsEyebrow').textContent='DATABASE';$('#prospectContactCount').textContent=`${count} ${count===1?'person':'people'} · A–Z`;$('#viewSubtitle').textContent=`${count} ${count===1?'person':'people'} in your database.`;}
-  $('#viewTitle').textContent=id==='settingsView'?'Your profile':titles[area];
+  if(id==='prospectingView'&&prospectSection==='contacts'&&prospectContactsMode!=='archived'){const count=Number.parseInt($('#prospectContactCount')?.textContent,10)||0;setRenderedText('#prospectContactsHeading','Your people');setRenderedText('#prospectContactsEyebrow','DATABASE');setRenderedText('#prospectContactCount',`${count} ${count===1?'person':'people'} · A–Z`);if(!isDetail)setRenderedText('#viewSubtitle',`${count} ${count===1?'person':'people'} in your database.`);}
+  setRenderedText('#viewTitle',id==='settingsView'?'Your profile':id==='todayView'?welcomeMessage():id==='scheduleView'&&todayPage==='overview'?'Your schedule':titles[area]);
   if(id==='todayView'){
-    $('#viewTitle').textContent=welcomeMessage();
-    const subtitle=$('#viewSubtitle');if(subtitle){subtitle.textContent=fmtDate(selectedDate);subtitle.classList.remove('hidden')}
-    $('#dateLabel')?.classList.add('hidden');
+    setRenderedText('#viewTitle',welcomeMessage());
+    const subtitle=$('#viewSubtitle');if(subtitle){setRenderedText('#viewSubtitle',fmtDate(selectedDate));setWorkspaceClass(subtitle,'hidden',false)}
+    setWorkspaceClass($('#dateLabel'),'hidden',true);
   }
-  if(id==='scheduleView'&&todayPage==='overview'){$('#viewTitle').textContent='Your schedule';$('#viewSubtitle').textContent=fmtDate(selectedDate);$('#viewSubtitle').classList.remove('hidden');$('#dateLabel')?.classList.add('hidden');}
+  if(id==='scheduleView'&&todayPage==='overview'){setRenderedText('#viewTitle','Your schedule');setRenderedText('#viewSubtitle',fmtDate(selectedDate));setWorkspaceClass($('#viewSubtitle'),'hidden',false);setWorkspaceClass($('#dateLabel'),'hidden',true);}
   if(id==='scheduleView'&&todayPage==='insights'){
-    $('#viewSubtitle').textContent='Your activity, progress and patterns.';$('#viewSubtitle').classList.remove('hidden');
+    setRenderedText('#viewSubtitle','Your activity, progress and patterns.');setWorkspaceClass($('#viewSubtitle'),'hidden',false);
   }
-  if(id==='settingsView'){$('#viewSubtitle').textContent='Account, targets and preferences.';$('#viewSubtitle').classList.remove('hidden');const name=$('#settingsView .profile-hero-copy h2');if(name)name.textContent=displayAgentName();}
-  const showWorkspaceDate=['todayView','scheduleView','appointmentsView'].includes(id)&&!editor&&area!=='performance';$('#dateNavActions')?.classList.toggle('hidden',!showWorkspaceDate);$('.top-actions')?.classList.toggle('date-nav-visible',showWorkspaceDate);$('#leaderboardModeShortcut')?.classList.toggle('hidden',id!=='insightsView');$('#workspaceProfile')?.setAttribute('aria-label',id==='settingsView'?'Return to previous screen':'Open profile and settings');
-  $('#workspaceBookingTitle').textContent=editingAppointment?'Edit appointment':'Book an appointment';
-  $$('.tabbar [data-workspace-area]').forEach(button=>{const active=button.dataset.workspaceArea===area&&id!=='settingsView';button.classList.toggle('active',active);if(active)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current')});
-  const isDetail=id==='prospectingView'&&(!$('#prospectDetail').classList.contains('hidden')||!$('#prospectingSession').classList.contains('hidden'));if(isDetail&&!$('#prospectDetail').classList.contains('hidden'))$('#viewSubtitle').textContent='Profile and activity.';if(editor){$('#viewSubtitle').textContent='Choose a person, time and purpose.';$('#viewSubtitle').classList.remove('hidden');}
-  if(id==='prospectingView'&&prospectSection==='today')$('#viewSubtitle').textContent=prospectTodayMode==='followups'?'Every due conversation, in context.':'Calls, sessions and campaigns.';
+  if(id==='settingsView'){setRenderedText('#viewSubtitle','Account, targets and preferences.');setWorkspaceClass($('#viewSubtitle'),'hidden',false);const name=$('#settingsView .profile-hero-copy h2');if(name)setRenderedText('#settingsView .profile-hero-copy h2',displayAgentName());}
+  const showWorkspaceDate=['todayView','scheduleView','appointmentsView'].includes(id)&&!editor&&area!=='performance';setWorkspaceClass($('#dateNavActions'),'hidden',!showWorkspaceDate);setWorkspaceClass($('.top-actions'),'date-nav-visible',showWorkspaceDate);setWorkspaceClass($('#leaderboardModeShortcut'),'hidden',id!=='insightsView');setWorkspaceAttribute($('#workspaceProfile'),'aria-label',id==='settingsView'?'Return to previous screen':'Open profile and settings');
+  setRenderedText('#workspaceBookingTitle',editingAppointment?'Edit appointment':'Book an appointment');
+  $$('.tabbar [data-workspace-area]').forEach(button=>{const active=button.dataset.workspaceArea===area&&id!=='settingsView';setWorkspaceClass(button,'active',active);if(active)setWorkspaceAttribute(button,'aria-current','page');else if(button.hasAttribute('aria-current'))button.removeAttribute('aria-current')});
+  if(isDetail&&!$('#prospectDetail').classList.contains('hidden'))setRenderedText('#viewSubtitle','Profile and activity.');if(editor){setRenderedText('#viewSubtitle','Choose a person, time and purpose.');setWorkspaceClass($('#viewSubtitle'),'hidden',false);}
+  if(id==='prospectingView'&&prospectSection==='today')setRenderedText('#viewSubtitle',prospectTodayMode==='followups'?'Every due conversation, in context.':'Calls, sessions and campaigns.');
+  setWorkspaceAttribute(app,'data-workspace-detail',String(isDetail));
   const toolbar=$('#workspaceToolbar');if(!toolbar)return;
-  toolbar.classList.toggle('hidden',editor||isDetail||id==='settingsView');
+  setWorkspaceClass(toolbar,'hidden',editor||isDetail||id==='settingsView');
   const active=id==='todayView'?'focus':id==='appointmentsView'?'bookings':id==='insightsView'?'leaderboard':id==='scheduleView'?todayPage==='insights'?'trends':todayPage==='log'?'log':'schedule':prospectSection==='contacts'?'contacts':prospectSection==='buyers'?'buyers':prospectSection==='pipeline'?'pipeline':prospectSection==='market'?marketPageMode==='marketpulse'?'marketpulse':marketPageMode==='hotspotting'?'hotspotting':'market':prospectTodayMode==='followups'?'followups':'reach';
   const routes=area==='today'?[['focus','Focus'],['schedule','Schedule'],['log','Log'],['bookings','Bookings']]:area==='people'?[['contacts','All people'],['buyers','Buyers'],['pipeline','Sellers'],['followups','Follow-ups'],['reach','Reach']]:area==='market'?[['market','Overview'],['marketpulse','MarketPulse'],['hotspotting','Hot Spotting']]:[['trends','Overview'],['leaderboard','Leaderboard']];
   const markup=routes.map(([route,label])=>`<button type="button" data-workspace-route="${route}" class="${active===route?'active':''}"${active===route?' aria-current="page"':''}>${label}</button>`).join('');
   if(toolbar.innerHTML!==markup)toolbar.innerHTML=markup;
-  toolbar.setAttribute('aria-label',`${titles[area]} views`);
+  setWorkspaceAttribute(toolbar,'aria-label',`${titles[area]} views`);
 }
 function openWorkspaceRoute(route){
+  workspaceNavigationDepth++;
+  try{return applyWorkspaceRoute(route)}finally{workspaceNavigationDepth--;if(!workspaceNavigationDepth)syncWorkspaceChrome()}
+}
+function applyWorkspaceRoute(route){
   if(route==='profile'){
     workspaceProfileReturnView=activeViewId();switchView('settingsView');return;
   }
   if(route==='profile-back'){switchView(workspaceProfileReturnView,{bookingMode:workspaceBookingEditor?'editor':'browse'});return}
   if(route==='today'||route==='focus'){switchView('todayView');return}
   if(route==='schedule'||route==='log'||route==='trends'){
-    setTodayPage(route==='trends'?'insights':route==='log'?'log':'overview');switchView('scheduleView');return;
+    setTodayPage(route==='trends'?'insights':route==='log'?'log':'overview',{render:false});switchView('scheduleView');return;
   }
   if(route==='performance')route='trends';
-  if(route==='trends'){setTodayPage('insights');switchView('scheduleView');return}
+  if(route==='trends'){setTodayPage('insights',{render:false});switchView('scheduleView');return}
   if(route==='leaderboard'){switchView('insightsView');return}
   if(route==='bookings'){
     workspaceBookingEditor=false;appointmentHistoryMode=null;switchView('appointmentsView',{bookingMode:'browse'});return;
@@ -5537,15 +5551,15 @@ function openWorkspaceRoute(route){
     route='contacts';
   }
   if(['market','marketpulse','hotspotting'].includes(route)){
-    marketPageMode=route==='market'?'hub':route;myMarketDetailKey='';setProspectorSection('market');switchView('prospectingView');return;
+    marketPageMode=route==='market'?'hub':route;myMarketDetailKey='';setProspectorSection('market',{render:false});switchView('prospectingView');return;
   }
   if(['contacts','buyers','pipeline','followups','reach'].includes(route)){
     const section=route==='followups'||route==='reach'?'today':route;
-    setProspectorSection(section,{todayMode:route==='followups'?'followups':route==='reach'?'dashboard':null});switchView('prospectingView');return;
+    setProspectorSection(section,{render:false,todayMode:route==='followups'?'followups':route==='reach'?'dashboard':null});switchView('prospectingView');return;
   }
 }
 
-function switchView(id,{bookingMode='editor'}={}){if(id==='appointmentsView')workspaceBookingEditor=bookingMode!=='browse';if(!document.getElementById(id)?.classList.contains('view'))id='todayView';$$('.tabbar button').forEach(b=>b.classList.toggle('active',b.dataset.view===id));$$('.view').forEach(v=>v.classList.toggle('active',v.id===id));updateTopbar(id);updateBackTodayVisibility(id);if(id==='todayView')renderToday();if(id==='scheduleView'){renderTimeline();setTodayPage(todayPage);}if(id==='appointmentsView'){$('#appointmentMainContent')?.classList.toggle('hidden',Boolean(appointmentHistoryMode));$('#appointmentHistoryScreen')?.classList.toggle('hidden',!appointmentHistoryMode);renderAppointments()}if(id==='prospectingView')renderProspecting();if(id==='insightsView')renderInsights();if(id==='settingsView')renderSettings();syncWorkspaceChrome(id)}
+function switchView(id,{bookingMode='editor'}={}){if(id==='appointmentsView')workspaceBookingEditor=bookingMode!=='browse';if(!document.getElementById(id)?.classList.contains('view'))id='todayView';$$('.view').forEach(v=>setWorkspaceClass(v,'active',v.id===id));updateTopbar(id);updateBackTodayVisibility(id);if(id==='todayView')renderToday();if(id==='scheduleView'){setTodayPage(todayPage);if(todayPage==='overview')renderTimeline();}if(id==='appointmentsView'){$('#appointmentMainContent')?.classList.toggle('hidden',Boolean(appointmentHistoryMode));$('#appointmentHistoryScreen')?.classList.toggle('hidden',!appointmentHistoryMode);renderAppointments()}if(id==='prospectingView')renderProspecting();if(id==='insightsView')renderInsights();if(id==='settingsView')renderSettings();syncWorkspaceChrome(id)}
 function returnToActiveTabRoot(id){
   if(id==='prospectingView'){
     const detail=$('#prospectDetail'),form=detail?.classList.contains('hidden')?null:detail?.querySelector('form');
@@ -5667,7 +5681,7 @@ $('#resetKnock').onclick=resetKnock;$('#knockingMetricCard').onclick=e=>{if(e.ta
 $('.tabbar').onclick=e=>{const button=e.target.closest('[data-workspace-area]');if(button)openWorkspaceRoute(button.dataset.workspaceArea)};
 $('#workspaceProfile').onclick=()=>openWorkspaceRoute(activeViewId()==='settingsView'?'profile-back':'profile');
 document.addEventListener('click',event=>{const button=event.target.closest('[data-workspace-route]');if(button){event.preventDefault();openWorkspaceRoute(button.dataset.workspaceRoute)}});
-const workspaceDetailObserver=new MutationObserver(()=>syncWorkspaceChrome());
+const workspaceDetailObserver=new MutationObserver(scheduleWorkspaceChrome);
 workspaceDetailObserver.observe($('#prospectDetail'),{attributes:true,attributeFilter:['class'],childList:true});
 workspaceDetailObserver.observe($('#prospectingSession'),{attributes:true,attributeFilter:['class'],childList:true});
 $('#timelineCurrentAction')?.addEventListener('click',e=>navigateDailyPlanAction(e.currentTarget.dataset.planAction,e.currentTarget.dataset.eventId));
@@ -6007,7 +6021,7 @@ $('#settingsView').addEventListener('change',event=>{const field=event.target;if
 $('#saveSettings').onclick=async()=>{const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;calendarPreference=$('[name=calendarPreference]:checked')?.value==='apple'?'apple':'outlook';appearancePreference=normaliseAppearance($('[name=appearancePreference]:checked')?.value);applyAppearance(appearancePreference);settingsDraftFields.clear();await saveTargets();if(cloud&&accountMode==='team'&&teamId&&uid){try{await setDoc(doc(db,'teams',teamId,'members',uid),{name:agentName,updatedAt:serverTimestamp()},{merge:true})}catch(err){console.error('Team profile name sync failed',err)}}renderAll();toast('Settings saved')};
 $('#signOut').onclick=async()=>{clearActiveSession();if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
 function mergeBackupRecords(current=[],incoming=[]){const byId=new Map();[...(Array.isArray(current)?current:[]),...(Array.isArray(incoming)?incoming:[])].forEach((item,index)=>{if(!item||typeof item!=='object')return;const id=cleanText(item.id,180)||`backup-record-${index}`;byId.set(id,item)});return[...byId.values()]}
-function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.46.2',exportedAt:new Date().toISOString(),targets,workDays,agentName,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
+function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.46.3',exportedAt:new Date().toISOString(),targets,workDays,agentName,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
 function restoreBuyerSessionBackup(value){if(!value||!Array.isArray(value.contacts))return false;buyerSession={contacts:value.contacts.map((contact,index)=>({id:cleanText(contact.id,80)||`buyer_${index}`,name:cleanText(contact.name,120)||'Unknown buyer',phone:normaliseDialNumber(contact.phone),address:cleanText(contact.address,240),doNotSms:Boolean(contact.doNotSms),status:cleanText(contact.status,40)})).filter(contact=>contact.phone),index:Math.max(0,Number(value.index)||0),active:Boolean(value.active),visible:false,fileName:cleanText(value.fileName,160),importedAt:Number(value.importedAt)||0};buyerSession.index=Math.min(buyerSession.index,buyerSession.contacts.length);return saveBuyerSession()}
 function syncImportedBackup(dayKeys=[],prospectingIncluded=false){if(!cloud)return;saveTargets().catch(err=>console.error('Imported settings sync failed',err));dayKeys.forEach(key=>saveDay(key,{quiet:true,awaitCloud:false,render:false}).catch?.(err=>console.error('Imported day sync failed',err)));if(prospectingIncluded)saveProspecting({render:false,awaitCloud:false}).catch(err=>console.error('Imported prospecting sync failed',err))}
 $('#exportData').onclick=()=>{const blob=new Blob([JSON.stringify(completeBackupPayload(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`agnt-complete-backup-${todayKey()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),0)};

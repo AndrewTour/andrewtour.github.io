@@ -1,3 +1,69 @@
+# AGNT v1.46.3 — Navigation runtime and stability
+
+Baseline: v1.46.2 Clear Schedule. Compared with the pre-Vercel approved main
+v1.44.22 at commit 2f2a24d3929f6e49a5912cc0ad8bb8b2bfae8792.
+The v1.46.2 design is retained; no rollback or source mixing.
+
+Confirmed regressions in the workspace navigation layer:
+- One route change could call workspace-header synchronisation up to six times.
+- Buyers and Market could render twice; Performance rendered its scorecard twice
+  and also generated the inactive daily timeline.
+- Header synchronisation repeatedly filtered/sorted the full contact database,
+  even though the contact list already supplied its count.
+- Repeated writes to app state attributes and header content caused unnecessary
+  DOM mutations and style invalidation across the expanded stylesheet.
+
+Fixes:
+- Workspace navigation batches header synchronisation until the transition ends.
+- Route setup defers content rendering to the selected destination.
+- Performance renders the scorecard once and does not render the inactive agenda.
+- The header uses the rendered contact count instead of sorting contacts again.
+- Workspace attributes, classes and text are only written when they change.
+- Detail/session observer callbacks are coalesced into one animation frame.
+- Added page-wide relational CSS selectors use explicit existing workspace state
+  instead, with equivalent selector specificity and visual declarations.
+
+Protected: Firebase/authentication, rules and paths, UID/team separation, data
+shapes, storage keys, local saves, offline queues, matching and planning logic.
+No Firebase Console, rules/indexes or GitHub settings changes required.
+Worker policy is unchanged; release/cache markers advance to 1.46.3.
+
+Changed files: app.js, visual-system.css, index.html, runtime.js,
+service-worker.js, RELEASE-NOTES.md. HTML/runtime/worker edits are release
+identifiers only. Original styles.css and cleanup.css are unchanged.
+
+Validation:
+- 112 navigation transitions with 1,500 fixture contacts in Chromium; zero
+  uncaught errors and no ongoing idle DOM mutations. This did not reproduce an
+  actual process crash, and does not establish native iPhone memory behaviour.
+- Instrumented navigation confirms Buyers, Market and scorecard render once.
+  Contact navigation filters once instead of five times in the measured route.
+- 800 direct repeated header calls across eight routes cause zero DOM writes.
+- Profile open/close retains contextual toolbar behaviour.
+- 14 existing browser layout/workflow checks pass: both themes, three viewport
+  widths, task add/complete/reopen, booking entry, day-log routing, past/future
+  dates, empty off-day, retained fixed Focus and baseline planning equivalence.
+- 1,088 baseline functions compare byte-for-byte unchanged, excluding intended
+  navigation/render changes and the release marker. Protected files match.
+- JavaScript syntax, mocked worker installation, 10 precache assets, local HTML
+  references, manifest icons and complete ZIP integrity checked.
+
+Legacy regression scripts were rerun against the historical and patched source.
+They retain their pre-existing stale asset/function/fixture failures; they were
+not rewritten or represented as passing. They remain outside the clean ZIP.
+
+The reported native iPhone process crash could not be reproduced here. The patch
+removes confirmed navigation work amplification; on-device verification is still
+required to establish whether it resolves Andrew's crash. Live Firebase/team,
+real offline network transitions and deployment were not tested. WebKit could not
+run in this host environment because its required native dependencies were not
+available in a usable form. No deployment performed.
+
+Upload all 14 deployment files, including icons/, via the established GitHub
+Pages process. No data reset, reinstall, sign-out or cache clearing is required.
+
+---
+
 # AGNT v1.46.2 — Clear Schedule
 
 Baseline: AGNT v1.46.1 Fixed Focus Dashboard, carried forward in full.

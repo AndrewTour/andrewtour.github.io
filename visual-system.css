@@ -602,17 +602,17 @@ html body #app .tabbar.workspace-navigation span {font-size:11px!important;line-
 html body #app .tabbar.workspace-navigation .tab-icon svg {width:21px!important;height:21px!important}
 html body #app .tabbar.workspace-navigation [data-workspace-area="market"].active {color:var(--ds-marketpulse)!important}
 /* A quiet, consistent header, including the profile entry point. */
-html body #app .topbar,html body #app:has(#todayView.active) .topbar {
+html body #app .topbar,html body #app[data-workspace-screen="todayView"]:is(#app) .topbar {
   display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:10px!important;
   align-items:center!important;min-height:74px!important;padding:4px 0 12px!important;position:relative!important;
 }
-html body #app .topbar>div:first-child,html body #app:has(#todayView.active) .topbar>div:first-child {width:auto!important;min-width:0!important;overflow:hidden!important}
-html body #app .topbar .top-actions,html body #app:has(#todayView.active) .topbar .top-actions {
+html body #app .topbar>div:first-child,html body #app[data-workspace-screen="todayView"]:is(#app) .topbar>div:first-child {width:auto!important;min-width:0!important;overflow:hidden!important}
+html body #app .topbar .top-actions,html body #app[data-workspace-screen="todayView"]:is(#app) .topbar .top-actions {
   position:static!important;display:flex!important;align-items:center;gap:5px!important;
   width:auto!important;max-width:none!important;
 }
-html body #app:has(#todayView.active) .date-line {min-height:0!important;padding:0!important}
-html body #app .topbar #viewTitle,html body #app:has(#todayView.active) #viewTitle {
+html body #app[data-workspace-screen="todayView"]:is(#app) .date-line {min-height:0!important;padding:0!important}
+html body #app .topbar #viewTitle,html body #app[data-workspace-screen="todayView"]:is(#app) #viewTitle {
   width:auto!important;margin:0 0 4px!important;padding:0!important;font-size:24px!important;
   line-height:1.15!important;font-weight:600!important;letter-spacing:-.035em!important;
 }
@@ -654,8 +654,8 @@ html body #app #todayView .scheduled-day-quick-menu {order:0;margin:12px 0 8px!i
 html body #app #todayView .metrics {min-height:392px!important;grid-template-rows:repeat(4,minmax(98px,auto))!important}
 html body #app #todayView .metric {min-height:98px!important}
 /* Record views and editors share one full-page identity and action rhythm. */
-html body #app:has(#prospectDetail:not(.hidden)) .prospecting-toolbar,
-html body #app:has(#prospectingSession:not(.hidden)) .prospecting-toolbar {display:none!important}
+html body #app[data-workspace-detail="true"]:is(#app) .prospecting-toolbar,
+html body #app[data-workspace-detail="true"]:is(#app) .prospecting-toolbar {display:none!important}
 html body #app #prospectDetail .person-profile {padding:0!important;margin:0!important}
 html body #app #prospectDetail .person-profile-head {
   display:grid!important;grid-template-columns:48px minmax(0,1fr) auto!important;gap:12px!important;
@@ -693,7 +693,7 @@ html body #app #appointmentForm :is(input[type="text"],input[type="tel"],input[t
 html body #app #appointmentForm .appointment-types {margin:6px 0 20px!important}
 html body #app #appointmentForm>.primary {min-height:48px!important;margin:0!important}
 @media(max-width:374px) {
-  html body #app .topbar #viewTitle,html body #app:has(#todayView.active) #viewTitle {font-size:22px!important}
+  html body #app .topbar #viewTitle,html body #app[data-workspace-screen="todayView"]:is(#app) #viewTitle {font-size:22px!important}
   html body #app .workspace-toolbar {gap:14px}
   html body #app #todayView #nowCardTitle {font-size:20px!important}
   html body #app .tabbar.workspace-navigation span {font-size:10px!important}
@@ -715,16 +715,16 @@ html body #app #prospectorPipelinePanel .pipeline-controls label {min-width:0!im
 html body #app #prospectorPipelinePanel .pipeline-controls select {flex:1;min-width:0!important;max-width:100%!important}
 html body #app.broadcast-fullscreen #workspaceToolbar {display:none!important}
 /* v1.46.1 — Focus is one viewport: progress, actions and four metrics. */
-html body #app:has(#todayView.active) .topbar {
+html body #app[data-workspace-screen="todayView"]:is(#app) .topbar {
   grid-template-columns:minmax(0,1fr) auto!important;row-gap:4px!important;
 }
-html body #app:has(#todayView.active) .topbar>div:first-child {display:contents!important}
-html body #app:has(#todayView.active) #viewTitle {
+html body #app[data-workspace-screen="todayView"]:is(#app) .topbar>div:first-child {display:contents!important}
+html body #app[data-workspace-screen="todayView"]:is(#app) #viewTitle {
   grid-column:1 / -1;font-size:24px!important;line-height:1.15!important;
   overflow-wrap:anywhere;margin-bottom:0!important;
 }
-html body #app:has(#todayView.active) .date-line {grid-column:1;grid-row:2}
-html body #app:has(#todayView.active) .top-actions {grid-column:2;grid-row:2}
+html body #app[data-workspace-screen="todayView"]:is(#app) .date-line {grid-column:1;grid-row:2}
+html body #app[data-workspace-screen="todayView"]:is(#app) .top-actions {grid-column:2;grid-row:2}
 html body #app #todayView.dashboard.active:not(.off-day-opportunity-mode) {
   display:grid!important;grid-template-rows:auto minmax(0,1fr)!important;
   gap:0!important;overflow:hidden!important;padding-bottom:0!important;
@@ -743,9 +743,9 @@ html body #app #todayView .metric-copy>:is(small,em) {
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 @media(max-height:740px) {
-  html body #app:has(#todayView.active) .topbar {min-height:68px!important;padding-bottom:4px!important}
-  html body #app:has(#todayView.active) #viewTitle {font-size:22px!important}
-  html body #app:has(#todayView.active) .workspace-toolbar {margin-bottom:6px!important}
+  html body #app[data-workspace-screen="todayView"]:is(#app) .topbar {min-height:68px!important;padding-bottom:4px!important}
+  html body #app[data-workspace-screen="todayView"]:is(#app) #viewTitle {font-size:22px!important}
+  html body #app[data-workspace-screen="todayView"]:is(#app) .workspace-toolbar {margin-bottom:6px!important}
   html body #app #todayView #dailyScore {font-size:32px!important}
   html body #app #todayView #momentumWhisper {font-size:10px!important;max-width:190px}
   html body #app #todayView .score-week>.bar {margin-top:8px!important}
@@ -755,9 +755,9 @@ html body #app #todayView .metric-copy>:is(small,em) {
   html body #app #todayView .metric-copy>em {margin-top:2px!important;font-size:10px!important}
   html body #app #todayView .metric-copy>strong {font-size:25px!important;margin-top:3px!important}
 }
-html body #app:has(#todayView.active) #viewSubtitle {grid-column:1;grid-row:2;align-self:center}
-html body #app:has(#todayView.active) .date-line {grid-column:1 / -1;grid-row:3}
-html body #app:has(#todayView.active) .date-line:not(:has(#dayScheduleStatus:not(.hidden))) {display:none!important}
+html body #app[data-workspace-screen="todayView"]:is(#app) #viewSubtitle {grid-column:1;grid-row:2;align-self:center}
+html body #app[data-workspace-screen="todayView"]:is(#app) .date-line {grid-column:1 / -1;grid-row:3}
+html body #app[data-workspace-screen="todayView"]:is(#app) .date-line:not(:has(#dayScheduleStatus:not(.hidden))) {display:none!important}
 html body #app #todayView .metric {padding-inline:0!important}
 html body #app #todayView .metric-copy>em {min-height:0!important;height:auto!important}
 html body #app #todayView .actions {grid-template-columns:44px 46px 44px!important;gap:6px!important}
@@ -765,9 +765,9 @@ html body #app #todayView .actions button {width:44px!important;min-width:44px!i
 html body #app #todayView .knock-actions {grid-template-columns:46px 72px 44px!important}
 html body #app #todayView .knock-actions .timer {width:72px!important}
 @media(max-height:620px) {
-  html body #app:has(#todayView.active) .topbar {min-height:58px!important;padding-block:0!important}
-  html body #app:has(#todayView.active) #viewTitle {font-size:20px!important}
-  html body #app:has(#todayView.active) .workspace-toolbar {margin-bottom:2px!important}
+  html body #app[data-workspace-screen="todayView"]:is(#app) .topbar {min-height:58px!important;padding-block:0!important}
+  html body #app[data-workspace-screen="todayView"]:is(#app) #viewTitle {font-size:20px!important}
+  html body #app[data-workspace-screen="todayView"]:is(#app) .workspace-toolbar {margin-bottom:2px!important}
   html body #app #todayView #dailyScore {font-size:26px!important}
   html body #app #todayView .score-overview {padding-top:0!important}
   html body #app #todayView .scheduled-day-quick-menu {margin-block:4px 0!important;padding:0!important}
@@ -776,7 +776,7 @@ html body #app #todayView .knock-actions .timer {width:72px!important}
   html body #app #todayView .metric-copy>small,html body #app #todayView .metric-copy>em {font-size:9px!important;line-height:1.1!important;margin-top:1px!important}
   html body #app #todayView .metric-copy>strong {font-size:22px!important;margin-top:2px!important}
 }
-html body #app:has(#todayView.active) #todayView .metrics {padding:0!important}
+html body #app[data-workspace-screen="todayView"]:is(#app) #todayView .metrics {padding:0!important}
 @media(max-height:740px) {
   html body #app #todayView .metric-copy {display:grid!important;grid-template-columns:minmax(0,1fr) auto;gap:1px 3px;align-items:baseline}
   html body #app #todayView .metric-copy>span {grid-column:1;grid-row:1;font-size:9px!important}
@@ -792,8 +792,8 @@ html body #app:has(#todayView.active) #todayView .metrics {padding:0!important}
 html body #app #todayView .metric-copy>span {display:block!important;line-height:1.2!important}
 
 @media(max-height:620px) {html body #app #todayView .metric {padding-block:0!important}}
-html body #app:has(#todayView.active) .topbar {transform:none!important}
-html body #app:has(#todayView.active) .topbar>div:first-child {overflow:visible!important}
+html body #app[data-workspace-screen="todayView"]:is(#app) .topbar {transform:none!important}
+html body #app[data-workspace-screen="todayView"]:is(#app) .topbar>div:first-child {overflow:visible!important}
 /* v1.46.2 — Schedule: a quiet priority and an open, readable agenda. */
 html body #app #scheduleView #todayOverviewPanel {padding:0 0 24px!important;min-width:0}
 html body #app #scheduleView #todayOverviewPanel>.timeline-view-head {display:none!important}
