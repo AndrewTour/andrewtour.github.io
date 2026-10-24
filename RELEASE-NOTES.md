@@ -1,3 +1,173 @@
+# AGNT v1.46.6 — Sellers and Market, Day Plan language
+
+Baseline: v1.46.5 Reach and Performance. All v1.46.4 stability protections and
+subsequent navigation decisions are carried forward unchanged.
+
+Sellers / Pipeline:
+- Compact next-conversation summary replaces the oversized introduction.
+- Due-now and missing-follow-up totals describe the currently filtered sellers.
+- Four timeframe totals remain, with matching counts beside each group heading.
+- Temperature filters use the flat tab rhythm; sorting stays available.
+- Each flat row puts follow-up timing in a left gutter, followed by temperature,
+  buyer/seller role, name, property address and linked listing appointment.
+- Temperature uses a small labelled dot; decorative avatar circles are removed.
+- All existing record-entry hooks, eligibility, filtering and sorting remain.
+
+Market Overview:
+- Imported-report totals separate current listings, sold results and withdrawals.
+  The existing six-month scope for closed results remains clearly labelled.
+- Existing eligible analytics use compact, open typography rather than cards.
+- Property rows use report date, status, address/configuration, reported guide or
+  sold price, and saved-contact opportunity/context in descending hierarchy.
+- Status tags become small labelled dots. Street/address matches retain their
+  existing qualifications; they are not represented as confirmed ownership.
+- Suburb/category/status filters, Show more, detailed property history, contact
+  linking, agency analysis and seller estimates remain available.
+- Matching, prices, confidence, calculations and source-scope rules are unchanged.
+
+Stability: no new observers, per-row listeners, page animations or stored state.
+The rapid-navigation queue, cancellation, list release and cache invalidation,
+form/draft protections and diagnostics helpers are byte-identical to v1.46.5.
+
+Validation: 15 WebKit checks cover both pages in light/dark at 320/390/430px,
+correct seller totals/due/missing counts, temperature filter, sort, profile entry,
+Market summaries, Sold/90-day filters, reported price, detail/history/back and
+inactive list release. WebKit and Chromium each pass 1,000 rapid menu events
+with 1,500 dual-role fixture contacts; one final route commit per burst and no
+uncaught errors. Screenshots were inspected for both themes. 1,098 baseline
+function declarations are unchanged outside four presentation renderers and the
+backup release marker. Syntax, mocked worker install, 10 precache assets, local
+HTML links, manifest icons and ZIP CRC were checked.
+
+Changed files: index.html, app.js, visual-system.css, runtime.js,
+service-worker.js, RELEASE-NOTES.md. Runtime/worker edits are release/cache
+identifiers only. Original styles.css and cleanup.css are unchanged.
+
+Firebase/authentication, Firestore paths/rules, UID/team separation, records,
+storage keys, offline queues, local-first writes and sync remain untouched.
+No Firebase Console, rules/indexes or GitHub settings changes required.
+Physical iPhone/PWA and live Firebase/team/network-loss tests were not performed.
+Legacy fixture failures documented below are not claimed as passing.
+No deployment performed.
+
+Replace all 14 files, including icons/, then fully close and reopen AGNT.
+Settings should show v1.46.6. No reset, sign-out or reinstall is required.
+
+---
+
+# AGNT v1.46.5 — Reach and Performance navigation
+
+Baseline: v1.46.4 Rapid Navigation Fix, confirmed crash-free by Andrew.
+
+- Reach moves from People to Market. Its active navigation, profile return and
+  broadcast workflow consistently identify Market as the parent destination.
+- Performance opens on Leaderboard. Leaderboard is the first subtab; Overview
+  remains available beside it. Existing Daily/Weekly leaderboard mode is retained.
+- All four Reach outreach action buttons use the same fixed 128 x 48px size,
+  including Start Session, Active Session, Session Complete, Import PDF and
+  Broadcast labels. Button text may wrap inside the fixed control.
+
+Preserved stability contract: queued rapid navigation commits only its final
+intent; inactive generated lists are released; drafts and canonical records are
+retained; page-entry animations remain disabled; header writes are idempotent;
+background/owner changes cancel obsolete requests. All related helpers compare
+byte-for-byte unchanged against the confirmed stable v1.46.4 source.
+
+Validation: ten WebKit checks cover navigation, profile return, broadcast parent,
+Performance landing and Overview access, plus button dimensions/overflow in light
+and dark themes at 320/390/430px with five label states. Rapid-navigation suites
+exercise 1,000 menu events in WebKit and 1,000 in Chromium with 1,500 dual-role
+fixture contacts, verifying one commit per burst and released inactive lists.
+No uncaught errors. 1,099 baseline function declarations are unchanged outside
+three requested presentation/routing edits and the backup version marker.
+JavaScript syntax, mocked worker installation, all 10 release assets, HTML links,
+manifest icons and ZIP CRC checks passed.
+
+Changed files: app.js, visual-system.css, index.html, runtime.js,
+service-worker.js, RELEASE-NOTES.md. HTML/runtime/worker edits are release/cache
+identifiers only. Firebase/authentication, rules/paths, UID/team separation,
+records, storage keys, local saves, offline queues, sync, original styles.css
+and cleanup.css are unchanged. No Firebase Console, rules/indexes or GitHub
+settings changes required.
+
+Browser tests use local fixtures and Firebase stubs. Physical iPhone/PWA,
+live Firebase/team access and deployment were not tested. Previously documented
+legacy regression fixture failures are not claimed as passing.
+
+Replace all 14 deployment files, including icons/, then fully close and reopen
+AGNT. Settings should show v1.46.5. No data reset or reinstall is needed.
+
+---
+
+# AGNT v1.46.4 — Rapid navigation and resource containment
+
+Baseline: v1.46.3 Navigation Stability, which Andrew reports still crashes.
+The v1.46.3 patch did not resolve the reported device crash. Its tests exercised
+serial transitions and did not cover an event burst or retained list DOM.
+
+Reproduced evidence in Linux WebKit:
+- 80 menu click events dispatched together kept the main thread busy for
+  30,307 ms in v1.46.3 and executed 80 complete route transitions.
+- Visiting Contacts, Buyers and Pipeline with 1,500 dual-role fixture contacts
+  retained 51,589 page elements after returning to Today.
+- With this patch the same burst dispatch took 40 ms and committed just the final
+  route after a 60 ms settling window and animation-frame scheduling. Dispatch
+  timing is not a claim that the whole final screen rendered in 40 ms.
+- The same list-navigation sequence retained 2,078 page elements on Today.
+
+Changes:
+- Footer, toolbar and profile navigation coalesce rapid requests; only the final
+  pending destination is rendered. Internal workflows remain synchronous.
+- A direct workflow, backgrounding or owner change cancels stale pending routes.
+- Inactive generated contact/buyer/pipeline/market list DOM and its HTML caches
+  are released. Canonical records, filters, selected IDs and draft forms remain.
+  Lists rebuild on entry. The current selected People subsection is retained.
+- Page-entry animations, transforms and backdrop filters are disabled on page
+  containers. CSS isolation retains their stacking boundary without animation.
+- Existing bounded diagnostics gain navigation-start/navigation-ready events.
+  Settings adds Download app diagnostics. The export contains at most 48 runtime
+  events with version, time, screen IDs and error codes; no client/form content.
+
+Validation:
+- 1,000 menu click events in 20 bursts in WebKit and 1,000 in Chromium, with
+  1,500 dual-role contacts. All 40 bursts committed the final destination once;
+  no uncaught errors, wrong destinations or unreleased inactive lists.
+- Contacts/Buyers revisits rebuild from canonical records. A repeat People tap
+  while on Buyers preserves its selected list.
+- Six WebKit workflow checks: actual unsaved contact form node and values,
+  booking draft, background cancellation, immediate-workflow precedence, search
+  restoration after list release, privacy-bounded diagnostics download.
+- Fourteen browser checks in both Chromium and WebKit cover themed layouts,
+  task completion/reopen, booking entry, day-log action, fixed Focus, past/future
+  dates, morning priority, empty off-day and baseline planning equivalence.
+- Nine idle/header/profile checks passed in Chromium.
+- 1,094 baseline function declarations are byte-identical, excluding the five
+  intended route/lifecycle/release-marker edits. New helper functions are UI-only.
+- JavaScript syntax, mocked worker installation, all 10 precache assets, manifest
+  icons, HTML references and complete ZIP CRC verified.
+
+Protected: authentication, Firebase configuration, Firestore rules/paths,
+UID/team separation, persistent record shapes/keys, local-first writes, offline
+queues, matching and sync. No data reset, sign-out or reinstall is needed.
+No Firebase Console, rules/indexes or GitHub settings changes are required.
+
+Changed files: app.js, visual-system.css, runtime.js, index.html,
+service-worker.js, RELEASE-NOTES.md. Worker behaviour is unchanged except release
+and cache identifiers. Original styles.css and cleanup.css remain unchanged.
+
+This reproduces and fixes a WebKit main-thread freeze and resource-retention
+problem. An actual native iPhone process termination was not reproduced. Linux
+WebKit is not physical iPhone Safari/PWA; on-device verification is still needed.
+Live Firebase/team permissions and real network-loss testing were not performed.
+The previously documented legacy suite fixture failures remain; they are not
+claimed as passing. No deployment performed.
+
+Replace all 14 files, including icons/, then fully close and reopen AGNT so the
+new service worker can activate. Settings must show v1.46.4. If a device issue
+remains, Download app diagnostics provides bounded device-side evidence.
+
+---
+
 # AGNT v1.46.3 — Navigation runtime and stability
 
 Baseline: v1.46.2 Clear Schedule. Compared with the pre-Vercel approved main

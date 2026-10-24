@@ -3110,8 +3110,8 @@ function filteredPipelineProspects(timeframe){
 }
 function pipelineAppointmentLabel(p){const entry=latestListingAppointmentForProspect(p);if(!entry)return'';const a=entry.appointment,scheduled=appointmentScheduledDate(a,entry.sourceDate);return `Listing appointment · ${shortAppointmentDate(scheduled)}`}
 function pipelineSellerCard(p,appointment=pipelineAppointmentLabel(p)){
-  const initials=p.name.split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase(),address=formatProspectAddress(p.address||p.company,p.suburb)||'No property address',role=prospectIsBuyerSeller(p)?'<span class="pipeline-buyer-seller-badge">Buyer + Seller</span>':'';
-  return `<button class="pipeline-seller-row ${prospectIsBuyerSeller(p)?'is-buyer-seller':''}" type="button" data-open-prospect="${p.id}"><span class="prospect-avatar">${escapeHtml(initials||'P')}</span><span class="pipeline-seller-copy"><span class="pipeline-seller-name"><strong>${escapeHtml(p.name)}</strong>${role}</span><small>${escapeHtml(address)}</small><em class="${p.nextFollowUp&&p.nextFollowUp<=todayKey()?'due':''}">${escapeHtml(p.nextFollowUp?dueText(p):appointment||'No follow-up set')}</em>${appointment&&p.nextFollowUp?`<i>${escapeHtml(appointment)}</i>`:''}</span><span class="prospect-temp temp-${p.temperature.toLowerCase()}">${p.temperature}</span><b aria-hidden="true">›</b></button>`
+  const address=formatProspectAddress(p.address||p.company,p.suburb)||'No property address',due=Boolean(p.nextFollowUp&&p.nextFollowUp<=todayKey()),date=p.nextFollowUp?shortAppointmentDate(p.nextFollowUp):'Not set';
+  return `<button class="pipeline-seller-row" type="button" data-open-prospect="${escapeHtml(p.id)}"><span class="pipeline-row-timing ${due?'is-due':''}"><small>Follow-up</small><b>${escapeHtml(date)}</b>${due?`<em>${p.nextFollowUp<todayKey()?'Overdue':'Due today'}</em>`:''}</span><span class="pipeline-seller-copy"><span class="pipeline-row-labels"><span class="pipeline-temperature temperature-${p.temperature.toLowerCase()}">${escapeHtml(p.temperature)}</span>${prospectIsBuyerSeller(p)?'<span class="pipeline-role">Buyer + Seller</span>':''}</span><strong>${escapeHtml(p.name)}</strong><small>${escapeHtml(address)}</small>${appointment?`<em>${escapeHtml(appointment)}</em>`:!p.nextFollowUp?'<em>Set the next conversation</em>':''}</span><b class="pipeline-disclosure" aria-hidden="true">›</b></button>`;
 }
 function renderSellerPipeline(){
   const panel=$('#prospectorPipelinePanel');if(!panel)return;
@@ -3130,10 +3130,13 @@ function renderSellerPipeline(){
     list.sort((a,b)=>{const av=pipelineSortValue(a.p),bv=pipelineSortValue(b.p);return typeof av==='number'?av-bv:String(av).localeCompare(String(bv),'en-AU',{sensitivity:'base'})||a.p.name.localeCompare(b.p.name)});
     const timeframe=SELLING_TIMEFRAMES[index],count=$(`#pipelineCount${index}`),target=$(`#pipelineList${index}`);
     if(count)count.textContent=list.length;
+    setRenderedText(`#pipelineCount${index}Mirror`,String(list.length));
     if(target)setRenderedMarkup(target,list.length?list.map(({p,label})=>pipelineSellerCard(p,label)).join(''):`<div class="pipeline-empty"><strong>No sellers in ${escapeHtml(timeframe)}</strong><small>Qualify a contact into this timeframe to build the pipeline.</small></div>`);
   });
   const total=$('#pipelineTotal');if(total)total.textContent=sellerCount;
-  const meta=$('#pipelineTotalMeta');if(meta)meta.textContent=`${sellerCount} active seller${sellerCount===1?'':'s'} across your pipeline`;
+  const visible=groups.flatMap(group=>group.map(item=>item.p)),due=visible.filter(p=>p.nextFollowUp&&p.nextFollowUp<=todayKey()).length,missing=visible.filter(p=>!p.nextFollowUp).length;
+  setRenderedText('#pipelineNextSteps',`${due} due now · ${missing} without a follow-up`);
+  const meta=$('#pipelineTotalMeta');if(meta)meta.textContent=`${visible.length} showing · ${sellerCount} active seller${sellerCount===1?'':'s'}`;
   $$('.pipeline-summary-card').forEach((card,index)=>card.classList.toggle('active',groups[index].length>0));
   renderProspectorInsights();
 }
@@ -3384,7 +3387,7 @@ function myMarketPropertyMarkup(row,recorded,{detail=false}={}){
   const streetContacts=knockingStreetContacts(e),addressContacts=myMarketAddressContacts(row),confirmedContacts=detail?myMarketConfirmedContacts(row):[],signal=myMarketPropertySignal(row),canMessage=['long60','long90','long120','withdrawn'].includes(signal.code),opportunity=streetContacts.length?`${streetContacts.length} saved contact${streetContacts.length===1?'':'s'} on this street`:'No saved street contacts yet';
   const outreachSummary=myMarketOutreachSummary(recorded);
   const signalMarkup=`<span class="my-market-signal-tag signal-${signal.code}">${escapeHtml(signal.label)}</span>`,addressMarkup=addressContacts.length?`<span class="my-market-address-tag">${addressContacts.length} contact${addressContacts.length===1?'':'s'} at address</span>`:'',smsReady=canMessage&&addressContacts.some(myMarketOwnerSmsEligible)?'<span class="my-market-sms-ready">SMS ready</span>':'';
-  if(!detail)return`<button class="my-market-property" type="button" data-open-market-property="${escapeHtml(row.key)}"><span class="my-market-property-copy"><strong>${escapeHtml(e.address)}</strong><small>${escapeHtml(e.suburb)} · ${escapeHtml(e.propertyDetails||marketPulseEventPropertyCategory(e)||'Details not recorded')}</small><span class="my-market-result"><b>${escapeHtml(price)}</b><small>${escapeHtml(label)} · ${escapeHtml(fmtDate(e.receivedDate))}</small></span><span class="my-market-signals">${signalMarkup}${addressMarkup}${smsReady}</span><em>${outreachSummary?`${escapeHtml(outreachSummary)} · `:''}${escapeHtml(opportunity)}</em></span><b aria-hidden="true">›</b></button>`;
+  if(!detail)return`<button class="my-market-property" type="button" data-open-market-property="${escapeHtml(row.key)}"><span class="market-row-date"><small>Reported</small><b>${escapeHtml(shortAppointmentDate(e.receivedDate))}</b></span><span class="my-market-property-copy"><span class="my-market-signals">${signalMarkup}${addressMarkup}${smsReady}</span><strong>${escapeHtml(e.address)}</strong><small>${escapeHtml(e.suburb)} · ${escapeHtml(e.propertyDetails||marketPulseEventPropertyCategory(e)||'Details not recorded')}</small><span class="my-market-result"><b>${escapeHtml(price)}</b><small>${escapeHtml(label)}</small></span><em>${outreachSummary?`${escapeHtml(outreachSummary)} · `:''}${escapeHtml(opportunity)}</em></span><b class="market-row-disclosure" aria-hidden="true">›</b></button>`;
   const recordedOrdered=[...recorded].sort((a,b)=>myMarketOutreachRank(a)-myMarketOutreachRank(b)||Number(b.latest?.at||0)-Number(a.latest?.at||0)||String(prospectById(a.id)?.name||'').localeCompare(String(prospectById(b.id)?.name||'')));
   const workedIds=new Set(recorded.map(contact=>contact.id)),otherStreetContacts=streetContacts.filter(p=>!workedIds.has(p.id));
   const conversation=signal.code==='withdrawn'?'Reopen the conversation after withdrawal':signal.code==='long120'?'Review a campaign reset':signal.code==='long90'?'A fresh plan for buyer competition':signal.code==='long60'?'Check campaign momentum':sold?'Use the result to reconnect':'Track the campaign and nearby owners';
@@ -3412,7 +3415,8 @@ function renderMyMarketHub(){
   select.value=myMarketSuburb;$('#myMarketCategory').value=myMarketCategory;
   $('#myMarketRefineSummary').textContent=`${myMarketSuburb||'All suburbs'} · ${$('#myMarketCategory').selectedOptions[0]?.textContent||'All categories'}`;
   if($('#myMarketAnalytics').innerHTML!==snapshot.analytics)$('#myMarketAnalytics').innerHTML=snapshot.analytics;
-  $('#myMarketCounts').textContent=`${counts[0][1]} current · ${counts[1][1]} sold · ${counts[2][1]} withdrawn`;
+  setRenderedMarkup($('#myMarketCounts'),counts.map(([label,value])=>`<span><strong>${value}</strong><small>${escapeHtml(label)}</small></span>`).join(''));
+  setRenderedText('#myMarketListCount',`${filtered.length} in this selection`);
   $('#myMarketStatus').value=myMarketFilter;
   if($('#myMarketAgencyShares').innerHTML!==snapshot.agencyMarkup)$('#myMarketAgencyShares').innerHTML=snapshot.agencyMarkup;if($('#myMarketAgentShares').innerHTML!==snapshot.agentMarkup)$('#myMarketAgentShares').innerHTML=snapshot.agentMarkup;
   const list=$('#myMarketProperties');
@@ -5472,10 +5476,10 @@ function consumerAuthError(error,action='sign in'){
 }
 async function init(){bindViewport();bindAppLifecycle();loadLocal('local');await finaliseExpiredTimers();if(!configured()){revealStartupFallback('AGNT is temporarily unavailable. Please try again shortly.');return}startupReady=false;startupDeviceOnly=false;clearTimeout(startupWatchdog);startupWatchdog=setTimeout(()=>revealStartupFallback(),STARTUP_WATCHDOG_MS);try{const fb=initializeApp(firebaseConfig);auth=getAuth(fb);await setPersistence(auth,browserLocalPersistence);db=initializeFirestore(fb,{experimentalAutoDetectLongPolling:true,localCache:memoryLocalCache()});onAuthStateChanged(auth,u=>{if(startupDeviceOnly)return;if(u){if(creatingAccount){currentUser=u;return}if(cloud&&uid===u.uid&&startupReady)return;startCloud(u).catch(err=>{console.error('Cloud session failed to start',err);revealStartupFallback('AGNT could not finish loading. Please check your connection and try again.')})}else{markStartupReady();clearActiveSession();$('#bootGate')?.classList.add('hidden');setAuthScreenActive(true);$('#app').classList.add('hidden');$('#authGate').classList.remove('hidden')}})}catch(err){console.error(err);revealStartupFallback('AGNT is temporarily unavailable. Please try again shortly.')}}
 function showAuthMessage(msg){$('#authMessage').textContent=msg}
-// v1.46.4 — presentation routing over the existing workflow screens.
+// v1.46.6 — presentation routing over the existing workflow screens.
 function workspaceAreaForView(id=activeViewId()){
   if(id==='settingsView')return workspaceLastArea;
-  if(id==='prospectingView')return prospectSection==='market'?'market':'people';
+  if(id==='prospectingView')return prospectSection==='market'||prospectSection==='broadcast'||prospectSection==='today'&&prospectTodayMode==='dashboard'?'market':'people';
   if(id==='insightsView'||id==='scheduleView'&&todayPage==='insights')return'performance';
   return'today';
 }
@@ -5515,7 +5519,7 @@ function syncWorkspaceChrome(id=activeViewId()){
   const toolbar=$('#workspaceToolbar');if(!toolbar)return;
   setWorkspaceClass(toolbar,'hidden',editor||isDetail||id==='settingsView');
   const active=id==='todayView'?'focus':id==='appointmentsView'?'bookings':id==='insightsView'?'leaderboard':id==='scheduleView'?todayPage==='insights'?'trends':todayPage==='log'?'log':'schedule':prospectSection==='contacts'?'contacts':prospectSection==='buyers'?'buyers':prospectSection==='pipeline'?'pipeline':prospectSection==='market'?marketPageMode==='marketpulse'?'marketpulse':marketPageMode==='hotspotting'?'hotspotting':'market':prospectTodayMode==='followups'?'followups':'reach';
-  const routes=area==='today'?[['focus','Focus'],['schedule','Schedule'],['log','Log'],['bookings','Bookings']]:area==='people'?[['contacts','All people'],['buyers','Buyers'],['pipeline','Sellers'],['followups','Follow-ups'],['reach','Reach']]:area==='market'?[['market','Overview'],['marketpulse','MarketPulse'],['hotspotting','Hot Spotting']]:[['trends','Overview'],['leaderboard','Leaderboard']];
+  const routes=area==='today'?[['focus','Focus'],['schedule','Schedule'],['log','Log'],['bookings','Bookings']]:area==='people'?[['contacts','All people'],['buyers','Buyers'],['pipeline','Sellers'],['followups','Follow-ups']]:area==='market'?[['market','Overview'],['marketpulse','MarketPulse'],['hotspotting','Hot Spotting'],['reach','Reach']]:[['leaderboard','Leaderboard'],['trends','Overview']];
   const markup=routes.map(([route,label])=>`<button type="button" data-workspace-route="${route}" class="${active===route?'active':''}"${active===route?' aria-current="page"':''}>${label}</button>`).join('');
   if(toolbar.innerHTML!==markup)toolbar.innerHTML=markup;
   setWorkspaceAttribute(toolbar,'aria-label',`${titles[area]} views`);
@@ -5571,7 +5575,7 @@ function applyWorkspaceRoute(route){
   if(route==='schedule'||route==='log'||route==='trends'){
     setTodayPage(route==='trends'?'insights':route==='log'?'log':'overview',{render:false});switchView('scheduleView');return;
   }
-  if(route==='performance')route='trends';
+  if(route==='performance')route='leaderboard';
   if(route==='trends'){setTodayPage('insights',{render:false});switchView('scheduleView');return}
   if(route==='leaderboard'){switchView('insightsView');return}
   if(route==='bookings'){
@@ -6060,7 +6064,7 @@ $('#settingsView').addEventListener('change',event=>{const field=event.target;if
 $('#saveSettings').onclick=async()=>{const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;calendarPreference=$('[name=calendarPreference]:checked')?.value==='apple'?'apple':'outlook';appearancePreference=normaliseAppearance($('[name=appearancePreference]:checked')?.value);applyAppearance(appearancePreference);settingsDraftFields.clear();await saveTargets();if(cloud&&accountMode==='team'&&teamId&&uid){try{await setDoc(doc(db,'teams',teamId,'members',uid),{name:agentName,updatedAt:serverTimestamp()},{merge:true})}catch(err){console.error('Team profile name sync failed',err)}}renderAll();toast('Settings saved')};
 $('#signOut').onclick=async()=>{clearActiveSession();if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
 function mergeBackupRecords(current=[],incoming=[]){const byId=new Map();[...(Array.isArray(current)?current:[]),...(Array.isArray(incoming)?incoming:[])].forEach((item,index)=>{if(!item||typeof item!=='object')return;const id=cleanText(item.id,180)||`backup-record-${index}`;byId.set(id,item)});return[...byId.values()]}
-function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.46.4',exportedAt:new Date().toISOString(),targets,workDays,agentName,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
+function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.46.6',exportedAt:new Date().toISOString(),targets,workDays,agentName,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
 function restoreBuyerSessionBackup(value){if(!value||!Array.isArray(value.contacts))return false;buyerSession={contacts:value.contacts.map((contact,index)=>({id:cleanText(contact.id,80)||`buyer_${index}`,name:cleanText(contact.name,120)||'Unknown buyer',phone:normaliseDialNumber(contact.phone),address:cleanText(contact.address,240),doNotSms:Boolean(contact.doNotSms),status:cleanText(contact.status,40)})).filter(contact=>contact.phone),index:Math.max(0,Number(value.index)||0),active:Boolean(value.active),visible:false,fileName:cleanText(value.fileName,160),importedAt:Number(value.importedAt)||0};buyerSession.index=Math.min(buyerSession.index,buyerSession.contacts.length);return saveBuyerSession()}
 function syncImportedBackup(dayKeys=[],prospectingIncluded=false){if(!cloud)return;saveTargets().catch(err=>console.error('Imported settings sync failed',err));dayKeys.forEach(key=>saveDay(key,{quiet:true,awaitCloud:false,render:false}).catch?.(err=>console.error('Imported day sync failed',err)));if(prospectingIncluded)saveProspecting({render:false,awaitCloud:false}).catch(err=>console.error('Imported prospecting sync failed',err))}
 $('#exportDiagnostics')?.addEventListener('click',()=>{const data=window.agntRuntime?.export?.()||'[]',blob=new Blob([data],{type:'application/json'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='AGNT-runtime-diagnostics.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)});
