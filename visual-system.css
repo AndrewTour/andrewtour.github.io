@@ -479,3 +479,103 @@ html body #app #appointmentsView .appointment-types label {padding:0!important;h
 html body #app #appointmentsView .appointment-types label span {height:44px!important;line-height:44px!important}
 html body #app #appointmentsView .appointment-types input:checked+span {box-shadow:inset 0 -2px var(--ds-accent)!important;color:var(--ds-ink)!important}
 html body #app #appointmentsView #appointmentForm {padding-block:16px!important}
+/* v1.45.2 — retain proven progress feedback with more tonal definition. */
+html {
+  --ds-soft:#f3f4f6;--ds-rule:#e3e5e9;--ds-secondary:#484b53;--ds-muted:#6b707a;
+  --ds-marketpulse:#f05d3d;--ds-control-radius:8px;--ds-control-height:44px;
+  --agnt-ring-actual:#25272c!important;--agnt-ring-pace:#c4cedf!important;
+  --agnt-ring-track:#eceef2!important;--agnt-ring-complete:#258459!important;
+}
+html[data-theme="dark"] {
+  --ds-soft:#212226;--ds-rule:#33353c;--ds-secondary:#d0d2d8;--ds-muted:#a7abb5;
+  --ds-marketpulse:#f47757;
+  --agnt-ring-actual:#f1f2f5!important;--agnt-ring-pace:#747d90!important;
+  --agnt-ring-track:#30323a!important;--agnt-ring-complete:#75d6a3!important;
+}
+/* Same three layers as the established ring: actual, expected pace and track. */
+html body #app #todayView .metric-percent.metric-ring {
+  --ring-color:var(--agnt-ring-actual);
+  position:relative;isolation:isolate;display:grid!important;place-items:center;
+  width:46px!important;min-width:46px!important;height:46px!important;padding:0!important;
+  border:0!important;border-radius:50%!important;box-shadow:none!important;transform:none!important;
+  color:var(--ds-ink)!important;font-size:11px!important;font-weight:600!important;
+  background:
+    conic-gradient(var(--ring-color) 0 calc(var(--actual) * 1%),transparent 0),
+    conic-gradient(var(--agnt-ring-pace) 0 calc(var(--pace) * 1%),transparent 0),
+    var(--agnt-ring-track)!important;
+}
+html body #app #todayView .metric-percent.metric-ring::before {
+  display:block!important;content:"";position:absolute;inset:5px!important;
+  z-index:-1;border-radius:50%!important;background:var(--ds-canvas)!important;
+}
+html body #app #todayView .metric-percent.metric-ring::after {display:none!important}
+html body #app #todayView :is(.metric.complete .metric-percent.metric-ring,.metric-percent.metric-ring.complete) {
+  --ring-color:var(--agnt-ring-complete);color:var(--ds-success)!important;
+}
+/* Tonal contrast comes from one quiet action strip and one priority row. */
+html body #app #todayView .scheduled-day-quick-menu {
+  background:var(--ds-soft)!important;border:0!important;border-radius:8px!important;
+  margin-block:10px 8px!important;padding:2px 0!important;
+}
+html body #app #todayView .scheduled-day-quick-menu button+button {border:0!important}
+html body #app #todayView .now-card-stack {
+  background:var(--ds-soft)!important;border:0!important;border-radius:8px!important;
+  margin-block:0 10px!important;padding:0 10px!important;
+}
+html body #app #todayView .now-card strong {font-weight:600!important}
+html body #app #todayView .now-card .now-card-label {color:var(--ds-secondary)!important;font-weight:500!important}
+/* MarketPulse has one recognisable orange treatment wherever it appears. */
+html body #app #todayView :is(#openMarketPulseHome,#openMarketPulseOffDay),
+html body #app #prospectingView .marketpulse-orb,
+html body #app :is(.marketpulse-page-entry-icon,.market-pulse-orb,.marketpulse-orb) {
+  background:var(--ds-marketpulse)!important;color:#fff!important;border:0!important;
+  border-radius:50%!important;box-shadow:none!important;
+}
+html body #app :is(.marketpulse-orb,.marketpulse-page-entry-icon) svg {stroke:#fff!important;color:#fff!important}
+html body #app .marketpulse-page-entry {border-color:var(--ds-rule)!important;background:transparent!important;box-shadow:none!important}
+/* A shared control scale across bookings, records, sessions and dialogs. */
+html body :is(#app #todayView,#app #scheduleView,#app #prospectingView,#app #appointmentsView,#app #settingsView,#authGate,#taskComposerModal) :is(.primary,.secondary,.file-btn),
+html body #app :is(.timeline-command-action,.timeline-plan-action),
+html body :is(.modal,.day-review-overlay,.buyer-followup-overlay,.knocking-capture-overlay) :is(.primary,.secondary) {
+  min-height:var(--ds-control-height)!important;padding:10px 14px!important;
+  border-radius:var(--ds-control-radius)!important;font-size:13px!important;
+  font-weight:500!important;line-height:1.2!important;box-shadow:none!important;
+}
+html body :is(#app #scheduleView,#app #prospectingView,#app #appointmentsView,#app #settingsView,#authGate,#taskComposerModal) :is(.secondary,.file-btn),
+html body #app :is(.timeline-plan-action,.seller-priority-defer),
+html body :is(.modal,.day-review-overlay,.buyer-followup-overlay,.knocking-capture-overlay) .secondary {
+  background:var(--ds-soft)!important;border:1px solid var(--ds-rule)!important;color:var(--ds-ink)!important;
+}
+html body #app #appointmentsView #appointmentSubmitButton {
+  min-height:var(--ds-control-height)!important;border-radius:var(--ds-control-radius)!important;
+  padding:10px 14px!important;font-size:13px!important;font-weight:500!important;
+}
+html body #app :is(.appointment-form,.prospect-editor,.buyer-editor,.seller-property-editor-form) :is(input:not([type="radio"]):not([type="checkbox"]):not([type="range"]):not([type="hidden"]),select),
+html body :is(#taskComposerModal,#followUpModal,#outcomeModal) :is(input:not([type="radio"]):not([type="checkbox"]),select,textarea) {
+  border-radius:var(--ds-control-radius)!important;border-color:var(--ds-rule)!important;
+  background:var(--ds-surface)!important;font-size:16px!important;font-weight:400!important;
+}
+html body #app :is(.prospect-card-actions,.prospect-quick-actions,.buyer-card-actions,.buyer-detail-actions) :is(a,button) {
+  min-height:var(--ds-control-height)!important;border-radius:var(--ds-control-radius)!important;
+  font-size:12px!important;font-weight:500!important;background:var(--ds-soft)!important;
+  border:1px solid var(--ds-rule)!important;color:var(--ds-ink)!important;box-shadow:none!important;
+}
+html body #app #todayView .actions button {
+  background:var(--ds-soft)!important;border-color:var(--ds-rule)!important;
+  color:var(--ds-ink)!important;border-radius:var(--ds-control-radius)!important;
+}
+html body #app #todayView .actions :is([data-action="plus"],.timer) {background:var(--ds-action)!important;border-color:var(--ds-action)!important;color:var(--ds-on-action)!important}
+html body #app #todayView .actions .timer.running {background:var(--ds-info-soft)!important;color:var(--ds-info)!important;border-color:var(--ds-info)!important}
+@media(max-width:374px) {
+  html body #app #todayView .metric-percent.metric-ring {width:42px!important;min-width:42px!important;height:42px!important}
+}
+html body :is([data-close-prospect],[data-close-buyer],[data-cancel-log],[data-cancel-sms],[data-session-back],[data-buyer-session-back],.market-pulse-back,.team-back,.my-market-back) {
+  border-radius:var(--ds-control-radius)!important;background:var(--ds-soft)!important;
+  border-color:var(--ds-rule)!important;color:var(--ds-ink)!important;
+  font-size:13px!important;font-weight:500!important;box-shadow:none!important;
+}
+html body :is(.action-sheet-close,.team-close,.team-manager-close,#closeManualDialler,#closeTaskComposer,#closeManualCallOutcome,#closeAppointmentEditor) {
+  border-radius:var(--ds-control-radius)!important;background:var(--ds-soft)!important;
+  border:1px solid var(--ds-rule)!important;color:var(--ds-ink)!important;box-shadow:none!important;
+  min-height:44px!important;min-width:44px!important;
+}

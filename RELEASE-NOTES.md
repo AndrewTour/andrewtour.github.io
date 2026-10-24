@@ -1,3 +1,68 @@
+# AGNT v1.45.2 — Progress rings and balanced controls
+
+Built directly from v1.45.1 Bright Visual System. This is a presentation-only
+update in the same 14-file clean deployment package.
+
+## What changed
+
+- Restored all four metric progress rings, including their existing actual progress,
+  expected pace, percentage labels, accessible descriptions and green completion
+  state. Ring values and calculations remain the original application logic.
+- Added tonal separation with black primary actions, grey secondary controls and
+  quiet grey utility/priority rows. The bright page canvas and light, blur-free
+  dialogs remain.
+- MarketPulse uses a consistent AGNT orange circle with a white icon on Home,
+  off-day Home, My Market and its page-entry icon.
+- Standardised primary/secondary buttons, record actions, back/dismiss controls,
+  booking/task actions and form-field corners. Common full-size actions use 44px
+  minimum height, 8px radius and 13px medium-weight labels; compact icons and record
+  actions retain their practical footprints and touch areas.
+- Coaching and pacing copy remains visible with its informational emphasis.
+
+## Changed files
+
+- visual-system.css — progress rings, tonal palette, MarketPulse and shared controls.
+- index.html — asset query versions and Settings version label.
+- app.js — backup release identifier only.
+- runtime.js — release identifiers only.
+- service-worker.js — release/cache identifiers only.
+- RELEASE-NOTES.md — this entry; previous release notes retained below.
+
+## Protected systems
+
+Firebase configuration/authentication, Firestore paths/rules, UID separation,
+records, calculations, storage, offline cache/queue and sync are unchanged.
+Original styles.css/cleanup.css, manifest, icons, Firebase configuration and
+Firestore rules are byte-identical to v1.45.1. Application/runtime/worker comparison
+confirms that only their release identifiers changed.
+
+No Firebase Console, rules, indexes or GitHub settings changes are required.
+Nothing has been pushed or deployed.
+
+## Verification
+
+Passed JavaScript syntax, CSS syntax/selector parsing, protected-file comparisons,
+complete ZIP integrity and required asset checks. Worker installation/cached
+navigation checks passed with local fixture responses.
+
+49 headless Chromium layout/workflow checks passed: six main screens at
+320/390/430px in light and dark mode, Core sections, profiles/editors, counter
+changes, metric containment and task dialog open/close. Eleven additional checks
+passed for ring restoration and 50%/100% completion, orange MarketPulse, matching
+booking/task action tokens, type selection, booking access and light/no-blur
+modal presentation. Relevant screenshots inspected.
+
+Checks used synthetic records and Firebase SDK stubs in device-only mode, with
+Australia/Sydney timezone. Live Firebase sign-in/team permissions, real network
+loss, Safari/WebKit, physical installed iPhone PWA and deployed-site testing were
+not performed. Inherited regression scripts remain omitted from this clean ZIP;
+their previously documented baseline fixture failures were not changed.
+
+Upload all 14 files, including the icons folder, through the existing GitHub Pages
+workflow. No new deployment settings or configuration steps are required.
+
+---
+
 # AGNT v1.45.1 — Bright, open visual system
 
 Built from the v1.45.0 clean deployment package tested in this conversation.
