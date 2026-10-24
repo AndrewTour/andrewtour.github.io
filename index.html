@@ -9,9 +9,9 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.46.6-workspace">
-<link rel="stylesheet" href="cleanup.css?v=1.46.6-workspace">
-<link rel="stylesheet" href="visual-system.css?v=1.46.6-workspace">
+<link rel="stylesheet" href="styles.css?v=1.46.7-workspace">
+<link rel="stylesheet" href="cleanup.css?v=1.46.7-workspace">
+<link rel="stylesheet" href="visual-system.css?v=1.46.7-workspace">
 <title>AGNT</title>
 </head>
 <body>
@@ -618,46 +618,42 @@
 
     <section id="insightsView" class="view leaderboard-only-view">
       <div id="leaderboardInsights" class="insights-page active">
-        <section class="leaderboard-dashboard glass" aria-label="Leaderboard overview">
-          <div class="leaderboard-leaders">
-            <div class="leaderboard-daily-leader">
-              <div class="leaderboard-ring" id="leaderboardRing" style="--score:0"><strong id="leaderboardTopScore">0%</strong><span>Today</span></div>
-              <div class="leaderboard-hero-copy"><span>DAILY LEADER</span><strong id="leaderboardDailyLeaderName">—</strong><small id="leaderboardDailyLeaderMeta">Waiting for today’s activity</small></div>
-            </div>
-            <div class="leaderboard-weekly-leader">
-              <span>WEEKLY LEADER</span><strong id="leaderboardWeeklyLeaderName">—</strong><small id="leaderboardWeeklyLeaderScore">0%</small>
-            </div>
+        <div class="leaderboard-period-bar">
+          <div class="leaderboard-mode-tabs" role="tablist" aria-label="Leaderboard period">
+            <button id="leaderboardDayTab" class="active" type="button" role="tab" aria-selected="true" aria-controls="leaderboardList" data-leaderboard-mode="day">Daily</button>
+            <button id="leaderboardWeekTab" type="button" role="tab" aria-selected="false" aria-controls="leaderboardList" data-leaderboard-mode="week">Weekly</button>
           </div>
-          <div class="leaderboard-summary-line" aria-label="Current leaderboard summary">
-            <div><span>Your position</span><strong id="leaderboardHeroRank">—</strong></div>
-            <div><span>Gap</span><strong id="leaderboardGap">—</strong></div>
-            <div><span>Agents logged</span><strong id="leaderboardAgentCount">0</strong></div>
+          <div id="leaderboardStatus" class="leaderboard-live">LIVE</div>
+        </div>
+        <section class="leaderboard-dashboard glass" aria-label="Your progress for the selected period">
+          <div class="leaderboard-period-summary">
+            <div class="leaderboard-ring" id="leaderboardRing" role="img" style="--score:0"><strong id="leaderboardTopScore">0%</strong><span id="leaderboardRingLabel">Day</span></div>
+            <div class="leaderboard-hero-copy"><span id="leaderboardHeroLabel">YOUR DAY</span><h3 id="leaderboardHeadline">Ready when you are</h3><small id="leaderboardHeroContext">Your activity will appear here.</small></div>
+          </div>
+          <div class="leaderboard-summary-line" aria-label="Selected period summary">
+            <div><strong id="leaderboardHeroRank">—</strong><span>Your position</span></div>
+            <div><strong id="leaderboardGap">—</strong><span>Gap to lead</span></div>
+            <div><strong id="leaderboardAgentCount">0</strong><span>Agents ranked</span></div>
           </div>
         </section>
         <section class="leaderboard-card leaderboard-unified-card glass">
-          <div class="leaderboard-mode-tabs leaderboard-mode-tabs-legacy" role="tablist" aria-label="Leaderboard period" aria-hidden="true">
-            <button id="leaderboardDayTab" class="active" type="button" role="tab" aria-selected="true" data-leaderboard-mode="day" tabindex="-1">Day</button>
-            <button id="leaderboardWeekTab" type="button" role="tab" aria-selected="false" data-leaderboard-mode="week" tabindex="-1">Week</button>
-          </div>
           <div class="leaderboard-head leaderboard-unified-head">
-            <div><span id="leaderboardPeriodLabel">DAILY LEADERBOARD</span><h2 id="leaderboardDate"></h2></div>
+            <div><span id="leaderboardPeriodLabel">DAILY RANKINGS</span><h2 id="leaderboardDate"></h2></div>
             <div class="leaderboard-head-actions">
-              <div id="leaderboardStatus" class="leaderboard-live">LIVE</div>
+              <button id="leaderboardFindMe" type="button">Find me</button>
               <div id="dayHistoryControls" class="week-history-controls leaderboard-period-controls">
                 <button id="dayPrev" type="button" aria-label="Previous day">‹</button><button id="dayToday" type="button">Today</button><button id="dayNext" type="button" aria-label="Next day">›</button>
               </div>
               <div id="weekHistoryControls" class="week-history-controls leaderboard-period-controls hidden">
-                <button id="weekPrev" type="button" aria-label="Previous week">‹</button><button id="weekLast" type="button">Last week</button><button id="weekNext" type="button" aria-label="Next week">›</button>
+                <button id="weekPrev" type="button" aria-label="Previous week">‹</button><button id="weekLast" type="button" aria-label="Return to this week">This week</button><button id="weekNext" type="button" aria-label="Next week">›</button>
               </div>
             </div>
           </div>
-          <div class="leaderboard-metric-head" aria-hidden="true"><span></span><span>Agent</span><span>Calls</span><span>Connects</span><span>Data</span><span>Knocking</span><span>Appts</span><span>Score</span></div>
-          <div id="leaderboardList" class="leaderboard-list leaderboard-unified-list"><div class="empty">Waiting for team data…</div></div>
-          <p id="leaderboardNote" class="leaderboard-note">Ranked by daily overall completion percentage.</p>
+          <div id="leaderboardList" class="leaderboard-list leaderboard-unified-list" aria-live="polite"><div class="empty">Waiting for team data…</div></div>
+          <p id="leaderboardNote" class="leaderboard-note">Ranked by overall completion. Tap an agent for their appointment summary.</p>
         </section>
       </div>
     </section>
-
 
     <section id="prospectingView" class="view prospecting-view">
       <nav class="prospector-sections glass" aria-label="People sections">
@@ -1083,7 +1079,7 @@ Andrew Tour | McGrath</textarea></label>
         <label class="file-btn secondary">Import backup<input id="importData" type="file" accept="application/json"></label>
         <button id="signOut" class="danger">Sign out</button>
         <p id="modeNote"></p>
-        <small class="release-version">AGNT v1.46.6</small>
+        <small class="release-version">AGNT v1.46.7</small>
       </div>
     </section>
   </main>
@@ -1234,7 +1230,7 @@ Andrew Tour | McGrath</textarea></label>
 
 
 
-<script src="runtime.js?v=1.46.6-workspace"></script>
-<script type="module" src="app.js?v=1.46.6-workspace"></script>
+<script src="runtime.js?v=1.46.7-workspace"></script>
+<script type="module" src="app.js?v=1.46.7-workspace"></script>
 </body>
 </html>

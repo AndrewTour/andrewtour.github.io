@@ -1,3 +1,59 @@
+# AGNT v1.46.7 — Clear Leaderboard
+
+Baseline: v1.46.6 Sellers and Market. Day Plan hierarchy now carries into
+Performance > Leaderboard, with the existing ranking/scoring model retained.
+
+- Visible Daily/Weekly controls replace the cryptic header DAY shortcut.
+- A compact personal progress ring, position, gap to lead and ranked-agent count
+  follow the selected day/week, including historical periods. The ring is labelled
+  as the user's progress rather than the daily leader's score.
+- Gap is shown in percentage points. Zero-completion and appointment-only activity
+  have distinct summaries; neither falsely declares a lead before a score exists.
+- Flat ranked rows show rank, agent identity/You, overall completion and five
+  labelled metrics with their existing actual/target progress bars.
+- Historical score-only records retain unavailable metric values, not false zeros.
+- Find me scrolls/focuses the signed-in user's row without creating a new view.
+- Existing pointer/keyboard agent entry opens the unchanged appointment summary.
+- Daily history arrows/Today remain. Weekly arrows retain history access; the
+  centre control now explicitly returns to This week instead of Last week.
+- Team connection status remains visible and uses the existing source state.
+- Overview, team permissions, ranking order/tie-breaks, scores, daily/weekly
+  calculations, historical records and appointment counts are unchanged.
+
+Stability contract retained: navigation bursts coalesce, inactive list DOM is
+released, old requests cancel, forms/drafts survive, and page containers do not
+animate. No additional observers, timers, data writes, persisted state or row
+listeners were introduced. New controls use existing delegated summary entry or
+single static handlers.
+
+Validation: 12 browser checks in each of WebKit and Chromium cover light/dark
+layouts at 320/390/430px, visible and unclipped metrics, 44px controls, descending
+ranks, own score/gap, past-day/score-only data, weekly history/reset, Find me with
+keyboard appointment entry, zero activity, appointment-only activity and empty
+states. Screenshots were inspected in both themes. 1,000 rapid menu events pass
+in each engine with 1,500 dual-role fixture contacts; one final commit per burst,
+correct destinations and released inactive lists. No uncaught errors.
+
+1,097 baseline function declarations compare unchanged except five presentation
+renderers/helpers and the backup version marker. Syntax, mocked worker install,
+all 10 precache assets, manifest icons, local HTML links and ZIP CRC were checked.
+Legacy fixture failures previously documented are not claimed as passing.
+
+Changed files: index.html, app.js, visual-system.css, runtime.js,
+service-worker.js, RELEASE-NOTES.md. Runtime/worker changes are release/cache
+identifiers only. Original styles.css and cleanup.css are unchanged.
+
+Firebase/authentication, rules/paths, UID/team isolation, storage keys, records,
+local-first persistence, offline queues and sync are untouched. No Firebase
+Console, rules/indexes or GitHub settings changes are required.
+Tests used local fixtures/Firebase stubs. Live team/authentication and physical
+installed iPhone PWA testing were not performed. No deployment performed.
+
+Replace all 14 files, including icons/, then fully close and reopen AGNT.
+Settings should show v1.46.7. No reset, sign-out or reinstall is needed.
+
+---
+
 # AGNT v1.46.6 — Sellers and Market, Day Plan language
 
 Baseline: v1.46.5 Reach and Performance. All v1.46.4 stability protections and
