@@ -1,0 +1,338 @@
+/* AGNT v1.45.0 — Refined application language.
+   Presentation only. Existing screen geometry, data hooks and workflows stay authoritative.
+   References: supplied InspectionIQ recording; design-bites Vercel DESIGN.md.
+   Flat records, native type, measured spacing, quiet chrome, purposeful colour. */
+:root {
+  --ds-canvas:#f8f9f6;
+  --ds-surface:#ffffff;
+  --ds-soft:#f0f2ee;
+  --ds-ink:#202722;
+  --ds-secondary:#505b53;
+  --ds-muted:#667168;
+  --ds-rule:#dfe4dc;
+  --ds-accent:#c34d2c;
+  --ds-accent-soft:#f9ece6;
+  --ds-info:#245fb0;
+  --ds-info-soft:#edf3fa;
+  --ds-success:#26714e;
+  --ds-danger:#b73545;
+  --ds-hero:#23332c;
+  --ds-hero-ink:#f7faf6;
+  --ds-hero-muted:#c6d2c9;
+  --ds-focus:#245fb0;
+  --ds-control-radius:8px;
+  --ds-sheet-radius:16px;
+  --ds-overlay-shadow:0 0 0 1px #17271d14,0 16px 48px #17271d26;
+  --ds-font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;
+  --bg:var(--ds-canvas)!important;--card:var(--ds-surface)!important;
+  --ink:var(--ds-ink)!important;--muted:var(--ds-muted)!important;
+  --line:var(--ds-rule)!important;--blue:var(--ds-info)!important;
+  --green:var(--ds-success)!important;--red:var(--ds-danger)!important;
+  --agnt-page:var(--ds-canvas)!important;--agnt-soft:var(--ds-soft)!important;
+  --agnt-ink:var(--ds-ink)!important;--agnt-text:var(--ds-ink)!important;
+  --agnt-subtle:var(--ds-muted)!important;--agnt-muted:var(--ds-muted)!important;
+  --agnt-faint:var(--ds-muted)!important;--agnt-rule:var(--ds-rule)!important;
+  --agnt-line:var(--ds-rule)!important;--agnt-divider:var(--ds-rule)!important;
+  --agnt-blue:var(--ds-info)!important;--agnt-green:var(--ds-success)!important;
+  --agnt-orange:var(--ds-accent)!important;--agnt-red:var(--ds-danger)!important;
+  --cleanup-surface:var(--ds-soft)!important;--cleanup-ink:var(--ds-ink)!important;
+  --cleanup-muted:var(--ds-muted)!important;--cleanup-line:var(--ds-rule)!important;
+  --cleanup-accent:var(--ds-info)!important;
+}
+html[data-theme="dark"] {
+  --ds-canvas:#101411;--ds-surface:#171e19;--ds-soft:#202922;
+  --ds-ink:#edf2ec;--ds-secondary:#c5cec6;--ds-muted:#a3afa5;
+  --ds-rule:#303b32;--ds-accent:#f29677;--ds-accent-soft:#35241e;
+  --ds-info:#9dc3f7;--ds-info-soft:#1b2a3b;--ds-success:#8ad1aa;
+  --ds-danger:#f299a3;--ds-hero:#24382c;--ds-hero-ink:#f3f7f1;
+  --ds-hero-muted:#c6d5c9;--ds-focus:#9dc3f7;
+  --ds-overlay-shadow:0 0 0 1px #ffffff1f,0 20px 56px #0008;
+}
+html body,html body #app {background:var(--ds-canvas)!important;color:var(--ds-ink)!important;font-family:var(--ds-font)}
+html body {background-image:none!important}
+html body #app {padding-inline:20px!important}
+html body :is(button,input,select,textarea) {font-family:var(--ds-font)}
+/* Restrained weights create hierarchy without making every label compete. */
+html body :is(h1,h2,h3,h4,strong,b) {font-weight:600!important}
+html body :is(h1,h2,h3) {letter-spacing:-.035em;line-height:1.18}
+html body :is(button,.primary,.secondary,.text-btn) {font-weight:500!important}
+html body :is(.eyebrow,.section-label,.view-head>div>span,.prospecting-section-head span,
+  .buyer-detail-section-head>span,.day-log-head span,.scorecard-head span,
+  .team-onboarding-kicker,.team-remove-kicker,.returning-snapshot-kicker) {
+  color:var(--ds-muted)!important;font-weight:500!important;letter-spacing:.11em!important;
+}
+html body :is(.empty,.view-subtitle,.date,.account-email,.prospector-work-state,
+  .seller-property-help,.my-market-muted,.leaderboard-note) {color:var(--ds-muted)!important;line-height:1.45}
+html body .empty {padding:32px 16px!important;font-size:13px!important}
+html body :is(.score-copy strong,.metric-copy strong,.profile-kpis strong,.leaderboard-summary-line strong,
+  .my-market-counts strong,.market-review-counts strong,.seller-estimate strong) {font-variant-numeric:tabular-nums}
+/* Persistent chrome retains its existing viewport and safe-area behaviour. */
+html body #app .topbar {background:var(--ds-canvas)!important;border-bottom:1px solid var(--ds-rule)!important}
+html body #app .topbar h1 {color:var(--ds-ink)!important;font-size:25px!important;font-weight:600!important;letter-spacing:-.045em!important}
+html body #app .topbar :is(.icon-btn,.back-today) {background:var(--ds-soft)!important;color:var(--ds-ink)!important;border-color:transparent!important;box-shadow:none!important;border-radius:var(--ds-control-radius)!important}
+html body #app .tabbar {background:var(--ds-surface)!important;border-top:1px solid var(--ds-rule)!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+html body #app .tabbar button {color:var(--ds-muted)!important;background:transparent!important;border-radius:0!important;font-weight:400!important}
+html body #app .tabbar button.active {color:var(--ds-accent)!important}
+html body #app .tabbar button.active::before {background:var(--ds-accent)!important;height:2px!important}
+html body #app .tabbar :is(.tab-icon,span) {color:inherit!important}
+html body #app .tabbar .tab-icon svg {width:20px;height:20px;stroke-width:1.6}
+html body #app .tabbar span {font-size:9px!important;letter-spacing:0;font-weight:500!important}
+/* Shared actions: one emphasis level, quiet secondary, semantic danger. */
+html body :is(.primary,.prospecting-add,.welcome-start,.send-today-stats,.timeline-task-add) {
+  background:var(--ds-accent)!important;color:#fff!important;border-color:var(--ds-accent)!important;box-shadow:none!important;
+}
+html[data-theme="dark"] body :is(.primary,.prospecting-add,.welcome-start,.send-today-stats,.timeline-task-add) {color:#22150f!important}
+html body :is(.primary,.secondary,.danger,.file-btn) {border-radius:var(--ds-control-radius)!important;box-shadow:none!important;font-size:13px!important;min-height:44px}
+html body :is(.secondary,.file-btn) {background:var(--ds-surface)!important;border:1px solid var(--ds-rule)!important;color:var(--ds-ink)!important}
+html body :is(.text-btn,.team-back,.my-market-back) {color:var(--ds-info)!important}
+html body :is(.danger,.danger-btn) {background:color-mix(in srgb,var(--ds-danger) 8%,var(--ds-surface))!important;color:var(--ds-danger)!important;border-color:color-mix(in srgb,var(--ds-danger) 25%,var(--ds-rule))!important}
+html body :is(button,a,summary) {touch-action:manipulation;transition:background-color .15s,color .15s}
+html body :is(button,a,summary):active:not(:disabled) {transform:none!important;filter:none!important}
+html body button:disabled {opacity:.45!important;cursor:default}
+/* Form controls keep their layout, including native dates, search and file inputs. */
+html body :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),select,textarea) {
+  background:var(--ds-surface)!important;color:var(--ds-ink)!important;
+  -webkit-text-fill-color:var(--ds-ink)!important;border-color:var(--ds-rule)!important;
+  border-radius:var(--ds-control-radius)!important;box-shadow:none!important;
+  font-size:16px!important;font-weight:400!important;letter-spacing:0!important;
+}
+html body :is(input,textarea)::placeholder {color:var(--ds-muted)!important;opacity:1}
+html body :is(input[type="checkbox"],input[type="radio"],input[type="range"]) {accent-color:var(--ds-accent)}
+html body :is(input,select,textarea):focus {outline:2px solid var(--ds-focus)!important;outline-offset:2px!important;border-color:var(--ds-focus)!important;box-shadow:none!important}
+html body :is(button,a,summary):focus-visible {outline:2px solid var(--ds-focus)!important;outline-offset:3px!important;box-shadow:0 0 0 2px var(--ds-canvas)!important}
+html body :is(.appointment-form,.settings,.prospect-editor,.buyer-editor,.task-composer-card,.seller-property-editor-form) label {color:var(--ds-secondary)!important;font-weight:500!important}
+html body #app .prospecting-search-wrap {background:var(--ds-surface)!important;border:1px solid var(--ds-rule)!important;border-radius:var(--ds-control-radius)!important;box-shadow:none!important}
+html body #app .prospecting-search-wrap input {background:transparent!important;border:0!important;border-radius:0!important}
+html body #app .prospecting-toolbar {background:var(--ds-canvas)!important;box-shadow:none!important}
+/* Equivalent tab bars and filters use the same selected treatment. */
+html body #app :is(.today-page-tabs,.prospector-sections,.leaderboard-mode-tabs,.insight-period-switch,.appointment-filter,.broadcast-review-switch) {
+  background:transparent!important;border:0!important;border-bottom:1px solid var(--ds-rule)!important;border-radius:0!important;box-shadow:none!important;
+}
+html body #app :is(.today-page-tabs,.prospector-sections,.leaderboard-mode-tabs,.insight-period-switch,.appointment-filter,.broadcast-review-switch) button {
+  background:transparent!important;color:var(--ds-muted)!important;border:0!important;border-radius:0!important;box-shadow:none!important;font-size:12px!important;font-weight:500!important;min-height:44px;
+}
+html body #app :is(.today-page-tabs,.prospector-sections,.leaderboard-mode-tabs,.insight-period-switch,.appointment-filter,.broadcast-review-switch) button.active {
+  color:var(--ds-ink)!important;box-shadow:inset 0 -2px var(--ds-accent)!important;
+}
+html body #app :is(.today-page-tabs,.prospector-sections,.leaderboard-mode-tabs,.insight-period-switch,.appointment-filter,.broadcast-review-switch) button.active::after {background:transparent!important}
+html body #app :is(.buyer-quick-filters,.pipeline-temperature-filters,.market-review-filters,.appointment-history-tabs) button {
+  color:var(--ds-secondary)!important;border-color:var(--ds-rule)!important;background:transparent!important;box-shadow:none!important;font-weight:500!important;
+}
+html body #app :is(.buyer-quick-filters,.pipeline-temperature-filters,.market-review-filters,.appointment-history-tabs) button.active {
+  color:var(--ds-accent)!important;background:var(--ds-accent-soft)!important;border-color:var(--ds-accent)!important;
+}
+/* Home: a single composed focal surface, followed by the activity ledger. */
+html body #todayView .score-week {background:var(--ds-hero)!important;border:0!important;border-radius:12px!important;padding:16px 16px 0!important;box-shadow:none!important}
+html body #todayView .score-week :is(.score-copy>span,.trend-wrap>span,#momentumWhisper,#leaderboardPositionMeta) {color:var(--ds-hero-muted)!important;font-weight:400!important;letter-spacing:.03em!important}
+html body #todayView .score-week :is(#dailyScore,#leaderboardPosition) {color:var(--ds-hero-ink)!important;font-weight:500!important;letter-spacing:-.045em!important}
+html body #todayView .score-week>.bar {height:3px!important;background:#ffffff29!important;border:0!important;box-shadow:none!important}
+html body #todayView .score-week>.bar i {background:#e19a7c!important}
+html body #todayView .scheduled-day-quick-menu {border-color:#ffffff26!important;background:transparent!important}
+html body #todayView .scheduled-day-quick-menu button {color:var(--ds-hero-ink)!important;background:transparent!important;border-color:#ffffff26!important;box-shadow:none!important;border-radius:var(--ds-control-radius)!important}
+html body #todayView .now-card {background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+html body #todayView .now-card-stack {border-top:1px solid #ffffff26!important}
+html body #todayView .now-card :is(.now-card-label,small,svg) {color:var(--ds-hero-muted)!important}
+html body #todayView .now-card strong {color:var(--ds-hero-ink)!important;font-size:14px!important;line-height:1.35;font-weight:500!important}
+html body #todayView .metrics {background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding-inline:0!important}
+html body #todayView .metric {background:transparent!important;border:0!important;border-bottom:1px solid var(--ds-rule)!important;border-radius:0!important;box-shadow:none!important}
+html body #todayView .metric-copy>span {color:var(--ds-secondary)!important;font-size:10px!important;font-weight:500!important;letter-spacing:.1em!important}
+html body #todayView .metric-copy>small {color:var(--ds-muted)!important;font-size:11px!important}
+html body #todayView .metric-copy>strong {color:var(--ds-ink)!important;font-weight:500!important;letter-spacing:-.04em!important}
+html body #todayView .actions button {background:var(--ds-soft)!important;color:var(--ds-ink)!important;border:1px solid var(--ds-rule)!important;border-radius:var(--ds-control-radius)!important;box-shadow:none!important;font-weight:400!important}
+html body #todayView .actions [data-action="plus"],html body #todayView .knock-actions .timer {background:var(--ds-accent)!important;border-color:var(--ds-accent)!important;color:#fff!important}
+html[data-theme="dark"] body #todayView .actions [data-action="plus"],html[data-theme="dark"] body #todayView .knock-actions .timer {color:#22150f!important}
+html body #todayView .knock-actions .timer.running {background:var(--ds-hero)!important;color:var(--ds-hero-ink)!important;border-color:var(--ds-hero-muted)!important}
+html body #todayView .metric-percent {box-shadow:none!important}
+html body #todayView .off-day-next-workday {background:var(--ds-hero)!important;border-radius:12px!important;box-shadow:none!important}
+html body #todayView .off-day-next-workday :is(h2,strong) {color:var(--ds-hero-ink)!important}
+html body #todayView .off-day-next-workday :is(span,small) {color:var(--ds-hero-muted)!important}
+/* Open sections: one continuous surface across all working screens. */
+html body #app :is(.timeline-overview,.daily-timeline,.day-log-card,.day-log-summary,.today-wins,
+  .scorecard-hero,.scorecard-metrics,.scorecard-focus,.scorecard-trends,.scorecard-productivity,
+  .scorecard-momentum,.scorecard-personal-bests,.scorecard-recommendations,.scorecard-achievements,
+  .prospecting-section,.prospecting-hero,.pipeline-overview,.pipeline-timeframe,
+  .market-pulse-hero,.market-pulse-results,.market-pulse-import,.market-review-hero,.market-review-panel,
+  .campaign-hero,.broadcast-step-surface,.prospect-intelligence-card,.prospect-weekly-focus,
+  .followup-queue-hero,.followup-queue-shell,.appointment-form,.leaderboard-card,.leaderboard-unified-card,
+  .settings,.team-account-settings,.marketpulse-automation-settings) {
+  background:transparent!important;border:0!important;border-bottom:1px solid var(--ds-rule)!important;
+  border-radius:0!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+}
+html body #app :is(.timeline-overview,.day-log-card,.today-wins,.prospecting-hero,.pipeline-overview,
+  .pipeline-timeframe,.market-pulse-hero,.campaign-hero,.appointment-form,.broadcast-step-surface) {padding:20px 0!important}
+html body #app :is(.view-head h2,.prospecting-section-head h3,.leaderboard-head h2,.appointment-history-head h2,.pipeline-overview h3,.buyer-results-head h3) {color:var(--ds-ink)!important;font-size:20px!important;font-weight:600!important;letter-spacing:-.035em!important}
+html body #app :is(.view-head,.prospecting-section-head,.leaderboard-head,.appointment-history-head) small {color:var(--ds-muted)!important;line-height:1.45}
+html body #app :is(.timeline-item,.day-log-card article,.prospect-card,.buyer-card,.pipeline-seller-card,
+  .contact-card-v156,.market-pulse-card,.my-market-property,.my-market-person-row,.appointment-card,
+  .appointment-card-premium,.leaderboard-row,.followup-context-card) {
+  background:transparent!important;color:var(--ds-ink)!important;border-color:var(--ds-rule)!important;border-radius:0!important;box-shadow:none!important;
+}
+html body #app :is(.prospect-card,.buyer-card,.pipeline-seller-card,.contact-card-v156,.market-pulse-card,.appointment-card,.appointment-card-premium,.followup-context-card) {border-top:0!important;border-left:0!important;border-right:0!important;border-bottom:1px solid var(--ds-rule)!important}
+html body #app :is(.prospect-card-copy,.contact-card-v156,.buyer-card,.pipeline-seller-card,.appointment-card-premium,.market-pulse-card,.my-market-property,.my-market-person-row) strong {color:var(--ds-ink)!important;font-weight:600!important}
+html body #app :is(.prospect-card-copy,.contact-card-v156,.buyer-card,.pipeline-seller-card,.appointment-card-premium,.market-pulse-card,.my-market-property,.my-market-person-row) small {color:var(--ds-muted)!important;line-height:1.45}
+html body #app :is(.buyer-row-brief,.buyer-row-location,.prospect-card-copy em) {color:var(--ds-secondary)!important;font-weight:400!important}
+html body #app :is(.prospect-card-actions,.prospect-quick-actions,.buyer-card-actions) :is(a,button) {background:var(--ds-surface)!important;border-color:var(--ds-rule)!important;color:var(--ds-info)!important;box-shadow:none!important;font-weight:500!important}
+html body #app :is(.prospect-card-actions,.prospect-quick-actions,.buyer-card-actions) :is([data-call-buyer],[data-call-prospect]) {background:var(--ds-info-soft)!important;color:var(--ds-info)!important}
+html body #app .timeline-item.current {background:var(--ds-info-soft)!important;box-shadow:inset 2px 0 var(--ds-info)!important}
+/* Contact and Buyer profiles deliberately share the same continuous hierarchy. */
+html body #app #prospectDetail :is(.prospect-profile,.buyer-detail-card,.prospecting-section,
+  .prospect-profile-top,.buyer-detail-head,.device-contact-action,.buyer-detail-section,
+  .prospect-profile-grid,.prospect-selling-status,.buyer-linked-seller-profile,.buyer-seller-opportunity,
+  .buyer-detail-next-action,.buyer-property-matches,.seller-estimate,.seller-profile-config,
+  .prospect-buyer-role,.prospect-background,.buyer-lifecycle-actions) {
+  background:transparent!important;border-color:var(--ds-rule)!important;border-radius:0!important;box-shadow:none!important;
+}
+html body #app #prospectDetail :is(.prospect-profile-top,.buyer-detail-head) {padding-block:20px!important}
+html body #app #prospectDetail :is(.prospect-profile-top h2,.buyer-detail-head h2) {color:var(--ds-ink)!important;font-size:26px!important;font-weight:600!important;letter-spacing:-.04em!important}
+html body #app #prospectDetail :is(.buyer-detail-section,.prospect-profile-grid)>div {background:transparent!important;border-radius:0!important;border-color:var(--ds-rule)!important}
+html body #app #prospectDetail .device-contact-action {color:var(--ds-ink)!important;padding-block:16px!important}
+html body #app #prospectDetail .device-contact-action small {color:var(--ds-muted)!important;font-size:12px!important}
+html body #app #prospectDetail .device-contact-action strong {font-size:14px!important;font-weight:500!important}
+html body #app :is(.seller-session-card,.prospect-session-card,.buyer-session-card) {background:transparent!important;color:var(--ds-ink)!important;border-radius:0!important;border-color:var(--ds-rule)!important;box-shadow:none!important}
+/* Analytics, team and settings use the same type and surface roles. */
+html body #app :is(.leaderboard-dashboard,.profile-hero) {background:var(--ds-hero)!important;border:0!important;border-radius:12px!important;box-shadow:none!important;padding:20px!important}
+html body #app :is(.leaderboard-dashboard,.profile-hero) :is(h2,strong) {color:var(--ds-hero-ink)!important}
+html body #app :is(.leaderboard-dashboard,.profile-hero) :is(span,small,.account-email) {color:var(--ds-hero-muted)!important}
+html body #app :is(.leaderboard-row.me,.leaderboard-viewport-row.me) {background:var(--ds-info-soft)!important;border-radius:0!important}
+html body #app .settings>fieldset {background:transparent!important;border:0!important;border-top:1px solid var(--ds-rule)!important;border-radius:0!important;padding:20px 0!important;margin:20px 0!important}
+html body #app .settings legend {color:var(--ds-ink)!important;font-size:14px!important;font-weight:600!important;padding:0 8px 0 0!important}
+html body #app :is(.profile-kpis article,.scorecard-trend-grid article,.scorecard-productivity-grid article,
+  .scorecard-momentum-grid article,.scorecard-best-grid article,.scorecard-achievement-grid article,
+  .prospecting-stat,.appointment-destination-card) {background:transparent!important;border:0!important;border-bottom:1px solid var(--ds-rule)!important;border-radius:0!important;box-shadow:none!important}
+html body #app :is(.profile-kpis,.scorecard-trend-grid,.scorecard-productivity-grid,.scorecard-momentum-grid,.scorecard-best-grid,.scorecard-achievement-grid) strong {color:var(--ds-ink)!important}
+/* Focused overlays stay contained; editors keep their established full-page shell. */
+html body :is(.modal .glass,.action-sheet.glass,.manual-dialler.glass,.calendar-shell.glass,
+  .task-composer-card,.day-review-card,.team-appointment-notice-card,.appointment-assignment-card,
+  .pipeline-refresh-card,.buyer-followup-sheet,.buyer-match-sms-sheet,.knocking-capture-card,
+  .team-manager-card,.team-remove-confirm-card,.team-leave-confirm-card,.team-code-refresh-confirm-card) {
+  background:var(--ds-surface)!important;color:var(--ds-ink)!important;border:0!important;
+  border-radius:var(--ds-sheet-radius)!important;box-shadow:var(--ds-overlay-shadow)!important;
+}
+html body :is(.modal-head,.action-sheet-head,.task-composer-head,.day-review-head,.team-manager-heading) :is(h2,strong) {color:var(--ds-ink)!important}
+html body :is(.modal,.task-composer-modal,.day-review-overlay,.knocking-capture-overlay,.buyer-followup-overlay) {background:rgba(13,24,17,.46)!important;backdrop-filter:blur(4px)!important;-webkit-backdrop-filter:blur(4px)!important}
+html body :is(.prospect-editor,.buyer-editor,.team-onboarding,.team-onboarding-card,.returning-snapshot-screen,.welcome-screen,.offday-review-screen) {background:var(--ds-canvas)!important;color:var(--ds-ink)!important}
+html body :is(.prospect-editor,.buyer-editor) :is(h2,h3) {color:var(--ds-ink)!important}
+html body :is(.morning-live-market,.morning-live-metrics,.returning-snapshot-priority,.offday-review-section) {background:transparent!important;border-color:var(--ds-rule)!important;border-radius:0!important;box-shadow:none!important}
+/* Startup and sign-in share the same brand treatment without changing their timing. */
+html body :is(.boot-gate,.auth-gate) {background:var(--ds-canvas)!important;color:var(--ds-ink)!important}
+html body .auth-card {background:var(--ds-surface)!important;border:1px solid var(--ds-rule)!important;border-radius:12px!important;box-shadow:none!important;padding:28px!important}
+html body .auth-card :is(h1,.brand-mark) {color:var(--ds-ink)!important;letter-spacing:-.04em!important}
+html body .auth-card .brand-mark {background:transparent!important;border-radius:0!important;font-weight:600!important}
+html body .auth-card p {color:var(--ds-muted)!important;line-height:1.5}
+html body .boot-mark {font-weight:600!important;letter-spacing:-.06em!important}
+html body :is(.boot-mark,.welcome-brand,.returning-snapshot-brand)>span {color:var(--ds-accent)!important}
+@media (hover:hover) {
+  html body #app :is(.contact-card-v156,.my-market-property,.my-market-person-row,.buyer-card):hover {background:var(--ds-soft)!important}
+  html body .secondary:hover {background:var(--ds-soft)!important}
+}
+@media(max-width:374px) {
+  html body #app {padding-inline:16px!important}
+  html body #app .tabbar span {font-size:8px!important}
+  html body #app .prospector-sections button {font-size:11px!important}
+}
+@media(max-height:740px) {
+  html body #todayView .score-week {padding-top:12px!important;padding-inline:12px!important}
+  html body #todayView .metric-copy>small {font-size:10px!important}
+}
+@media(prefers-reduced-motion:reduce) {
+  html body :is(button,a,summary,input,select,textarea) {transition:none!important;animation:none!important}
+}
+/* Bridge older module tokens into the same surface palette. */
+html {
+  --agnt-card:var(--ds-surface)!important;--agnt-field:var(--ds-surface)!important;
+  --agnt-border:var(--ds-rule)!important;--agnt-label:var(--ds-secondary)!important;
+  --soft:var(--ds-soft)!important;--surface-soft:var(--ds-soft)!important;
+  --text:var(--ds-ink)!important;--accent:var(--ds-accent)!important;
+  --morning-ink:var(--ds-ink)!important;--morning-muted:var(--ds-muted)!important;
+  --morning-border:var(--ds-rule)!important;--morning-blue:var(--ds-info)!important;
+}
+html body #app :is(.prospect-editor,.buyer-editor,.buyer-import-review,.prospect-session-card,
+  .buyer-session-contact,.buyer-session-summary,.knocking-history-summary,.knocking-session-card,
+  .knocking-address-card,.knocking-history-session,.broadcast-review-section) {
+  background:transparent!important;color:var(--ds-ink)!important;border-color:var(--ds-rule)!important;
+  border-radius:0!important;box-shadow:none!important;
+}
+html body #app :is(.buyer-editor-section,.prospect-editor-section,.buyer-session-context,
+  .seller-session-context>div,.market-session-context,.broadcast-step-header,.broadcast-recipient-row) {
+  background:transparent!important;border-color:var(--ds-rule)!important;border-radius:0!important;box-shadow:none!important;
+}
+html body :is(#app,#authGate,#taskComposerModal,#manualDiallerModal,#outcomeModal,#followUpModal,#appointmentAssignmentModal) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),select,textarea) {
+  background:var(--ds-surface)!important;color:var(--ds-ink)!important;
+  -webkit-text-fill-color:var(--ds-ink)!important;border-color:var(--ds-rule)!important;
+  border-radius:var(--ds-control-radius)!important;font-size:16px!important;font-weight:400!important;
+}
+html body #app .prospecting-search-wrap input {background:transparent!important}
+html body #app .my-market-hub select {background:transparent!important;border-radius:0!important;font-size:13px!important}
+html body #appointmentsView #appointmentForm :is(input,select,textarea):focus,
+html body #appointmentsView #appointmentForm :is(input,select,textarea):focus-visible {
+  outline:2px solid var(--ds-focus)!important;outline-offset:2px!important;border-color:var(--ds-focus)!important;box-shadow:none!important;
+}
+html body :is(.outcome-option,.manual-call-outcome-options button,.seller-priority-deferral-options button,
+  .buyer-match-reasons button,.hotspot-no-answer-option,.team-choice) {
+  background:var(--ds-surface)!important;color:var(--ds-ink)!important;
+  border-color:var(--ds-rule)!important;box-shadow:none!important;border-radius:var(--ds-control-radius)!important;
+}
+html body :is(.outcome-option,.seller-priority-deferral-options button,.team-choice) :is(i,small,p) {color:var(--ds-muted)!important}
+html body :is(.buyer-match-outcome-sheet,.appointment-market-insights-sheet,.appointment-market-insights-actions) {background:var(--ds-surface)!important;color:var(--ds-ink)!important;border-color:var(--ds-rule)!important;box-shadow:none!important}
+
+html body .release-version {display:block;margin:20px 0;color:var(--ds-muted);font-size:11px;letter-spacing:.04em}
+/* iPhone QA: remove unused header reservations while retaining every action. */
+html body #app .topbar .top-actions.date-nav-visible {
+  display:flex!important;width:auto!important;max-width:174px!important;gap:6px!important;
+}
+html body #app .topbar #backToday.is-placeholder {display:none!important}
+html body #app .topbar #viewTitle {
+  white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+  text-wrap:nowrap!important;line-height:1.2!important;
+}
+html body :is(h1,h2,h3,h4,p,small,.empty) {text-transform:none!important}
+html body #app :is(.team-account-summary,.marketpulse-automation-card,.marketpulse-automation-route) {
+  background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding-inline:0!important;
+}
+html body #app .profile-avatar {background:#ffffff18!important;color:var(--ds-hero-ink)!important;border:0!important;border-radius:8px!important;box-shadow:none!important}
+html body #app :is(.off-day-quick-menu,.scheduled-day-quick-menu) button {border-radius:8px!important;box-shadow:none!important}
+html body #app :is(.off-day-quick-menu) button {background:var(--ds-surface)!important;border-color:var(--ds-rule)!important;color:var(--ds-info)!important}
+html body #app :is(.contacts-head,.buyer-results-head,.appointment-destination-card,.team-account-heading,.marketpulse-automation-heading) strong {font-weight:500!important}
+html body #app .contacts-head h3 {font-weight:500!important}
+/* Keep metric copy inside its ledger row, including wrapped pacing text. */
+html body #todayView .metric {padding-block:6px!important}
+html body #todayView .metric-copy>small {margin-top:3px!important;line-height:1.2!important;text-transform:none!important}
+html body #todayView .metric-copy>em {font-size:10.5px!important;font-weight:500!important;line-height:1.2!important;margin-top:3px!important;text-transform:none!important;letter-spacing:0!important}
+html body #todayView .metric-copy>strong {font-size:25px!important;line-height:1!important;margin-top:4px!important}
+html body #app #scheduleView :is(.timeline-overview,.daily-timeline) {
+  background:transparent!important;border:0!important;border-bottom:1px solid var(--ds-rule)!important;
+  border-radius:0!important;box-shadow:none!important;padding-inline:0!important;
+}
+html body #app #scheduleView .timeline-overview>strong {font-weight:500!important;font-size:18px!important;line-height:1.3!important;text-transform:none!important}
+html body #app #scheduleView .timeline-item :is(strong,small) {text-transform:none!important}
+html body #app #insightsView #leaderboardRing {background:conic-gradient(var(--ds-accent) calc(var(--score)*1%),#ffffff29 0)!important}
+html body #app #insightsView #leaderboardRing::after {background:var(--ds-hero)!important}
+html body #app #insightsView #leaderboardRing strong {color:var(--ds-hero-ink)!important;font-weight:500!important}
+html body #app #insightsView #leaderboardRing span {color:var(--ds-hero-muted)!important}
+@media(max-height:740px) {
+  html body #todayView.dashboard.active {overflow-y:auto!important;grid-template-rows:auto auto auto!important}
+  html body #todayView .metrics {min-height:380px!important}
+}
+html body #app :is(.view-head,.timeline-view-head,.leaderboard-head) {width:auto!important;max-width:100%!important;min-width:0!important;margin-inline:0!important}
+html body #app #scheduleView .timeline-command-actions {padding-inline-end:6px!important;box-sizing:border-box}
+/* Keep expanded tap areas and rotated disclosure glyphs inside their rows. */
+html body #app .my-market-signal-head {padding-inline-end:6px}
+html body #app :is(.my-market-selects label,.my-market-estimate-label,.my-market-controls>label)::after {right:10px!important}
+/* Resolve legacy screen-specific action overrides to the shared action style. */
+html body :is(#app #todayView,#app #scheduleView,#app #prospectingView,#app #appointmentsView,#app #settingsView,#authGate,#taskComposerModal) :is(.primary,.prospecting-add) {
+  background:var(--ds-accent)!important;border-color:var(--ds-accent)!important;color:#fff!important;
+  border-radius:var(--ds-control-radius)!important;box-shadow:none!important;font-weight:500!important;
+}
+html[data-theme="dark"] body :is(#app #todayView,#app #scheduleView,#app #prospectingView,#app #appointmentsView,#app #settingsView,#authGate,#taskComposerModal) :is(.primary,.prospecting-add) {color:#22150f!important}
+html body #app strong {text-transform:none!important}
+html body #app .pipeline-summary-card {background:transparent!important;border:0!important;border-inline-start:1px solid var(--ds-rule)!important;border-radius:0!important;box-shadow:none!important;padding:8px 12px!important}
+html body #app .pipeline-summary-card:first-child {border-inline-start:0!important;padding-inline-start:0!important}
+html body #app .pipeline-summary-card :is(span,strong) {color:var(--ds-ink)!important;font-weight:500!important}
+html body #app .pipeline-summary-card span {color:var(--ds-muted)!important}
+html body #app .pipeline-temperature-filter button {color:var(--ds-secondary)!important;background:transparent!important;border:1px solid var(--ds-rule)!important;box-shadow:none!important;border-radius:8px!important;font-weight:500!important}
+html body #app .pipeline-temperature-filter button.active {color:var(--ds-accent)!important;background:var(--ds-accent-soft)!important;border-color:var(--ds-accent)!important}
+html body #app .prospecting-hero>div>strong {font-size:32px!important;line-height:1.1!important;font-weight:500!important}
+html body #app :is(.prospecting-hero small,.prospecting-hero em,.pipeline-overview small,.pipeline-timeframe small) {font-weight:400!important;text-transform:none!important;color:var(--ds-muted)!important}
+html body #app .pipeline-timeframe .empty :is(strong,small) {display:block;line-height:1.5}
+html body #app .tabbar span {font-size:clamp(7px,2.1vw,9px)!important;white-space:nowrap}
+html body :is(#app,#authGate,#taskComposerModal) :is(input,textarea)::placeholder {font-weight:400!important;color:var(--ds-muted)!important;text-transform:none!important}
