@@ -1058,3 +1058,74 @@ html body #app #insightsView #leaderboardList .leaderboard-performance-metric {w
 html body #app #insightsView #leaderboardList .leaderboard-performance-metric>:is(strong,small) {text-align:left!important;width:auto!important;min-width:0!important}
 html body #app #insightsView #leaderboardFindMe {min-height:44px;min-width:44px;padding:8px 12px;border:1px solid var(--ds-rule);border-radius:8px;background:transparent;color:var(--ds-secondary);font-size:12px;font-weight:500;line-height:1.3}
 html body #app #insightsView .leaderboard-head-actions {flex-wrap:wrap!important}
+/* v1.46.8 — Clear People. Scoped presentation; existing actions remain authoritative. */
+html body #app #prospectorBuyersPanel .buyer-work-summary {padding:20px 0 16px;border-bottom:1px solid var(--ds-rule)}
+html body #app #prospectorBuyersPanel .buyer-work-summary h2 {font-size:21px!important;margin:6px 0!important}
+html body #app #prospectorBuyersPanel .buyer-work-summary small {font-size:12px;color:var(--ds-muted)}
+html body #app #prospectorBuyersPanel .buyer-work-summary dl {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:20px 0 0}
+html body #app #prospectorBuyersPanel .buyer-work-summary dl>div {padding:0 12px;border-left:1px solid var(--ds-rule)}
+html body #app #prospectorBuyersPanel .buyer-work-summary dl>div:first-child {border:0;padding-left:0}
+html body #app #prospectorBuyersPanel .buyer-work-summary dt {font-size:11px;color:var(--ds-muted);margin-bottom:6px}
+html body #app #prospectorBuyersPanel .buyer-work-summary dd {margin:0;font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--ds-ink)}
+html body #app #prospectorBuyersPanel :is(.buyer-overview,.buyer-browse-controls,.buyer-list-shell) {padding:0!important;margin:0!important;border:0!important;background:transparent!important;box-shadow:none!important}
+html body #app #prospectorBuyersPanel .buyer-quick-filters {display:flex!important;gap:16px!important;padding:8px 0 0!important;border-bottom:1px solid var(--ds-rule);overflow:visible!important}
+html body #app #prospectorBuyersPanel .buyer-quick-filters button {flex:0 1 auto!important;width:auto!important;min-width:44px!important;min-height:44px!important;padding:10px 0!important;border:0!important;border-bottom:2px solid transparent!important;border-radius:0!important;background:transparent!important;color:var(--ds-muted)!important;font-size:13px!important;box-shadow:none!important}
+html body #app #prospectorBuyersPanel .buyer-quick-filters button.active {color:var(--ds-ink)!important;border-bottom-color:var(--ds-ink)!important;background:transparent!important}
+html body #app #prospectorBuyersPanel #toggleBuyerFilters {margin-left:auto!important}
+html body #app #prospectorBuyersPanel .buyer-results-head {padding:8px 0!important;margin:0!important;min-height:48px!important;border-bottom:1px solid var(--ds-rule)!important;font-size:11px!important;gap:8px!important}
+html body #app #prospectorBuyersPanel #toggleArchivedBuyers {min-height:44px!important;padding:8px!important;font-size:12px!important;color:var(--ds-secondary)!important}
+html body #app #prospectorBuyersPanel .buyer-card {padding:16px 0!important;margin:0!important;gap:10px!important;background:transparent!important;border-radius:0!important;box-shadow:none!important}
+html body #app #prospectorBuyersPanel .buyer-row-profile {padding:0!important;gap:5px!important;border:0!important;background:transparent!important;text-align:left!important;min-width:0!important}
+html body #app #prospectorBuyersPanel .buyer-row-head {gap:12px!important;align-items:start!important}
+html body #app #prospectorBuyersPanel .buyer-row-identity {min-width:0!important}
+html body #app #prospectorBuyersPanel .buyer-row-identity strong {font-size:17px!important;line-height:1.3!important;overflow-wrap:anywhere}
+html body #app #prospectorBuyersPanel :is(.buyer-row-brief,.buyer-row-location) {font-size:12px!important;line-height:1.5!important;color:var(--ds-secondary)!important;white-space:normal!important;overflow-wrap:anywhere}
+html body #app #prospectorBuyersPanel .buyer-row-location {color:var(--ds-muted)!important}
+html body #app #prospectorBuyersPanel .buyer-row-next {padding:8px 0 0!important;margin:0!important;border:0!important;gap:6px!important;flex-wrap:wrap!important;font-size:11px!important;color:var(--ds-muted)!important;text-transform:none!important}
+html body #app #prospectorBuyersPanel :is(.buyer-next-overdue,.buyer-next-today)>span:first-child {color:var(--ds-danger)!important;font-weight:500!important}
+html body #app #prospectorBuyersPanel :is(.buyer-position-tag,.buyer-archived-pill) {background:transparent!important;border:0!important;padding:0!important;color:var(--ds-secondary)!important;font-size:10px!important;font-style:normal!important;font-weight:400!important}
+html body #app #prospectorBuyersPanel .buyer-position-summary {margin-left:auto}
+html body #app #prospectorBuyersPanel .buyer-card-actions {display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;margin:10px 0 0!important;padding:0!important}
+html body #app #prospectorBuyersPanel .buyer-card-restore {grid-template-columns:1fr!important}
+html body #app #prospectorBuyersPanel .buyer-card-actions :is(button,a),html body #app #prospectDetail .person-profile-actions :is(button,a) {height:44px!important;min-height:44px!important;min-width:0!important;border:1px solid var(--ds-rule)!important;border-radius:8px!important;background:var(--ds-soft)!important;box-shadow:none!important;color:var(--ds-ink)!important;font-size:12px!important;padding:10px 4px!important;text-decoration:none!important;display:flex;align-items:center;justify-content:center}
+html body #app #prospectorBuyersPanel .buyer-card-actions [data-call-buyer],html body #app #prospectDetail .person-profile-actions [data-prospect-call] {background:var(--ds-ink)!important;color:var(--ds-canvas)!important;border-color:var(--ds-ink)!important}
+html body #app #prospectorBuyersPanel .prospect-temp,html body #app #prospectDetail .person-profile-head>.prospect-temp {display:inline-flex!important;align-items:center;gap:5px!important;white-space:nowrap!important;min-width:0!important;background:transparent!important;border:0!important;padding:4px 0!important;font-size:11px!important;font-weight:500!important;font-style:normal!important;color:var(--ds-secondary)!important}
+html body #app #prospectorBuyersPanel .prospect-temp::before,html body #app #prospectDetail .person-profile-head>.prospect-temp::before {content:'';width:6px;height:6px;flex:0 0 6px;border-radius:50%;background:var(--ds-muted)}
+html body #app #prospectorBuyersPanel .temp-hot::before,html body #app #prospectDetail .temp-hot::before {background:var(--ds-danger)}
+html body #app #prospectorBuyersPanel .temp-warm::before,html body #app #prospectDetail .temp-warm::before {background:var(--ds-accent)}
+html body #app #prospectDetail>.prospect-detail-nav {display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;padding:0 0 8px!important}
+html body #app #prospectDetail>.prospect-detail-nav>button {flex:0 0 auto!important;width:auto!important;min-width:44px!important;min-height:44px!important;padding:8px 12px!important;border:1px solid var(--ds-rule)!important;border-radius:8px!important;background:var(--ds-soft)!important;color:var(--ds-ink)!important;font-size:13px!important;box-shadow:none!important}
+html body #app #prospectDetail .person-profile-head {grid-template-columns:minmax(0,1fr) auto!important;padding:20px 0 16px!important;gap:12px!important}
+html body #app #prospectDetail .person-profile-head>.prospect-avatar {display:none!important}
+html body #app #prospectDetail .person-profile-head h2 {font-size:28px!important;margin:6px 0 8px!important;line-height:1.15!important}
+html body #app #prospectDetail .person-profile-head small {font-size:13px!important;overflow-wrap:anywhere}
+html body #app #prospectDetail .prospect-profile-grid {display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;padding:0!important;border:0!important;border-bottom:1px solid var(--ds-rule)!important;gap:0!important;margin:0!important}
+html body #app #prospectDetail .prospect-profile-grid>div {padding:14px 0!important;border:0!important;border-bottom:1px solid var(--ds-rule)!important}
+html body #app #prospectDetail .prospect-profile-grid>div:nth-child(even) {padding-left:16px!important}
+html body #app #prospectDetail .prospect-profile-grid>div:nth-last-child(-n+2) {border-bottom:0!important}
+html body #app #prospectDetail .prospect-profile-grid span {font-size:10px!important;letter-spacing:.08em!important;color:var(--ds-muted)!important}
+html body #app #prospectDetail .prospect-profile-grid strong {font-size:14px!important;color:var(--ds-ink)!important;margin-top:5px;display:block;overflow-wrap:anywhere}
+html body #app #prospectDetail .device-contact-action {padding:16px 0!important;min-height:64px!important;margin:0!important;border:0!important;border-bottom:1px solid var(--ds-rule)!important;border-radius:0!important;background:transparent!important;color:var(--ds-ink)!important;box-shadow:none!important;text-align:left!important}
+html body #app #prospectDetail .device-contact-action strong {font-size:14px!important;font-weight:500!important}
+html body #app #prospectDetail .device-contact-action small {font-size:12px!important;line-height:1.5!important;color:var(--ds-muted)!important;overflow-wrap:anywhere}
+html body #app #prospectDetail .device-contact-action b {color:var(--ds-muted)!important}
+html body #app #prospectDetail :is(.seller-estimate,.prospect-buyer-role,.prospect-selling-status,.profile-notes) {padding:20px 0!important;margin:0!important;border:0!important;border-bottom:1px solid var(--ds-rule)!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+html body #app #prospectDetail .seller-estimate {display:flex!important;flex-wrap:wrap!important;gap:8px 12px!important;align-items:center!important}
+html body #app #prospectDetail .seller-estimate>div {flex:1 1 180px;min-width:0}
+html body #app #prospectDetail .seller-estimate :is(span,small,p) {font-size:11px!important;line-height:1.5!important;color:var(--ds-muted)!important}
+html body #app #prospectDetail .seller-estimate>small,html body #app #prospectDetail .seller-estimate>p {flex:1 0 100%;margin:0!important}
+html body #app #prospectDetail .seller-estimate strong {font-size:24px!important;line-height:1.25!important;letter-spacing:-.035em!important;overflow-wrap:anywhere}
+html body #app #prospectDetail .seller-estimate em {background:transparent!important;color:var(--ds-secondary)!important;padding:0!important;font-size:11px!important;font-style:normal!important}
+html body #app #prospectDetail .prospect-buyer-role {display:flex!important;flex-wrap:wrap!important;gap:12px!important;align-items:center!important}
+html body #app #prospectDetail .prospect-buyer-role>div {flex:1 1 170px!important;min-width:0}
+html body #app #prospectDetail .prospect-buyer-role span {font-size:10px!important;color:var(--ds-muted)!important;letter-spacing:.08em!important}
+html body #app #prospectDetail .prospect-buyer-role strong {font-size:14px!important}
+html body #app #prospectDetail .prospect-buyer-role small {font-size:11px!important;line-height:1.5!important;color:var(--ds-muted)!important}
+html body #app #prospectDetail .prospect-buyer-role>button {min-height:44px!important;padding:10px 12px!important;border:1px solid var(--ds-rule)!important;border-radius:8px!important;background:var(--ds-soft)!important;color:var(--ds-ink)!important;font-size:12px!important}
+html body #app #prospectDetail .profile-notes h3 {font-size:14px!important;margin:0 0 8px!important}
+html body #app #prospectDetail .profile-notes .prospect-background {border:0!important;padding:0!important;margin:0!important;font-size:13px!important;line-height:1.6!important;color:var(--ds-secondary)!important;white-space:pre-wrap;overflow-wrap:anywhere}
+html body #app #prospectDetail .prospect-history {padding:8px 0!important}
+html body #app #prospectDetail .prospect-history article {padding-block:14px!important}
+html body #app #prospectorBuyersPanel :is(button,a):focus-visible,html body #app #prospectDetail :is(button,a):focus-visible {outline:2px solid var(--ds-focus)!important;outline-offset:3px!important}
+html body #app #prospectorBuyersPanel .buyer-row-identity strong {white-space:normal!important;overflow:visible!important;text-overflow:clip!important}
+html body #app #prospectorBuyersPanel .buyer-row-next>span {text-transform:none!important}

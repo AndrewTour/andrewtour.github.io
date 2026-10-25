@@ -1,3 +1,67 @@
+# AGNT v1.46.8 — Clear People
+
+Baseline: v1.46.7 Clear Leaderboard, retaining the confirmed navigation stability
+contract. Buyers and contact profiles now use the open Day Plan hierarchy and
+the approved Vercel reference: monochrome surfaces, restrained status dots,
+measured spacing and consistent 44px action controls.
+
+Buyers:
+- A compact summary shows Hot, Due now (today and overdue), and No follow-up
+  for buyers in the current search/filter/archive view. The scope is labelled.
+- Flat quick-filter tabs with announced selected states, compact results/archive
+  controls and open record rows.
+- Names wrap safely, with criteria, suburb and follow-up timing beneath.
+- Temperature uses a labelled dot; buyer position is quiet text.
+- Call, SMS and Follow up share equal widths and 44px heights.
+- Search, A–Z order, advanced filters, archived access, restore, buyer matches,
+  seller opportunities and all existing action hooks are retained.
+
+Contact profiles:
+- Compact Back/Edit controls and identity without decorative avatar circles.
+- Consistent Call, Message and Log Contact controls.
+- Next follow-up, last contact, motivation and contact count now appear directly
+  after the main actions, ahead of secondary tools and property intelligence.
+- Phone contact export and property details remain adjacent in their existing
+  order. Property estimates retain evidence and confidence qualifications.
+- Buyer/seller links, selling timeframe, background and history remain available.
+- Shared profile controls also retain the established Buyer detail rhythm.
+
+Engineering:
+Only renderBuyerProfiles and renderProspectDetail change outside version markers.
+No new observers, timers, row listeners, persisted UI state or data writes.
+All navigation coalescing/cancellation, list release/cache invalidation,
+form/draft protections, page isolation and diagnostics helpers are unchanged.
+1,100 other function declarations match the selected baseline byte for byte.
+Firebase/auth, rules/paths, UID/team isolation, record shapes, storage, local-first
+persistence, offline queues and sync remain unchanged. Worker/runtime edits are
+release/cache identifiers only. No Firebase Console, rules, indexes or GitHub
+settings changes are needed.
+
+Validation:
+JavaScript syntax, local HTML assets and mocked complete service-worker install
+(10 assets) pass. WebKit and Chromium each pass 15 browser check groups covering both themes at
+320/390/430px, bounds and 44px/equal-width actions, profile information order,
+summary counts, quick filters, search, advanced filters, follow-up entry,
+contact/property editors, archive/restore control and empty states. Screenshots
+were inspected in light and dark mode. Each engine also passes 1,000 rapid menu
+events using 1,500 dual-role test contacts: one final commit per burst, bounded
+DOM, repeat People preserving Buyers, and inactive list release. No uncaught
+browser errors. Complete replacement ZIP integrity is verified.
+Inherited legacy check-fixture failures documented in previous releases remain;
+they are not represented as passing. Testing uses local fixture records with
+Firebase startup bypassed only in the test response, never in the shipped app.
+Physical installed iPhone PWA, live authentication/team sync, real calls/SMS and
+network-loss testing were not performed. No deployment performed.
+
+Changed files: index.html, app.js, visual-system.css, runtime.js,
+service-worker.js, RELEASE-NOTES.md. Original styles.css, cleanup.css,
+Firebase configuration/rules, manifest and icons are unchanged.
+
+Replace all 14 files, including icons/, then fully close and reopen AGNT.
+Settings should show v1.46.8. No reset, sign-out or reinstall is needed.
+
+---
+
 # AGNT v1.46.7 — Clear Leaderboard
 
 Baseline: v1.46.6 Sellers and Market. Day Plan hierarchy now carries into
