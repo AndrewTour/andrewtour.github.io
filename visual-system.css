@@ -1966,3 +1966,12 @@ html[data-theme] body :is(#teamOnboarding,#teamManager):is(#teamOnboarding,#team
 html[data-theme] body #app #prospectorTodayPanel button {min-height:44px!important;min-width:44px!important}
 html[data-theme] body #app #prospectorTodayPanel .prospecting-stat span {font-size:10px!important;letter-spacing:0!important}
 html[data-theme] body #app #prospectorTodayPanel #clearProspectFilter {width:auto!important;min-width:80px!important;flex-shrink:0!important;font-size:12px!important}
+/* v1.46.17 — Appointment editing shares the normal booking page and its Back control. */
+html[data-theme] body #app #appointmentsView.appointment-edit-mode::before {display:none!important;content:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+html[data-theme] body #app #appointmentsView.appointment-edit-mode #appointmentForm {
+  position:static!important;inset:auto!important;z-index:auto!important;transform:none!important;
+  box-sizing:border-box!important;width:100%!important;max-width:100%!important;height:auto!important;
+  max-height:none!important;overflow:visible!important;margin:0!important;padding:0 0 24px!important;
+  border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;
+}
+html[data-theme] body #app #appointmentsView.appointment-edit-mode .workspace-booking-heading {display:flex!important;position:static!important}

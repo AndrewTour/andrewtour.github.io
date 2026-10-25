@@ -1,3 +1,79 @@
+# AGNT v1.46.17 — Navigation and Back Continuity
+
+Baseline: complete v1.46.16 Outcome, Leaderboard and Action Fixes package.
+This release implements the navigation audit and removes Leaderboard Find me.
+
+- Appointment editing now uses the normal full-page booking surface. Its Back
+  control remains visible and tappable rather than sitting beneath a legacy
+  fixed edit overlay. New/edit bookings return to their actual entry: Today,
+  Day Plan, meeting history, contact/log workflow or Market property.
+- Buyer edit Back returns to the buyer profile. Buyer/seller role detours and
+  property editing retrace the originating role and page. Day Plan/Today direct
+  buyer entry now reveals the generated profile and its Back action.
+- Opening profiles starts at the top. Back restores the source list scroll,
+  search and view. Settings detours preserve the precise page, role, active
+  editor and scroll position instead of only the underlying view ID.
+- A conversation log's actual form nodes survive a temporary Edit Contact
+  detour. Back or successful contact save restores the unfinished note and
+  selected outcome. Completed logs/editors consume their transient return frame
+  so subsequent Back does not reopen a completed editor or repeat a profile.
+- Follow-ups returns to the originating People view, Today or Day Plan; a direct
+  entry defaults to People. Its label reflects Today/Day Plan where applicable.
+- Broadcast first-step Back returns to its menu; menu Back returns to Reach or
+  its real entry. Contextual MarketPulse broadcasts return to their originating
+  Day Plan/Today/Hot Spotting screen. Leaving Broadcast clears its fullscreen
+  shell state and restores the progress control to the builder.
+- MarketPulse establishes a fresh entry on each opening, including tab entry.
+  Back returns to Today, Day Plan, Market or Hot Spotting without reusing an
+  older Today destination. Back labels match the destination.
+- Adding a buyer from an imported call-list session returns to that same active
+  session item. Pipeline session review closes to Reach; Hot Spotting review
+  closes to Hot Spotting. Session Back/log Back retain progress.
+- Find me is removed from Leaderboard markup and both JS references. Ranking,
+  period/history controls and agent summaries are unchanged.
+- Booking completion checks the captured owner/navigation epoch before returning
+  to a screen. A delayed save still completes its captured workflow without
+  overriding later user navigation. No new network requests or backend writes
+  are introduced by navigation.
+
+Implementation: a transient return history is bounded to eight levels and
+scoped to the active UID. It retains form nodes only for nested form detours;
+profiles/lists are rebuilt from canonical records. Explicit root navigation and
+state reset release return references. Scroll restoration has owner/view/epoch
+checks. No new persisted storage keys, record fields, framework, dependencies,
+observers or repeating timers are shipped. Existing draft persistence remains.
+The bounded 60ms+RAF menu coalescing/cancellation, inactive list release, page
+isolation, diagnostic limits and core save/sync handlers remain byte-identical.
+
+Changed files: app.js, index.html, visual-system.css, RELEASE-NOTES.md,
+runtime.js and service-worker.js (the latter two only version/cache markers).
+Original styles.css and cleanup.css, Firebase configuration, Firestore rules,
+manifest and icons are unchanged. Auth, UID permissions, collection paths,
+record shapes, import rules, timers and sync mechanisms are preserved.
+No Firebase Console, rules/indexes, GitHub settings or configuration changes.
+
+Validation: local Chromium and Linux WebKit fixture navigation checks cover
+profiles/roles/editors, incomplete log preservation, return labels/origins,
+MarketPulse and Broadcast detours, new/edit bookings, meeting history, Settings,
+scroll continuity, call-list and Pipeline/Hot Spotting sessions, UID rejection,
+bounded return history and removal of Find me. Save checks cover standalone and
+prospect bookings, buyer inspections, existing contact/buyer/property edits,
+filtered Buyers and delayed booking completion after navigating elsewhere.
+Booking edit screenshots/tap bounds are checked in light/dark at 320/390/430px.
+Each engine receives 1,000 rapid menu actions with 1,500 contacts: one final route
+commit per burst and bounded DOM. Final assertions require no uncaught browser
+errors. Static checks cover JS syntax/parse, unchanged protected handlers/files,
+local assets and a complete mocked worker install of all 10 precache assets.
+The full 14-file replacement ZIP is checked for entry completeness and CRC.
+
+Limits: browser data is synthetic and local. No live Firebase account/team writes,
+Phone/Messages/SMS handoffs or physical iPhone/PWA runs are claimed. Transient
+return history is not a new cross-refresh navigation/draft persistence feature.
+No deployment is performed. Replace all 14 files, close/reopen the PWA and check
+AGNT v1.46.17 in Profile/Settings after updating.
+
+---
+
 # AGNT v1.46.16 — Outcome, Leaderboard and Action Fixes
 
 Baseline: complete v1.46.15 Complete Visual System replacement package.
