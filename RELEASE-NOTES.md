@@ -1,3 +1,63 @@
+# AGNT v1.46.9 — Cohesive People
+
+Baseline: v1.46.8 Clear People. Sellers is the approved design specification.
+All people, Buyers and Follow-ups now follow its visual hierarchy; the Sellers
+screen itself and its eligibility, filters, sorting and calculations are intact.
+
+- Shared row rhythm: 64px timing gutter (54px on narrow screens), 12px gap
+  (10px below 375px), 16px vertical padding, 15px/500 names with 1.35 line height,
+  12px supporting copy, 10px labels and small labelled temperature dots.
+- Buyers moves follow-up timing to the left, status/role above the name and
+  keeps criteria, suburbs, property-match alerts and opportunities together.
+  Existing Call/SMS/Follow up controls remain equal sized, 44px high and aligned
+  under the record copy. Narrow rows stay within the available width.
+- Buyer overview matches Sellers' 20px heading, 28px total, 11px scope copy and
+  20px summary values above 10px labels, with flat 12px filter controls.
+- All people uses the same summary and row typography, with follow-up timing,
+  name, role, property, phone and existing value-trend indicator. Alphabet jump,
+  search, CSV import, manage/select and archive workflows remain available.
+- Follow-ups uses the same compact summary and count, one quiet queue heading,
+  timing gutter, 15px names and 12px context. Clear, call and outcome controls
+  retain original record/type/source attributes and workflow bindings.
+
+Only presentation renderers change: buyerCard, renderBuyerProfiles, prospectCard,
+renderContactsList and followUpContextCardMarkup. Two shared markup helpers avoid
+separate timing/temperature treatments. 1,097 other function declarations are
+unchanged apart from the backup version marker. No new observers, timers, row
+listeners, persistent state, navigation changes or data writes are introduced.
+The confirmed rapid-navigation queue, cancellation, list release/cache cleanup,
+page isolation, form/draft retention and diagnostics contract is unchanged.
+
+Validation: 23 check groups per engine pass in Chromium and Linux WebKit, using
+local fixture records. Across light/dark themes at 320/390/430px, computed row
+font size, weight, line height, padding, gap and timing column match Sellers.
+Checks also cover viewport bounds, contained equal-width 44px Buyer actions,
+summary counts, contact selection, follow-up logging, search/filters, contact and
+property editor entry, archive/restore controls, empty states and profile timing.
+Screenshots of all three pages were inspected in both themes. Each engine passes
+1,000 rapid menu events with 1,500 dual-role records: one final route commit per
+burst, bounded DOM, correct inactive-list release and retained Buyers on repeat
+People entry. No uncaught browser errors.
+
+Syntax, protected-file comparisons, local asset links, complete mocked worker
+installation with 10 assets, manifest/icons and replacement ZIP CRC pass.
+Previously documented inherited legacy fixture failures are not claimed to pass.
+Physical installed iPhone PWA, live auth/team sync, real calls/SMS and network-loss
+testing were not performed. Test startup instrumentation is not shipped.
+
+Changed files: index.html, app.js, visual-system.css, runtime.js,
+service-worker.js, RELEASE-NOTES.md. Runtime/worker edits are release/cache
+identifiers only. Original styles.css, cleanup.css, Firebase configuration/rules,
+manifest and icons are unchanged. Firebase/auth, paths, UID/team isolation,
+records, local storage keys, offline behaviour and sync are untouched.
+No Firebase Console, rules/indexes or GitHub settings changes are required.
+No deployment performed.
+
+Replace all 14 files, including icons/, then fully close and reopen AGNT.
+Settings should show v1.46.9. No reset, sign-out or reinstall is needed.
+
+---
+
 # AGNT v1.46.8 — Clear People
 
 Baseline: v1.46.7 Clear Leaderboard, retaining the confirmed navigation stability

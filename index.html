@@ -9,9 +9,9 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.46.8-workspace">
-<link rel="stylesheet" href="cleanup.css?v=1.46.8-workspace">
-<link rel="stylesheet" href="visual-system.css?v=1.46.8-workspace">
+<link rel="stylesheet" href="styles.css?v=1.46.9-workspace">
+<link rel="stylesheet" href="cleanup.css?v=1.46.9-workspace">
+<link rel="stylesheet" href="visual-system.css?v=1.46.9-workspace">
 <title>AGNT</title>
 </head>
 <body>
@@ -707,23 +707,23 @@
         <section id="prospectorFollowUpPanel" class="prospector-followup-panel hidden" aria-live="polite">
           <button id="backFromFollowUps" class="market-pulse-back text-btn" type="button">‹ Back to People</button>
           <section class="followup-queue-hero glass">
-            <div><span>TODAY’S FOLLOW-UPS</span><h3>Every due conversation, in context</h3><p id="followUpQueueSummary">Loading the exact records behind this task.</p></div>
+            <div><span>TODAY’S FOLLOW-UPS</span><h3>Your next conversations</h3><p id="followUpQueueSummary">Loading the exact records behind this task.</p></div>
             <strong id="followUpQueueCount">0</strong>
           </section>
           <section class="followup-queue-shell glass">
-            <div class="prospecting-section-head"><div><span>ACTION QUEUE</span><h3>Who needs action and why</h3><small>Log an outcome or update the appointment to clear the task.</small></div></div>
+            <div class="prospecting-section-head"><div><span>ACTION QUEUE</span><h3>Due conversations</h3><small>Log an outcome or update the appointment to clear the task.</small></div></div>
             <div id="followUpContextQueue" class="followup-context-queue"></div>
           </section>
         </section>
         <section id="prospectorContactsPanel" class="prospecting-section prospector-contacts-panel glass hidden">
-          <div class="prospecting-section-head contacts-head"><div><span id="prospectContactsEyebrow">CONTACTS</span><h3 id="prospectContactsHeading">Your database</h3><small id="prospectContactCount">0 contacts · Sorted A–Z</small></div><div class="contacts-head-actions"><label class="prospect-import-button">Import CSV<input id="prospectCsvImport" type="file" accept=".csv,text/csv"></label><button id="toggleProspectBulk" class="text-btn manage-contacts-btn" type="button">Manage Contacts</button><button id="toggleArchivedContacts" class="text-btn manage-contacts-btn" type="button">Archived</button></div></div>
+          <div class="prospecting-section-head contacts-head"><div><span id="prospectContactsEyebrow">CONTACTS</span><h3 id="prospectContactsHeading">Your database</h3><small id="prospectContactCount">0 contacts · Sorted A–Z</small></div><strong id="peopleContactsTotal">0</strong><div class="contacts-head-actions"><label class="prospect-import-button">Import CSV<input id="prospectCsvImport" type="file" accept=".csv,text/csv"></label><button id="toggleProspectBulk" class="text-btn manage-contacts-btn" type="button">Manage Contacts</button><button id="toggleArchivedContacts" class="text-btn manage-contacts-btn" type="button">Archived</button></div></div>
           <div class="prospect-bulk-bar"><span id="prospectSelectedCount">0 selected</span><button id="selectAllProspects" class="text-btn" type="button">Select All</button><button id="restoreSelectedProspects" class="primary hidden" type="button" disabled>Restore</button><button id="deleteSelectedProspects" class="danger-btn" type="button" disabled>Delete</button></div>
           <div id="prospectContactList" class="prospect-list contacts-list"></div>
           <nav id="contactAlphabet" class="contact-alphabet hidden" aria-label="Jump to contact by first letter"></nav>
         </section>
         <section id="prospectorBuyersPanel" class="prospector-buyers-panel hidden" aria-live="polite">
           <section class="buyer-overview">
-            <div class="buyer-work-summary"><div><span class="workspace-eyebrow">BUYER PIPELINE</span><h2>Your next conversations</h2><small>Based on the buyers in this view</small></div><dl><div><dt>Hot</dt><dd id="buyerSummaryHot">0</dd></div><div><dt>Due now</dt><dd id="buyerSummaryDue">0</dd></div><div><dt>No follow-up</dt><dd id="buyerSummaryUnset">0</dd></div></dl></div>
+            <div class="buyer-work-summary"><div class="buyer-summary-head"><div><span class="workspace-eyebrow">BUYER PIPELINE</span><h2>Your next conversations</h2><small>Based on the buyers in this view</small></div><strong id="buyerSummaryTotal">0</strong></div><dl><div><dt>Hot</dt><dd id="buyerSummaryHot">0</dd></div><div><dt>Due now</dt><dd id="buyerSummaryDue">0</dd></div><div><dt>No follow-up</dt><dd id="buyerSummaryUnset">0</dd></div></dl></div>
             <div class="buyer-browse-controls">
               <div class="buyer-quick-filters" aria-label="Quick buyer filters">
                 <button class="active" type="button" data-buyer-quick-filter="All">All</button>
@@ -1080,7 +1080,7 @@ Andrew Tour | McGrath</textarea></label>
         <label class="file-btn secondary">Import backup<input id="importData" type="file" accept="application/json"></label>
         <button id="signOut" class="danger">Sign out</button>
         <p id="modeNote"></p>
-        <small class="release-version">AGNT v1.46.8</small>
+        <small class="release-version">AGNT v1.46.9</small>
       </div>
     </section>
   </main>
@@ -1231,7 +1231,7 @@ Andrew Tour | McGrath</textarea></label>
 
 
 
-<script src="runtime.js?v=1.46.8-workspace"></script>
-<script type="module" src="app.js?v=1.46.8-workspace"></script>
+<script src="runtime.js?v=1.46.9-workspace"></script>
+<script type="module" src="app.js?v=1.46.9-workspace"></script>
 </body>
 </html>
