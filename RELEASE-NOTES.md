@@ -1,3 +1,56 @@
+# AGNT v1.46.19 — Fullscreen Quick Call and History
+
+Baseline: verified complete v1.46.18 Full Replacement package.
+
+Quick Call now occupies one opaque fixed viewport above every app layer. The
+keypad, number field and call action sit in the lower part of the page for thumb
+reach, with a compact layout for short/landscape screens. Controls retain the
+approved monochrome visual language, reliable touch targets and light/dark modes.
+Underlying app navigation, contact rows and the alphabet index cannot show through
+or receive input. Closing returns to the same page and focus without navigating.
+
+History opens within the same full-screen surface. Back returns to the keypad
+and preserves its entered number; selecting an entry loads its exact number and
+requires the Call button to dial. Entries show number/name where known, time and
+logged outcome where available. Empty history has an explicit empty state.
+
+New AGNT call handoffs are recorded locally under the current UID, bounded to
+200 recent entries. Quick Call, imported buyer sessions, buyer-profile calls and
+direct contact/appointment links are covered. Existing saved daily call events
+are included only when they contain the actual phone number. No number is guessed
+from an old contact interaction. The phone's system call log is not accessible;
+this shows AGNT handoffs and does not assert a call connected unless logged.
+
+History does not increment call/connect metrics. Repeated outcome updates reuse
+the original handoff entry. Metrics still use the established outcome workflow.
+New pending manual calls include the owner UID; an old account's pending call and
+late outcome cannot write into another account's history or unlock its operation.
+Reset clears the private dialler DOM and restores underlying input availability.
+No Firebase paths, rules, authentication, cloud sync or permissions are changed.
+History is device-local; existing daily events retain their established sync.
+
+Validation: 105 scenario groups per engine (210 total) across local Chromium
+and Linux WebKit, including layout/input/history checks, cover
+320x568, 390x844, 430x932 and 844x390 in light/dark; full viewport bounds, opaque
+layer/tap coverage, bottom keypad positioning, contained fields and visible
+controls. Checks also cover number entry/paste/delete, history selection without
+automatic dialling, Back/Escape, repeated opening, corrupt history, escaped names,
+UID separation, history deduplication/cap and delayed outcome isolation. Synthetic
+phone handoffs are intercepted in the test harness; no real calls are made.
+Existing navigation, 1,000-action-per-engine menu stress, booking/save and v1.46.18
+stability regressions are run, with no uncaught browser errors accepted. Syntax,
+assets, protected handlers/configuration and mocked worker install are checked.
+The complete 14-file ZIP is validated by CRC and extracted-byte equality.
+
+Changed files: app.js, index.html, visual-system.css, runtime.js,
+service-worker.js and RELEASE-NOTES.md. Runtime/worker only change release/cache
+markers. Original styles.css/cleanup.css, Firebase files/rules, manifest and icons
+are unchanged. No Firebase Console, indexes or GitHub settings changes required.
+Not deployed. Physical iPhone Home Screen PWA/Phone handoffs and live Firebase
+were not tested; Linux WebKit is not a physical iPhone test.
+
+---
+
 # AGNT v1.46.18 — Stability and Performance
 
 Baseline: complete, confirmed v1.46.17 Navigation and Back Continuity package.

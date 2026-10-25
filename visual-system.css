@@ -1975,3 +1975,60 @@ html[data-theme] body #app #appointmentsView.appointment-edit-mode #appointmentF
   border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;
 }
 html[data-theme] body #app #appointmentsView.appointment-edit-mode .workspace-booking-heading {display:flex!important;position:static!important}
+
+/* v1.46.19 — Quick Call is one opaque viewport with a thumb-reachable keypad. */
+html[data-theme] body #manualDiallerModal#manualDiallerModal {
+  position:fixed!important;inset:0!important;z-index:2147480000!important;
+  width:100%!important;height:var(--app-height,100dvh)!important;min-height:0!important;max-height:none!important;
+  box-sizing:border-box!important;padding:max(16px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left))!important;
+  background:var(--ds-canvas)!important;opacity:1!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+  overflow:hidden!important;overscroll-behavior:none!important;transform:none!important;animation:none!important;
+}
+html[data-theme] body #manualDiallerModal#manualDiallerModal.open {display:flex!important;align-items:stretch!important;justify-content:center!important}
+html[data-theme] body #manualDiallerModal#manualDiallerModal .manual-dialler {
+  display:flex!important;flex-direction:column!important;width:min(100%,520px)!important;height:100%!important;min-height:0!important;max-height:100%!important;
+  margin:0 auto!important;padding:0!important;overflow:hidden!important;background:var(--ds-canvas)!important;
+  border:0!important;border-radius:0!important;box-shadow:none!important;transform:none!important;
+}
+html[data-theme] body #manualDiallerModal#manualDiallerModal .manual-dialler-head {
+  display:grid!important;grid-template-columns:44px minmax(0,1fr) 80px!important;align-items:center!important;flex:0 0 auto!important;
+  gap:8px!important;padding:0 0 16px!important;margin:0!important;border-bottom:1px solid var(--ds-rule)!important;text-align:left!important;
+}
+html[data-theme] body #manualDiallerModal#manualDiallerModal .manual-dialler-head button {width:auto!important;height:44px!important;padding:8px!important;font-size:13px!important;border-radius:8px!important}
+html[data-theme] body #manualDiallerModal#manualDiallerModal #closeManualDialler {font-size:24px!important}
+html[data-theme] body #manualDiallerModal#manualDiallerModal .manual-dialler-head h2 {font-size:20px!important;line-height:1.25!important;margin:4px 0 0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+html[data-theme] body #manualDiallerModal#manualDiallerModal .manual-dialler-pad {display:flex!important;flex-direction:column!important;align-items:center!important;flex:0 0 auto!important;width:100%!important;min-height:0!important;margin:auto 0 clamp(8px,3dvh,28px)!important;padding-top:16px!important}
+html[data-theme] body #manualDiallerModal#manualDiallerModal #manualDiallerNumber {
+  display:block!important;width:100%!important;height:56px!important;min-height:56px!important;margin:0 0 20px!important;
+  padding:8px!important;text-align:center!important;font-size:clamp(20px,6vw,28px)!important;font-weight:500!important;
+  background:transparent!important;border:0!important;border-bottom:1px solid var(--ds-rule)!important;border-radius:0!important;
+}
+html[data-theme] body #manualDiallerModal#manualDiallerModal #manualDiallerKeypad {display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;width:min(100%,300px)!important;gap:12px 24px!important;margin:0!important}
+html[data-theme] body #manualDiallerModal#manualDiallerModal #manualDiallerKeypad button {width:100%!important;height:clamp(56px,9dvh,72px)!important;min-height:56px!important;margin:0!important;padding:6px!important;border-radius:10px!important;background:var(--ds-soft)!important;border:1px solid var(--ds-rule)!important}
+html[data-theme] body #manualDiallerModal#manualDiallerModal #manualDiallerKeypad strong {font-size:28px!important;font-weight:500!important;line-height:1!important}
+html[data-theme] body #manualDiallerModal#manualDiallerModal #manualDiallerKeypad small {font-size:9px!important;font-weight:500!important;line-height:1.2!important;margin-top:5px!important;letter-spacing:.12em!important;color:var(--ds-secondary)!important}
+html[data-theme] body #manualDiallerModal#manualDiallerModal #manualDiallerCall {display:grid!important;place-items:center!important;flex-shrink:0!important;width:64px!important;height:60px!important;min-height:60px!important;margin:20px auto 0!important;padding:12px!important;background:var(--ds-ink)!important;color:var(--ds-canvas)!important;border-color:var(--ds-ink)!important;border-radius:10px!important}
+html[data-theme] body #manualDiallerModal#manualDiallerModal #manualDiallerCall svg {width:28px!important;height:28px!important;fill:currentColor!important}
+html[data-theme] body #manualDiallerModal#manualDiallerModal .manual-call-history {flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;overscroll-behavior:contain!important;padding:16px 0!important;-webkit-overflow-scrolling:touch}
+html[data-theme] body #manualDiallerModal#manualDiallerModal .manual-call-history>p {font-size:13px!important;line-height:1.5!important;color:var(--ds-secondary)!important;margin:0 0 20px!important}
+html[data-theme] body #manualDiallerModal#manualDiallerModal #manualCallHistoryList h3 {font-size:12px!important;line-height:1.5!important;font-weight:500!important;color:var(--ds-secondary)!important;margin:24px 0 8px!important;letter-spacing:0!important}
+html[data-theme] body #manualDiallerModal#manualDiallerModal #manualCallHistoryList .manual-call-history-row {display:flex!important;align-items:center!important;justify-content:space-between!important;gap:16px!important;width:100%!important;min-height:76px!important;padding:14px 0!important;text-align:left!important;border:0!important;border-bottom:1px solid var(--ds-rule)!important;border-radius:0!important;background:transparent!important;white-space:normal!important}
+html[data-theme] body #manualDiallerModal#manualDiallerModal .manual-call-history-row>span:first-child {min-width:0!important;flex:1!important}
+html[data-theme] body #manualDiallerModal#manualDiallerModal .manual-call-history-row strong {display:block!important;font-size:16px!important;line-height:1.4!important;font-weight:500!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+html[data-theme] body #manualDiallerModal#manualDiallerModal .manual-call-history-row small {display:block!important;font-size:12px!important;line-height:1.5!important;color:var(--ds-secondary)!important;margin-top:3px!important}
+html[data-theme] body #manualDiallerModal#manualDiallerModal .manual-call-history-time {display:flex!important;align-items:center!important;gap:12px!important;font-size:12px!important;white-space:nowrap!important;color:var(--ds-secondary)!important}
+html[data-theme] body #manualDiallerModal#manualDiallerModal .manual-call-history-time>span {font-size:20px!important;color:var(--ds-ink)!important}
+html[data-theme] body #manualDiallerModal#manualDiallerModal .manual-call-history-empty {padding:40px 0!important;text-align:center!important}
+html[data-theme] body #manualDiallerModal#manualDiallerModal .manual-call-history-empty p {font-size:13px!important;line-height:1.5!important;color:var(--ds-secondary)!important}
+html[data-theme] body #manualDiallerModal#manualDiallerModal [hidden] {display:none!important}
+@media(max-height:560px) {
+  html[data-theme] body #manualDiallerModal#manualDiallerModal {padding:8px 16px max(8px,env(safe-area-inset-bottom))!important;overflow-y:auto!important}
+  html[data-theme] body #manualDiallerModal#manualDiallerModal .manual-dialler-head {padding-bottom:8px!important}
+  html[data-theme] body #manualDiallerModal#manualDiallerModal .manual-dialler-pad {padding-top:8px!important;margin-bottom:8px!important}
+  html[data-theme] body #manualDiallerModal#manualDiallerModal #manualDiallerNumber {height:44px!important;min-height:44px!important;margin-bottom:8px!important;font-size:20px!important}
+  html[data-theme] body #manualDiallerModal#manualDiallerModal #manualDiallerKeypad {gap:6px 24px!important}
+  html[data-theme] body #manualDiallerModal#manualDiallerModal #manualDiallerKeypad button {height:44px!important;min-height:44px!important}
+  html[data-theme] body #manualDiallerModal#manualDiallerModal #manualDiallerKeypad strong {font-size:23px!important}
+  html[data-theme] body #manualDiallerModal#manualDiallerModal #manualDiallerKeypad small {font-size:8px!important;margin-top:2px!important}
+  html[data-theme] body #manualDiallerModal#manualDiallerModal #manualDiallerCall {height:48px!important;min-height:48px!important;margin-top:10px!important}
+}

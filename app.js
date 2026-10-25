@@ -66,19 +66,19 @@ let marketPulseReturnTarget='hotspotting',homeQuickProspectorReturn=false;
 let appointmentEditReturnState=null;
 let appointmentLinkedProspectId='';
 let pendingProspectAppointmentFlow=null;
-let manualDiallerNumber='',manualCallOutcome='';
+let manualDiallerNumber='',manualCallOutcome='',manualDiallerMode='keypad',manualDiallerReturnFocus=null,manualDiallerAppWasInert=false;
 let buyerSession={contacts:[],index:0,active:false,fileName:'',importedAt:0};
 let buyerQuickFilter='All',buyerBrowseMode='active',buyerFilterState={budgetMin:0,budgetMax:BUYER_BUDGET_MAX,suburb:'',bedrooms:0,bathrooms:0,cars:0,propertyType:'',stage:'',temperature:'',position:'',followUp:'',features:new Set()},pendingBuyerEditorContext=null;
 let buyerMatchOutcomeReturnFocus=null,buyerMatchSmsReturnGuardUntil=0,appointmentSmsReturnGuardUntil=0,hotSpotSmsAfterOutcome=false;
 let pendingSellerPriorityId='';
 let sellerPriorityDecisionPending=false;
 let sellerPriorityReturnView='';
-// v1.46.18 — isolate transient state and pending completions across account resets.
+// v1.46.19 — isolate transient state and pending completions across account resets.
 let accountStateEpoch=0,appointmentOutcomeModalEpoch=0;
 const appointmentOutcomeSaves=new Map();
 function normaliseTargets(raw={}){return Object.fromEntries(Object.entries(DEFAULTS).map(([key,fallback])=>{const value=Number(raw?.[key]);return[key,Number.isSafeInteger(value)&&value>0?value:fallback]}))}
 function resetAccountTransientState(){
-  accountStateEpoch++;appointmentOutcomeModalEpoch++;appointmentOutcomeSaves.clear();appointmentSubmitLocks.clear();
+  closeManualDialler({restoreFocus:false});manualDiallerNumber='';manualCallSaveBusy=false;closeManualCallOutcome({clear:false});accountStateEpoch++;appointmentOutcomeModalEpoch++;appointmentOutcomeSaves.clear();appointmentSubmitLocks.clear();
   clearTimeout(prospectingSaveTimer);clearTimeout(prospectingRetryTimer);prospectingSaveTimer=prospectingRetryTimer=null;
   pendingProspectingPayload=null;pendingProspectingSignature='';pendingProspectingRevision=0;prospectingWriteInFlight=false;lastProspectingSignature='';prospectingRetryDelay=2500;prospectingSaveWaiters.splice(0).forEach(({resolve})=>resolve());daySaveChains.clear();
   prospects=[];prospectInteractions=[];activeProspectId=null;prospectSection='market';prospectContactsMode='active';prospectBulkMode=false;selectedProspectIds.clear();
@@ -96,7 +96,7 @@ function resetAccountTransientState(){
 }
 function appointmentOutcomeSaveKey(id=pendingOutcomeAppointment?.id,date=pendingOutcomeAppointment?.sourceDate){return`${uid}|${date||''}|${id||''}`}
 
-// v1.46.18: bounded, UID-scoped workflow returns; no persisted records or routes.
+// v1.46.19: bounded, UID-scoped workflow returns; no persisted records or routes.
 let workflowDetailReturns=[],workflowEntries={booking:null,market:null,broadcast:null,followups:null,profile:null},workflowRestoring=false,workflowEpoch=0;
 function clearWorkflowReturns(){workflowDetailReturns=[];workflowEntries={booking:null,market:null,broadcast:null,followups:null,profile:null};workflowEpoch++;}
 function captureWorkflowPlace(){
@@ -3009,13 +3009,56 @@ function showBuyerSession(){if(!buyerSession.active)return;const host=$('#prospe
 function completeBuyerSessionCall(outcome,pending){if(pending?.source!=='buyer-session'||outcome==='Cancelled')return;const buyer=buyerSession.contacts.find(c=>c.id===pending.buyerId);if(buyer)buyer.status=outcome;while(buyerSession.index<buyerSession.contacts.length&&buyerSession.contacts[buyerSession.index].status)buyerSession.index++;saveBuyerSession();renderBuyerSessionHero()}
 function manualCallStorageKey(){return'agnt-manual-call-v126-device'}
 const MANUAL_CALL_SESSION_KEY='agnt-manual-call-session-v1';
-function readPendingManualCall(){for(const storage of [sessionStorage,localStorage]){try{const value=JSON.parse(storage.getItem(storage===sessionStorage?MANUAL_CALL_SESSION_KEY:manualCallStorageKey())||'null');if(value&&typeof value==='object')return value}catch{}}return null}
-function writePendingManualCall(value){const payload=value?JSON.stringify(value):'';for(const [storage,key] of [[sessionStorage,MANUAL_CALL_SESSION_KEY],[localStorage,manualCallStorageKey()]]){try{if(value)storage.setItem(key,payload);else storage.removeItem(key)}catch(err){console.warn('Manual call state could not be saved',err)}}}
+function readPendingManualCall(){for(const storage of [sessionStorage,localStorage]){try{const value=JSON.parse(storage.getItem(storage===sessionStorage?MANUAL_CALL_SESSION_KEY:manualCallStorageKey())||'null');if(value&&typeof value==='object'&&(!value.owner||value.owner===uid))return value}catch{}}return null}
+function writePendingManualCall(value){if(value){value={...value,owner:value.owner||uid};recordCallHistory(value)}const payload=value?JSON.stringify(value):'';for(const [storage,key] of [[sessionStorage,MANUAL_CALL_SESSION_KEY],[localStorage,manualCallStorageKey()]]){try{if(value)storage.setItem(key,payload);else storage.removeItem(key)}catch(err){console.warn('Manual call state could not be saved',err)}}}
 function normaliseDialNumber(value=''){let clean=String(value).replace(/[^+\d]/g,'');if(clean.includes('+'))clean=(clean.startsWith('+')?'+':'')+clean.replace(/\+/g,'');return clean.slice(0,18)}
 function displayDialNumber(value=''){const number=normaliseDialNumber(value);if(!number)return'\u00a0';const local=number.startsWith('+61')&&number.length>3?'0'+number.slice(3):number;if(/^04\d*$/.test(local)){const digits=local.slice(0,10);return [digits.slice(0,4),digits.slice(4,7),digits.slice(7,10)].filter(Boolean).join(' ')}return local.replace(/(\d{4})(?=\d)/g,'$1 ').trim()}
 function renderManualDialler(){const output=$('#manualDiallerNumber'),call=$('#manualDiallerCall'),display=manualDiallerNumber?displayDialNumber(manualDiallerNumber):'';if(output&&output.value!==display)output.value=display;if(call)call.disabled=normaliseDialNumber(manualDiallerNumber).replace(/\D/g,'').length<6}
-function openManualDialler(){manualDiallerNumber='';renderManualDialler();const modal=$('#manualDiallerModal');modal?.classList.add('open');modal?.setAttribute('aria-hidden','false');document.body.classList.add('manual-dialler-open')}
-function closeManualDialler(){const modal=$('#manualDiallerModal');modal?.classList.remove('open');modal?.setAttribute('aria-hidden','true');document.body.classList.remove('manual-dialler-open')}
+// Call history records AGNT handoffs, never the device's private Phone history.
+function callHistoryStorageKey(){return`${storagePrefix(uid)}call-history`}
+function normaliseCallHistoryRow(row){const number=normaliseDialNumber(row?.number),at=Number(row?.at||row?.launchedAt);return number.replace(/\D/g,'').length>=6&&Number.isFinite(at)&&at>0&&Number.isFinite(new Date(at).getTime())?{id:cleanText(row.id,100)||`${at}-${number}`,number,at,name:cleanText(row.name,120),outcome:cleanText(row.outcome,80)}:null}
+function readCallHistory(){try{const rows=JSON.parse(localStorage.getItem(callHistoryStorageKey())||'[]');return Array.isArray(rows)?rows.slice(0,200).map(normaliseCallHistoryRow).filter(Boolean):[]}catch{return[]}}
+function recordCallHistory(call){if(!call?.number||call.owner&&call.owner!==uid)return;const row=normaliseCallHistoryRow({id:call.id,number:call.number,at:call.launchedAt||call.at,name:call.buyerName||call.name,outcome:call.outcome});if(!row)return;const rows=readCallHistory(),existing=rows.find(item=>item.id===row.id);if(existing){row.at=existing.at;row.name=row.name||existing.name;row.outcome=row.outcome||existing.outcome}const next=[row,...rows.filter(item=>item.id!==row.id)].sort((a,b)=>b.at-a.at).slice(0,200);try{localStorage.setItem(callHistoryStorageKey(),JSON.stringify(next))}catch(err){console.warn('Call history could not be saved',err);toast('Call history could not be saved on this device.')}}
+function manualCallHistoryRows(){
+  const rows=readCallHistory(),seen=new Set(rows.map(row=>row.id));
+  // Backfill only events with the number actually saved, not a guessed current contact number.
+  let remaining=200;
+  for(const key of Object.keys(days).sort().reverse()){
+    for(const event of [...(days[key]?.events||[])].reverse()){
+      if(event?.type!=='calls'||!event.phone)continue;
+      const id=String(event.sourceInteractionId||event.id||''),row=normaliseCallHistoryRow({id,number:event.phone,at:event.at,outcome:String(event.label||'').startsWith('Quick Call · ')?String(event.label).slice(13):''});
+      if(row&&!seen.has(row.id)){seen.add(row.id);rows.push(row);if(--remaining<=0)break}
+    }
+    if(remaining<=0)break;
+  }
+  return rows.sort((a,b)=>b.at-a.at).slice(0,200);
+}
+const callHistoryTimeFormatter=new Intl.DateTimeFormat('en-AU',{hour:'numeric',minute:'2-digit'});
+function renderManualCallHistory(){
+  const rows=manualCallHistoryRows(),host=$('#manualCallHistoryList');if(!host)return;
+  const names=new Map();for(const p of prospects){const phone=normalisedPhoneDigits(primaryProspectPhone(p));if(phone&&!names.has(phone))names.set(phone,p.name)}
+  let lastDate='';host.innerHTML=rows.map(row=>{const day=dateKey(new Date(row.at)),heading=day!==lastDate?`<h3>${escapeHtml(day===todayKey()?'Today':fmtDate(day))}</h3>`:'';lastDate=day;const name=row.name||names.get(normalisedPhoneDigits(row.number))||'',number=displayDialNumber(row.number);return`${heading}<button type="button" class="manual-call-history-row" data-history-number="${escapeHtml(row.number)}" aria-label="Load ${escapeHtml(number)} into keypad"><span><strong>${escapeHtml(name||number)}</strong>${name?`<small>${escapeHtml(number)}</small>`:''}<small>${escapeHtml(row.outcome||'Opened in Phone')}</small></span><span class="manual-call-history-time">${escapeHtml(callHistoryTimeFormatter.format(new Date(row.at)))}<span aria-hidden="true">↗</span></span></button>`}).join('')||'<div class="manual-call-history-empty"><h3>No calls yet</h3><p>Numbers you call through AGNT will appear here.</p></div>';
+}
+function setManualDiallerMode(mode){
+  manualDiallerMode=mode==='history'?'history':'keypad';const history=manualDiallerMode==='history';
+  $('#manualDiallerPad').hidden=history;$('#manualCallHistory').hidden=!history;$('#manualDiallerTitle').textContent=history?'Call history':'Call a number';$('#manualDiallerHistoryToggle').hidden=history;
+  const back=$('#closeManualDialler');back.textContent=history?'‹':'×';back.setAttribute('aria-label',history?'Back to keypad':'Close keypad');
+  if(history){renderManualCallHistory();$('#manualCallHistory').scrollTop=0}else renderManualDialler();
+}
+function manualDiallerBack(){if(manualDiallerMode==='history')setManualDiallerMode('keypad');else closeManualDialler()}
+function openManualDialler(){
+  const modal=$('#manualDiallerModal');if(modal?.classList.contains('open'))return;
+  manualDiallerReturnFocus=document.activeElement;manualDiallerAppWasInert=Boolean($('#app')?.inert);manualDiallerNumber='';setManualDiallerMode('keypad');
+  modal?.classList.add('open');modal?.setAttribute('aria-hidden','false');document.body.classList.add('manual-dialler-open');if($('#app'))$('#app').inert=true;
+  $('#closeManualDialler')?.focus({preventScroll:true});
+}
+function closeManualDialler({restoreFocus=true}={}){
+  const modal=$('#manualDiallerModal'),wasOpen=modal?.classList.contains('open');modal?.classList.remove('open');modal?.setAttribute('aria-hidden','true');document.body.classList.remove('manual-dialler-open');
+  if(wasOpen&&$('#app'))$('#app').inert=manualDiallerAppWasInert;
+  $('#manualCallHistoryList')?.replaceChildren();manualDiallerMode='keypad';
+  if(restoreFocus&&wasOpen&&manualDiallerReturnFocus?.isConnected)manualDiallerReturnFocus.focus({preventScroll:true});manualDiallerReturnFocus=null;
+}
+
 function closeManualCallOutcome({clear=true}={}){const modal=$('#manualCallOutcomeModal');modal?.classList.remove('open');modal?.setAttribute('aria-hidden','true');document.body.classList.remove('manual-call-outcome-open');manualCallOutcome='';$('#manualCallOutcomeOptions')?.classList.remove('hidden');$('#manualCallPostActions')?.classList.add('hidden');if(clear)writePendingManualCall(null)}
 function showManualCallOutcome(){const pending=readPendingManualCall();if(!pending?.number||pending.outcomeLogged)return false;const modal=$('#manualCallOutcomeModal');if(!modal)return false;$('#manualCallOutcomeNumber').textContent=displayDialNumber(pending.number);const buyerButton=$('#manualCallSaveBuyer');if(buyerButton)buyerButton.textContent=pending.buyerProspectId?'Update buyer':'Add as buyer';$('#manualCallOutcomeOptions').classList.remove('hidden');$('#manualCallPostActions').classList.add('hidden');modal.classList.add('open');modal.setAttribute('aria-hidden','false');document.body.classList.add('manual-call-outcome-open');return true}
 function maybeShowManualCallOutcome(){const pending=readPendingManualCall();if(!pending?.number||pending.outcomeLogged)return false;return showManualCallOutcome()}
@@ -3023,14 +3066,14 @@ function launchManualCall(){const number=normaliseDialNumber(manualDiallerNumber
 let manualCallSaveBusy=false;
 async function applyManualCallOutcome(outcome,pending){if(!pending?.id||outcome==='Cancelled')return;const key=todayKey(),d=dayData(key);if(d.events.some(event=>event?.sourceInteractionId===pending.id))return;const connected=outcome==='Connected',at=Date.now();d.calls=Math.max(0,d.calls+1);d.events.push({id:uuid(),type:'calls',label:`Quick Call · ${outcome}`,delta:1,at,sourceInteractionId:pending.id,phone:pending.number});if(connected){d.connects=Math.max(0,d.connects+1);d.events.push({id:uuid(),type:'connects',label:'Quick Call · Connected',delta:1,at,sourceInteractionId:pending.id,phone:pending.number})}d.events=d.events.slice(-500);days[key]=d;haptic();await saveDay(key,{awaitCloud:false})}
 async function saveManualCallOutcome(outcome){
-  if(manualCallSaveBusy)return;manualCallSaveBusy=true;
+  if(manualCallSaveBusy)return;manualCallSaveBusy=true;const savingUid=uid,savingEpoch=accountStateEpoch,isCurrent=()=>savingUid===uid&&savingEpoch===accountStateEpoch;
   try{
   const pending=readPendingManualCall();if(!pending?.number)return closeManualCallOutcome();manualCallOutcome=outcome;const buyerMatchId=cleanText(pending.buyerMatchId,180),buyerId=cleanText(pending.buyerProspectId,80),isBuyerMatch=Boolean(buyerId&&buyerMatchId);
   if(outcome!=='Cancelled'){try{await applyManualCallOutcome(outcome,pending)}catch(err){console.error('Quick call metrics failed to save',err);toast('Call logged locally. Please check sync.')}}
-  completeBuyerSessionCall(outcome,pending);await logManualCallToBuyer(outcome,pending);const updated={...pending,outcome,outcomeLogged:true,loggedAt:Date.now()};writePendingManualCall(updated);renderAll();
+  if(!isCurrent())return;completeBuyerSessionCall(outcome,pending);await logManualCallToBuyer(outcome,pending);if(!isCurrent())return;const updated={...pending,outcome,outcomeLogged:true,loggedAt:Date.now()};writePendingManualCall(updated);renderAll();
   if(isBuyerMatch){closeManualCallOutcome();if(outcome==='Connected'){openBuyerMatchOutcome(buyerId,buyerMatchId,{contactMethod:'call'});return}if(outcome==='Cancelled'){toast('Property match left open');return}toast('Contact attempt saved · property stays open');return}
   $('#manualCallOutcomeOptions').classList.add('hidden');$('#manualCallPostActions').classList.remove('hidden');$('#manualCallResultIcon').textContent=outcome==='Cancelled'?'×':'✓';$('#manualCallResultTitle').textContent=outcome==='Cancelled'?'Call cancelled':'Call logged';$('#manualCallResultMeta').textContent=outcome==='Connected'?'+1 call · +1 connect':outcome==='Cancelled'?'No metrics added':'+1 call · No connect';
-  }finally{manualCallSaveBusy=false}
+  }finally{if(isCurrent())manualCallSaveBusy=false}
 }
 function manualCallPhone(){return readPendingManualCall()?.number||''}
 function saveManualCallAsContact(){const pending=readPendingManualCall(),phone=manualCallPhone(),buyer=pending?.source==='buyer-session'?buyerSession.contacts.find(item=>item.id===pending.buyerId):null;closeManualCallOutcome();switchView('prospectingView');setProspectorSection('contacts');openProspectEditor('',{prefill:{phone,name:buyer?.name||pending?.buyerName||'',address:buyer?.address||''}});requestAnimationFrame(()=>$('#prospectEditor input[name="name"]')?.focus({preventScroll:true}))}
@@ -3167,6 +3210,7 @@ function resumeAppointmentFollowUpCallReturn(){let pending=null;try{pending=JSON
 function primeDirectCallOutcome(link){
   if(!link||link.classList.contains('disabled'))return;
   const appointmentId=link.dataset.appointmentFollowupCall,contactId=link.dataset.prospectCall;
+  if(appointmentId||contactId){const number=normaliseDialNumber(decodeURIComponent(String(link.getAttribute('href')||'').replace(/^tel:/i,'')));recordCallHistory({id:prospectId(),number,launchedAt:Date.now()})}
   if(appointmentId){rememberAppointmentFollowUpCallReturn(appointmentId,link.dataset.sourceDate||selectedDate,link.dataset.callReturnMode||'');return}
   if(contactId){rememberProspectCallReturn(contactId,link.dataset.callFromSession==='1',link.dataset.callReturnMode||'');return}
   if(link.matches('[data-timeline-buyer-call]'))return;
@@ -5572,7 +5616,7 @@ function consumerAuthError(error,action='sign in'){
 }
 async function init(){bindViewport();bindAppLifecycle();loadLocal('local');await finaliseExpiredTimers();if(!configured()){revealStartupFallback('AGNT is temporarily unavailable. Please try again shortly.');return}startupReady=false;startupDeviceOnly=false;clearTimeout(startupWatchdog);startupWatchdog=setTimeout(()=>revealStartupFallback(),STARTUP_WATCHDOG_MS);try{const fb=initializeApp(firebaseConfig);auth=getAuth(fb);await setPersistence(auth,browserLocalPersistence);db=initializeFirestore(fb,{experimentalAutoDetectLongPolling:true,localCache:memoryLocalCache()});onAuthStateChanged(auth,u=>{if(startupDeviceOnly)return;if(u){if(creatingAccount){currentUser=u;return}if(cloud&&uid===u.uid&&startupReady)return;startCloud(u).catch(err=>{console.error('Cloud session failed to start',err);revealStartupFallback('AGNT could not finish loading. Please check your connection and try again.')})}else{markStartupReady();clearActiveSession();$('#bootGate')?.classList.add('hidden');setAuthScreenActive(true);$('#app').classList.add('hidden');$('#authGate').classList.remove('hidden')}})}catch(err){console.error(err);revealStartupFallback('AGNT is temporarily unavailable. Please try again shortly.')}}
 function showAuthMessage(msg){$('#authMessage').textContent=msg}
-// v1.46.18 — presentation routing over the existing workflow screens.
+// v1.46.19 — presentation routing over the existing workflow screens.
 function workspaceAreaForView(id=activeViewId()){
   if(id==='settingsView')return workspaceLastArea;
   if(id==='prospectingView')return prospectSection==='market'||prospectSection==='broadcast'||prospectSection==='today'&&prospectTodayMode==='dashboard'?'market':'people';
@@ -5962,7 +6006,10 @@ $('#prospectSearch').oninput=()=>{
 $('#addProspectButton').onclick=()=>prospectSection==='buyers'?openBuyerEditor():openProspectEditor();
 $('#addBuyerFromTab')&&($('#addBuyerFromTab').onclick=()=>openBuyerEditor());
 $('#openManualDialler').onclick=openManualDialler;
-$('#closeManualDialler').onclick=closeManualDialler;
+$('#closeManualDialler').onclick=manualDiallerBack;
+$('#manualDiallerHistoryToggle').onclick=()=>setManualDiallerMode('history');
+$('#manualCallHistoryList').onclick=e=>{const row=e.target.closest('[data-history-number]');if(!row)return;manualDiallerNumber=normaliseDialNumber(row.dataset.historyNumber);setManualDiallerMode('keypad');$('#manualDiallerCall')?.focus({preventScroll:true})};
+$('#manualDiallerModal').addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();manualDiallerBack();return}if(e.key!=='Tab')return;const nodes=[...e.currentTarget.querySelectorAll('button:not([disabled]),input')].filter(node=>node.getClientRects().length),first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}});
 $('#manualDiallerModal').onclick=e=>{if(e.target.id==='manualDiallerModal')closeManualDialler()};
 $('#manualDiallerKeypad').onclick=e=>{const key=e.target.closest('[data-dial-key]'),del=e.target.closest('[data-dial-delete]');if(key){const value=key.dataset.dialKey;if(value==='+'&&manualDiallerNumber)return;manualDiallerNumber=normaliseDialNumber(manualDiallerNumber+value);renderManualDialler();haptic()}else if(del){manualDiallerNumber=manualDiallerNumber.slice(0,-1);renderManualDialler();haptic()}};
 $('#manualDiallerNumber').addEventListener('input',e=>{manualDiallerNumber=normaliseDialNumber(e.target.value);renderManualDialler()});
@@ -6172,7 +6219,7 @@ $('#settingsView').addEventListener('change',event=>{const field=event.target;if
 $('#saveSettings').onclick=async()=>{const fields=['callsTarget','connectsTarget','dataTarget','weeklyKnockTarget'];const invalid=fields.find(id=>{const value=Number($('#'+id).value);return !Number.isSafeInteger(value)||value<=0});if(invalid){toast('Enter a whole number greater than zero for every target.');$('#'+invalid).focus();return}const savingOwner=uid,savingEpoch=accountStateEpoch;const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;calendarPreference=$('[name=calendarPreference]:checked')?.value==='apple'?'apple':'outlook';appearancePreference=normaliseAppearance($('[name=appearancePreference]:checked')?.value);applyAppearance(appearancePreference);settingsDraftFields.clear();await saveTargets();if(uid!==savingOwner||accountStateEpoch!==savingEpoch)return;if(cloud&&accountMode==='team'&&teamId&&uid){try{await setDoc(doc(db,'teams',teamId,'members',uid),{name:agentName,updatedAt:serverTimestamp()},{merge:true})}catch(err){console.error('Team profile name sync failed',err)}}renderAll();toast('Settings saved')};
 $('#signOut').onclick=async()=>{clearActiveSession();if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
 function mergeBackupRecords(current=[],incoming=[]){const byId=new Map();[...(Array.isArray(current)?current:[]),...(Array.isArray(incoming)?incoming:[])].forEach((item,index)=>{if(!item||typeof item!=='object')return;const id=cleanText(item.id,180)||`backup-record-${index}`;byId.set(id,item)});return[...byId.values()]}
-function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.46.18',exportedAt:new Date().toISOString(),targets,workDays,agentName,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
+function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.46.19',exportedAt:new Date().toISOString(),targets,workDays,agentName,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
 function restoreBuyerSessionBackup(value){if(!value||!Array.isArray(value.contacts))return false;buyerSession={contacts:value.contacts.map((contact,index)=>({id:cleanText(contact.id,80)||`buyer_${index}`,name:cleanText(contact.name,120)||'Unknown buyer',phone:normaliseDialNumber(contact.phone),address:cleanText(contact.address,240),doNotSms:Boolean(contact.doNotSms),status:cleanText(contact.status,40)})).filter(contact=>contact.phone),index:Math.max(0,Number(value.index)||0),active:Boolean(value.active),visible:false,fileName:cleanText(value.fileName,160),importedAt:Number(value.importedAt)||0};buyerSession.index=Math.min(buyerSession.index,buyerSession.contacts.length);return saveBuyerSession()}
 function syncImportedBackup(dayKeys=[],prospectingIncluded=false){if(!cloud)return;saveTargets().catch(err=>console.error('Imported settings sync failed',err));dayKeys.forEach(key=>saveDay(key,{quiet:true,awaitCloud:false,render:false}).catch?.(err=>console.error('Imported day sync failed',err)));if(prospectingIncluded)saveProspecting({render:false,awaitCloud:false}).catch(err=>console.error('Imported prospecting sync failed',err))}
 $('#exportDiagnostics')?.addEventListener('click',()=>{const data=window.agntRuntime?.export?.()||'[]',blob=new Blob([data],{type:'application/json'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='AGNT-runtime-diagnostics.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)});

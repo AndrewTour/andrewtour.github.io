@@ -9,9 +9,9 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.46.18-workspace">
-<link rel="stylesheet" href="cleanup.css?v=1.46.18-workspace">
-<link rel="stylesheet" href="visual-system.css?v=1.46.18-workspace">
+<link rel="stylesheet" href="styles.css?v=1.46.19-workspace">
+<link rel="stylesheet" href="cleanup.css?v=1.46.19-workspace">
+<link rel="stylesheet" href="visual-system.css?v=1.46.19-workspace">
 <title>AGNT</title>
 </head>
 <body>
@@ -1079,7 +1079,7 @@ Andrew Tour | McGrath</textarea></label>
         <label class="file-btn secondary">Import backup<input id="importData" type="file" accept="application/json"></label>
         <button id="signOut" class="danger">Sign out</button>
         <p id="modeNote"></p>
-        <small class="release-version">AGNT v1.46.18</small>
+        <small class="release-version">AGNT v1.46.19</small>
       </div>
     </section>
   </main>
@@ -1185,7 +1185,8 @@ Andrew Tour | McGrath</textarea></label>
 
 <div id="manualDiallerModal" class="modal manual-dialler-modal" aria-hidden="true">
   <section class="manual-dialler glass" role="dialog" aria-modal="true" aria-labelledby="manualDiallerTitle">
-    <div class="manual-dialler-head"><button id="closeManualDialler" type="button" aria-label="Close keypad">×</button><div><small>QUICK CALL</small><h2 id="manualDiallerTitle">Enter a number</h2></div><span></span></div>
+    <div class="manual-dialler-head"><button id="closeManualDialler" type="button" aria-label="Close keypad">×</button><div><small>QUICK CALL</small><h2 id="manualDiallerTitle">Call a number</h2></div><button id="manualDiallerHistoryToggle" type="button" aria-label="Call history">History</button></div>
+    <div id="manualDiallerPad" class="manual-dialler-pad">
     <input id="manualDiallerNumber" class="manual-dialler-number" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Phone number" placeholder="Paste or enter a number">
     <div id="manualDiallerKeypad" class="manual-dialler-keypad" aria-label="Phone keypad">
       <button type="button" data-dial-key="1"><strong>1</strong><small>&nbsp;</small></button>
@@ -1202,6 +1203,8 @@ Andrew Tour | McGrath</textarea></label>
       <button type="button" data-dial-delete aria-label="Delete digit"><strong>⌫</strong><small>&nbsp;</small></button>
     </div>
     <button id="manualDiallerCall" class="manual-dialler-call" type="button" disabled aria-label="Call number"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.2 3.9 9.8 3c.7-.2 1.5.2 1.8.9l1.2 3.1c.2.6.1 1.2-.4 1.6l-1.7 1.5a14 14 0 0 0 3.2 3.2l1.5-1.7c.4-.5 1.1-.6 1.6-.4l3.1 1.2c.7.3 1.1 1.1.9 1.8l-.9 2.6c-.3.9-1.1 1.5-2.1 1.5C10.8 18.3 5.7 13.2 5.7 6c0-1 .6-1.8 1.5-2.1Z"/></svg></button>
+    </div>
+    <div id="manualCallHistory" class="manual-call-history" hidden><p>Calls started in AGNT. Select a number to load it into the keypad.</p><div id="manualCallHistoryList"></div></div>
   </section>
 </div>
 
@@ -1230,7 +1233,7 @@ Andrew Tour | McGrath</textarea></label>
 
 
 
-<script src="runtime.js?v=1.46.18-workspace"></script>
-<script type="module" src="app.js?v=1.46.18-workspace"></script>
+<script src="runtime.js?v=1.46.19-workspace"></script>
+<script type="module" src="app.js?v=1.46.19-workspace"></script>
 </body>
 </html>
