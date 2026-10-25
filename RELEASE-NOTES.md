@@ -1,3 +1,63 @@
+# AGNT v1.46.16 — Outcome, Leaderboard and Action Fixes
+
+Baseline: complete v1.46.15 Complete Visual System replacement package.
+
+- Appointment outcome actions use normal document flow below the note field,
+  rather than the legacy sticky footer that overlapped notes with the keyboard.
+  The modal owns scrolling, retains an opaque surface and uses the existing
+  visual-viewport height/offset integration. The child sheet no longer creates
+  a second keyboard scroll container. Save/Cancel remain reachable by scrolling.
+- Outcome choices use full-width single-line rows, with the explanation alongside
+  the label. Selected choices retain the explanation and theme-correct contrast;
+  the old coloured tick and description-hiding rule are suppressed. Selection
+  transitions are disabled to avoid visual jitter. Outcome values, dependencies,
+  validation and save handlers are unchanged.
+- Daily/Weekly and Team Live occupy a stable, opaque sticky period bar inside
+  the leaderboard scroller. It stays below the workspace navigation, retaining
+  its height and tap targets as rankings scroll and periods change. No route,
+  ranking, date or sync logic changes.
+- Reach has equal 20px row spacing and equal 144 x 48px outreach action buttons.
+  Start/Active/Complete/Continue and import-unavailable labels fit on one line.
+  Action buttons across the visual system no longer opt into text wrapping.
+  Supporting information remains separate from primary action labels; labels
+  are not truncated or replaced with ellipses. Older Reach queue controls retain
+  44px targets, and Back/View all controls have sufficient text width.
+
+Changed files: visual-system.css and RELEASE-NOTES.md. app.js, index.html,
+runtime.js and service-worker.js receive only the v1.46.16 version/cache bump.
+All other files match v1.46.15. All workflow JavaScript and HTML structure remain
+unchanged; all function declarations except the backup version marker match.
+Navigation coalescing/cancellation, inactive DOM release, page isolation,
+form/draft retention and bounded diagnostics remain intact. Authentication,
+Firebase configuration, Firestore rules/paths/permissions, UID separation,
+records, offline behaviour and sync are unchanged. No Firebase Console, rules,
+indexes, GitHub settings or configuration changes are required.
+
+Validation: Chromium and Linux WebKit fixture runs cover seller/buyer outcome
+choices, persistent selected descriptions, label fit and contrast in both
+light/dark at 320/390/430px. Reduced visual viewport tests exercise the existing
+viewport handler with three keyboard heights and offsets, checking no action/
+note overlap, hit-testable Save, and local outcome/note persistence. Leaderboard
+scroll/period-switch tests use 2 and 20 agents and verify period-control hit
+visibility. Reach button states, equal dimensions and spacing are checked.
+Existing 32 secondary screen states plus People/profile/search/filter/archive
+regressions remain. Checks include single-line button styling, visible text
+bounds, 44px targets, viewport bounds and owner/member visibility. Each engine
+receives 1,000 rapid navigation events with 1,500 dual-role contacts, asserting
+one route commit per burst and bounded DOM; final runs have no uncaught errors.
+Performance Overview and Broadcast layout/step regressions are also checked.
+Screenshots are inspected. Syntax, protected files, local assets, all 10 mocked
+worker precache assets, manifest/icons and complete ZIP CRC are validated.
+
+Limits: virtual-keyboard geometry is simulated in desktop browser engines.
+This is not a physical iPhone keyboard/PWA run or a live Firebase/SMS/team test.
+The supplied recording was visually reviewed; deployment is not performed.
+
+Installation: replace all 14 files using this complete ZIP, then close/reopen
+the installed PWA and confirm AGNT v1.46.16 in Profile/Settings.
+
+---
+
 # AGNT v1.46.15 — Complete Visual System
 
 Baseline: the complete v1.46.14 Performance and Broadcast replacement ZIP.
