@@ -9,9 +9,9 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.46.9-workspace">
-<link rel="stylesheet" href="cleanup.css?v=1.46.9-workspace">
-<link rel="stylesheet" href="visual-system.css?v=1.46.9-workspace">
+<link rel="stylesheet" href="styles.css?v=1.46.15-workspace">
+<link rel="stylesheet" href="cleanup.css?v=1.46.15-workspace">
+<link rel="stylesheet" href="visual-system.css?v=1.46.15-workspace">
 <title>AGNT</title>
 </head>
 <body>
@@ -21,8 +21,8 @@
     <div class="brand-mark">AGNT</div>
     <h1>AGNT</h1>
     <p>Sign in once and your data stays live across your devices.</p>
-    <input id="email" type="email" autocomplete="email" placeholder="Email" required>
-    <input id="password" type="password" autocomplete="current-password" placeholder="Password" minlength="6" required>
+    <input id="email" type="email" autocomplete="email" placeholder="Email" aria-label="Email" required>
+    <input id="password" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password" minlength="6" required>
     <button class="primary" type="submit">Sign in</button>
     <button id="createAccount" class="secondary" type="button">Create account</button>
     <button id="localMode" class="text-btn" type="button">Continue on this device only</button>
@@ -1080,7 +1080,7 @@ Andrew Tour | McGrath</textarea></label>
         <label class="file-btn secondary">Import backup<input id="importData" type="file" accept="application/json"></label>
         <button id="signOut" class="danger">Sign out</button>
         <p id="modeNote"></p>
-        <small class="release-version">AGNT v1.46.9</small>
+        <small class="release-version">AGNT v1.46.15</small>
       </div>
     </section>
   </main>
@@ -1231,7 +1231,7 @@ Andrew Tour | McGrath</textarea></label>
 
 
 
-<script src="runtime.js?v=1.46.9-workspace"></script>
-<script type="module" src="app.js?v=1.46.9-workspace"></script>
+<script src="runtime.js?v=1.46.15-workspace"></script>
+<script type="module" src="app.js?v=1.46.15-workspace"></script>
 </body>
 </html>

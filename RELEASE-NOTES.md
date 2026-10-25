@@ -1,3 +1,369 @@
+# AGNT v1.46.15 — Complete Visual System
+
+Baseline: the complete v1.46.14 Performance and Broadcast replacement ZIP.
+This completes the remaining visual inventory against the approved Vercel MD
+and the Sellers / Day Plan design language. Earlier release history follows.
+
+- Profile and Settings use a continuous layout, shared type, quiet dividers,
+  consistent fields and controls. Team permissions and device-only states remain.
+- Team creation/joining, invite codes, member management and destructive
+  confirmations use the same hierarchy. Permission and consequence copy remains.
+- The annual calendar has a legible monochrome completion scale, consistent month
+  dividers, 44px day controls and no calendar entry animation.
+- Task creation, booking assignment, team appointment notices and seller-priority
+  deferral share the form and decision language. Destructive/short decisions keep
+  a restrained backdrop; longer workflows use the full viewport.
+- Buyer outcome, follow-up/reason, SMS decisions, pipeline refresh, agent summary
+  and appointment market insights follow the same structure and control sizing.
+- MarketPulse review, Hot Spotting, Day Log and prospecting health receive the
+  remaining spacing, row, field and type refinements. Day Log wins become flat
+  rows. Functional rings, charts and semantic status information remain.
+- Sync popover and toast treatment is aligned with the shared system.
+
+Engineering: all 1,104 function declarations other than the backup version
+marker match v1.46.14 byte for byte. This is a CSS completion pass; app.js,
+index.html, runtime.js and service-worker.js only receive release version bumps.
+No new listeners, timers, observers, state, storage keys, records or migrations.
+Navigation coalescing/cancellation, inactive list/markup release, bounded
+navigation diagnostics, page isolation and draft retention are unchanged.
+Original styles.css, cleanup.css, Firebase configuration/rules, manifest and
+icons are unchanged. No configuration or backend deployment is required.
+
+Validation: automated Chromium and Linux WebKit fixture coverage checks 32
+secondary screen states in light/dark themes at 320/390/430px, including 568px
+height at the narrow size. Checks cover visibility, viewport/internal bounds,
+44px buttons, team owner/member visibility, local settings/workday save, team
+setup panel navigation, calendar year/date selection and buyer decision branches.
+Screenshots were inspected. Existing People layout/search/filter/selection,
+archive/profile and cleanup checks are retained. Each engine receives 1,000
+rapid menu events with 1,500 dual-role contacts; assertions require one route
+commit per burst and bounded DOM. Final runs have no uncaught browser errors.
+Static validation covers syntax, protected-file comparison, local assets and a
+complete mocked service-worker install of all 10 precache assets. ZIP contents
+and CRC are checked before delivery.
+
+Limits: fixture tests do not sign in, alter live teams, send SMS, launch iOS
+Shortcuts or verify backend writes. Linux WebKit is not a physical iPhone/PWA
+run. Those live/device checks remain necessary before a production release.
+The completed visual inventory is not a claim of exhaustive runtime coverage.
+
+Installation: replace the previous upload with all 14 files from this ZIP.
+No node_modules, build dependencies or test fixtures are included. Close/reopen
+the installed PWA after updating and confirm AGNT v1.46.15 in Profile/Settings.
+
+---
+
+# AGNT v1.46.14 — Performance and Broadcast
+
+Baseline: v1.46.13 Profiles, Properties and Bookings. This batch applies the
+approved Sellers/Day Plan hierarchy to Performance Overview and Broadcast.
+
+- Weekly scorecard uses a compact period header, score/grade, open activity
+  metrics, strongest/focus summary and projection. Reporting sections use flat
+  trend, productivity, momentum, personal-best, coaching and achievement rows.
+- Reporting values, scheduled-day calculations, week navigation, comparisons,
+  streaks, achievements and recommendations are unchanged.
+- Broadcast type selection uses flat rows. Audience controls, recipient lists,
+  message fields, review/test tabs, readiness indicators, previews, exclusions,
+  success summary and campaign history share the approved type and controls.
+- Steps retain visible headings and progress. The Market header is no longer
+  cramped by an inherited width limit. Readiness uses small status dots and
+  warnings remain explicit without filled badge stacks.
+- A UI scroll correction resets the actual prospecting scroller on user step
+  changes and builder open/close. Rerendering the current step retains scroll.
+  No asynchronous scrolling, navigation queuing or saved state was added.
+
+Engineering: 1,101 other function declarations match the baseline byte for byte.
+Only setBroadcastStep, openBroadcastBuilder and closeBroadcastBuilder receive
+UI scroll adjustments, plus the backup version marker. Report calculations,
+eligibility/exclusions, deduplication, message token expansion, shortcut payload
+construction, launch/handoff and record/sync handlers are unchanged.
+Navigation coalescing/cancellation, list release, cache invalidation, page
+isolation, form/draft retention and diagnostics remain intact. No new listeners,
+observers, timers, records, storage keys or persisted state.
+
+Validation: Chromium and Linux WebKit fixture tests cover ten reporting/Broadcast
+states in light/dark at 320/390/430px, including a 568px-high narrow viewport.
+Checks cover viewport/control/field bounds, 44px controls, populated/empty
+reports and previous/current-week navigation. Audience tests verify do-not-contact
+and contacted-today exclusions, personalised token expansion, review readiness,
+retained message/scroll when returning/rerendering, isolated test preview,
+live/test panel visibility and an empty audience being unable to advance.
+Success is a simulated fixture: no SMS, iOS Shortcut or external handoff is
+launched during testing. Screenshots were inspected. Existing People/profile/
+filter/selection/archive/cleanup checks remain, plus 1,000 rapid menu events in
+each engine with 1,500 dual-role contacts, one route commit per burst and bounded
+DOM. Final runs have no uncaught browser errors.
+Syntax, protected-file comparisons, local assets, complete mocked worker install
+(10 assets), manifest/icons and replacement ZIP CRC pass. Inherited legacy
+fixture failures documented previously are not claimed to pass.
+
+Tests use local fixtures with startup instrumentation only in test responses;
+none is shipped. Physical installed iPhone PWA, live auth/team sync, real
+Shortcuts/SMS delivery, native keyboard and network-loss testing were not performed.
+No deployment performed.
+
+Changed files: visual-system.css, app.js, index.html, runtime.js,
+service-worker.js, RELEASE-NOTES.md. Runtime/worker/index edits are release/cache
+markers only. Original styles.css, cleanup.css, Firebase configuration/rules,
+manifest and icons are unchanged. Auth/Firestore paths, UID/team isolation,
+canonical data, offline queues, storage keys and sync remain untouched.
+No Firebase Console, rules/indexes or GitHub settings changes are required.
+
+Replace all 14 files including icons/, then fully close and reopen AGNT.
+Settings should show v1.46.14. No reset, sign-out or reinstall is needed.
+Remaining passes include Profile/Settings, team administration, calendar and
+secondary buyer-match/property decision screens.
+
+---
+
+# AGNT v1.46.13 — Profiles, Properties and Bookings
+
+Baseline: v1.46.12 Editors and Outcomes. This batch brings buyer profiles,
+Market property details and appointment browsing into the approved Sellers/
+Day Plan language without changing their data or workflows.
+
+- Buyer profiles use open next-action, seller-side, criteria, match and lifecycle
+  sections with shared typography and controls. Requirement values and long
+  addresses wrap safely. Restore remains a clear action on archived profiles.
+- Property matches retain source event, price, reason, state, urgency and call/
+  message/contact/outcome actions. Match counts and urgency indicators become
+  quiet labels/dots rather than filled circles and nested cards.
+- Buyer/seller move opportunities retain evidence and qualifications, with flat
+  current-home/matched-property context. Existing follow-up and history remain.
+- Market property details use clear address/price hierarchy, restrained statuses,
+  open campaign facts, reported history and property-linked activity. Address
+  matches still do not imply ownership, and all evidence qualifications remain.
+- Appointment browsing uses flat Past/Upcoming destinations, group headings,
+  clear property/contact/date rows and uniform 44px actions. MAP/LAP/BAP and
+  OFI/auction schedule information remain. Dates, source IDs, team assignments,
+  follow-ups, outcomes, calendar/message/edit/delete hooks are retained.
+- Browse formatting does not reveal history panels in the New Booking editor.
+
+Engineering: all 1,104 application function declarations match v1.46.12 apart
+from the backup version marker. No new listeners/observers, persisted state,
+form or record fields, matching/ranking calculations or data writes. App/index/
+runtime/worker edits are release/cache identifiers only; presentation is scoped
+CSS. Confirmed navigation coalescing, cancellation, inactive-list release,
+cache cleanup, page isolation, draft retention and diagnostics remain unchanged.
+
+Validation: Chromium and Linux WebKit cover ten populated/empty/archived detail
+and browsing states in light/dark at 320/390/430px (320px height 568). Fixtures
+include active buyer matches, linked buyer/seller context, current/sold property,
+past/upcoming/empty bookings, new booking, and MAP/LAP/BAP/OFI+auction records.
+Checks cover bounds, 44px browse controls and editor/browse separation. Screenshots
+were inspected, including lower buyer criteria/match sections. Entry tests cover
+buyer follow-up, linked seller profile, property back, retained ownership
+qualification, past appointment outcomes, history back and keyboard appointment
+editing. Existing People/filter/archive/profile checks remain. Both engines
+also process 1,000 rapid menu events with 1,500 dual-role contacts, one final
+route commit per burst, bounded DOM and no uncaught browser errors.
+Syntax, protected-file comparisons, local assets, complete mocked worker install
+(10 assets), manifest/icons and replacement ZIP CRC pass. Previously documented
+inherited legacy fixture failures are not claimed to pass.
+
+Tests use local fixture data and test-response startup instrumentation only;
+no instrumentation is shipped. Physical iPhone/Home Screen PWA, live auth/team
+sync, native sharing/calendar/calls/SMS and network-loss testing were not performed.
+No deployment performed.
+
+Changed files: visual-system.css, index.html, app.js, runtime.js,
+service-worker.js, RELEASE-NOTES.md. Original styles.css, cleanup.css, Firebase
+configuration/rules, manifest and icons are unchanged. Auth/Firestore paths,
+UID/team isolation, records, storage keys, offline queues and sync are untouched.
+No Firebase Console, rules/indexes or GitHub settings changes are required.
+
+Replace all 14 files including icons/, then fully close and reopen AGNT.
+Settings should show v1.46.13. No reset, sign-out or reinstall is needed.
+Remaining major passes include Performance Overview, Broadcast and Profile/team.
+
+---
+
+# AGNT v1.46.12 — Editors and Outcomes
+
+Baseline: v1.46.11 Sessions and Knocking. The approved Sellers/Day Plan language
+now covers the main contact/buyer editors and common outcome/decision screens.
+
+- New/edit Contact, new/edit Buyer, Property Details, Log Contact and buyer
+  purchase forms use continuous surfaces, measured sections, 12px labels,
+  readable 16px fields, consistent 44px controls and 48px primary saves.
+- Buyer budget, suburb selection, property configuration, position, features
+  and journey controls remain present. Configuration selectors wrap with usable
+  touch targets rather than squeezing three sets of choices into narrow columns.
+- Selected states use the same near-black/white treatment as approved controls.
+- Buyer follow-up date/notes use a continuous editor with matching Cancel/Save.
+- Appointment follow-up and MAP/LAP/BAP outcome dialogs use open headers,
+  property/contact context, consistent options, notes and action controls.
+- Manual keypad and call outcomes share the same field, type and control system.
+  Existing disabled-call guards and post-call actions remain authoritative.
+- Hidden Land configuration and conditional outcome follow-up/purchase fields
+  retain their existing visibility; hidden call choices stay hidden after logging.
+
+Engineering: all 1,104 application function declarations are unchanged apart
+from the backup version marker. Index/app/runtime/worker edits are release/cache
+identifiers only. No form schemas, record shapes, submit/outcome handlers,
+validations, focus/draft logic, observers, timers or persistence changes.
+Navigation coalescing/cancellation, inactive-list release, page isolation,
+local-first saves, background sync and diagnostics remain unchanged.
+
+Validation: Chromium and Linux WebKit cover 12 editor/decision states in both
+themes at 320/390/430px, including a 568px-high narrow viewport. Checks cover
+viewport/control/field bounds and at least 44px button targets. Screenshots were
+inspected. Functional fixture checks cover Land/House conditional fields,
+appointment option selection and required-follow-up visibility, Contact save
+retaining property configuration/buyer data, Buyer save retaining the canonical
+property record, unsaved Contact draft retention through Profile navigation,
+Buyer follow-up save/close, keypad input/invalid-number guard and the post-call
+choice/action transition. Existing People, filter/search, archive, editor-entry
+and cleanup checks remain. Each engine also passes 1,000 rapid menu events with
+1,500 dual-role contacts, one route commit per burst and bounded generated DOM.
+No uncaught browser errors. Syntax, protected-file comparisons, local assets,
+complete mocked worker install (10 assets), manifest/icons and ZIP CRC pass.
+Previously documented inherited legacy fixture failures are not claimed to pass.
+
+Tests use local fixtures and test-response startup instrumentation, which is
+not shipped. Physical installed iPhone PWA, native keyboard/date picker behaviour,
+live Firebase/auth/team sync, real calls/SMS and network-loss testing were not
+performed. No deployment performed.
+
+Changed files: visual-system.css, index.html, app.js, runtime.js,
+service-worker.js, RELEASE-NOTES.md. Original styles.css, cleanup.css,
+Firebase configuration/rules, manifest and icons remain unchanged. Firebase/auth
+logic, paths/rules, UID/team separation, storage keys, records, offline queues and
+sync are untouched. No Firebase Console, rules/indexes or GitHub changes needed.
+
+Replace all 14 files including icons/, then fully close and reopen AGNT.
+Settings should show v1.46.12. No reset, sign-out or reinstall is needed.
+Remaining batches include deeper buyer-match/property workflows, bookings,
+Performance Overview, Broadcast and Profile/team administration.
+
+---
+
+# AGNT v1.46.11 — Sessions and Knocking
+
+Baseline: v1.46.10 Opening and Reviews. This coordinated visual batch covers
+active pipeline calls, buyer list calls, import review, queue completion,
+calling/knocking reviews, active knocking, knocking capture and session history.
+The approved Sellers/Day Plan language provides the common type/spacing system.
+
+- Calling screens use quiet session progress, open identity/context sections,
+  a clear primary call action and consistent secondary SMS/outcome/skip controls.
+- Buyer import review keeps editable names, mobiles, addresses and Do Not SMS
+  flags, using flat rows with 44px remove controls and readable 16px inputs.
+- Queue-complete screens keep their original finish/refresh actions.
+- Calling and knocking reviews use open metric rows and a consistent Done action.
+- Knocking uses 28px timer/tallies, flat capture actions, restrained conversion
+  rates and open client-log rows with visible Edit/Delete actions. Captured names
+  wrap rather than truncate. Tally adjustment buttons remain side by side.
+- Property/contact capture uses a continuous surface, consistent form controls,
+  and date/time fields constrained to narrow viewports.
+- Session history uses flat totals and expandable session/log rows; original
+  dates, durations, conversion rates, counts and captured records remain intact.
+- WebKit text-fill styling follows the actual button colour in both themes,
+  preventing inherited legacy text fills from making dark controls illegible.
+
+Engineering: 1,104 application function declarations are unchanged apart from
+the backup version marker. All operational app/runtime/worker edits are version
+identifiers only; presentation changes are scoped CSS. No timer/queue/outcome,
+record, storage or sync code changes. Timer text-only rendering, immediate local
+session end, background sync, pause/re-entry, drafts, navigation burst coalescing,
+list release, stale-route cancellation, page isolation and diagnostics remain.
+
+Validation: Chromium and Linux WebKit fixture checks cover nine session states
+in both themes at 320/390/430px (320px height 568), viewport/control bounds, text
+fill matching button colour and minimum 44px targets. Screenshots were inspected.
+Workflow checks cover the pipeline call link/outcome editor, removing an import
+row, timer node retention, tally adjustment, pause returning to Today, retained
+session re-entry, local session end and review dismissal. Existing People list,
+filter/search, selection, archive, profile/editor and cleanup checks also pass.
+Each engine processes 1,000 rapid menu events with 1,500 dual-role contacts,
+one final route commit per burst, bounded DOM and no uncaught browser errors.
+Syntax, protected-file comparisons, local assets, complete mocked worker install
+(10 assets), manifest/icons and replacement ZIP CRC pass. Inherited legacy test
+fixture failures documented earlier are not represented as passing.
+
+Tests use local fixture records with startup bypassed only in test responses.
+No instrumentation is shipped. Physical iPhone/Home Screen PWA, live auth/team
+sync, real calls/SMS, real PDF extraction and offline network transitions were
+not tested. No deployment performed.
+
+Changed files: visual-system.css, index.html, app.js, runtime.js,
+service-worker.js, RELEASE-NOTES.md. Index/app/runtime/worker edits are release
+markers only. Original styles.css, cleanup.css, Firebase configuration/rules,
+manifest and icons are unchanged. Auth, Firestore paths, UID/team separation,
+canonical data, storage keys, offline queues and sync remain unchanged.
+No Firebase Console, rules/indexes or GitHub settings changes required.
+
+Replace all 14 files including icons/, then fully close and reopen AGNT.
+Settings should show v1.46.11. No reset, sign-out or reinstall is needed.
+Next batch: remaining detailed editors and secondary outcome/decision screens.
+
+---
+
+# AGNT v1.46.10 — Opening and Reviews
+
+Baseline: v1.46.9 Cohesive People. This coordinated batch covers six surfaces:
+loading, sign-in/create-account entry, welcome, returning morning briefing,
+end-of-day review and off-day weekly review. The approved Sellers/Day Plan
+language provides typography, spacing, flat sections and control sizing.
+
+- Quiet AGNT loading mark with the existing loading/fallback behaviour.
+- Flat sign-in form, 48px fields/actions and accessible names on email/password.
+  Existing sign-in/create-account/device-only handlers and light sign-in policy
+  are retained; this is a visual update, not an authentication rewrite.
+- Welcome uses a compact brand/date header, clear greeting and open appointment,
+  pipeline and momentum sections. Appointment rows use the shared timing rhythm.
+  A long appointment list scrolls independently of the Start My Day control.
+- Morning briefing keeps its score, current source states, MarketPulse events,
+  review-market action, four operational summaries and existing four-second
+  countdown. Restrained orange identifies MarketPulse and countdown progress.
+- Weekly review uses open score, day-by-day overview, metric progress bars and
+  appointment rows. Its content scrolls independently of Open AGNT.
+- End-of-day review uses a continuous full-screen surface, four clear metrics,
+  flat plan-versus-completed rows, coaching and matched Send Stats/Finish controls.
+- Existing content, data calculations, launch eligibility, timers, storage,
+  dismiss actions, Send Stats composition and selected-workday behaviour remain.
+
+Engineering: all 1,104 application function declarations are byte-identical to
+v1.46.9 except the backup version marker. No JavaScript workflow changes, new
+listeners, timers, observers or persistence. The confirmed navigation coalescing,
+cancellation, inactive-list release, cache invalidation, page isolation, draft
+protections and diagnostics are carried forward unchanged. Runtime and worker
+edits are release/cache identifiers only.
+
+Validation: local Chromium and Linux WebKit checks cover the six screens in
+light/dark presentation at 320/390/430px (320px uses a 568px-high viewport).
+Sign-in retains its existing always-light policy. Checks cover overflow, control
+bounds, 44px-or-larger targets, a twelve-appointment scroll fixture, achieved
+metrics, welcome/review exit actions and named sign-in fields. Screenshots were
+inspected. Existing People formatting, search, filters, selection, archive,
+editor entry and inactive-list tests are retained. Each engine also tests 1,000
+rapid menu events with 1,500 dual-role fixture contacts, one route commit per
+burst and bounded generated DOM. No uncaught errors in the final browser runs.
+Syntax, local assets, protected-file comparisons, complete mocked worker install
+(10 assets), manifest/icons and replacement ZIP integrity pass. Inherited legacy
+fixture failures documented previously are not represented as passing.
+
+Tests use local fixture data with startup bypassed only in browser responses;
+no test instrumentation is shipped. Physical installed iPhone PWA, live sign-in,
+team sync, external sharing and network-loss testing were not performed.
+No deployment performed.
+
+Changed files: index.html, visual-system.css, app.js, runtime.js,
+service-worker.js, RELEASE-NOTES.md. App/runtime/worker changes are version
+markers only. Original styles.css, cleanup.css, Firebase configuration/rules,
+manifest and icons are unchanged. Auth logic, Firestore paths, UID/team
+separation, record shapes, local storage, offline queue and sync are untouched.
+No Firebase Console, rules/indexes or GitHub settings changes are needed.
+
+Replace all 14 files including icons/, then fully close and reopen AGNT.
+Settings should show v1.46.10. No reset, sign-out or reinstall is needed.
+
+Next batches remain active calling/knocking sessions, followed by detailed
+editors and secondary workflows. These were not broadly restyled in this release.
+
+---
+
 # AGNT v1.46.9 — Cohesive People
 
 Baseline: v1.46.8 Clear People. Sellers is the approved design specification.
