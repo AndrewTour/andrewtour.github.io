@@ -1,3 +1,92 @@
+# AGNT v1.46.18 — Stability and Performance
+
+Baseline: complete, confirmed v1.46.17 Navigation and Back Continuity package.
+This is a runtime/data-isolation audit and repair; the approved visual design
+and navigation structure are retained. No deployment is included.
+
+## Confirmed faults repaired
+
+- Cancelling the conversation-log → booking handoff previously restored a form
+  whose Save button remained disabled. Restore its original Save label/state
+  before handing off; the retained note can now be submitted after Back.
+- Logging a standalone profile while a prospecting session was paused could
+  advance that hidden session and its counters. Session progression now requires
+  the log's explicit session origin.
+- While an appointment outcome was saving, changing the selected outcome could
+  re-enable Save and create a second interaction. A per-account/appointment
+  operation guard now locks choices and fields and rejects duplicate saves.
+- An older outcome completion could close/reset a newer appointment's modal and
+  discard its unsaved note. Completion now checks both account and modal instance;
+  reopening an appointment with a pending save retains its busy state safely.
+- Account reset previously retained prospect/session/editor state and pending
+  work. Clear transient records, sessions, generated private DOM and operation
+  references; reload only the active UID's existing saved data/session keys.
+  Persisted records and other accounts' stored data are not deleted.
+- Late prospecting/day/profile/leaderboard completions could alter another
+  account's sync counters, signatures, retries or UI. Capture the owner and
+  account generation, keep the original write destination, and reject stale
+  completions. Queued day saves also check the generation before starting.
+- Booking/listing-edit continuations now check the account generation before
+  post-await mutations, linked-flow completion or form reset/unlock. A stale
+  operation cannot recreate the previous account's day or unlock a newer form.
+- Zero, negative, fractional or invalid targets were accepted. Validate all four
+  fields together as positive safe whole numbers; keep settings unchanged on
+  rejection. Invalid persisted/imported target values fall back to established
+  defaults while valid values are retained.
+- Legacy appointments without numeric timestamps passed a Date object to a
+  date-key formatter. Use their recorded date key directly, preventing the old
+  fallback-path exception and displaying the correct booking date.
+
+## Performance and preserved behaviour
+
+Reuse equivalent en-AU collator/date formatter instances rather than creating
+locale formatters repeatedly while sorting/rendering lists. Date keys are
+formatted as calendar dates, preserving their day across daylight-saving changes.
+No pagination, list truncation, record ordering, search rules or visual changes.
+
+A synthetic 1,500-record Chromium run measured Contacts 652ms, Buyers 1,020ms and
+Pipeline 1,497ms versus the pre-fix probe's 1,158ms, 1,588ms and 2,379ms. These are
+local synchronous render measurements, not iPhone benchmarks or guaranteed speed
+improvements; timings vary. Large complete lists still take measurable work.
+
+The existing 60ms+RAF menu coalescing/cancellation, inactive list release, bounded
+return history, lifecycle/viewport handlers and normalised record shapes remain.
+No new dependencies, backend collections, persisted keys or record fields.
+Local-first writes, dirty markers, latest-snapshot queuing and retry are retained;
+only stale-account completion behaviour is tightened.
+
+## Validation
+
+88 automated scenario groups per engine (176 total) in local Chromium and Linux
+WebKit fixtures cover navigation and Back
+continuity, booking/profile saves, paused-session logging, booking cancellation,
+duplicate outcome submission, overlapping modal lifetimes, account reset/reload,
+late successful/failed writes, latest-snapshot retention, failed-write recovery,
+target validation, locale/date parity and legacy appointment dates. Each engine
+also receives 1,000 rapid menu actions with 1,500 contacts, with a bounded active
+DOM and one final route commit per burst. Booking editor Back/tap/overflow checks
+cover light/dark at 320/390/430px. No uncaught browser errors are accepted.
+
+Static checks validate syntax/parse, local assets, unchanged protected files and
+handlers, version references and all 10 assets in a mocked service-worker install.
+Mocked worker checks also reject mismatched release HTML, retain unrelated/SDK
+caches during activation, serve the cached release offline and return an explicit
+503 when no offline shell exists. The complete 14-file replacement ZIP is checked
+for file completeness and CRC.
+
+Limits: fixtures use synthetic local data and mocked cloud writes. Physical
+installed-iPhone/PWA lifecycle and memory-pressure behaviour, live Firebase
+login/team/permissions/sync, deployment/cache upgrades and Phone/Messages/Calendar
+handoffs still require real-environment release validation. This audit materially
+improves stability; it is not certification that every consumer workflow is bug-free.
+
+Changed files: app.js, index.html, runtime.js, service-worker.js and
+RELEASE-NOTES.md. The latter three code/HTML files only update release/cache
+markers. All CSS, Firebase configuration, Firestore rules, manifest and icons
+remain unchanged. No Firebase Console, rules/indexes or GitHub settings changes.
+
+---
+
 # AGNT v1.46.17 — Navigation and Back Continuity
 
 Baseline: complete v1.46.16 Outcome, Leaderboard and Action Fixes package.
