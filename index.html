@@ -9,9 +9,9 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.46.19-workspace">
-<link rel="stylesheet" href="cleanup.css?v=1.46.19-workspace">
-<link rel="stylesheet" href="visual-system.css?v=1.46.19-workspace">
+<link rel="stylesheet" href="styles.css?v=1.46.20-workspace">
+<link rel="stylesheet" href="cleanup.css?v=1.46.20-workspace">
+<link rel="stylesheet" href="visual-system.css?v=1.46.20-workspace">
 <title>AGNT</title>
 </head>
 <body>
@@ -681,7 +681,7 @@
           <button id="startProspectingSession" class="primary" type="button">Start Session</button>
         </section>
         <section class="prospecting-hero glass">
-          <div><span>HOT SPOTTING</span><strong id="hotSpottingReadyCount">0</strong><small id="hotSpottingReadyLabel">clients ready</small><em id="hotSpottingWorkState" class="prospector-work-state">No live opportunity yet</em></div>
+          <div><span>MARKET CHANGES</span><strong id="hotSpottingReadyCount">0</strong><small id="hotSpottingReadyLabel">clients ready</small><em id="hotSpottingWorkState" class="prospector-work-state">No live opportunity yet</em></div>
           <button id="openHotSpotting" class="primary" type="button">Start Session</button>
         </section>
         <section class="prospecting-hero glass buyer-list-hero">
@@ -791,7 +791,7 @@
           <div id="hotSpottingPanel" class="hotspotting-panel">
             <button id="backFromMarketPulse" class="market-pulse-back text-btn" type="button">‹ Back to Sessions</button>
             <section class="market-pulse-results glass">
-              <div class="prospecting-section-head hotspotting-list-head"><div><span>HOT SPOTTING</span><small id="marketPulseMatchSummary">Paste an email to find matching contacts.</small></div><button id="clearMarketPulseEvents" class="text-btn" type="button">Clear all</button></div>
+              <div class="prospecting-section-head hotspotting-list-head"><div><span>MARKET CHANGES</span><small id="marketPulseMatchSummary">Paste an email to find matching contacts.</small></div><button id="clearMarketPulseEvents" class="text-btn" type="button">Clear all</button></div>
               <div id="marketPulseList" class="market-pulse-list"></div>
             </section>
             <section class="market-pulse-import glass">
@@ -803,7 +803,7 @@
             <button id="openMarketPulseData" class="marketpulse-page-entry" type="button"><span class="marketpulse-page-entry-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 17 9 10l4 5 7-9"/><path d="M15 6h5v5"/></svg></span><span><strong>MarketPulse</strong><small>Review today’s property activity</small></span><b aria-hidden="true">›</b></button>
           </div>
           <div id="marketPulseDataPanel" class="market-pulse-data-panel hidden">
-            <button id="backFromMarketPulseData" class="market-pulse-back text-btn" type="button">‹ Back to Hot Spotting</button>
+            <button id="backFromMarketPulseData" class="market-pulse-back text-btn" type="button">‹ Back to Market Changes</button>
             <span id="marketPulseEventCount" hidden>0</span>
             <section class="market-review-panel glass">
               <div class="market-review-head">
@@ -857,7 +857,7 @@
                   <label class="broadcast-select-field">SUBURB<select id="campaignSuburbSelect"></select></label>
                 </div>
                 <div id="campaignContextAudience" class="broadcast-audience-mode hidden">
-                  <div class="broadcast-audience-intro"><strong id="campaignContextTitle">Hot Spotting matches</strong><small id="campaignContextMeta">Select the matching contacts who should receive this market update.</small></div>
+                  <div class="broadcast-audience-intro"><strong id="campaignContextTitle">Market Changes matches</strong><small id="campaignContextMeta">Select the matching contacts who should receive this market update.</small></div>
                   <div id="campaignContextRecipients" class="broadcast-recipient-list"></div>
                 </div>
                 <div id="campaignStreetAudience" class="broadcast-audience-mode hidden">
@@ -1028,7 +1028,7 @@ Andrew Tour | McGrath</textarea></label>
               <div><span id="marketPulseAutomationStatus" data-state="unavailable">Connecting</span><strong id="marketPulseAutomationEmail">Sign in to connect</strong></div>
               <span class="marketpulse-automation-badge">AUTO</span>
             </div>
-            <p id="marketPulseAutomationDetail">Checking your automatic Hot Spotting connection.</p>
+            <p id="marketPulseAutomationDetail">Checking your automatic Market Changes connection.</p>
             <div class="marketpulse-automation-route"><span>FORWARD MARKETPULSE TO</span><strong id="marketPulseAutomationDestination">agnt.marketpulse@gmail.com</strong><small>Daily check around 6:00 am Sydney time. Forward from the same email used to sign in to AGNT.</small></div>
           </div>
         </fieldset>
@@ -1079,7 +1079,7 @@ Andrew Tour | McGrath</textarea></label>
         <label class="file-btn secondary">Import backup<input id="importData" type="file" accept="application/json"></label>
         <button id="signOut" class="danger">Sign out</button>
         <p id="modeNote"></p>
-        <small class="release-version">AGNT v1.46.19</small>
+        <small class="release-version">AGNT v1.46.20</small>
       </div>
     </section>
   </main>
@@ -1186,6 +1186,7 @@ Andrew Tour | McGrath</textarea></label>
 <div id="manualDiallerModal" class="modal manual-dialler-modal" aria-hidden="true">
   <section class="manual-dialler glass" role="dialog" aria-modal="true" aria-labelledby="manualDiallerTitle">
     <div class="manual-dialler-head"><button id="closeManualDialler" type="button" aria-label="Close keypad">×</button><div><small>QUICK CALL</small><h2 id="manualDiallerTitle">Call a number</h2></div><button id="manualDiallerHistoryToggle" type="button" aria-label="Call history">History</button></div>
+    <div id="manualDiallerContact" class="manual-dialler-contact" aria-live="polite" aria-atomic="true" hidden></div>
     <div id="manualDiallerPad" class="manual-dialler-pad">
     <input id="manualDiallerNumber" class="manual-dialler-number" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Phone number" placeholder="Paste or enter a number">
     <div id="manualDiallerKeypad" class="manual-dialler-keypad" aria-label="Phone keypad">
@@ -1212,6 +1213,7 @@ Andrew Tour | McGrath</textarea></label>
   <section class="action-sheet glass manual-call-outcome-sheet" role="dialog" aria-modal="true" aria-labelledby="manualCallOutcomeTitle">
     <div class="action-sheet-handle"></div>
     <div class="action-sheet-head"><div><small>CALL OUTCOME</small><h2 id="manualCallOutcomeTitle">How did the call go?</h2><p id="manualCallOutcomeNumber"></p></div><button id="closeManualCallOutcome" type="button" class="action-sheet-close" aria-label="Close">×</button></div>
+    <div id="manualCallSavedContact" class="manual-call-saved-contact" hidden></div>
     <div id="manualCallOutcomeOptions" class="manual-call-outcome-options">
       <button type="button" data-manual-call-outcome="Connected"><span>Connected</span></button>
       <button type="button" data-manual-call-outcome="Left voicemail"><span>Left voicemail</span></button>
@@ -1233,7 +1235,7 @@ Andrew Tour | McGrath</textarea></label>
 
 
 
-<script src="runtime.js?v=1.46.19-workspace"></script>
-<script type="module" src="app.js?v=1.46.19-workspace"></script>
+<script src="runtime.js?v=1.46.20-workspace"></script>
+<script type="module" src="app.js?v=1.46.20-workspace"></script>
 </body>
 </html>

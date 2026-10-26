@@ -1,3 +1,64 @@
+# AGNT v1.46.20 — Market Changes and Saved Contact Recognition
+
+Baseline: complete verified v1.46.19 Fullscreen Quick Call Full Replacement.
+Includes both requested updates; no deployment is included.
+
+Market Changes replaces the user-facing Hot Spotting wording in navigation,
+section headings, Back labels, guidance, follow-up controls, campaign defaults
+and notifications. Internal route IDs, storage keys, event IDs and existing
+historical records are retained for compatibility.
+
+Menu entry explicitly returns to the dashboard/options surface, hides an old
+profile/editor/session, clears visible-session markers and releases buyer-list
+visibility. It does not end the active session, advance its item, alter counters
+or overwrite the saved queue. Returning from Market Changes to the sessions home
+now goes through the root menu path rather than the retained session. Resume and
+an event's Start/Active Session action remain explicit choices. The same root
+behaviour applies to Market, MarketPulse and Reach menu entry.
+
+Keypad, imported buyer call-list items and the manual call-outcome screen now
+recognise saved AGNT contacts by exact phone identity. Australian local, +61 and
+0061 formats are equivalent; stored secondary numbers and landlines are covered.
+Short/partial numbers never match. Shared numbers show each matching name rather
+than silently choosing one. Archived records are marked. Lookup uses a bounded
+in-memory index of the active account's canonical records; it adds no backend
+requests, data records or persisted keys. Canonical save/reset invalidates it,
+including the existing in-place phone editor. No contacts are auto-created.
+
+Recognition shows the saved name, last logged connected conversation's date,
+outcome and note. If there is no connected call, it shows the last recorded
+activity; missing history is stated explicitly. Imported list identities stay as
+imported. Notes/names are escaped. The keypad retains its lower placement; the
+recognition area scrolls separately, with a compact phone and landscape layout.
+History hides recognition and restores it when returning to the keypad. Account
+reset removes private recognition DOM and cached references.
+
+Validation: 133 scenario groups per engine (266 total) in local Chromium and
+Linux WebKit synthetic fixtures cover active
+seller/market/buyer sessions → menu entry, all options on sessions home, retained
+progress and explicit Resume, profile/log cleanup, event Start/Back, MarketPulse
+and Broadcast returns, existing navigation/booking/stability/call-history
+regressions and 1,000 rapid menu actions per engine. Recognition checks cover
+local/+61/0061 identities, secondary/landline numbers, unknown/partial numbers,
+shared/archived records, missing conversation history, refreshed/in-place edits,
+account isolation, escaped notes and history detours. Call remains visible and
+tappable at 320x568, 390x844, 430x932 and 844x390 in light/dark modes.
+No uncaught browser errors are accepted. Syntax, local assets, protected handlers,
+complete mocked service-worker install, ZIP CRC and source-byte equality checked.
+
+Changed files: app.js, index.html, visual-system.css, runtime.js,
+service-worker.js and RELEASE-NOTES.md. Runtime/worker only update release/cache
+markers. Original styles.css/cleanup.css, Firebase configuration, rules, manifest
+and icons are unchanged. Auth, cloud paths, permissions and record shapes remain.
+No Firebase Console, indexes or GitHub settings changes are required.
+
+Limits: automated browser data is synthetic. No physical iPhone/installed-PWA,
+real Phone handoff or live Firebase/account testing is claimed. Recognition uses
+AGNT's saved contacts, not the iPhone address book. New call history remains
+device-local as in v1.46.19; this update does not change its persistence.
+
+---
+
 # AGNT v1.46.19 — Fullscreen Quick Call and History
 
 Baseline: verified complete v1.46.18 Full Replacement package.
