@@ -2058,3 +2058,29 @@ html[data-theme] body #prospectingSession .saved-call-contact {padding:16px 0!im
 }
 
 html[data-theme] body #manualCallOutcomeModal #manualCallSavedContact[hidden] {display:none!important}
+
+/* v1.46.22 — crisp shared headers, bottom call outcomes and centred buyer calls. */
+html[data-theme] body #app .topbar,
+html[data-theme] body #app .topbar * {
+  filter:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+  text-shadow:none!important;
+}
+html[data-theme] body #app .topbar {background:var(--ds-canvas)!important}
+html[data-theme] body #manualCallOutcomeModal#manualCallOutcomeModal.open {
+  display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-end!important;
+  box-sizing:border-box!important;position:fixed!important;inset:0!important;height:var(--app-height,100dvh)!important;
+  padding:max(20px,env(safe-area-inset-top)) 20px max(20px,env(safe-area-inset-bottom))!important;
+  overflow-y:auto!important;background:var(--ds-canvas)!important;overscroll-behavior:contain!important;
+}
+html[data-theme] body #manualCallOutcomeModal#manualCallOutcomeModal .manual-call-outcome-sheet {
+  flex:0 0 auto!important;box-sizing:border-box!important;margin:auto auto 0!important;
+  max-height:100%!important;min-height:0!important;overflow-y:auto!important;
+}
+html[data-theme] body #app #prospectingView #prospectingSession[data-session-kind="buyer"]:not(.hidden) {
+  display:flex!important;flex-direction:column!important;height:100%!important;min-height:100%!important;
+  box-sizing:border-box!important;overflow-y:auto!important;
+}
+html[data-theme] body #app #prospectingSession[data-session-kind="buyer"] .prospect-session-head {flex:0 0 auto!important}
+html[data-theme] body #app #prospectingSession[data-session-kind="buyer"] .prospect-session-card {
+  flex:0 0 auto!important;width:100%!important;margin:auto 0!important;
+}

@@ -1,3 +1,38 @@
+# AGNT v1.46.22 — Clear Headers and Call Layout
+
+Baseline: complete v1.46.21 Hotspotting Home and Market Updates release.
+
+- Shared page headers use a solid theme surface without blur/filter/text shadow.
+  The iPhone web-app status bar changes from black-translucent to default to avoid
+  the translucent status area overlapping the heading. Native iOS rendering still
+  requires an installed-device check; desktop Chromium cannot reproduce that effect.
+- Both Quick Call outcome phases (choice of outcome and logged-call follow-up
+  actions) align to the bottom with safe-area padding. The sheet scrolls when
+  content exceeds the available screen, retaining close and action controls.
+- Imported buyer call-list details centre in the space beneath the session header
+  and above bottom navigation. Long content remains scrollable on short screens.
+
+All app logic is byte-identical after normalising the release marker. Navigation,
+session state/progress, metrics, contact recognition, saved history, auth and sync
+are retained. No animations, observers, dependencies or timers are added.
+
+Validation: local Chromium synthetic fixtures check five page headers, both
+outcome phases and the buyer layout at 320x568, 390x844 and 430x844 in light/dark.
+Checks cover computed filter styles, bottom bounds, buyer centring where space
+permits, and correct call metric increment after an outcome, without uncaught
+browser errors. Screenshots were reviewed for buyer and outcome alignment.
+Syntax, unchanged app logic, ten mocked worker precache assets, ZIP completeness,
+CRC and exact source bytes are checked. No live Firebase/Phone handoffs, physical
+iPhone or Linux WebKit testing is claimed for this release. Not deployed.
+
+Changed files: visual-system.css, index.html, app.js, runtime.js,
+service-worker.js and RELEASE-NOTES.md. The three JavaScript files only change
+release/cache markers. Firebase config/rules, manifest, icons and original
+styles.css/cleanup.css remain unchanged. No Firebase Console, indexes or GitHub
+settings changes are required.
+
+---
+
 # AGNT v1.46.21 — Hotspotting Home and Market Updates
 
 Baseline: complete v1.46.20 Market Changes and Contact Recognition package.
