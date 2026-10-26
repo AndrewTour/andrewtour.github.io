@@ -1,3 +1,42 @@
+# AGNT v1.46.21 — Hotspotting Home and Market Updates
+
+Baseline: complete v1.46.20 Market Changes and Contact Recognition package.
+Corrects the requested distinction between the menu landing page and its market
+updates workflow. The saved-contact recognition and fullscreen keypad are retained.
+
+- Navigation shows Hotspotting. It opens the existing options home (formerly
+  Reach), containing seller Pipeline, Market Updates, buyer call list, Broadcast
+  and the existing quick actions. It does not enter an event/session UI.
+- Market Updates is the old market-change opportunities screen, reached by the
+  home page's View updates action. Its primary heading, section label, guidance,
+  contextual Back labels and notifications use Market Updates.
+- The duplicate Reach navigation entry is consolidated into Hotspotting because
+  it is the same options home. Its internal route remains unchanged, as do
+  existing data IDs/storage keys. The event page retains its internal route;
+  the menu itself no longer links to it.
+- Back from Market Updates returns to Hotspotting home. A MarketPulse detour
+  returns to Market Updates first. Active prospecting queues/counters and buyer
+  list progress remain available for explicit Resume; opening home does not
+  auto-resume, advance or end a session.
+
+Validation: 61 scenario groups per engine (122 total) in local Chromium and Linux
+WebKit cover menu label/home title,
+all home options, explicit Market Updates entry, correct heading/selected tab,
+Back through MarketPulse, active Pipeline/market/buyer session entry and retained
+progress. Existing navigation/back workflows and 1,000 rapid menu actions per
+engine are checked. JavaScript syntax, local assets, mocked worker install,
+unchanged protected handlers/files, complete ZIP CRC and source-byte equality
+are validated. No real calls or live Firebase writes are made by the fixtures.
+Physical iPhone/installed-PWA testing and deployment were not performed.
+
+Changed files: app.js, index.html, runtime.js, service-worker.js and
+RELEASE-NOTES.md. Runtime/worker only change release/cache markers. All CSS,
+Firebase configuration/rules, manifest and icons are byte-identical to v1.46.20.
+Auth, cloud paths, permissions, record shapes, saved-number recognition and call
+history are retained. No Firebase Console, indexes or GitHub settings changes.
+
+---
+
 # AGNT v1.46.20 — Market Changes and Saved Contact Recognition
 
 Baseline: complete verified v1.46.19 Fullscreen Quick Call Full Replacement.

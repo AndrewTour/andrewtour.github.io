@@ -9,9 +9,9 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.46.20-workspace">
-<link rel="stylesheet" href="cleanup.css?v=1.46.20-workspace">
-<link rel="stylesheet" href="visual-system.css?v=1.46.20-workspace">
+<link rel="stylesheet" href="styles.css?v=1.46.21-workspace">
+<link rel="stylesheet" href="cleanup.css?v=1.46.21-workspace">
+<link rel="stylesheet" href="visual-system.css?v=1.46.21-workspace">
 <title>AGNT</title>
 </head>
 <body>
@@ -657,7 +657,7 @@
     <section id="prospectingView" class="view prospecting-view">
       <nav class="prospector-sections glass" aria-label="People sections">
         <button class="active" type="button" data-prospector-section="market" aria-current="page">Market</button>
-        <button type="button" data-prospector-section="today">Reach</button>
+        <button type="button" data-prospector-section="today">Hotspotting</button>
         <button type="button" data-prospector-section="buyers">Buyers</button>
         <button type="button" data-prospector-section="contacts">Contacts</button>
         <button type="button" data-prospector-section="pipeline">Pipeline</button>
@@ -681,8 +681,8 @@
           <button id="startProspectingSession" class="primary" type="button">Start Session</button>
         </section>
         <section class="prospecting-hero glass">
-          <div><span>MARKET CHANGES</span><strong id="hotSpottingReadyCount">0</strong><small id="hotSpottingReadyLabel">clients ready</small><em id="hotSpottingWorkState" class="prospector-work-state">No live opportunity yet</em></div>
-          <button id="openHotSpotting" class="primary" type="button">Start Session</button>
+          <div><span>MARKET UPDATES</span><strong id="hotSpottingReadyCount">0</strong><small id="hotSpottingReadyLabel">clients ready</small><em id="hotSpottingWorkState" class="prospector-work-state">No live opportunity yet</em></div>
+          <button id="openHotSpotting" class="primary" type="button">View updates</button>
         </section>
         <section class="prospecting-hero glass buyer-list-hero">
           <div><span>BUYER LIST</span><strong id="buyerListReadyCount">0</strong><small id="buyerListReadyLabel">Import an Agentbox call list</small><em id="buyerListWorkState" class="prospector-work-state">Name, mobile and address/suburb</em></div>
@@ -789,9 +789,9 @@
           </div>
           <section id="myMarketPropertyScreen" class="my-market-property-screen hidden" aria-label="Property details"></section>
           <div id="hotSpottingPanel" class="hotspotting-panel">
-            <button id="backFromMarketPulse" class="market-pulse-back text-btn" type="button">‹ Back to Sessions</button>
+            <button id="backFromMarketPulse" class="market-pulse-back text-btn" type="button">‹ Back to Hotspotting</button>
             <section class="market-pulse-results glass">
-              <div class="prospecting-section-head hotspotting-list-head"><div><span>MARKET CHANGES</span><small id="marketPulseMatchSummary">Paste an email to find matching contacts.</small></div><button id="clearMarketPulseEvents" class="text-btn" type="button">Clear all</button></div>
+              <div class="prospecting-section-head hotspotting-list-head"><div><span>MARKET UPDATES</span><small id="marketPulseMatchSummary">Paste an email to find matching contacts.</small></div><button id="clearMarketPulseEvents" class="text-btn" type="button">Clear all</button></div>
               <div id="marketPulseList" class="market-pulse-list"></div>
             </section>
             <section class="market-pulse-import glass">
@@ -803,7 +803,7 @@
             <button id="openMarketPulseData" class="marketpulse-page-entry" type="button"><span class="marketpulse-page-entry-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 17 9 10l4 5 7-9"/><path d="M15 6h5v5"/></svg></span><span><strong>MarketPulse</strong><small>Review today’s property activity</small></span><b aria-hidden="true">›</b></button>
           </div>
           <div id="marketPulseDataPanel" class="market-pulse-data-panel hidden">
-            <button id="backFromMarketPulseData" class="market-pulse-back text-btn" type="button">‹ Back to Market Changes</button>
+            <button id="backFromMarketPulseData" class="market-pulse-back text-btn" type="button">‹ Back to Market Updates</button>
             <span id="marketPulseEventCount" hidden>0</span>
             <section class="market-review-panel glass">
               <div class="market-review-head">
@@ -857,7 +857,7 @@
                   <label class="broadcast-select-field">SUBURB<select id="campaignSuburbSelect"></select></label>
                 </div>
                 <div id="campaignContextAudience" class="broadcast-audience-mode hidden">
-                  <div class="broadcast-audience-intro"><strong id="campaignContextTitle">Market Changes matches</strong><small id="campaignContextMeta">Select the matching contacts who should receive this market update.</small></div>
+                  <div class="broadcast-audience-intro"><strong id="campaignContextTitle">Market Updates matches</strong><small id="campaignContextMeta">Select the matching contacts who should receive this market update.</small></div>
                   <div id="campaignContextRecipients" class="broadcast-recipient-list"></div>
                 </div>
                 <div id="campaignStreetAudience" class="broadcast-audience-mode hidden">
@@ -1028,7 +1028,7 @@ Andrew Tour | McGrath</textarea></label>
               <div><span id="marketPulseAutomationStatus" data-state="unavailable">Connecting</span><strong id="marketPulseAutomationEmail">Sign in to connect</strong></div>
               <span class="marketpulse-automation-badge">AUTO</span>
             </div>
-            <p id="marketPulseAutomationDetail">Checking your automatic Market Changes connection.</p>
+            <p id="marketPulseAutomationDetail">Checking your automatic Market Updates connection.</p>
             <div class="marketpulse-automation-route"><span>FORWARD MARKETPULSE TO</span><strong id="marketPulseAutomationDestination">agnt.marketpulse@gmail.com</strong><small>Daily check around 6:00 am Sydney time. Forward from the same email used to sign in to AGNT.</small></div>
           </div>
         </fieldset>
@@ -1079,7 +1079,7 @@ Andrew Tour | McGrath</textarea></label>
         <label class="file-btn secondary">Import backup<input id="importData" type="file" accept="application/json"></label>
         <button id="signOut" class="danger">Sign out</button>
         <p id="modeNote"></p>
-        <small class="release-version">AGNT v1.46.20</small>
+        <small class="release-version">AGNT v1.46.21</small>
       </div>
     </section>
   </main>
@@ -1235,7 +1235,7 @@ Andrew Tour | McGrath</textarea></label>
 
 
 
-<script src="runtime.js?v=1.46.20-workspace"></script>
-<script type="module" src="app.js?v=1.46.20-workspace"></script>
+<script src="runtime.js?v=1.46.21-workspace"></script>
+<script type="module" src="app.js?v=1.46.21-workspace"></script>
 </body>
 </html>
