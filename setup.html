@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AGNT · Android SMS setup</title>
+<style>:root{color-scheme:light dark;font-family:system-ui,-apple-system,sans-serif;background:#fafafa;color:#171717}body{max-width:640px;margin:auto;padding:32px 22px 48px;line-height:1.55}h1{font-size:30px;line-height:1.15;margin:10px 0 20px}h2{font-size:20px;margin-top:32px}li{padding:6px 0}a{color:inherit;text-underline-offset:4px}.label{font-size:12px;letter-spacing:.12em;color:#d85c1e;font-weight:700}.action{display:inline-block;background:#202020;color:white;padding:13px 20px;border-radius:8px;text-decoration:none;font-weight:600}p{margin:14px 0}code{overflow-wrap:anywhere}@media(prefers-color-scheme:dark){:root{background:#111;color:#eee}.action{background:#efefef;color:#111}}</style></head>
+<body><span class="label">AGNT · ANDROID</span><h1>Set up Bulk SMS once.</h1>
+<p>AGNT prepares your recipients and personalised messages. Tasker sends each SMS individually from your phone.</p>
+<ol>
+<li><a href="https://tasker.joaoapps.com/download.html" target="_blank" rel="noopener">Install Tasker</a>. It is a separate app and may require purchase.</li>
+<li><a href="AGNT-Bulk-SMS.prf.xml" download>Download the AGNT Bulk SMS profile</a> to your phone. Keep the <code>.prf.xml</code> extension.</li>
+<li>Open Tasker. Long-press the <strong>Profiles</strong> tab, select <strong>Import Profile</strong>, then select the downloaded file. The imported profile and task are both named <strong>AGNT Bulk SMS</strong>.</li>
+<li>Enable the profile and Tasker's main switch. In Tasker Preferences → Action, enable <strong>Secondary App</strong> if disabled. Save/apply your changes.</li>
+<li>Allow Tasker SMS permission. If asked to display a confirmation over another app, allow that so you can review the campaign. Set the intended <strong>default SMS SIM</strong> in Android settings, especially on dual-SIM phones.</li>
+<li>Return to AGNT → Reach → Bulk SMS → Review &amp; Send → <strong>Test environment</strong>. Enter your own mobile and send one short message. Confirm the recipient and message in Tasker.</li>
+</ol>
+<p><a class="action" href="../index.html">Return to AGNT</a></p>
+<h2>Before your first campaign</h2>
+<p>Check that the test arrives, appears in your sent conversation, and comes from the intended number. Then test two personalised messages, a long message, and your normal delay. Keep the phone awake for this first check.</p>
+<p>After setup: select recipients, write your message, review and tap <strong>Open AGNT Bulk SMS in Tasker</strong>. Confirm the campaign in Tasker. Each recipient receives their own message. This uses SMS and your mobile plan, rather than RCS or iMessage; long messages may use several SMS parts.</p>
+<h2>If Tasker did not open</h2>
+<p>This page is also the fallback when Chrome cannot open Tasker. Confirm Tasker is installed, Secondary App is enabled and the profile is on. Use Chrome or AGNT installed from Chrome. Return to AGNT and launch the test again. No recipient data is placed in this setup page's URL.</p>
+<h2>If sending stops</h2>
+<p>Check Tasker's error and your Messages app. Android, your SIM or your carrier may restrict sending. Allow Tasker background activity if your phone stops it. Do not rerun the full campaign until you have checked which messages were submitted.</p>
+<p>The profile stops on a reported submission error and blocks replaying the same launch. Its local journal holds the last 50 launch IDs and counts, without names, phone numbers or message text. To stop a campaign, use Tasker's running-task stop control.</p>
+<p>AGNT records launch attempts. It cannot confirm Tasker opened, that its confirmation was accepted, or that SMS was delivered. MarketPulse retains the existing “Bulk SMS launched” behaviour. If you cancel in Tasker or the handoff fails, check those contacts before relying on that activity.</p>
+<p>Very large campaigns may exceed the handoff size limit. AGNT will ask you to select fewer recipients rather than truncate messages. Maximum 500 recipients per Android launch; the size limit may be reached earlier.</p>
+<p>The Android integration requires a real handset acceptance test. No automatic sending occurs simply by installing the profile.</p>
+<p><a href="https://tasker.joaoapps.com/changes/changes5.9.3.html">Tasker URL handoff documentation</a> · <a href="https://tasker.joaoapps.com/userguide/en/javascript.html">Tasker scripting documentation</a></p>
+</body></html>

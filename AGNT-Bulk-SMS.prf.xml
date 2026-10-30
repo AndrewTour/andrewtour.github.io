@@ -1,0 +1,119 @@
+<?xml version='1.0' encoding='utf-8'?>
+<TaskerData sr="" dvi="1" tv="6.3.13">
+  <Profile sr="prof1" ve="2">
+    <cdate>1793232000000</cdate>
+    <edate>1793232000000</edate>
+    <flags>8</flags>
+    <id>1</id>
+    <mid0>2</mid0>
+    <nme>AGNT Bulk SMS</nme>
+    <Event sr="con0" ve="2">
+      <code>2077</code>
+      <pri>0</pri>
+    </Event>
+  </Profile>
+  <Task sr="task2">
+    <cdate>1793232000000</cdate>
+    <edate>1793232000000</edate>
+    <id>2</id>
+    <nme>AGNT Bulk SMS</nme>
+    <pri>10</pri>
+    <rty>0</rty>
+    <Action sr="act0" ve="7">
+      <code>129</code>
+      <Str sr="arg0" ve="3">// Embedded in the importable Tasker profile. Tasker supplies agntaction/agntpayload.
+var agnt_count = 0;
+var agnt_delay = 0;
+var agnt_batch = null;
+function agntReject(message) { flashLong(message); throw new Error(message); }
+if (typeof agntaction === 'undefined' || agntaction !== 'bulk_sms_v1') agntReject('Open AGNT Bulk SMS from AGNT.');
+try { agnt_batch = JSON.parse(agntpayload); } catch (e) { agntReject('AGNT: invalid campaign data. Nothing sent.'); }
+if (!agnt_batch || agnt_batch.androidVersion !== 1 || !/^[A-Za-z0-9_-]{8,160}$/.test(agnt_batch.launchId || '') || !Array.isArray(agnt_batch.users) || !agnt_batch.users.length || agnt_batch.users.length &gt; 500) agntReject('AGNT: invalid campaign. Nothing sent.');
+agnt_delay = Number(agnt_batch.delay);
+if (!isFinite(agnt_delay) || agnt_delay &lt; 0 || agnt_delay &gt; 10) agntReject('AGNT: invalid sending delay. Nothing sent.');
+var agnt_seen = {};
+for (var agnt_i = 0; agnt_i &lt; agnt_batch.users.length; agnt_i++) {
+  var agnt_user = agnt_batch.users[agnt_i];
+  if (!agnt_user || typeof agnt_user.number !== 'string') agntReject('AGNT: invalid mobile. Nothing sent.');
+  var agnt_number = agnt_user.number.replace(/[\s()-]/g, '');
+  if (/^\+?614\d{8}$/.test(agnt_number)) agnt_number = '0' + agnt_number.replace(/^\+?61/, '');
+  if (!/^04\d{8}$/.test(agnt_number) || agnt_seen[agnt_number]) agntReject('AGNT: invalid or duplicate mobile. Nothing sent.');
+  if (typeof agnt_user.message !== 'string' || !agnt_user.message.trim() || agnt_user.message.length &gt; 10000) agntReject('AGNT: invalid message. Nothing sent.');
+  agnt_seen[agnt_number] = true;
+  agnt_user.number = agnt_number;
+}
+var agnt_journal;
+try { agnt_journal = JSON.parse(global('AGNTsmsJournal') || '[]'); } catch (e) { agntReject('AGNT: cannot read launch journal. Check Tasker before retrying.'); }
+if (!Array.isArray(agnt_journal)) agntReject('AGNT: invalid launch journal. Nothing sent.');
+for (var agnt_j = 0; agnt_j &lt; agnt_journal.length; agnt_j++) {
+  if (agnt_journal[agnt_j].id === agnt_batch.launchId) agntReject('AGNT: this launch was already attempted. Check Messages before creating another campaign.');
+}
+var agnt_first = agnt_batch.users[0];
+if (!confirm('AGNT Bulk SMS' + (agnt_batch.test ? ' TEST' : '') + '\n\n' + String(agnt_batch.name || 'Campaign') + '\n' + agnt_batch.users.length + ' individual SMS via your default SMS SIM.\nDelay: ' + agnt_delay + ' seconds.\n\nFirst recipient: ' + String(agnt_first.name || '') + ' ' + agnt_first.number + '\n\n' + agnt_first.message + '\n\nSend this campaign?')) agntReject('AGNT: cancelled. Nothing sent.');
+agnt_count = agnt_batch.users.length;
+// Store only launch IDs and counts. Never persist recipients or message text here.
+agnt_journal.push({id: agnt_batch.launchId, attempted: 0, submitted: 0, total: agnt_count, at: Date.now()});
+setGlobal('AGNTsmsJournal', JSON.stringify(agnt_journal.slice(-50)));
+agntpayload = JSON.stringify(agnt_batch);
+</Str>
+      <Str sr="arg1" ve="3" />
+      <Int sr="arg2" val="1" />
+      <Int sr="arg3" val="180" />
+    </Action>
+    <Action sr="act1" ve="7">
+      <code>39</code>
+      <Str sr="arg0" ve="3">%agnt_index</Str>
+      <Str sr="arg1" ve="3">1:%agnt_count</Str>
+    </Action>
+    <Action sr="act2" ve="7">
+      <code>129</code>
+      <Str sr="arg0" ve="3">// One Tasker For-loop iteration. No automatic retry after an ambiguous send.
+var agnt_current = JSON.parse(agntpayload);
+var agnt_position = Number(agnt_index);
+var agnt_entries = JSON.parse(global('AGNTsmsJournal') || '[]');
+var agnt_entry = null;
+for (var agnt_k = 0; agnt_k &lt; agnt_entries.length; agnt_k++) {
+  if (agnt_entries[agnt_k].id === agnt_current.launchId) agnt_entry = agnt_entries[agnt_k];
+}
+if (!agnt_entry || agnt_position !== agnt_entry.attempted + 1) throw new Error('AGNT: repeated or out-of-order send blocked.');
+agnt_entry.attempted = agnt_position;
+// Write BEFORE invoking SMS, so stopping/crashing here cannot silently resend it.
+setGlobal('AGNTsmsJournal', JSON.stringify(agnt_entries));
+var agnt_recipient = agnt_current.users[agnt_position - 1];
+var agnt_ok = sendSMS(agnt_recipient.number, agnt_recipient.message, true);
+if (agnt_ok !== true &amp;&amp; agnt_ok !== 'true') {
+  flashLong('AGNT stopped at recipient ' + agnt_position + '. Check Messages before retrying.');
+  throw new Error('SMS submission failed or result is uncertain.');
+}
+agnt_entry.submitted = agnt_position;
+setGlobal('AGNTsmsJournal', JSON.stringify(agnt_entries));
+if (agnt_position === 1 || agnt_position % 10 === 0) flash('AGNT: submitted ' + agnt_position + ' of ' + agnt_current.users.length);
+</Str>
+      <Str sr="arg1" ve="3" />
+      <Int sr="arg2" val="1" />
+      <Int sr="arg3" val="45" />
+    </Action>
+    <Action sr="act3" ve="7">
+      <code>30</code>
+      <Int sr="arg0" val="0" />
+      <Int sr="arg1">
+        <var>%agnt_delay</var>
+      </Int>
+      <Int sr="arg2" val="0" />
+      <Int sr="arg3" val="0" />
+      <Int sr="arg4" val="0" />
+    </Action>
+    <Action sr="act4" ve="7">
+      <code>40</code>
+    </Action>
+    <Action sr="act5" ve="7">
+      <code>129</code>
+      <Str sr="arg0" ve="3">var agnt_finished = JSON.parse(agntpayload);
+flashLong('AGNT: ' + agnt_finished.users.length + ' SMS submitted to Android. Check Messages for sending status. Delivery is not confirmed.');
+</Str>
+      <Str sr="arg1" ve="3" />
+      <Int sr="arg2" val="1" />
+      <Int sr="arg3" val="45" />
+    </Action>
+  </Task>
+</TaskerData>
