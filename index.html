@@ -9,9 +9,9 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.46.22-workspace">
-<link rel="stylesheet" href="cleanup.css?v=1.46.22-workspace">
-<link rel="stylesheet" href="visual-system.css?v=1.46.22-workspace">
+<link rel="stylesheet" href="styles.css?v=1.46.23-workspace">
+<link rel="stylesheet" href="cleanup.css?v=1.46.23-workspace">
+<link rel="stylesheet" href="visual-system.css?v=1.46.23-workspace">
 <title>AGNT</title>
 </head>
 <body>
@@ -901,11 +901,17 @@
                 <button id="broadcastReviewLive" class="active" type="button">Campaign</button>
                 <button id="broadcastReviewTest" type="button">Test environment</button>
               </div>
+              <details id="androidBulkSmsSetup" class="bulk-sms-json hidden">
+                <summary>Android SMS setup</summary>
+                <p>Install Tasker and import the AGNT profile once. Allow SMS access and choose your default SMS SIM before testing.</p>
+                <p><a href="android/setup.html" target="_blank" rel="noopener">Setup instructions</a> · <a href="android/AGNT-Bulk-SMS.prf.xml" download>Download AGNT profile</a></p>
+                <p>First run: use Test environment with your own number. Tasker asks you to confirm before sending. SMS uses your mobile plan; long messages may use several SMS parts.</p>
+              </details>
               <div id="broadcastLiveReview" class="broadcast-step-surface">
                 <div id="campaignReadiness" class="broadcast-readiness" aria-live="polite"></div><div id="campaignWarnings" class="campaign-warnings"></div>
                 <div id="campaignPreview" class="campaign-preview"><div class="empty">Choose an audience and write a message to preview recipients.</div></div>
                 <button id="launchCampaignShortcut" class="primary campaign-launch" type="button">Open AGNT Bulk SMS</button>
-                <p class="campaign-disclaimer">AGNT prepares the personalised payload. iOS Shortcuts performs the sending. Review the recipient count and samples before continuing.</p>
+                <p id="campaignRunnerDisclaimer" class="campaign-disclaimer">AGNT prepares the personalised payload. iOS Shortcuts performs the sending. Review the recipient count and samples before continuing.</p>
               </div>
               <div id="broadcastTestReview" class="broadcast-step-surface bulk-sms-test-lab hidden">
                 <div class="broadcast-step-section-head"><div><span>TEST ENVIRONMENT</span><h4>Send without live CRM contacts</h4></div><small id="bulkSmsTestMeta">Enter test recipients</small></div>
@@ -1079,7 +1085,7 @@ Andrew Tour | McGrath</textarea></label>
         <label class="file-btn secondary">Import backup<input id="importData" type="file" accept="application/json"></label>
         <button id="signOut" class="danger">Sign out</button>
         <p id="modeNote"></p>
-        <small class="release-version">AGNT v1.46.22</small>
+        <small class="release-version">AGNT v1.46.23</small>
       </div>
     </section>
   </main>
@@ -1235,7 +1241,7 @@ Andrew Tour | McGrath</textarea></label>
 
 
 
-<script src="runtime.js?v=1.46.22-workspace"></script>
-<script type="module" src="app.js?v=1.46.22-workspace"></script>
+<script src="runtime.js?v=1.46.23-workspace"></script>
+<script type="module" src="app.js?v=1.46.23-workspace"></script>
 </body>
 </html>
