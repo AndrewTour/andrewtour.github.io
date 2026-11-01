@@ -2085,3 +2085,16 @@ html[data-theme] body #app #prospectingSession[data-session-kind="buyer"] .prosp
   flex:0 0 auto!important;width:100%!important;margin:auto 0!important;
 }
 
+
+/* v1.46.25: compact rankings header; rows scroll above installed-app navigation. */
+html body #app #insightsView #leaderboardInsights {display:flex!important;flex-direction:column!important;height:var(--leaderboard-available,100%)!important;min-height:0!important;padding-bottom:0!important;overflow:hidden!important}
+html body #app #insightsView .leaderboard-period-bar,html body #app #insightsView .leaderboard-dashboard {flex-shrink:0!important}
+html body #app #insightsView .leaderboard-card {display:flex!important;flex-direction:column!important;flex:1 1 0!important;min-height:0!important;overflow:hidden!important;padding-top:12px!important}
+html body #app #insightsView .leaderboard-head {display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:center!important;gap:8px!important;flex-shrink:0!important}
+html body #app #insightsView #leaderboardDate {font-size:10px!important;font-weight:400!important;line-height:1.4!important;letter-spacing:0!important;margin-top:3px!important}
+html body #app #insightsView .leaderboard-head-actions {flex-wrap:nowrap!important;align-self:center!important}
+html body #app #insightsView .leaderboard-period-controls {display:flex!important;gap:3px!important;width:auto!important}
+html body #app #insightsView .leaderboard-period-controls.hidden {display:none!important}
+html body #app #insightsView .leaderboard-period-controls button {width:auto!important;min-width:32px!important;min-height:36px!important;height:36px!important;padding:4px 8px!important;font-size:11px!important;border-radius:6px!important}
+html body #app #insightsView #leaderboardList {flex:1 1 0!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch}
+html body #app #insightsView #leaderboardNote {flex-shrink:0!important;font-size:10px!important;margin:8px 0!important}
