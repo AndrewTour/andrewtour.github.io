@@ -2118,3 +2118,9 @@ html body #app #prospectorContactsPanel .people-record-timing-wrap>.people-recor
 html body #app #prospectorContactsPanel .people-record-timing-wrap>.people-record-timing>em {grid-column:1/-1!important;grid-row:3!important;margin-top:4px!important}
 html body #app #prospectorContactsPanel .people-record-timing-wrap>.contact-value {grid-column:1!important;grid-row:4!important;justify-self:stretch!important;align-self:start!important;display:flex!important;justify-content:center!important;align-items:center!important;width:100%!important;height:20px!important;min-height:20px!important;padding:0!important;margin:12px 0 0!important;transform:none!important}
 html body #app #prospectorContactsPanel .people-record-timing-wrap>.prospect-select-mark {grid-column:1!important;grid-row:5!important;justify-self:center!important}
+
+/* v1.46.34 — lower the two-row Today header to the People header's visual start. */
+html body #app[data-workspace-screen="todayView"]:is(#app) .topbar {
+  padding:18px 0 12px!important;
+  min-height:88px!important;
+}
