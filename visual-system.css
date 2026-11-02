@@ -2107,3 +2107,14 @@ html body #app :is(.topbar,.workspace-toolbar,.view-head,.prospecting-toolbar,.p
 html body #app :is(.topbar,.workspace-toolbar,.view-head,.prospecting-toolbar)::before,
 html body #app :is(.topbar,.workspace-toolbar,.view-head,.prospecting-toolbar)::after {filter:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:none!important}
 html body #app :is(h1,h2,h3,.workspace-title) {filter:none!important;text-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+
+/* v1.46.33 — solid viewport edge shared by every page; no content/interaction layer. */
+html body #statusBarSurface {position:fixed;inset:0 0 auto;height:max(1px,env(safe-area-inset-top,0px));z-index:2147483646;background:var(--ds-canvas,#fff);pointer-events:none;user-select:none;filter:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+/* Centre the indicator on the label track, not the wider date/column track. */
+html body #app #prospectorContactsPanel .people-record-timing-wrap {display:grid!important;grid-template-columns:max-content minmax(0,1fr)!important;align-items:start!important;justify-items:start!important;gap:0!important;width:100%!important;min-width:0!important}
+html body #app #prospectorContactsPanel .people-record-timing-wrap>.people-record-timing {display:contents!important}
+html body #app #prospectorContactsPanel .people-record-timing-wrap>.people-record-timing>small {grid-column:1!important;grid-row:1!important;white-space:nowrap!important;width:max-content!important}
+html body #app #prospectorContactsPanel .people-record-timing-wrap>.people-record-timing>b {grid-column:1/-1!important;grid-row:2!important;margin-top:4px!important;max-width:100%!important;overflow-wrap:anywhere!important}
+html body #app #prospectorContactsPanel .people-record-timing-wrap>.people-record-timing>em {grid-column:1/-1!important;grid-row:3!important;margin-top:4px!important}
+html body #app #prospectorContactsPanel .people-record-timing-wrap>.contact-value {grid-column:1!important;grid-row:4!important;justify-self:stretch!important;align-self:start!important;display:flex!important;justify-content:center!important;align-items:center!important;width:100%!important;height:20px!important;min-height:20px!important;padding:0!important;margin:12px 0 0!important;transform:none!important}
+html body #app #prospectorContactsPanel .people-record-timing-wrap>.prospect-select-mark {grid-column:1!important;grid-row:5!important;justify-self:center!important}
