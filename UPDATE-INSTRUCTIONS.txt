@@ -1,0 +1,62 @@
+AGNT v1.46.27 | Rolling MarketPulse history and permanent activity totals
+This supersedes the uninstalled v1.46.26 package. Upload v1.46.27 only.
+Built on v1.46.26, retaining the production v1.46.25 SMS, buyer-message and leaderboard changes.
+
+NUMBERED UPLOAD STEPS
+1. Before uploading, open your current AGNT > Your profile / Settings > Export backup. Save the JSON in Files or on your computer. Keep it unchanged. The existing MarketPulse capacity warning does not require clearing anything to export. Export on any other device that has unsynced work too; do not sign out, uninstall, clear website storage or reset an account.
+2. Download a copy of the current main GitHub repository as a rollback reference. In Firebase project daily-accountability-be0ac, open Firestore Database > Rules and copy the currently published rules into a separate safe file.
+3. Unzip this package. In Firebase Rules, compare your live rules to the supplied firestore.rules. This release changes only the recursive owner write rule inside /users/{userId}, adding safeProspectingWrite immediately before it. If your current rules match the repository rules elsewhere, paste the complete supplied firestore.rules and Publish. If your live rules have other custom changes, keep them and apply only the snippet below. Do not change Authentication, indexes, project settings, the Gmail bridge or Apps Script.
+4. In AndrewTour/andrewtour.github.io, upload the unzipped website files into the main branch. Keep the existing folder structure, particularly android/ and icons/. Commit the files together. Do not upload the ZIP as the website. firestore.rules and this guide are reference/configuration files; uploading rules to GitHub does not publish them to Firebase.
+5. Wait for GitHub Pages deployment to finish. Close all open AGNT windows, reopen while online, and check Your profile / Settings says AGNT v1.46.27. If it still shows an older version, allow the update to download, then close and reopen again. Do not clear website data to force an update.
+6. Leave AGNT open online until syncing settles. The first run uploads and verifies recovery copies, creates the small activity ledger, migrates the cloud snapshot and then retries pending MarketPulse inbox items. Duration depends on connection and history size. Do not import your backup over it as part of normal installation.
+7. Check your contact list, several contact notes, recent call history, appointments, team/leaderboard and recent MarketPulse properties. On My Market, the new Captured activity totals line should show listed, sold, price-update and withdrawn totals. These totals span retained observations; the detailed property list covers the latest 12 months.
+8. Export another AGNT backup after sync completes. Keep both the before and after files. Update your other devices before editing on them. Each agent's device migrates only that agent's own UID when they open the new app. No one needs a new account or forwarding setup.
+9. If a migration or archive verification error remains, keep your backup and leave the account intact. Share the exact message for investigation. Do not delete cloud records, remove chunks, loosen rules, reinstall or roll back to an older app after migration. A forward repair can use the retained recovery snapshots.
+
+EXACT RULE CHANGE FOR A CUSTOM LIVE RULESET
+Inside match /users/{userId}, add this function and replace only the old recursive owner read/write block with these lines. Keep all other live rules intact.
+
+      function safeProspectingWrite() {
+        let statePath = /databases/$(database)/documents/users/$(userId)/prospecting/state;
+        return request.path != statePath
+          || !exists(statePath)
+          || !get(statePath).data.keys().hasAny(['storageVersion'])
+          || (request.resource != null && request.resource.data.keys().hasAll(['storageVersion', 'fields'])
+              && request.resource.data.storageVersion in [2, 3]
+              && request.resource.data.storageVersion >= get(statePath).data.storageVersion);
+      }
+      match /{document=**} {
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId) && safeProspectingWrite();
+      }
+
+WHAT IS PRESERVED
+Contacts, contact notes, contact/call interactions, appointments, daily activity, targets, team memberships and leaderboard data are not subject to the MarketPulse expiry policy. Authentication, Firebase project configuration, SMS routing, the iOS Shortcut and Tasker profile are unchanged. The original record IDs and UID separation are preserved.
+
+WHAT EXPIRES
+Detailed MarketPulse property events older than 12 calendar months roll off the live cloud snapshot and device archive only after their summaries have been saved. The cutoff uses Sydney's calendar date and includes the cutoff day. This applies to event addresses, guides/prices, agency/agent details and descriptions in the MarketPulse archive. It does not erase information deliberately saved in contact notes or interaction logs.
+
+WHAT REMAINS
+A private, small ledger retains a SHA-256 event fingerprint, month, suburb, reported property type and event kind. AGNT derives monthly and lifetime listed/sold/price-update/withdrawn counts from it. No address, price, agent name or free-text description is stored in the permanent ledger. Re-importing the same event ID does not increase the total. Totals represent captured MarketPulse event records, not an independently verified census of unique properties. Separate dated notices are distinct events. Historical fields absent from surviving data are not invented. Prior compact-history aliases are counted when their encoded date/type can be recovered.
+
+RECOVERY AND CLEANUP
+A full recovery snapshot of the current cloud state is stored before replacing it. When old device-only property detail is about to expire, a full pre-prune payload is backed up as well. A failed backup stops publication. Recovery copies are kept for at least 30 days. The external backup you export is not automatically deleted.
+Cleanup runs on a successful sync while AGNT is open and online. It uses a transaction lease so a concurrent writer must retry, and deletes only age-verified expired recovery manifests and old unreferenced chunks. Current data, unexpired recovery copies, recently uploaded chunks and objects with an unverified age are retained. Cleanup is conservative and limited to 1,000 documents per pass; large backlogs are cleaned over later successful syncs. This is not a new always-running server job.
+After a durable IndexedDB checkpoint, duplicate legacy localStorage copies of the large prospecting arrays are removed. A failed device archive read blocks further archive writes until recovery, preserving the existing checkpoint.
+Cloud state uses storage version 3. Existing legacy and v2 snapshots remain readable for migration/recovery. The rules block older clients from replacing a migrated v3 head with v2/legacy data. Do not roll back the app or remove the downgrade guard after migration.
+
+VALIDATION
+64 automated checks: 16 storage/integrity/interruption tests; 5 IndexedDB checks; 17 rolling-retention/totals/cleanup tests; 10 actual-app writer, observer and cleanup integration checks; 16 Firestore Emulator rule checks. JavaScript syntax and ZIP integrity also checked. Firebase configuration, styling, manifest, icons and Android SMS assets are byte-identical to the v1.46.25 baseline.
+No live Firebase data or rules have been changed by preparing this ZIP. This package has not been tested on a physical iPhone or a deployed website. The upload steps include the necessary live verification.
+This removes the prior aggregate 800KB sync cap and limits retained property detail, but Firebase quotas, browser/device free space and the growing lightweight totals ledger still have practical limits. Missing historic data cannot be reconstructed from totals.
+
+CHANGED FILES
+app.js, index.html, runtime.js, service-worker.js, prospecting-storage.js, market-retention.js (new), archive-cleanup.js (new), firestore.rules, UPDATE-INSTRUCTIONS.txt.
+No indexes or GitHub Pages settings changes required. One Firestore rules update is required before upload.
+
+RECENT RELEASE HISTORY
+v1.46.27: 12-month property detail; persistent monthly event totals; 30-day recovery retention; guarded cleanup.
+v1.46.26: Partitioned verified snapshots, durable device archive and old-client write protection.
+v1.46.25: Weekly buyer messages and compact scrollable leaderboard.
+v1.46.24: Logged-in agent SMS signatures, EOM exclusion and contact-tag audiences.
+v1.46.23: Android Tasker bulk SMS alongside existing iOS handoff.

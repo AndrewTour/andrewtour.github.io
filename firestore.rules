@@ -75,8 +75,18 @@ service cloud.firestore {
         allow write: if isOwner(userId);
       }
 
+      function safeProspectingWrite() {
+        let statePath = /databases/$(database)/documents/users/$(userId)/prospecting/state;
+        return request.path != statePath
+          || !exists(statePath)
+          || !get(statePath).data.keys().hasAny(['storageVersion'])
+          || (request.resource != null && request.resource.data.keys().hasAll(['storageVersion', 'fields'])
+              && request.resource.data.storageVersion in [2, 3]
+              && request.resource.data.storageVersion >= get(statePath).data.storageVersion);
+      }
       match /{document=**} {
-        allow read, write: if isOwner(userId);
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId) && safeProspectingWrite();
       }
     }
 
@@ -372,3 +382,4 @@ service cloud.firestore {
     }
   }
 }
+
