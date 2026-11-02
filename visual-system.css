@@ -2098,3 +2098,12 @@ html body #app #insightsView .leaderboard-period-controls.hidden {display:none!i
 html body #app #insightsView .leaderboard-period-controls button {width:auto!important;min-width:32px!important;min-height:36px!important;height:36px!important;padding:4px 8px!important;font-size:11px!important;border-radius:6px!important}
 html body #app #insightsView #leaderboardList {flex:1 1 0!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch}
 html body #app #insightsView #leaderboardNote {flex-shrink:0!important;font-size:10px!important;margin:8px 0!important}
+
+/* v1.46.32 — value movement belongs to the follow-up column. */
+html body #app #prospectorContactsPanel .people-record-timing-wrap {display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:0!important;min-width:0!important}
+html body #app #prospectorContactsPanel .people-record-timing-wrap>.contact-value {align-self:center!important;justify-self:center!important;display:flex!important;align-items:center!important;justify-content:center!important;margin:12px 0 0!important;padding:0!important;min-height:20px!important;width:100%!important;line-height:1!important}
+/* Opaque, sharp header surfaces in both themes; retain safe-area/layout rules. */
+html body #app :is(.topbar,.workspace-toolbar,.view-head,.prospecting-toolbar,.prospector-sections,.today-page-tabs) {filter:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:var(--ds-canvas)!important;text-shadow:none!important}
+html body #app :is(.topbar,.workspace-toolbar,.view-head,.prospecting-toolbar)::before,
+html body #app :is(.topbar,.workspace-toolbar,.view-head,.prospecting-toolbar)::after {filter:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:none!important}
+html body #app :is(h1,h2,h3,.workspace-title) {filter:none!important;text-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
