@@ -1,0 +1,23 @@
+AGNT v1.46.30 - Prospecting conflict comparison repair
+
+Baseline: complete v1.46.29 Sync Diagnostics and Verification.
+
+Observed diagnostics
+The supplied v1.46.29 report records successful server reads for days, profile and prospecting, and successful team leaderboard writes. Prospecting publication repeatedly fails at commit with concurrent-cloud-change. It does not confirm successful prospecting sync or prove all records are healthy.
+
+Repair
+The previous conflict guard compared JSON strings directly. Object/map field order could therefore produce a false conflict even when the stored values were identical. The actual prior save function was reproduced failing on reordered but equal head data.
+The guard now compares canonical field values independently of object-key order. Array order and field values remain significant. Timestamp JSON representations are normalised. Actual changed content, revision, timestamps, maintenance and account changes still prevent publication. No conflict check was removed and no cloud records are overwritten to force recovery.
+The explicit cloud check also ignores object-key order when comparing normalised records.
+Diagnostics now record harmless key-order normalisation and allowlisted top-level fields involved in a genuine head conflict. No record values, IDs or raw messages are included.
+
+Protected systems
+Firebase configuration, Authentication, Firestore paths/rules, existing record payloads, UID separation, local record storage and retry scheduling are unchanged. Existing chunks and recovery backups remain in place. No new migration or Firebase Console changes are required. Existing v1.46.27 rules remain required.
+
+Validation
+Reproduced the actual v1.46.29 false conflict with equal reordered head fields. The actual v1.46.30 save publishes after chunk/recovery acknowledgement. Changed revisions, timestamps, archive references, active maintenance and account changes still block publication. Prior empty-list, retry, dirty-marker, diagnostics, read-only verification, mismatch, timeout, offline and account-switch checks passed. All JavaScript syntax, relative module packaging, protected-file comparisons and ZIP integrity checked.
+No live-account, deployed-site or physical-iPhone test performed. This patch addresses a reproduced defect; only a fresh on-device check can establish whether it resolves this account's remaining failure.
+
+Install and verify
+Replace the complete GitHub Pages source with this ZIP and commit. Open AGNT online, close all AGNT windows, then reopen to activate. Confirm Settings shows v1.46.30. Do not clear storage or reinstall.
+Allow the pending save to finish, then use Settings > Check cloud sync. Look for no pending core changes and a confirmed prospecting write in diagnostics. If an error or mismatch remains, download diagnostics before refreshing. The new conflict detail can distinguish genuine remote changes from key-order differences.
