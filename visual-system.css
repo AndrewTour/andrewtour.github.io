@@ -2124,3 +2124,18 @@ html body #app[data-workspace-screen="todayView"]:is(#app) .topbar {
   padding:18px 0 12px!important;
   min-height:88px!important;
 }
+
+/* v1.46.35 — conversation dates share the existing follow-up hierarchy. */
+html body #app :is(#prospectorContactsPanel,#prospectorBuyersPanel,#prospectorPipelinePanel) .people-last-spoken {display:grid!important;gap:4px!important;margin-top:12px!important;min-width:0!important;text-align:left!important}
+html body #app :is(#prospectorContactsPanel,#prospectorBuyersPanel,#prospectorPipelinePanel) .people-last-spoken>small {font-size:10px!important;font-weight:400!important;line-height:1.4!important;color:var(--ds-muted)!important;text-transform:none!important;letter-spacing:0!important;white-space:normal!important}
+html body #app :is(#prospectorContactsPanel,#prospectorBuyersPanel,#prospectorPipelinePanel) .people-last-spoken>b {font-size:11px!important;font-weight:500!important;line-height:1.4!important;color:var(--ds-secondary)!important;white-space:normal!important;overflow-wrap:anywhere!important}
+html body #app #prospectorContactsPanel .people-record-timing-wrap>.people-last-spoken {grid-column:1/-1!important;grid-row:5!important}
+html body #app #prospectorContactsPanel .people-record-timing-wrap>.prospect-select-mark {grid-row:6!important}
+/* Flat notifications; preserve the event, priority and existing action targets. */
+html body #app #prospectorBuyersPanel .buyer-match-alert {display:inline-flex!important;align-items:center!important;gap:6px!important;width:fit-content!important;max-width:100%!important;margin:8px 0 0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:var(--ds-accent)!important;font-size:11px!important;font-weight:500!important;line-height:1.4!important;text-transform:none!important;letter-spacing:0!important}
+html body #app #prospectorBuyersPanel .buyer-match-alert>b {display:inline!important;min-width:0!important;width:auto!important;height:auto!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:inherit!important;font-size:inherit!important;font-weight:600!important}
+html body #app #prospectorBuyersPanel .buyer-card-time-alert {display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:3px!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:6px 0 2px!important;padding:4px 0 4px 10px!important;border:0!important;border-left:2px solid var(--ds-accent)!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+html body #app #prospectorBuyersPanel .buyer-card-time-alert::before {display:none!important;content:none!important}
+html body #app #prospectorBuyersPanel .buyer-card-time-alert>b {font-size:11px!important;font-weight:500!important;line-height:1.4!important;letter-spacing:0!important;text-transform:none!important;color:var(--ds-secondary)!important;white-space:normal!important}
+html body #app #prospectorBuyersPanel .buyer-card-time-alert>small {grid-column:1!important;font-size:11px!important;font-weight:400!important;line-height:1.45!important;color:var(--ds-muted)!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere!important}
+html body #app #prospectorBuyersPanel .buyer-card-time-alert.critical {border-left-color:var(--ds-danger)!important}
