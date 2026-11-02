@@ -1,0 +1,19 @@
+AGNT v1.46.31 - Green sync status during normal operation
+
+Baseline: confirmed working v1.46.30, verified by the supplied on-device diagnostics.
+
+Presentation-only change
+The compact indicator stays green during routine saves, initial connecting and older confirmations. Labels still distinguish Connecting, Saving and Up to date from a confirmed Live state. Offline/device-only states and recorded failures or mismatched records retain warning/error styling. Green signals normal operation rather than a newly proven cloud read.
+Hide the profile sync label when status is verified or last-verified and no other existing warning applies. A confirmation becoming older no longer displays Awaiting sync verification, asks for a manual check, or says Server check due. The compact badge uses Up to date and the detailed summary uses No pending changes for an older confirmation. Diagnostics retain the original last-verified state and timestamps; no claim of a new server check is manufactured.
+Refresh the profile label whenever sync status refreshes so it clears without reopening Settings. Hide placeholder profile copy during startup. Pending, offline, device-only, initial unverified and genuine error messages remain visible.
+
+Protected systems
+No changes to Firebase, authentication, Firestore rules/paths, record payloads, stored data, cache/offline logic, save scheduling, retries, diagnostics state calculation or the manual check. Only release/cache version markers and status presentation changed.
+No Firebase Console, index, rules or GitHub configuration changes are required.
+
+Validation
+Checked profile labels for fresh/older healthy states, pending saves, offline, errors and initial unverified. All JavaScript syntax checked, complete ZIP and relative dependencies verified. Confirmed protected files and diagnostic-state module unchanged apart from release headers.
+No deployed-site or physical-iPhone testing performed for this release.
+
+Install
+Replace the complete GitHub Pages source and commit. Open online, close all AGNT windows and reopen to activate. Confirm Settings shows v1.46.31. No manual sync check is required to hide the healthy profile label. Do not clear app storage.
