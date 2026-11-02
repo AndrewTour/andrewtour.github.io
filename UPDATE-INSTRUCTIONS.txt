@@ -1,5 +1,9 @@
-AGNT v1.46.27 | Rolling MarketPulse history and permanent activity totals
-This supersedes the uninstalled v1.46.26 package. Upload v1.46.27 only.
+v1.46.29: Sync diagnostics and read-only verification. No further Firebase changes. After replacing the complete GitHub Pages source and confirming v1.46.29 in Settings, tap Check cloud sync. Read confirmation and last successful save are shown separately. Download diagnostics before refreshing if problems persist. See RELEASE-NOTES-1.46.29.txt for scope, validation and limits.
+
+v1.46.28 PATCH: No further Firebase rule changes are needed if the v1.46.27 rules have already been published. Replace the complete GitHub Pages source with this package. Do not clear storage or reinstall. Open online, close all AGNT windows, then reopen to activate the downloaded release. Confirm Settings shows v1.46.28 and cloud sync completes. The original storage-migration guidance is retained below for installations upgrading from before v1.46.27.
+
+AGNT v1.46.28 | Rolling MarketPulse history and permanent activity totals
+This supersedes the uninstalled v1.46.26 package. Upload v1.46.28 only.
 Built on v1.46.26, retaining the production v1.46.25 SMS, buyer-message and leaderboard changes.
 
 NUMBERED UPLOAD STEPS
@@ -7,7 +11,7 @@ NUMBERED UPLOAD STEPS
 2. Download a copy of the current main GitHub repository as a rollback reference. In Firebase project daily-accountability-be0ac, open Firestore Database > Rules and copy the currently published rules into a separate safe file.
 3. Unzip this package. In Firebase Rules, compare your live rules to the supplied firestore.rules. This release changes only the recursive owner write rule inside /users/{userId}, adding safeProspectingWrite immediately before it. If your current rules match the repository rules elsewhere, paste the complete supplied firestore.rules and Publish. If your live rules have other custom changes, keep them and apply only the snippet below. Do not change Authentication, indexes, project settings, the Gmail bridge or Apps Script.
 4. In AndrewTour/andrewtour.github.io, upload the unzipped website files into the main branch. Keep the existing folder structure, particularly android/ and icons/. Commit the files together. Do not upload the ZIP as the website. firestore.rules and this guide are reference/configuration files; uploading rules to GitHub does not publish them to Firebase.
-5. Wait for GitHub Pages deployment to finish. Close all open AGNT windows, reopen while online, and check Your profile / Settings says AGNT v1.46.27. If it still shows an older version, allow the update to download, then close and reopen again. Do not clear website data to force an update.
+5. Wait for GitHub Pages deployment to finish. Close all open AGNT windows, reopen while online, and check Your profile / Settings says AGNT v1.46.28. If it still shows an older version, allow the update to download, then close and reopen again. Do not clear website data to force an update.
 6. Leave AGNT open online until syncing settles. The first run uploads and verifies recovery copies, creates the small activity ledger, migrates the cloud snapshot and then retries pending MarketPulse inbox items. Duration depends on connection and history size. Do not import your backup over it as part of normal installation.
 7. Check your contact list, several contact notes, recent call history, appointments, team/leaderboard and recent MarketPulse properties. On My Market, the new Captured activity totals line should show listed, sold, price-update and withdrawn totals. These totals span retained observations; the detailed property list covers the latest 12 months.
 8. Export another AGNT backup after sync completes. Keep both the before and after files. Update your other devices before editing on them. Each agent's device migrates only that agent's own UID when they open the new app. No one needs a new account or forwarding setup.
@@ -55,7 +59,7 @@ app.js, index.html, runtime.js, service-worker.js, prospecting-storage.js, marke
 No indexes or GitHub Pages settings changes required. One Firestore rules update is required before upload.
 
 RECENT RELEASE HISTORY
-v1.46.27: 12-month property detail; persistent monthly event totals; 30-day recovery retention; guarded cleanup.
+v1.46.28: 12-month property detail; persistent monthly event totals; 30-day recovery retention; guarded cleanup.
 v1.46.26: Partitioned verified snapshots, durable device archive and old-client write protection.
 v1.46.25: Weekly buyer messages and compact scrollable leaderboard.
 v1.46.24: Logged-in agent SMS signatures, EOM exclusion and contact-tag audiences.

@@ -1,0 +1,10 @@
+AGNT v1.46.28 - Prospecting sync repair
+
+Baseline: complete v1.46.27 Rolling MarketPulse History package.
+Preserves all five required snapshot arrays, including empty lists, when compacting queued cloud saves. Previously an empty list was omitted, causing snapshot validation or retention length checks to fail before the cloud write.
+Uses the normalised ledger in the queued signature.
+Shows the local-save warning once per continuous failure episode; retry and the persistent sync indicator remain active. Resets after a successful save or account reset.
+Adds privacy-safe prospecting failure type/code to runtime diagnostics; no record contents or error messages logged.
+No Firestore rules, Firebase configuration, authentication, paths, UID separation or interface changes.
+Retains the v1.46.27 rules requirement; this patch requires no further Firebase changes.
+Install by replacing the GitHub Pages source with the complete package. Close all AGNT windows, open it online to fetch the update, then close and reopen to activate. Verify Settings shows v1.46.28 and syncing completes. Do not clear app storage.

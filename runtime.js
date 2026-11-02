@@ -1,9 +1,9 @@
-/* AGNT 1.46.27: independent startup protection; no authentication or data access. */
+/* AGNT 1.46.29: independent startup protection; no authentication or data access. */
 (()=>{
   'use strict';
-  const version='1.46.27',key='agnt:runtime-events-v1',boot=Date.now().toString(36);
-  const codes=new Set(['Error','TypeError','ReferenceError','RangeError','SyntaxError','SecurityError','QuotaExceededError','AbortError']);
-  const events=new Set(['boot','ready','hidden','visible','pagehide','pageshow','pageshow-restored','online','offline','runtime-error','promise-error','module-error','startup-timeout','storage-error','render-error','worker-change','navigation-start','navigation-ready']);
+  const version='1.46.29',key='agnt:runtime-events-v1',boot=Date.now().toString(36);
+  const codes=new Set(['Error','TypeError','ReferenceError','RangeError','SyntaxError','SecurityError','QuotaExceededError','AbortError','permission-denied','unavailable','failed-precondition','resource-exhausted','aborted','deadline-exceeded','unauthenticated','invalid-argument']);
+  const events=new Set(['boot','ready','hidden','visible','pagehide','pageshow','pageshow-restored','online','offline','runtime-error','promise-error','module-error','startup-timeout','storage-error','render-error','worker-change','navigation-start','navigation-ready','prospecting-sync-error']);
   let rows=[],timer=null,ready=false,navigation='';
   try{const type=performance.getEntriesByType('navigation')[0]?.type;if(['navigate','reload','back_forward','prerender'].includes(type))navigation=type}catch{}
   try{const saved=JSON.parse(localStorage.getItem(key)||'[]');if(Array.isArray(saved))rows=saved.slice(-47)}catch{}

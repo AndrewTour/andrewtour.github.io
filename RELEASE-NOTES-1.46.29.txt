@@ -1,0 +1,30 @@
+AGNT v1.46.29 - Sync diagnostics and verification
+
+Baseline: complete v1.46.28 Prospecting Sync Fix.
+
+Changes
+- Download app diagnostics now includes a schema-versioned sync report alongside runtime events.
+- Reports daily/profile/prospecting and personal/team leaderboard save acknowledgements, active save ages, safe error codes and reasons, archive save phases, and retry delays.
+- Server reads are distinguished from cached snapshots and pending local writes. An unrelated successful channel cannot clear a recorded channel failure.
+- Diagnostic sync history is bounded to 160 events in the active account session, reset on account change, and contains no names, emails, UIDs, tokens, record bodies or raw error messages. Current-state metadata and safe error codes remain available when older events roll off. Download before refreshing when investigating an issue.
+- Settings includes a read-only Check cloud sync action, with a 20-second timeout. It reads the signed-in account's profile, today's day and prospecting head directly from the server, verifies archive chunks, and compares normalised prospecting data and today's revision with this device. Missing archives containing local records are reported as differences.
+- Checks do not create test records, change rules, overwrite records, trigger a migration or silently clear save/listener failures.
+- Live status now takes server confirmation, dirty-day and prospecting queues, device save issues and unresolved recorded failures into account. Confirmations older than two minutes are labelled Last verified rather than fresh verification. Last acknowledged cloud save is shown separately.
+- The existing v1.46.28 empty-list save fix remains included.
+
+Scope and limits
+- No changes to Firebase configuration, authentication, Firestore paths/rules, existing payloads, record identities, UID separation, local record storage or retry scheduling. Only diagnostics, status reporting, explicit reads and release-cache updates changed.
+- The explicit check verifies core personal records. It does not independently prove every historical day, team assignment, external MarketPulse inbox/import service or cross-device listener is healthy. Successful write acknowledgement is reported separately and only after a real save returns successfully.
+- No production Firebase session, live-account or physical-iPhone testing performed. A green read check is not proof of an untested write permission.
+
+Validation
+- Baseline empty-list defect reproduced; 32 empty/populated required-list combinations round-tripped.
+- Save retry, dirty-marker protection and repeat-alert reset regressions passed.
+- Sync tracker tests: cache-only reads, confirmed reads, independent failures, phases, device issues, pending queues, stale confirmation, bounded privacy-safe logs and account reset.
+- Actual read-only check exercised with controlled IO: success, mismatch, pending changes, permission denial, archive integrity failure, offline, timeout and account switch.
+- All JavaScript syntax checked; full ZIP integrity and release asset references checked. Firebase configuration and rules byte-identical to v1.46.28.
+
+Install
+Replace the complete GitHub Pages source with this ZIP and commit. Open online, close all AGNT windows and reopen to activate the downloaded release. Confirm Settings says v1.46.29. Do not clear storage or reinstall.
+Then use Settings > Check cloud sync. If it reports a failure, difference or persistent pending changes, Download app diagnostics before refreshing and provide that file.
+No additional Firebase Console, rule, index or GitHub configuration changes are required beyond the already required v1.46.27 rules.
