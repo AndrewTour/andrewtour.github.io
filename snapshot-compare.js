@@ -1,4 +1,4 @@
-// AGNT v1.46.40 — order-independent comparisons; no stored data is modified.
+// AGNT v1.46.41 — order-independent comparisons; no stored data is modified.
 export function stableSnapshotString(value){
  function canonical(item){
   if(item===null||typeof item!=='object')return item;
