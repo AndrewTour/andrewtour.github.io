@@ -2209,3 +2209,46 @@ html body .associate-completion-alert button {min-height:44px;border:0;backgroun
 html body .associate-completion-alert strong {display:block;font-size:13px;font-weight:500}
 html body .associate-completion-alert span {display:block;margin-top:6px;color:var(--ds-muted);font-size:12px}
 html body .associate-completion-alert button:last-child {text-align:center;font-size:22px}
+
+/* v1.46.44 — Focus remains one page above the navigation in either theme. */
+html body #app #todayView.dashboard.active:not(.off-day-opportunity-mode) {
+  flex:0 0 auto!important;height:var(--focus-available,100%)!important;max-height:100%!important;
+  min-height:0!important;grid-template-rows:auto minmax(0,1fr)!important;overflow:hidden!important;
+}
+html body #app #todayView:not(.off-day-opportunity-mode) .score-overview {grid-template-columns:minmax(0,1fr) auto!important}
+html body #app #todayView:not(.off-day-opportunity-mode) .score-copy {min-width:0!important;max-width:100%!important}
+html body #app #todayView:not(.off-day-opportunity-mode) #momentumWhisper {
+  display:block!important;min-width:0!important;max-width:100%!important;
+  white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+}
+html body #app #todayView:not(.off-day-opportunity-mode) .metrics {
+  height:auto!important;min-height:0!important;overflow:hidden!important;
+  grid-template-rows:repeat(4,minmax(0,1fr))!important;
+}
+html body #app #todayView:not(.off-day-opportunity-mode) .metric {min-height:0!important;grid-template-rows:minmax(0,1fr)!important;overflow:hidden!important}
+html body #app #todayView:is([data-focus-density="compact"],[data-focus-density="tight"]):not(.off-day-opportunity-mode) .metric-copy {
+  display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;grid-template-rows:auto auto auto!important;gap:1px 3px!important;align-items:baseline;
+}
+html body #app #todayView:is([data-focus-density="compact"],[data-focus-density="tight"]) .metric-copy>span {grid-column:1;grid-row:1;font-size:10px!important}
+html body #app #todayView:is([data-focus-density="compact"],[data-focus-density="tight"]) .metric-copy>strong {grid-column:2;grid-row:1;font-size:20px!important;margin:0!important}
+html body #app #todayView:is([data-focus-density="compact"],[data-focus-density="tight"]) .metric-copy>small {grid-column:1/-1;grid-row:2;margin:0!important;font-size:10px!important;line-height:1.15!important}
+html body #app #todayView:is([data-focus-density="compact"],[data-focus-density="tight"]) .metric-copy>em {grid-column:1/-1;grid-row:3;margin:0!important;font-size:10px!important;line-height:1.15!important}
+html body #app #todayView[data-focus-density="compact"] .metric {padding-block:2px!important}
+html body #app #todayView[data-focus-density="compact"] #dailyScore {font-size:32px!important}
+html body #app #todayView:is([data-focus-density="tight"]) .score-week {padding-block:0!important}
+html body #app #todayView:is([data-focus-density="tight"]) .score-overview {padding-top:0!important}
+html body #app #todayView:is([data-focus-density="tight"]) .score-copy {display:grid!important;grid-template-columns:auto minmax(0,1fr)!important;gap:2px 8px!important;align-items:center!important}
+html body #app #todayView:is([data-focus-density="tight"]) #dailyScore {grid-column:1;grid-row:1;font-size:26px!important;margin:0!important}
+html body #app #todayView:is([data-focus-density="tight"]) #welcomeMessage {grid-column:2;grid-row:1;font-size:10px!important;line-height:1.1!important}
+html body #app #todayView:is([data-focus-density="tight"]) #momentumWhisper {grid-column:1/-1;grid-row:2;font-size:9.5px!important;line-height:1.1!important;margin-top:0!important}
+html body #app #todayView:is([data-focus-density="tight"]) #leaderboardPosition {font-size:20px!important}
+html body #app #todayView:is([data-focus-density="tight"]) .score-week>.bar {height:2px!important;margin-top:4px!important}
+html body #app #todayView:is([data-focus-density="tight"]) .scheduled-day-quick-menu {margin:4px 0 0!important}
+html body #app #todayView:is([data-focus-density="tight"]) .metric {padding-block:0!important}
+html body #app #todayView[data-focus-density="tight"] .metric-copy>strong {font-size:18px!important}
+
+html body #app #todayView:not(.off-day-opportunity-mode) .metric-copy {
+  width:calc(100% / var(--focus-copy-scale,1))!important;max-width:none!important;
+  transform:scale(var(--focus-copy-scale,1));transform-origin:left center;
+}
+html body #app #todayView:not(.off-day-opportunity-mode) .metric-copy>span {min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

@@ -1,4 +1,4 @@
-// AGNT v1.46.43 — diagnostic state only; no record data or Firebase access.
+// AGNT v1.46.44 — diagnostic state only; no record data or Firebase access.
 const CHANNELS=new Set(['days','profile','prospecting','leaderboard','team-leaderboard','other']);
 const CODES=new Set(['Error','TypeError','ReferenceError','RangeError','SyntaxError','SecurityError','QuotaExceededError','AbortError','permission-denied','unavailable','failed-precondition','resource-exhausted','aborted','deadline-exceeded','unauthenticated','invalid-argument','cancelled','not-found','already-exists','internal','data-loss','unimplemented','unknown']);
 const PHASES=new Set(['queued','retention','chunks','recovery','commit','decode','listener','server-check']);

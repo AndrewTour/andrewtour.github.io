@@ -1,4 +1,4 @@
-// AGNT v1.46.43 — shared, dependency-free associate recurrence rules.
+// AGNT v1.46.44 — shared, dependency-free associate recurrence rules.
 const clean=(value,max)=>String(value??'').trim().slice(0,max);
 function validDate(value){
   if(!/^\d{4}-\d{2}-\d{2}$/.test(value||''))return false;
