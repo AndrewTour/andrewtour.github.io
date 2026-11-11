@@ -1471,7 +1471,7 @@ function exportAppointmentToCalendar(a,sourceDate=''){
 function appointmentCalendarButton(a,sourceDate=''){
   const added=appointmentAddedToCalendar(a,sourceDate),id=escapeHtml(calendarExportId(a,sourceDate)),source=escapeHtml(sourceDate);
   const icon=added?'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4.5 8.5h15M5.5 5h13a1.5 1.5 0 0 1 1.5 1.5v12a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-12A1.5 1.5 0 0 1 5.5 5Z"/><path d="m9 14 2 2 4-4"/></svg>':'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4.5 8.5h15M5.5 5h13a1.5 1.5 0 0 1 1.5 1.5v12a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-12A1.5 1.5 0 0 1 5.5 5Z"/><path d="M12 11v6M9 14h6"/></svg>';
-  return `<button class="appointment-calendar ${added?'is-added':''}" data-calendar-appointment="${id}" data-source-date="${source}" aria-label="${added?'Added to calendar':'Add appointment to calendar'}" title="${added?'Added to calendar':'Add to calendar'}">${icon}</button>`;
+  return `<button class="appointment-calendar ${added?'is-added':''}" data-calendar-appointment="${id}" data-source-date="${source}" aria-label="${added?'Add appointment to calendar again':'Add appointment to calendar'}" title="${added?'Add to calendar again':'Add to calendar'}">${icon}</button>`;
 }
 function appointmentEntriesForDate(viewDate){
   const entries=dayData(viewDate).appointments.map(a=>({appointment:a,sourceDate:viewDate,isReminder:false,isTeamAssigned:false}));
@@ -3204,12 +3204,36 @@ function normaliseBuyerPropertyMatches(list=[]){
     return{id,eventId,propertyKey,eventType:cleanText(item.eventType,60),address:cleanText(item.address,240),suburb:cleanText(item.suburb,100),price:cleanText(item.price,120),guide:cleanText(item.guide,120),priorPrice:cleanText(item.priorPrice,120),priceMovementAmount:cleanText(item.priceMovementAmount,120),priceMovementPercent:cleanText(item.priceMovementPercent,40),priceMovementDirection:['above','below'].includes(item.priceMovementDirection)?item.priceMovementDirection:'',propertyDetails:cleanText(item.propertyDetails,240),daysOnMarket:cleanText(item.daysOnMarket,80),auctionDate:validDateKey(item.auctionDate)?item.auctionDate:'',auctionTime:/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(item.auctionTime)?item.auctionTime:'',auctionText:cleanText(item.auctionText,180),propertyType:BUYER_PROPERTY_TYPES.includes(item.propertyType)?item.propertyType:'',bedrooms:Math.max(0,Number(item.bedrooms)||0),bathrooms:Math.max(0,Number(item.bathrooms)||0),cars:Math.max(0,Number(item.cars)||0),receivedDate:validDateKey(item.receivedDate)?item.receivedDate:todayKey(),matchedAt:Number(item.matchedAt)||Date.now(),status:BUYER_MATCH_STATUSES.has(item.status)?item.status:'active',statusAt:Number(item.statusAt)||0,reason:cleanText(item.reason,320),outcome:BUYER_MATCH_OUTCOMES.has(item.outcome)?item.outcome:'',outcomeAt:Number(item.outcomeAt)||0,outcomeReason:BUYER_MATCH_REASONS.has(item.outcomeReason)?item.outcomeReason:'',nextFollowUp:validDateKey(item.nextFollowUp)?item.nextFollowUp:'',lastAttemptAt:Number(item.lastAttemptAt)||0,lastContactMethod:['call','sms','manual'].includes(item.lastContactMethod)?item.lastContactMethod:'',attemptCount:Math.max(0,Number(item.attemptCount)||0)};
   }).filter(item=>item.id&&item.eventId&&item.propertyKey&&item.address&&item.suburb).filter(item=>{if(seen.has(item.id))return false;seen.add(item.id);return true}).sort((a,b)=>a.receivedDate.localeCompare(b.receivedDate)||a.matchedAt-b.matchedAt).slice(-60)
 }
+function normaliseAdditionalProperties(list=[]){
+  const records=new Map();
+  for(const [index,raw] of (Array.isArray(list)?list:[]).entries()){
+    if(!raw||typeof raw!=='object')continue;
+    const address=cleanText(raw.address,240);
+    if(!address)continue;
+    const property={
+      id:cleanText(raw.id,80)||'property_'+index,address,suburb:cleanText(raw.suburb,100),
+      notes:cleanText(raw.notes,2000),
+      sellerBedrooms:Math.max(0,Math.min(8,Number(raw.sellerBedrooms)||0)),
+      sellerBathrooms:Math.max(0,Math.min(6,Number(raw.sellerBathrooms)||0)),
+      sellerCars:Math.max(0,Math.min(6,Number(raw.sellerCars)||0)),
+      sellerPropertyType:SELLER_PROPERTY_TYPES.includes(raw.sellerPropertyType)?raw.sellerPropertyType:'',
+      sellerLandSizeBand:SELLER_LAND_SIZE_BANDS.includes(raw.sellerLandSizeBand)?raw.sellerLandSizeBand:'',
+      sellerTitleType:SELLER_TITLE_TYPES.includes(raw.sellerTitleType)?raw.sellerTitleType:'',
+      updatedAt:Number(raw.updatedAt)||0
+    };
+    const previous=records.get(property.id);
+    if(!previous||property.updatedAt>=previous.updatedAt)records.set(property.id,property);
+  }
+  return [...records.values()];
+}
 function normaliseProspect(raw={}){
   const p=raw&&typeof raw==='object'?raw:{},isLegacyBuyer=p.recordType==='buyer',hasBuyerRoleFlag=Boolean(p.buyerProfileActive||p.buyerProfileArchived),sellingTimeframe=SELLING_TIMEFRAMES.includes(p.sellingTimeframe)?p.sellingTimeframe:'',temperatureManual=isLegacyBuyer||hasBuyerRoleFlag||Boolean(p.temperatureManual),motivationManual=Boolean(p.motivationManual),defaults=pipelineDefaultsForTimeframe(sellingTimeframe);
   const base={id:cleanText(p.id,80)||prospectId(),name:cleanText(p.name,120)||'Unnamed contact',phone:cleanText(p.phone,50),email:cleanText(p.email,180),address:cleanText(p.address,240),company:cleanText(p.company,240),suburb:cleanText(p.suburb,100),tags:Array.isArray(p.tags)?p.tags.map(x=>cleanText(x,50)).filter(Boolean).slice(0,12):cleanText(p.tags,300).split(/[,;|]/).map(x=>x.trim()).filter(Boolean).slice(0,12),source:cleanText(p.source,100),stage:cleanText(p.stage,60)||'Nurture',temperature:temperatureManual&&['Cold','Warm','Hot'].includes(p.temperature)?p.temperature:defaults.temperature,sellingTimeframe,motivation:motivationManual?Math.max(1,Math.min(5,Number(p.motivation)||defaults.motivation)):defaults.motivation,temperatureManual,motivationManual,lastContact:validDateKey(p.lastContact)?p.lastContact:'',nextFollowUp:validDateKey(p.nextFollowUp)?p.nextFollowUp:'',notes:cleanText(p.notes,3000),archived:Boolean(p.archived),archivedAt:Number(p.archivedAt)||0,sellerProfileActive:Boolean(p.sellerProfileActive),sellerBedrooms:Math.max(0,Math.min(8,Number(p.sellerBedrooms)||0)),sellerBathrooms:Math.max(0,Math.min(6,Number(p.sellerBathrooms)||0)),sellerCars:Math.max(0,Math.min(6,Number(p.sellerCars)||0)),sellerPropertyType:SELLER_PROPERTY_TYPES.includes(p.sellerPropertyType)?p.sellerPropertyType:'',sellerLandSizeBand:SELLER_LAND_SIZE_BANDS.includes(p.sellerLandSizeBand)?p.sellerLandSizeBand:'',sellerTitleType:SELLER_TITLE_TYPES.includes(p.sellerTitleType)?p.sellerTitleType:'',mergedProspectIds:[...new Set((Array.isArray(p.mergedProspectIds)?p.mergedProspectIds:[]).map(id=>cleanText(id,80)).filter(Boolean))].slice(0,50),marketConfirmedProperties:[...new Set((Array.isArray(p.marketConfirmedProperties)?p.marketConfirmedProperties:[]).map(key=>cleanText(key,320)).filter(key=>key.includes('|')))].slice(0,8),dataCreditedAt:Number(p.dataCreditedAt)||0,createdAt:Number(p.createdAt)||Date.now(),updatedAt:Number(p.updatedAt)||Date.now()};
   const hasBuyerHistory=isLegacyBuyer||hasBuyerRoleFlag||Boolean(p.buyerConvertedAt||p.buyerPurchaseAddress||p.buyerStage||p.buyerSeller||p.buyerBudgetMax||p.buyerBedrooms||p.buyerBathrooms||p.buyerCars||(Array.isArray(p.buyerSuburbs)&&p.buyerSuburbs.length)||(Array.isArray(p.buyerPositionTags)&&p.buyerPositionTags.length));
   if(isLegacyBuyer)base.recordType='buyer';
   if(hasBuyerHistory){const min=Math.max(0,Number(p.buyerBudgetMin)||0),rawMax=Math.max(0,Number(p.buyerBudgetMax)||0),positionTags=(Array.isArray(p.buyerPositionTags)?p.buyerPositionTags:cleanText(p.buyerPositionTags,500).split(/[,;|]/)).map(x=>cleanText(x,50)).filter(x=>BUYER_POSITION_TAGS.includes(x));if(p.buyerSeller&&!positionTags.includes('Buyer Seller'))positionTags.unshift('Buyer Seller');const buyerStage=BUYER_STAGES.includes(p.buyerStage)?p.buyerStage:(isLegacyBuyer?'Looking':'Purchased'),buyerProfileArchived=Boolean(p.buyerProfileArchived||(isLegacyBuyer&&p.archived)),buyerProfileActive=buyerStage!=='Purchased'&&!buyerProfileArchived&&(p.buyerProfileActive===undefined?isLegacyBuyer:Boolean(p.buyerProfileActive));Object.assign(base,{buyerProfileActive,buyerProfileArchived,buyerStage,buyerBudgetMin:min,buyerBudgetMax:rawMax&&rawMax<min?min:rawMax,buyerBedrooms:Math.max(0,Math.min(5,Number(p.buyerBedrooms)||0)),buyerBathrooms:Math.max(0,Math.min(4,Number(p.buyerBathrooms)||0)),buyerCars:Math.max(0,Math.min(3,Number(p.buyerCars)||0)),buyerSuburbs:(Array.isArray(p.buyerSuburbs)?p.buyerSuburbs:cleanText(p.buyerSuburbs,500).split(/[,;|]/)).map(x=>cleanText(x,100)).filter(Boolean).slice(0,12),buyerPropertyType:BUYER_PROPERTY_TYPES.includes(p.buyerPropertyType)?p.buyerPropertyType:'',buyerFeatures:(Array.isArray(p.buyerFeatures)?p.buyerFeatures:cleanText(p.buyerFeatures,500).split(/[,;|]/)).map(x=>cleanText(x,50)).filter(x=>BUYER_FEATURES.includes(x)).slice(0,12),buyerPositionTags:[...new Set(positionTags)].slice(0,BUYER_POSITION_TAGS.length),buyerSeller:positionTags.includes('Buyer Seller'),buyerPurchaseAddress:cleanText(p.buyerPurchaseAddress,240),buyerPurchasePrice:Math.max(0,Number(p.buyerPurchasePrice)||0),buyerPurchaseDate:validDateKey(p.buyerPurchaseDate)?p.buyerPurchaseDate:'',buyerConvertedAt:Number(p.buyerConvertedAt)||0,buyerPropertyMatches:normaliseBuyerPropertyMatches(p.buyerPropertyMatches)});if(positionTags.includes('Buyer Seller'))base.sellerProfileActive=true;}
+  const additionalProperties=normaliseAdditionalProperties(p.additionalProperties);
+  if(additionalProperties.length)base.additionalProperties=additionalProperties;
   if(!base.marketConfirmedProperties.length)delete base.marketConfirmedProperties;
   return base
 }
@@ -3958,7 +3982,7 @@ function marketSessionProgress(event,matches=marketMatches(event)){
 }
 function marketMovementLabel(event){if(!event?.priceMovementDirection)return'';const eventType=normalisePlace(event.eventType),amount=event.priceMovementAmount?`${event.priceMovementAmount} `:'',percent=event.priceMovementPercent?` · ${event.priceMovementPercent} ${event.priceMovementDirection}`:'';if(eventType==='price update')return`reduced ${amount}from prior guide${percent}`;return`sold ${amount}${event.priceMovementDirection} asking${percent}`}
 function marketEventDetailHtml(event){const primary=event.price||event.guide,movement=marketMovementLabel(event),prior=event.priorPrice?`${event.guide?'Prior guide':'Asking'} ${event.priorPrice}`:'',auction=marketAuctionLabel(event),meta=[prior,auction,event.daysOnMarket,event.agency].filter(Boolean);if(!primary&&!movement&&!event.propertyDetails&&!meta.length)return'';return`<div class="market-pulse-event-data">${primary?`<strong>${escapeHtml(primary)}${event.guide?' guide':' sold'}</strong>`:''}${movement?`<span class="market-price-movement market-price-${escapeHtml(event.priceMovementDirection)}">${escapeHtml(movement)}</span>`:''}${event.propertyDetails?`<small>${escapeHtml(event.propertyDetails)}</small>`:''}${meta.length?`<small>${meta.map(escapeHtml).join(' · ')}</small>`:''}</div>`}
-function marketPulseCardHeadingMarkup(event){return`<div class="market-pulse-card-head"><span class="market-event-tag event-${marketTypeClass(event.eventType)}">${escapeHtml(event.eventType)}</span><button type="button" data-remove-market-event="${escapeHtml(event.id)}" aria-label="Remove ${escapeHtml(event.address)}">×</button></div><div class="market-pulse-card-title"><h4>${escapeHtml(event.address)}</h4><p>${escapeHtml(event.suburb)}</p></div>`}
+function marketPulseCardHeadingMarkup(event){return`<div class="market-pulse-card-head"><span class="market-event-tag event-${marketTypeClass(event.eventType)}">${escapeHtml(event.eventType)}</span><button type="button" data-remove-market-event="${escapeHtml(event.id)}" aria-label="Remove ${escapeHtml(event.address)} from Hotspotting">×</button></div><div class="market-pulse-card-title"><h4>${escapeHtml(event.address)}</h4><p>${escapeHtml(event.suburb)}</p></div>`}
 function renderMarketPulseReview(){
   const list=$('#marketReviewList');if(!list)return;const model=dailyBriefingMarketModel(),all=marketBriefingRows(model),filters={listed:row=>row.bucket==='listed',sold:row=>row.bucket==='sold',price:row=>row.bucket==='price',other:row=>row.bucket==='other'},rows=marketReviewFilter==='all'?all:all.filter(filters[marketReviewFilter]||(()=>true)),date=$('#marketReviewDate'),status=$('#marketReviewStatus'),summary=$('#marketReviewOpportunitySummary'),counts=$('#marketReviewCounts');
   if(date)date.textContent=model.events.length?`${model.fresh?'Today':dailyBriefingDateLabel(model.activeDate)} · ${model.suburbCount} suburb${model.suburbCount===1?'':'s'}`:'Daily property intelligence';
@@ -3967,6 +3991,17 @@ function renderMarketPulseReview(){
   if(counts)counts.innerHTML=[['Listed',model.listed],['Sold',model.sold],['Price',model.price],['Other',model.other]].map(([label,value])=>`<span><strong>${value}</strong>${label}</span>`).join('');
   $$('[data-market-review-filter]').forEach(button=>{const active=button.dataset.marketReviewFilter===marketReviewFilter;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active))});
   setRenderedMarkup(list,rows.length?rows.map(row=>marketBriefingRowMarkup(row)).join(''):`<div class="prospect-empty"><strong>${all.length?'No events in this filter':'No MarketPulse changes yet'}</strong><small>${all.length?'Choose another event type.':'AGNT will populate this briefing from the existing MarketPulse feed.'}</small></div>`);
+}
+async function clearHotSpottingQueue(eventId){
+  const removed=eventId?marketPulseEvents.filter(event=>event.id===eventId):marketPulseEvents;
+  if(!removed.length)return;
+  // The queue can be cleared while its properties remain in Market Overview.
+  marketPulseHistory=normaliseMarketPulseHistory([...marketPulseHistory,...removed]);
+  marketPulseEvents=eventId?marketPulseEvents.filter(event=>event.id!==eventId):[];
+  closeReplacedMarketPulseSession();
+  await saveProspecting({render:false,awaitCloud:false});
+  renderMarketPulse();
+  toast(eventId?'Removed from Hotspotting':'Hotspotting queue cleared');
 }
 function renderMarketPulse(){
   if(!$('#prospectingView')?.classList.contains('active')||prospectSection!=='market')return;
@@ -4396,10 +4431,50 @@ function setBuyerBrowseMode(mode='active'){buyerBrowseMode=mode==='archived'?'ar
 function buyerChoiceMarkup(target,current,values,labels={}){return`<input type="hidden" name="${target}" value="${escapeHtml(String(current||0))}"><div class="buyer-segment" data-buyer-segment="${target}">${values.map(value=>`<button type="button" class="${String(current||0)===String(value)?'active':''}" data-buyer-choice="${target}" data-buyer-choice-value="${value}">${escapeHtml(labels[value]||String(value))}</button>`).join('')}</div>`}
 function sellerChoiceMarkup(target,current,values,labels={}){return`<input type="hidden" name="${target}" value="${escapeHtml(String(current||0))}"><div class="buyer-segment seller-segment">${values.map(value=>`<button type="button" class="${String(current||0)===String(value)?'active':''}" data-seller-choice="${target}" data-seller-choice-value="${value}" aria-pressed="${String(current||0)===String(value)}">${escapeHtml(labels[value]||String(value))}</button>`).join('')}</div>`}
 function sellerToggleMarkup(target,current,values,labels={}){return`<input type="hidden" name="${target}" value="${escapeHtml(current||'')}"><div class="buyer-option-tags seller-option-tags">${values.map(value=>`<button type="button" class="${current===value?'active':''}" data-seller-toggle="${target}" data-seller-toggle-value="${escapeHtml(value)}" aria-pressed="${current===value}">${escapeHtml(labels[value]||value)}</button>`).join('')}</div>`}
-function sellerPropertyEditorMarkup(current={}){const showLand=current.sellerPropertyType==='House',hideConfig=current.sellerPropertyType==='Land';return`<section class="buyer-editor-section seller-editor-property"><div class="buyer-editor-section-head"><span>PROPERTY DETAILS</span><strong>Optional</strong></div><p class="seller-property-help">Add what you know to sharpen MarketPulse priority and sold estimates.</p><div class="buyer-config-grid seller-config-fields ${hideConfig?'hidden':''}" data-seller-config-fields><div><small>Bedrooms</small>${sellerChoiceMarkup('sellerBedrooms',current.sellerBedrooms||0,[0,1,2,3,4,5],{0:'—',5:'5+'})}</div><div><small>Bathrooms</small>${sellerChoiceMarkup('sellerBathrooms',current.sellerBathrooms||0,[0,1,2,3,4],{0:'—',4:'4+'})}</div><div><small>Cars</small>${sellerChoiceMarkup('sellerCars',current.sellerCars||0,[0,1,2,3],{0:'—',3:'3+'})}</div></div><span class="buyer-field-label seller-field-label">PROPERTY TYPE</span>${sellerToggleMarkup('sellerPropertyType',current.sellerPropertyType||'',SELLER_PROPERTY_TYPES)}<div class="seller-land-fields ${showLand?'':'hidden'}" data-seller-land-fields><span class="buyer-field-label seller-field-label">LAND SIZE</span>${sellerToggleMarkup('sellerLandSizeBand',current.sellerLandSizeBand||'',SELLER_LAND_SIZE_BANDS,SELLER_LAND_SIZE_LABELS)}</div><span class="buyer-field-label seller-field-label">TITLE</span>${sellerToggleMarkup('sellerTitleType',current.sellerTitleType||'',SELLER_TITLE_TYPES)}</section>`}
+function sellerPropertyEditorMarkup(current={},primary=true){const showLand=current.sellerPropertyType==='House',hideConfig=current.sellerPropertyType==='Land';return`<section class="buyer-editor-section seller-editor-property"><div class="buyer-editor-section-head"><span>PROPERTY DETAILS</span><strong>Optional</strong></div><p class="seller-property-help">${primary?'Add what you know to sharpen MarketPulse priority and sold estimates.':'Record the configuration of this additional property.'}</p><div class="buyer-config-grid seller-config-fields ${hideConfig?'hidden':''}" data-seller-config-fields><div><small>Bedrooms</small>${sellerChoiceMarkup('sellerBedrooms',current.sellerBedrooms||0,[0,1,2,3,4,5],{0:'—',5:'5+'})}</div><div><small>Bathrooms</small>${sellerChoiceMarkup('sellerBathrooms',current.sellerBathrooms||0,[0,1,2,3,4],{0:'—',4:'4+'})}</div><div><small>Cars</small>${sellerChoiceMarkup('sellerCars',current.sellerCars||0,[0,1,2,3],{0:'—',3:'3+'})}</div></div><span class="buyer-field-label seller-field-label">PROPERTY TYPE</span>${sellerToggleMarkup('sellerPropertyType',current.sellerPropertyType||'',SELLER_PROPERTY_TYPES)}<div class="seller-land-fields ${showLand?'':'hidden'}" data-seller-land-fields><span class="buyer-field-label seller-field-label">LAND SIZE</span>${sellerToggleMarkup('sellerLandSizeBand',current.sellerLandSizeBand||'',SELLER_LAND_SIZE_BANDS,SELLER_LAND_SIZE_LABELS)}</div><span class="buyer-field-label seller-field-label">TITLE</span>${sellerToggleMarkup('sellerTitleType',current.sellerTitleType||'',SELLER_TITLE_TYPES)}</section>`}
 function syncSellerPropertyEditor(form,resetHidden=false){const type=form?.elements.namedItem('sellerPropertyType')?.value||'',config=form?.querySelector('[data-seller-config-fields]'),land=form?.querySelector('[data-seller-land-fields]');config?.classList.toggle('hidden',type==='Land');land?.classList.toggle('hidden',type!=='House');if(!resetHidden)return;if(type==='Land'){for(const name of ['sellerBedrooms','sellerBathrooms','sellerCars']){const input=form.elements.namedItem(name);if(input)input.value='0';form.querySelectorAll(`[data-seller-choice="${name}"]`).forEach(button=>{const active=button.dataset.sellerChoiceValue==='0';button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active))})}}if(type!=='House'){const input=form.elements.namedItem('sellerLandSizeBand');if(input)input.value='';form.querySelectorAll('[data-seller-toggle="sellerLandSizeBand"]').forEach(button=>{button.classList.remove('active');button.setAttribute('aria-pressed','false')})}}
 function sellerPropertyEditorForm(p={}){return`<form id="sellerPropertyEditor" class="buyer-editor glass seller-property-editor-form" data-prospect-id="${escapeHtml(p.id)}"><div class="prospect-detail-nav buyer-detail-nav"><button type="button" data-close-seller-property>‹ Back</button><strong>Property Details</strong><span></span></div><div class="buyer-editor-intro"><span>PROPERTY PROFILE</span><h2>${escapeHtml(p.name)}</h2><p>${escapeHtml(formatProspectAddress(p.address||p.company,p.suburb)||'Add the property configuration you know.')} These details improve MarketPulse matching across AGNT.</p></div>${sellerPropertyEditorMarkup(p)}${sellerEstimateMarkup(p)}<button class="primary buyer-save-button" type="submit">Save Property Details</button></form>`}
 function openSellerPropertyEditor(id=''){rememberDetailReturn();startDetailViewport();const p=prospectById(id);if(!p)return toast('Contact could not be found');activeProspectId=p.id;$('#prospectingDashboard')?.classList.add('hidden');$('#prospectingSession')?.classList.add('hidden');$('#prospectDetail')?.classList.remove('hidden');$('#prospectDetail').innerHTML=sellerPropertyEditorForm(p)}
+function additionalPropertiesMarkup(person={}){
+  const properties=normaliseAdditionalProperties(person.additionalProperties);
+  const rows=properties.map(property=>`<button class="device-contact-action" type="button" data-edit-additional-property="${escapeHtml(property.id)}" data-property-contact="${escapeHtml(person.id)}"><span><strong>${escapeHtml(formatProspectAddress(property.address,property.suburb))}</strong><small>${escapeHtml(sellerConfigurationLabel(property)||'Additional property')}${property.notes?' · Notes saved':''}</small></span><b aria-hidden="true">›</b></button>`).join('');
+  return `<section class="contact-properties"><h3>Properties</h3><p class="contact-primary-address"><small>Primary · Prospecting &amp; MarketPulse</small><strong>${escapeHtml(formatProspectAddress(person.address||person.company,person.suburb)||'Primary address not set')}</strong></p>${rows}<button class="device-contact-action" type="button" data-add-additional-property="${escapeHtml(person.id)}"><span><strong>Add another property</strong><small>Save another home against this client</small></span><b aria-hidden="true">+</b></button></section>`;
+}
+function openAdditionalPropertyEditor(contactId,propertyId=''){
+  const person=prospectById(contactId);
+  if(!person)return toast('Contact could not be found');
+  const property=normaliseAdditionalProperties(person.additionalProperties).find(item=>item.id===propertyId);
+  if(propertyId&&!property)return toast('Property could not be found');
+  rememberDetailReturn();
+  startDetailViewport();
+  activeProspectId=person.id;
+  $('#prospectingDashboard')?.classList.add('hidden');
+  $('#prospectingSession')?.classList.add('hidden');
+  const detail=$('#prospectDetail');
+  detail.classList.remove('hidden');
+  const current=property||{};
+  detail.innerHTML=`<form id="additionalPropertyEditor" class="buyer-editor glass" data-prospect-id="${escapeHtml(person.id)}" data-property-id="${escapeHtml(property?.id||prospectId())}" data-property-owner="${escapeHtml(uid)}" data-property-epoch="${accountStateEpoch}"><div class="prospect-detail-nav buyer-detail-nav"><button type="button" data-close-seller-property>‹ Back</button><strong>${property?'Edit property':'Add property'}</strong><span></span></div><div class="buyer-editor-intro"><span>ADDITIONAL PROPERTY</span><h2>${escapeHtml(person.name)}</h2><p>The primary address remains the address used for prospecting and MarketPulse matching.</p></div><label>Property address<input name="address" autocomplete="street-address" maxlength="240" value="${escapeHtml(current.address||'')}" required></label><label>Suburb<input name="suburb" autocomplete="address-level2" maxlength="100" value="${escapeHtml(current.suburb||'')}" required></label>${sellerPropertyEditorMarkup(current,false)}<label>Property notes<textarea name="notes" rows="4" maxlength="2000" placeholder="Ownership, tenancy or other property details">${escapeHtml(current.notes||'')}</textarea></label><button class="primary buyer-save-button" type="submit">Save property</button>${property?'<button class="prospect-delete" type="button" data-remove-additional-property>Remove property</button>':''}</form>`;
+}
+function saveAdditionalProperty(form,{remove=false}={}){
+  if(form.dataset.propertyOwner!==uid||Number(form.dataset.propertyEpoch)!==accountStateEpoch)return;
+  const person=prospectById(form.dataset.prospectId);
+  if(!person)return toast('Contact could not be found');
+  const properties=normaliseAdditionalProperties(person.additionalProperties),propertyId=form.dataset.propertyId;
+  let updatedProperties=properties.filter(property=>property.id!==propertyId);
+  if(!remove){
+    const values=Object.fromEntries(new FormData(form)),address=cleanText(values.address,240),suburb=cleanText(values.suburb,100);
+    if(!address||!suburb)return toast('Add the address and suburb');
+    const key=marketPropertyKey(address,suburb),primaryKey=marketPropertyKey(person.address||person.company,person.suburb);
+    if(key===primaryKey||updatedProperties.some(property=>marketPropertyKey(property.address,property.suburb)===key))return toast('This property is already on the contact');
+    const property=normaliseAdditionalProperties([{...values,id:propertyId,updatedAt:Date.now()}])[0];
+    updatedProperties=properties.some(item=>item.id===propertyId)?properties.map(item=>item.id===propertyId?property:item):[...properties,property];
+  }
+  const updated=normaliseProspect({...person,additionalProperties:updatedProperties,updatedAt:Date.now()});
+  prospects=prospects.map(item=>item.id===person.id?updated:item);
+  saveProspecting({render:false,awaitCloud:false}).catch(error=>console.error('Additional property sync failed',error));
+  if(!finishDetailEditor())renderProspectDetail(person.id);
+  toast(remove?'Property removed':'Property saved');
+}
 function buyerFeatureMarkup(selected=[]){const set=new Set(selected);return BUYER_FEATURES.map(feature=>`<button type="button" class="${set.has(feature)?'active':''}" data-buyer-feature="${escapeHtml(feature)}" aria-pressed="${set.has(feature)}">${escapeHtml(feature)}</button>`).join('')}
 function buyerPropertyTypeMarkup(current=''){return BUYER_PROPERTY_TYPES.map(type=>`<button type="button" class="${current===type?'active':''}" data-buyer-property-type="${escapeHtml(type)}" aria-pressed="${current===type}">${escapeHtml(type)}</button>`).join('')}
 function renderBuyerSuburbChips(form){const host=form?.querySelector('[data-buyer-suburb-chips]');if(!host)return;const suburbs=Array.isArray(form._buyerSuburbs)?form._buyerSuburbs:[];host.innerHTML=suburbs.length?suburbs.map((suburb,index)=>`<span>${escapeHtml(suburb)}<button type="button" data-remove-buyer-suburb="${index}" aria-label="Remove ${escapeHtml(suburb)}">×</button></span>`).join(''):'<small>Add one or more suburbs.</small>'}
@@ -4427,7 +4502,7 @@ function earliestProspectFollowUp(...dates){return dates.filter(validDateKey).so
 function mergeBuyerDuplicateIntoContact(contact,buyer){
   if(!contact||!buyer||contact.id===buyer.id)return contact||buyer;
   const now=Date.now(),buyerFields=buyerProfileSnapshot(buyer),buyerArchived=prospectBuyerArchived(buyer),buyerPurchased=buyerFields.buyerStage==='Purchased',tags=Array.from(new Set([...(contact.tags||[]),...(buyer.tags||[])])).slice(0,12),positionTags=Array.from(new Set(['Buyer Seller',...buyerFields.buyerPositionTags])).filter(tag=>BUYER_POSITION_TAGS.includes(tag)),mergedProspectIds=Array.from(new Set([...(contact.mergedProspectIds||[]),...(buyer.mergedProspectIds||[]),buyer.id])).filter(id=>id&&id!==contact.id).slice(0,50);
-  const merged=normaliseProspect({...contact,...buyerFields,id:contact.id,name:contact.name||buyer.name,phone:contact.phone||buyer.phone,email:contact.email||buyer.email,address:contact.address||buyer.address,company:contact.company||buyer.company,suburb:contact.suburb||buyer.suburb,tags,notes:mergedProspectNotes(contact.notes,buyer.notes),temperature:hotterProspectTemperature(contact.temperature,buyer.temperature),temperatureManual:true,motivation:Math.max(Number(contact.motivation)||1,Number(buyer.motivation)||1),motivationManual:Boolean(contact.motivationManual||buyer.motivationManual),lastContact:[contact.lastContact,buyer.lastContact].filter(validDateKey).sort().at(-1)||'',nextFollowUp:earliestProspectFollowUp(contact.nextFollowUp,buyer.nextFollowUp),buyerProfileActive:!buyerArchived&&!buyerPurchased,buyerProfileArchived:buyerArchived,buyerStage:buyerFields.buyerStage,buyerPositionTags:positionTags,buyerSeller:true,sellerProfileActive:true,mergedProspectIds,marketConfirmedProperties:[...new Set([...(contact.marketConfirmedProperties||[]),...(buyer.marketConfirmedProperties||[])])].slice(0,8),dataCreditedAt:Number(contact.dataCreditedAt)||Number(buyer.dataCreditedAt)||0,createdAt:Math.min(Number(contact.createdAt)||now,Number(buyer.createdAt)||now),updatedAt:now});
+  const merged=normaliseProspect({...contact,...buyerFields,id:contact.id,name:contact.name||buyer.name,phone:contact.phone||buyer.phone,email:contact.email||buyer.email,address:contact.address||buyer.address,company:contact.company||buyer.company,suburb:contact.suburb||buyer.suburb,tags,notes:mergedProspectNotes(contact.notes,buyer.notes),temperature:hotterProspectTemperature(contact.temperature,buyer.temperature),temperatureManual:true,motivation:Math.max(Number(contact.motivation)||1,Number(buyer.motivation)||1),motivationManual:Boolean(contact.motivationManual||buyer.motivationManual),lastContact:[contact.lastContact,buyer.lastContact].filter(validDateKey).sort().at(-1)||'',nextFollowUp:earliestProspectFollowUp(contact.nextFollowUp,buyer.nextFollowUp),buyerProfileActive:!buyerArchived&&!buyerPurchased,buyerProfileArchived:buyerArchived,buyerStage:buyerFields.buyerStage,buyerPositionTags:positionTags,buyerSeller:true,sellerProfileActive:true,additionalProperties:normaliseAdditionalProperties([...(buyer.additionalProperties||[]),...(contact.additionalProperties||[])]),mergedProspectIds,marketConfirmedProperties:[...new Set([...(contact.marketConfirmedProperties||[]),...(buyer.marketConfirmedProperties||[])])].slice(0,8),dataCreditedAt:Number(contact.dataCreditedAt)||Number(buyer.dataCreditedAt)||0,createdAt:Math.min(Number(contact.createdAt)||now,Number(buyer.createdAt)||now),updatedAt:now});
   prospects=prospects.filter(item=>item.id!==buyer.id).map(item=>item.id===contact.id?merged:item);
   prospectInteractions=normaliseProspectInteractions(prospectInteractions.map(item=>item.prospectId===buyer.id?{...item,prospectId:contact.id}:item)).filter((item,index,list)=>list.findIndex(other=>other.id===item.id)===index);
   if(!prospectInteractions.some(item=>item.prospectId===contact.id&&item.type==='Profile'&&item.outcome==='Buyer + seller unified'))prospectInteractions.push({id:prospectId(),prospectId:contact.id,date:todayKey(),at:now,type:'Profile',outcome:'Buyer + seller unified',note:'Buyer requirements and seller pipeline were linked to one contact profile.',nextFollowUp:''});
@@ -4477,7 +4552,7 @@ function renderBuyerDetail(id){
   const actions=archived?`<div class="buyer-detail-restore"><button class="primary" type="button" data-restore-buyer="${p.id}">Restore buyer</button></div>`:`<div class="prospect-quick-actions buyer-detail-actions person-profile-actions"><button type="button" data-call-buyer="${p.id}" class="${phone?'':'disabled'}">Call</button><a href="${sms}" class="${phone?'':'disabled'}">Message</a><button type="button" data-buyer-followup="${p.id}">Follow up</button></div>${buyerNextActionMarkup(p)}`;
   const lifecycle=archived?'':`<div class="buyer-lifecycle-actions"><button class="primary buyer-purchased-button" type="button" data-mark-buyer-purchased="${p.id}">Mark as purchased</button><button class="secondary buyer-archive-button" type="button" data-archive-buyer="${p.id}">Archive buyer</button></div>`;
   const archivedAction=archived?(prospectHasContactProfile(p)?`<button class="prospect-delete" type="button" data-remove-buyer-profile="${p.id}">Remove archived buyer profile</button>`:`<button class="prospect-delete" type="button" data-delete-buyer="${p.id}">Delete buyer permanently</button>`):'';
-  $('#prospectDetail').innerHTML=`<div class="prospect-detail-nav buyer-detail-nav"><button type="button" data-close-buyer>‹ Back</button>${archived?'<span></span>':`<button type="button" data-edit-buyer="${p.id}">Edit</button>`}</div><section class="buyer-detail-card person-profile glass"><div class="buyer-detail-head person-profile-head"><span class="prospect-avatar large">${escapeHtml(initials)}</span><div><span>${archived?'Archived':escapeHtml(p.buyerStage||'Looking')} · ${escapeHtml(p.temperature)}</span><h2>${escapeHtml(p.name)}</h2>${buyerDetailContactMarkup(p,phone)}</div>${prospectIsBuyerSeller(p)?'<em class="buyer-seller-role-pill">Buyer + Seller</em>':''}</div>${actions}<button class="device-contact-action" type="button" data-export-device-contact="${escapeHtml(p.id)}"><span><strong>Add to Phone Contacts</strong><small>Name, mobile, email, address and notes</small></span><b aria-hidden="true">›</b></button>${contactEomControl(p)}${archived?'':buyerSellerPipelineMarkup(p)}${archived?'':buyerSellerOpportunityMarkup(p)}${archived?'':buyerPropertyMatchesMarkup(p)}${buyerRequirementRows(p)}${p.notes?`<p class="prospect-background">${escapeHtml(p.notes)}</p>`:''}${lifecycle}</section><section class="prospecting-section glass buyer-activity-section"><div class="prospecting-section-head"><div><span>ACTIVITY</span><h3>Every conversation</h3></div></div><div class="prospect-history">${buyerHistoryMarkup(history)}</div></section>${archivedAction}`
+  $('#prospectDetail').innerHTML=`<div class="prospect-detail-nav buyer-detail-nav"><button type="button" data-close-buyer>‹ Back</button>${archived?'<span></span>':`<button type="button" data-edit-buyer="${p.id}">Edit</button>`}</div><section class="buyer-detail-card person-profile glass"><div class="buyer-detail-head person-profile-head"><span class="prospect-avatar large">${escapeHtml(initials)}</span><div><span>${archived?'Archived':escapeHtml(p.buyerStage||'Looking')} · ${escapeHtml(p.temperature)}</span><h2>${escapeHtml(p.name)}</h2>${buyerDetailContactMarkup(p,phone)}</div>${prospectIsBuyerSeller(p)?'<em class="buyer-seller-role-pill">Buyer + Seller</em>':''}</div>${actions}<button class="device-contact-action" type="button" data-export-device-contact="${escapeHtml(p.id)}"><span><strong>Add to Phone Contacts</strong><small>Name, mobile, email, address and notes</small></span><b aria-hidden="true">›</b></button>${additionalPropertiesMarkup(p)}${contactEomControl(p)}${archived?'':buyerSellerPipelineMarkup(p)}${archived?'':buyerSellerOpportunityMarkup(p)}${archived?'':buyerPropertyMatchesMarkup(p)}${buyerRequirementRows(p)}${p.notes?`<p class="prospect-background">${escapeHtml(p.notes)}</p>`:''}${lifecycle}</section><section class="prospecting-section glass buyer-activity-section"><div class="prospecting-section-head"><div><span>ACTIVITY</span><h3>Every conversation</h3></div></div><div class="prospect-history">${buyerHistoryMarkup(history)}</div></section>${archivedAction}`
 }
 async function archiveBuyer(id){const p=prospectById(id);if(!prospectHasActiveBuyerRole(p))return;const now=Date.now(),keepContact=prospectHasContactProfile(p),cleared=!keepContact&&p.nextFollowUp?` Follow-up for ${shortContactDate(p.nextFollowUp)} was cleared.`:'',updated=normaliseProspect({...p,buyerProfileActive:false,buyerProfileArchived:true,archived:keepContact?p.archived:true,archivedAt:keepContact?p.archivedAt:now,nextFollowUp:keepContact?p.nextFollowUp:'',updatedAt:now});prospects=prospects.map(item=>item.id===p.id?updated:item);prospectInteractions.push({id:prospectId(),prospectId:p.id,date:todayKey(),at:now,type:'Archive',outcome:'Buyer archived',note:`Buyer brief moved to Archived.${keepContact?' The seller/contact profile remains active.':''}${cleared}`,nextFollowUp:''});await saveProspecting({render:false,awaitCloud:false});buyerBrowseMode='active';closeProspectDetail();renderTimeline();renderNowCard();toast(keepContact?'Buyer brief archived · seller profile retained':'Buyer archived')}
 async function restoreBuyer(id){const p=prospectById(id);if(!prospectBuyerArchived(p))return;const now=Date.now(),updated=normaliseProspect({...p,buyerProfileActive:true,buyerProfileArchived:false,archived:false,archivedAt:0,updatedAt:now});prospects=prospects.map(item=>item.id===p.id?updated:item);prospectInteractions.push({id:prospectId(),prospectId:p.id,date:todayKey(),at:now,type:'Archive',outcome:'Buyer restored',note:'Returned to active buyers.',nextFollowUp:''});await saveProspecting({render:false,awaitCloud:false});buyerBrowseMode='active';buyerFilterState=defaultBuyerFilters();buyerQuickFilter='All';closeProspectDetail();toast('Buyer restored')}
@@ -4887,15 +4962,54 @@ function configureBulkSmsPlatform(){
   const live=$('#launchCampaignShortcut'),test=$('#launchBulkSmsTest');if(live)live.textContent='Open AGNT Bulk SMS in Tasker';if(test)test.textContent='Open test in Tasker';
 }
 function agntBulkSmsShortcutUrl(payload){const input=encodeURIComponent(JSON.stringify(payload));return`shortcuts://run-shortcut?name=${encodeURIComponent(AGNT_BULK_SMS_SHORTCUT)}&input=text&text=${input}`}
+function recordBroadcastSmsLaunch(payload,launch,event=null){
+  if(payload.test||launch.test)return;
+  const at=launch.createdAt,contactDate=todayKey(),loggedContacts=new Set(),seenContacts=new Set();
+  const existingIds=new Set(prospectInteractions.map(item=>item.id));
+  const marketLoggedIds=new Set(event?prospectInteractions.filter(item=>item.type==='SMS'&&item.marketEventId===event.id).map(item=>item.prospectId):[]);
+  payload.users.forEach((user,index)=>{
+    const person=prospectById(user.identifier);
+    if(!person||seenContacts.has(person.id)||marketLoggedIds.has(person.id))return;
+    seenContacts.add(person.id);
+    const interactionId=cleanText('bulk_'+launch.id,65)+'_'+index;
+    if(existingIds.has(interactionId))return;
+    prospectInteractions.push({
+      id:interactionId,prospectId:person.id,date:contactDate,at,type:'SMS',
+      outcome:'Bulk SMS launched',
+      note:cleanText('Broadcast: '+payload.name+'\n\n'+user.message,2000),
+      nextFollowUp:'',marketEventId:event?.id||''
+    });
+    existingIds.add(interactionId);
+    loggedContacts.add(person.id);
+  });
+  prospects=prospects.map(person=>loggedContacts.has(person.id)?normaliseProspect({...person,lastContact:contactDate,updatedAt:at}):person);
+}
 function recordMarketPulseBulkSmsLaunch(payload){
   const eventId=selectedBroadcastContext?.kind==='market-pulse'?selectedBroadcastContext.eventId:'',event=marketPulseBulkSmsEvent(eventId);if(!event)return;
-  const at=Date.now();payload.users.forEach(user=>{const p=prospectById(user.identifier);if(!p||prospectInteractions.some(item=>item.prospectId===p.id&&item.type==='SMS'&&item.marketEventId===event.id))return;prospectInteractions.push({id:prospectId(),prospectId:p.id,date:todayKey(),at,type:'SMS',outcome:'Bulk SMS launched',note:user.message,nextFollowUp:'',marketEventId:event.id});prospects=prospects.map(item=>item.id===p.id?normaliseProspect({...item,lastContact:todayKey(),updatedAt:at}):item)});
+  const at=Date.now();
   const matches=marketMatches(event),worked=marketSessionProgress(event,matches).workedIds,remainingIds=matches.map(person=>person.id).filter(id=>!worked.has(id)),complete=matches.length>0&&remainingIds.length===0;
   marketPulseEvents=normaliseMarketPulseEvents(marketPulseEvents.map(item=>item.id===event.id?{...item,sessionStartedAt:item.sessionStartedAt||at,sessionCompletedAt:complete?at:item.sessionCompletedAt}:item));
   if(prospectSessionActive&&prospectSessionContext?.eventId===event.id){if(remainingIds.length){prospectSessionIds=remainingIds;prospectSessionIndex=0;saveProspectingSessionState()}else{prospectSessionActive=false;prospectSessionIds=[];prospectSessionIndex=0;prospectSessionStats={calls:0,connects:0,temperate:0,appointments:0,sms:0};prospectSessionContext=null;clearProspectingSessionState();saveHotSpotSmsPending(null)}}
-  saveProspecting({render:false,awaitCloud:false}).catch(err=>console.error('Market Updates Bulk SMS launch sync failed',err));renderMarketPulse();renderTimeline();renderNowCard();
+  renderMarketPulse();renderTimeline();renderNowCard();
 }
-function launchCampaignShortcut(){const payload=campaignPayload();if(!payload.users.length)return toast('No eligible recipients');let launchUrl;try{launchUrl=agntBulkSmsLaunchUrl(payload)}catch(error){return toast(error.message)}if(!confirm(`Open ${agntBulkSmsRunnerName()} with ${payload.users.length} personalised messages?`))return;broadcastLastLaunch={id:prospectId(),name:payload.name,count:payload.users.length,createdAt:Date.now(),test:false,context:selectedBroadcastContext?.kind||''};campaignHistory.unshift(broadcastLastLaunch);if(selectedBroadcastContext?.kind==='market-pulse')recordMarketPulseBulkSmsLaunch(payload);else saveLocal();renderCampaignHistory();renderBroadcastSuccess();setBroadcastStep(4);openAgntBulkSmsRunner(launchUrl)}
+function launchCampaignShortcut(){
+  const payload=campaignPayload();
+  if(!payload.users.length)return toast('No eligible recipients');
+  let launchUrl;
+  try{launchUrl=agntBulkSmsLaunchUrl(payload)}catch(error){return toast(error.message)}
+  if(!confirm(`Open ${agntBulkSmsRunnerName()} with ${payload.users.length} personalised messages?`))return;
+  broadcastLastLaunch={id:prospectId(),name:payload.name,count:payload.users.length,createdAt:Date.now(),test:false,context:selectedBroadcastContext?.kind||''};
+  campaignHistory.unshift(broadcastLastLaunch);
+  const event=selectedBroadcastContext?.kind==='market-pulse'?marketPulseBulkSmsEvent(selectedBroadcastContext.eventId):null;
+  recordBroadcastSmsLaunch(payload,broadcastLastLaunch,event);
+  if(event)recordMarketPulseBulkSmsLaunch(payload);
+  saveProspecting({render:false,awaitCloud:false}).catch(error=>console.error('Broadcast SMS history sync failed',error));
+  renderCampaignHistory();
+  renderBroadcastSuccess();
+  setBroadcastStep(4);
+  openAgntBulkSmsRunner(launchUrl);
+}
+
 function bulkSmsTestFirstName(name=''){return cleanText(name,100).split(/\s+/)[0]||'there'}
 function bulkSmsTestNumber(value=''){const digits=String(value||'').replace(/\D/g,'');if(/^614\d{8}$/.test(digits))return`0${digits.slice(2)}`;if(/^04\d{8}$/.test(digits))return digits;return''}
 function bulkSmsTestRecipients(){const raw=$('#bulkSmsTestRecipients')?.value||'',seen=new Set(),valid=[],invalid=[];raw.split(/\r?\n/).map(x=>x.trim()).filter(Boolean).forEach((line,index)=>{const match=line.match(/(?:\+?61|0)4(?:[\s-]*\d){8}/),number=bulkSmsTestNumber(match?.[0]||line);if(!number){invalid.push(line);return}if(seen.has(number)){invalid.push(`${line} · duplicate`);return}seen.add(number);let name=cleanText(line.replace(match?.[0]||number,'').replace(/^[\s,|;:\-]+|[\s,|;:\-]+$/g,''),100);if(!name)name=`Test ${index+1}`;valid.push({identifier:`test-${index+1}-${number}`,name,number})});return{valid,invalid}}
@@ -5017,7 +5131,7 @@ function prospectForm(p={},draft=null,prefill={}){
 function openProspectEditor(id='',options={}){rememberDetailReturn();startDetailViewport();const p=id?prospectById(id):{},draft=!id?(options.draft||readContactDraft()):null;activeProspectId=p?.id||null;$('#prospectingDashboard').classList.add('hidden');$('#prospectingSession').classList.add('hidden');$('#prospectDetail').classList.remove('hidden');$('#prospectDetail').innerHTML=prospectForm(p,draft,options.prefill||{});if(!id&&options.prefill)saveContactDraftFromForm($('#prospectEditor'))}
 function sellerPropertyProfileMarkup(p={}){if(!sellerPropertyConfigured(p))return'';return sellerEstimateMarkup(p)}
 function sellerPropertyActionMarkup(p={}){const configured=sellerPropertyConfigured(p),summary=configured?sellerConfigurationLabel(p):'Beds, baths, cars, property type, land size and title';return`<button class="device-contact-action property-details-action ${configured?'property-details-configured':''}" type="button" data-open-seller-property="${escapeHtml(p.id)}"><span><strong>${configured?'Property Details':'Add Property Details'}</strong><small>${escapeHtml(summary)}</small></span><b aria-hidden="true">›</b></button>`}
-function prospectBuyerRoleMarkup(p={}){const linked=prospectHasActiveBuyerRole(p);return`${sellerPropertyActionMarkup(p)}${sellerPropertyProfileMarkup(p)}<section class="prospect-buyer-role ${linked?'linked':''}"><div><span>${linked?'BUYER + SELLER':'CONTACT ROLE'}</span><strong>${linked?'Buyer brief linked':'Are they also buying?'}</strong><small>${linked?'Buyer requirements, seller pipeline and history share this profile.':'Add a buyer brief without creating another contact.'}</small></div><button type="button" data-open-buyer-role="${escapeHtml(p.id)}">${linked?'Open buyer brief':'Add buyer brief'}</button></section>`}
+function prospectBuyerRoleMarkup(p={}){const linked=prospectHasActiveBuyerRole(p);return`${sellerPropertyActionMarkup(p)}${sellerPropertyProfileMarkup(p)}${additionalPropertiesMarkup(p)}<section class="prospect-buyer-role ${linked?'linked':''}"><div><span>${linked?'BUYER + SELLER':'CONTACT ROLE'}</span><strong>${linked?'Buyer brief linked':'Are they also buying?'}</strong><small>${linked?'Buyer requirements, seller pipeline and history share this profile.':'Add a buyer brief without creating another contact.'}</small></div><button type="button" data-open-buyer-role="${escapeHtml(p.id)}">${linked?'Open buyer brief':'Add buyer brief'}</button></section>`}
 function confirmedMarketPropertyActions(p){
   const keys=p.marketConfirmedProperties||[];if(!keys.length)return'';
   const wanted=new Set(keys),events=new Map();
@@ -5043,10 +5157,22 @@ function compactProspectingCloudValue(value){
   const compact={};for(const [key,item] of Object.entries(value)){const next=compactProspectingCloudValue(item),empty=next===undefined||next===null||next===''||next===false||next===0||Array.isArray(next)&&!next.length;if(!empty)compact[key]=next}return compact
 }
 function preserveNewerLocalSellerDetails(cloudProspects=[]){
-  const localById=new Map(prospects.map(record=>[record.id,record])),sellerFields=['sellerBedrooms','sellerBathrooms','sellerCars','sellerPropertyType','sellerLandSizeBand','sellerTitleType'];let retained=false;
-  const merged=cloudProspects.map(cloudRecord=>{const localRecord=localById.get(cloudRecord.id),propertyChanged=localRecord&&sellerFields.some(field=>String(localRecord[field]??'')!==String(cloudRecord[field]??''));if(propertyChanged&&Number(localRecord.updatedAt)>Number(cloudRecord.updatedAt)){retained=true;return localRecord}return cloudRecord});
-  return{prospects:normaliseProspects(merged),retained}
+  const localById=new Map(prospects.map(record=>[record.id,record]));
+  const sellerFields=['sellerBedrooms','sellerBathrooms','sellerCars','sellerPropertyType','sellerLandSizeBand','sellerTitleType'];
+  let retained=false;
+  const merged=cloudProspects.map(cloudRecord=>{
+    const localRecord=localById.get(cloudRecord.id);
+    if(!localRecord)return cloudRecord;
+    const propertyChanged=sellerFields.some(field=>String(localRecord[field]??'')!==String(cloudRecord[field]??''))||JSON.stringify(localRecord.additionalProperties||[])!==JSON.stringify(cloudRecord.additionalProperties||[]);
+    if(propertyChanged&&Number(localRecord.updatedAt)>Number(cloudRecord.updatedAt)){
+      retained=true;
+      return localRecord;
+    }
+    return cloudRecord;
+  });
+  return {prospects:normaliseProspects(merged),retained};
 }
+
 function saveProspectingLocal(){savedCallPhoneSource=null;const saved=saveLocal('prospecting');markProspectingDirty();return saved}
 
 function scheduleProspectingRetry(){
@@ -6324,13 +6450,12 @@ $('#appointmentsView').onclick=e=>{
   const messageButton=e.target.closest('[data-message-appointment]');
   if(messageButton){launchAppointmentSms(messageButton.dataset.messageAppointment,messageButton.dataset.sourceDate||appointmentDate,messageButton.dataset.teamAppointmentId||'');return;}
   const teamCalendarButton=e.target.closest('[data-calendar-team-appointment]');
-  if(teamCalendarButton){const a=assignedTeamAppointments.find(item=>String(item.teamAppointmentId||item.id)===String(teamCalendarButton.dataset.calendarTeamAppointment));if(!a)return toast('Appointment could not be found');if(appointmentAddedToCalendar(a,a.createdDate||todayKey()))return toast('Already added to calendar');exportAppointmentToCalendar(a,a.createdDate||todayKey());acknowledgeTeamAppointment(a,{calendar:true});return;}
+  if(teamCalendarButton){const a=assignedTeamAppointments.find(item=>String(item.teamAppointmentId||item.id)===String(teamCalendarButton.dataset.calendarTeamAppointment));if(!a)return toast('Appointment could not be found');exportAppointmentToCalendar(a,a.createdDate||todayKey());acknowledgeTeamAppointment(a,{calendar:true});return;}
   const calendarButton=e.target.closest('[data-calendar-appointment]');
   if(calendarButton){
     const sourceDate=calendarButton.dataset.sourceDate||appointmentDate;
     const entry=allAppointmentEntries().find(({appointment:a,sourceDate:s})=>calendarExportId(a,s)===calendarButton.dataset.calendarAppointment&&s===sourceDate);
     if(!entry)return toast('Appointment could not be found');
-    if(appointmentAddedToCalendar(entry.appointment,entry.sourceDate))return toast('Already added to calendar');
     exportAppointmentToCalendar(entry.appointment,entry.sourceDate);return;
   }
   const follow=e.target.closest('[data-set-followup]');if(follow){setAppointmentFollowUp(follow.dataset.setFollowup,follow.dataset.sourceDate);return;}
@@ -6384,7 +6509,7 @@ $('#backFromMarketPulseData')&&($('#backFromMarketPulseData').onclick=closeMarke
 $('#returningSnapshotReviewMarket')&&($('#returningSnapshotReviewMarket').onclick=()=>openDailyBriefingDestination('view-market'));
 $('#importMarketPulse')&&($('#importMarketPulse').onclick=importMarketPulse);
 $('#clearMarketPulseInput')&&($('#clearMarketPulseInput').onclick=()=>{const input=$('#marketPulseInput');if(input)input.value='';$('#marketPulseImportStatus').textContent='Nothing imported yet.'});
-$('#clearMarketPulseEvents')&&($('#clearMarketPulseEvents').onclick=async()=>{if(!marketPulseEvents.length&&!marketPulseHistory.length)return;marketPulseEvents=[];marketPulseHistory=[];invalidateSellerPriorityCache({delay:80});saveLocal();renderMarketPulse();try{await queueProspectingSave()}catch(err){console.error('Market Updates clear sync failed',err)}toast('Market Updates cleared')});
+$('#clearMarketPulseEvents')?.addEventListener('click',()=>clearHotSpottingQueue());
 
 $('#clearProspectFilter').onclick=()=>{prospectFilter='priority';renderProspecting()};
 $('#prospectCsvImport').onchange=async e=>{try{if(e.target.files[0])await importProspectCsv(e.target.files[0])}catch(err){console.error(err);toast('CSV could not be imported')}finally{e.target.value=''}};
@@ -6433,6 +6558,15 @@ $('#prospectingView').onclick=async e=>{
   const editBuyer=e.target.closest('[data-edit-buyer]');if(editBuyer){openBuyerEditor(editBuyer.dataset.editBuyer);return}
   const openBuyerRole=e.target.closest('[data-open-buyer-role]');if(openBuyerRole){openBuyerEditor(openBuyerRole.dataset.openBuyerRole);return}
   const openSellerProfile=e.target.closest('[data-open-seller-profile]');if(openSellerProfile){openContactProfileFromWorkflow(openSellerProfile.dataset.openSellerProfile);return}
+  const addProperty=e.target.closest('[data-add-additional-property]');
+  if(addProperty){openAdditionalPropertyEditor(addProperty.dataset.addAdditionalProperty);return}
+  const editProperty=e.target.closest('[data-edit-additional-property]');
+  if(editProperty){openAdditionalPropertyEditor(editProperty.dataset.propertyContact,editProperty.dataset.editAdditionalProperty);return}
+  if(e.target.closest('[data-remove-additional-property]')){
+    const form=e.target.closest('#additionalPropertyEditor');
+    if(form&&confirm('Remove this additional property from the contact?'))saveAdditionalProperty(form,{remove:true});
+    return;
+  }
   const openSellerProperty=e.target.closest('[data-open-seller-property]');if(openSellerProperty){openSellerPropertyEditor(openSellerProperty.dataset.openSellerProperty);return}
   if(e.target.closest('[data-close-seller-property]')){if(!returnDetailWorkflow())renderProspectDetail(activeProspectId);return}
   if(e.target.closest('[data-close-buyer]')){pendingBuyerEditorContext=null;closeProspectDetail();return}
@@ -6444,8 +6578,8 @@ $('#prospectingView').onclick=async e=>{
   if(e.target.closest('[data-cancel-buyer-purchase]')){renderBuyerDetail(activeProspectId);return}
   const removeBuyerProfile=e.target.closest('[data-remove-buyer-profile]');if(removeBuyerProfile&&confirm('Remove the archived buyer brief?\n\nThe seller/contact profile and full interaction history will be retained.')){await removeArchivedBuyerProfile(removeBuyerProfile.dataset.removeBuyerProfile);return}
   const deleteBuyer=e.target.closest('[data-delete-buyer]'),buyerToDelete=deleteBuyer?prospectById(deleteBuyer.dataset.deleteBuyer):null;if(deleteBuyer&&prospectBuyerArchived(buyerToDelete)&&!prospectHasContactProfile(buyerToDelete)&&confirm('Permanently delete this archived buyer and their interaction history?')){prospects=prospects.filter(p=>p.id!==buyerToDelete.id);prospectInteractions=prospectInteractions.filter(x=>x.prospectId!==buyerToDelete.id);await saveProspecting({render:false,awaitCloud:false});closeProspectDetail();toast('Buyer permanently deleted');return}
-  const sellerChoice=e.target.closest('[data-seller-choice]');if(sellerChoice){const form=sellerChoice.closest('#sellerPropertyEditor,#prospectEditor'),target=sellerChoice.dataset.sellerChoice,value=sellerChoice.dataset.sellerChoiceValue,input=form?.elements.namedItem(target);if(input)input.value=value;form?.querySelectorAll(`[data-seller-choice="${target}"]`).forEach(button=>{const active=button===sellerChoice;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active))});if(form?.dataset.contactDraft==='1')saveContactDraftFromForm(form);return}
-  const sellerToggle=e.target.closest('[data-seller-toggle]');if(sellerToggle){const form=sellerToggle.closest('#sellerPropertyEditor,#prospectEditor'),target=sellerToggle.dataset.sellerToggle,value=sellerToggle.dataset.sellerToggleValue,input=form?.elements.namedItem(target),wasActive=sellerToggle.classList.contains('active');form?.querySelectorAll(`[data-seller-toggle="${target}"]`).forEach(button=>{button.classList.remove('active');button.setAttribute('aria-pressed','false')});if(input)input.value=wasActive?'':value;if(!wasActive){sellerToggle.classList.add('active');sellerToggle.setAttribute('aria-pressed','true')}if(target==='sellerPropertyType')syncSellerPropertyEditor(form,true);if(form?.dataset.contactDraft==='1')saveContactDraftFromForm(form);return}
+  const sellerChoice=e.target.closest('[data-seller-choice]');if(sellerChoice){const form=sellerChoice.closest('#sellerPropertyEditor,#prospectEditor,#additionalPropertyEditor'),target=sellerChoice.dataset.sellerChoice,value=sellerChoice.dataset.sellerChoiceValue,input=form?.elements.namedItem(target);if(input)input.value=value;form?.querySelectorAll(`[data-seller-choice="${target}"]`).forEach(button=>{const active=button===sellerChoice;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active))});if(form?.dataset.contactDraft==='1')saveContactDraftFromForm(form);return}
+  const sellerToggle=e.target.closest('[data-seller-toggle]');if(sellerToggle){const form=sellerToggle.closest('#sellerPropertyEditor,#prospectEditor,#additionalPropertyEditor'),target=sellerToggle.dataset.sellerToggle,value=sellerToggle.dataset.sellerToggleValue,input=form?.elements.namedItem(target),wasActive=sellerToggle.classList.contains('active');form?.querySelectorAll(`[data-seller-toggle="${target}"]`).forEach(button=>{button.classList.remove('active');button.setAttribute('aria-pressed','false')});if(input)input.value=wasActive?'':value;if(!wasActive){sellerToggle.classList.add('active');sellerToggle.setAttribute('aria-pressed','true')}if(target==='sellerPropertyType')syncSellerPropertyEditor(form,true);if(form?.dataset.contactDraft==='1')saveContactDraftFromForm(form);return}
   const buyerChoice=e.target.closest('[data-buyer-choice]');if(buyerChoice){const form=buyerChoice.closest('#buyerEditor'),target=buyerChoice.dataset.buyerChoice,value=buyerChoice.dataset.buyerChoiceValue;const input=form?.querySelector(`input[name="${target}"]`);if(input)input.value=value;form?.querySelectorAll(`[data-buyer-choice="${target}"]`).forEach(button=>button.classList.toggle('active',button===buyerChoice));return}
   const buyerPropertyType=e.target.closest('[data-buyer-property-type]');if(buyerPropertyType){const form=buyerPropertyType.closest('#buyerEditor'),active=buyerPropertyType.classList.contains('active');form?.querySelectorAll('[data-buyer-property-type]').forEach(button=>{button.classList.remove('active');button.setAttribute('aria-pressed','false')});if(!active){buyerPropertyType.classList.add('active');buyerPropertyType.setAttribute('aria-pressed','true')}return}
   const buyerFeature=e.target.closest('[data-buyer-feature]');if(buyerFeature){buyerFeature.classList.toggle('active');buyerFeature.setAttribute('aria-pressed',String(buyerFeature.classList.contains('active')));return}
@@ -6457,7 +6591,8 @@ $('#prospectingView').onclick=async e=>{
   const marketSession=e.target.closest('[data-start-market-session]');if(marketSession){startMarketPulseSession(marketSession.dataset.startMarketSession);return}
   const marketSessionSkip=e.target.closest('[data-skip-market-session]');if(marketSessionSkip){await skipMarketPulseSession(marketSessionSkip.dataset.skipMarketSession);return}
   const marketReview=e.target.closest('[data-market-review-filter]');if(marketReview){marketReviewFilter=marketReview.dataset.marketReviewFilter||'all';renderMarketPulseReview();return}
-  const removeMarket=e.target.closest('[data-remove-market-event]');if(removeMarket){const eventId=removeMarket.dataset.removeMarketEvent;marketPulseEvents=marketPulseEvents.filter(x=>x.id!==eventId);marketPulseHistory=marketPulseHistory.filter(x=>x.id!==eventId);invalidateSellerPriorityCache({delay:80});saveLocal();renderMarketPulse();try{await queueProspectingSave()}catch(err){console.error('Market Updates removal sync failed',err)}return}
+  const removeMarket=e.target.closest('[data-remove-market-event]');
+  if(removeMarket){await clearHotSpottingQueue(removeMarket.dataset.removeMarketEvent);return}
   const prospectCall=e.target.closest('[data-prospect-call]');if(prospectCall){rememberProspectCallReturn(prospectCall.dataset.prospectCall,prospectCall.dataset.callFromSession==='1',prospectCall.dataset.callReturnMode||'');return}
   const section=e.target.closest('[data-prospector-section]');if(section){e.preventDefault();e.stopPropagation();homeQuickProspectorReturn=false;const target=section.dataset.prospectorSection;if(target==='market'){marketPageMode='hub';myMarketDetailKey=''}if(target==='today')prospectTodayMode='dashboard';setProspectorSection(target,{todayMode:target==='today'?'dashboard':null});renderProspecting();return}
   const eomButton=e.target.closest('[data-toggle-eom]');if(eomButton){toggleContactEom(eomButton.dataset.toggleEom).catch(err=>{console.error(err);toast('Could not save EOM preference')});return}
@@ -6533,6 +6668,7 @@ $('#prospectingView').addEventListener('change',e=>{
 });
 $('#prospectingView').addEventListener('keydown',e=>{if(e.key!=='Enter')return;if(e.target.matches('[data-buyer-existing-search]')){e.preventDefault();e.target.closest('#buyerEditor')?.querySelector('[data-use-contact-as-buyer]')?.click();return}if(e.target.matches('[data-buyer-suburb-input]')){e.preventDefault();const form=e.target.closest('#buyerEditor'),first=form?.querySelector('[data-select-buyer-suburb]');addBuyerSuburb(form,first?.dataset.selectBuyerSuburb||'')}});
 $('#prospectingView').onsubmit=async e=>{
+  if(e.target.id==='additionalPropertyEditor'){e.preventDefault();saveAdditionalProperty(e.target);return}
   if(e.target.id==='sellerPropertyEditor'){
     e.preventDefault();const form=e.target,submit=form.querySelector('button[type=submit]'),id=cleanText(form.dataset.prospectId,80),p=prospectById(id),f=new FormData(form);if(!p)return toast('Contact could not be found');if(submit?.disabled)return;if(submit){submit.disabled=true;submit.textContent='Saving…'}
     const updated=normaliseProspect({...p,sellerBedrooms:f.get('sellerBedrooms'),sellerBathrooms:f.get('sellerBathrooms'),sellerCars:f.get('sellerCars'),sellerPropertyType:f.get('sellerPropertyType'),sellerLandSizeBand:f.get('sellerLandSizeBand'),sellerTitleType:f.get('sellerTitleType'),updatedAt:Date.now()});prospects=prospects.map(item=>item.id===updated.id?updated:item);
@@ -6575,9 +6711,98 @@ $('#settingsView').addEventListener('change',event=>{const field=event.target;if
 $('#saveSettings').onclick=async()=>{const fields=['callsTarget','connectsTarget','dataTarget','weeklyKnockTarget'];const invalid=fields.find(id=>{const value=Number($('#'+id).value);return !Number.isSafeInteger(value)||value<=0});if(invalid){toast('Enter a whole number greater than zero for every target.');$('#'+invalid).focus();return}const savingOwner=uid,savingEpoch=accountStateEpoch;const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();agentMobile=cleanText($('#agentMobile').value,50);targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;calendarPreference=$('[name=calendarPreference]:checked')?.value==='apple'?'apple':'outlook';appearancePreference=normaliseAppearance($('[name=appearancePreference]:checked')?.value);applyAppearance(appearancePreference);settingsDraftFields.clear();await saveTargets();if(uid!==savingOwner||accountStateEpoch!==savingEpoch)return;if(cloud&&accountMode==='team'&&teamId&&uid){try{await setDoc(doc(db,'teams',teamId,'members',uid),{name:agentName,updatedAt:serverTimestamp()},{merge:true})}catch(err){console.error('Team profile name sync failed',err)}}renderAll();toast('Settings saved')};
 $('#signOut').onclick=async()=>{clearActiveSession();if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
 function mergeBackupRecords(current=[],incoming=[]){const byId=new Map();[...(Array.isArray(current)?current:[]),...(Array.isArray(incoming)?incoming:[])].forEach((item,index)=>{if(!item||typeof item!=='object')return;const id=cleanText(item.id,180)||`backup-record-${index}`;byId.set(id,item)});return[...byId.values()]}
-function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.46.37',exportedAt:new Date().toISOString(),targets,workDays,agentName,agentMobile,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),marketPulseLedger:normaliseLedger(marketPulseLedger),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
+function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.46.40',exportedAt:new Date().toISOString(),targets,workDays,agentName,agentMobile,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),marketPulseLedger:normaliseLedger(marketPulseLedger),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
 function restoreBuyerSessionBackup(value){if(!value||!Array.isArray(value.contacts))return false;buyerSession={contacts:value.contacts.map((contact,index)=>({id:cleanText(contact.id,80)||`buyer_${index}`,name:cleanText(contact.name,120)||'Unknown buyer',phone:normaliseDialNumber(contact.phone),address:cleanText(contact.address,240),doNotSms:Boolean(contact.doNotSms),status:cleanText(contact.status,40)})).filter(contact=>contact.phone),index:Math.max(0,Number(value.index)||0),active:Boolean(value.active),visible:false,fileName:cleanText(value.fileName,160),importedAt:Number(value.importedAt)||0};buyerSession.index=Math.min(buyerSession.index,buyerSession.contacts.length);return saveBuyerSession()}
 function syncImportedBackup(dayKeys=[],prospectingIncluded=false){if(!cloud)return;saveTargets().catch(err=>console.error('Imported settings sync failed',err));dayKeys.forEach(key=>saveDay(key,{quiet:true,awaitCloud:false,render:false}).catch?.(err=>console.error('Imported day sync failed',err)));if(prospectingIncluded)saveProspecting({render:false,awaitCloud:false}).catch(err=>console.error('Imported prospecting sync failed',err))}
+function missingMarketRecoveryRows(rows){
+  const currentIds=new Set([...marketPulseHistory,...marketPulseEvents].map(event=>event.id));
+  const cutoff=retentionCutoff(sydneyDateKey());
+  return rows.filter(event=>!currentIds.has(event.id)&&event.receivedDate>=cutoff);
+}
+
+async function findMarketRecovery(owner,isCurrent){
+  const archive=collection(db,'users',owner,'prospecting');
+  const snapshots=await getDocsFromServer(query(archive,where('source','==','retention-recovery')));
+  if(!isCurrent())return null;
+  const backups=snapshots.docs.filter(row=>row.id.startsWith('recovery_')).map(row=>row.data());
+  backups.sort((a,b)=>marketPulseTimestampMillis(b.createdAt)-marketPulseTimestampMillis(a.createdAt));
+  const fields=['marketPulseHistory','marketPulseEvents'];
+  const checked=new Set(),emptyChunk='chunk_'+await digest('[]');
+  let unreadable=false;
+  for(const backup of backups){
+    if(!isCurrent())return null;
+    const refs=fields.flatMap(field=>backup.fields?.[field]||[]);
+    if(!refs.length||refs.every(ref=>ref===emptyChunk))continue;
+    const signature=JSON.stringify(fields.map(field=>backup.fields?.[field]));
+    if(checked.has(signature))continue;
+    checked.add(signature);
+    try{
+      const market=await decodeSnapshot(backup,async id=>{
+        const chunk=await getDocFromServer(doc(archive,id));
+        return chunk.exists()?chunk.data():null;
+      },isCurrent,fields);
+      if(!isCurrent())return null;
+      const rows=normaliseMarketPulseHistory([...market.marketPulseEvents,...market.marketPulseHistory]);
+      if(missingMarketRecoveryRows(rows).length)return {rows,createdAt:backup.createdAt};
+    }catch(error){
+      if(!isCurrent())return null;
+      unreadable=true;
+    }
+  }
+  if(unreadable)throw new Error('One or more market backups could not be read');
+  return null;
+}
+
+async function restoreMarketOverview(){
+  const button=$('#restoreMarketOverview'),status=$('#marketRecoveryStatus');
+  if(button.disabled)return;
+  if(!cloud||!uid||!navigator.onLine){
+    status.textContent='Sign in and connect to check for a Market Overview backup.';
+    return;
+  }
+  if(!prospectingCloudReady){
+    status.textContent='Wait for AGNT to finish syncing, then try again.';
+    return;
+  }
+  const owner=uid,epoch=accountStateEpoch,isCurrent=()=>cloud&&uid===owner&&accountStateEpoch===epoch;
+  button.disabled=true;
+  status.textContent='Checking recent cloud backups…';
+  try{
+    const backup=await findMarketRecovery(owner,isCurrent);
+    if(!isCurrent())return;
+    if(!backup){
+      status.textContent='No recent cloud backup contains missing market records.';
+      return;
+    }
+    const rows=missingMarketRecoveryRows(backup.rows);
+    if(!rows.length){
+      status.textContent='These market records are already in Overview.';
+      return;
+    }
+    const count=rows.length,properties=new Set(rows.map(event=>event.propertyKey)).size;
+    const date=formatMarketPulseImportTime(backup.createdAt);
+    if(!confirm(`Restore ${count} missing market records across ${properties} properties${date?' from the cloud backup saved '+date:''}? The records will be added to Market Overview.`)){
+      status.textContent='Restore cancelled.';
+      return;
+    }
+    if(!isCurrent())return;
+    marketPulseHistory=normaliseMarketPulseHistory([...rows,...marketPulseHistory]);
+    status.textContent='Saving restored market records…';
+    await saveProspecting({render:false});
+    if(!isCurrent())return;
+    status.textContent=`Restored ${count} market records. Open Market → Overview to review them.`;
+    toast('Market Overview restored');
+  }catch(error){
+    if(!isCurrent())return;
+    console.error('Market Overview recovery failed',error);
+    status.textContent='Recovery could not be verified. Check your connection and cloud sync, then try again.';
+  }finally{
+    button.disabled=false;
+    if(!isCurrent())status.textContent='';
+  }
+}
+$('#restoreMarketOverview')?.addEventListener('click',restoreMarketOverview);
+
 async function checkCloudSync(){
   if(syncCheckBusy)return;
   if(!cloud||!currentUser||!db){toast('Sign in to check cloud sync');return}
@@ -6603,7 +6828,7 @@ async function checkCloudSync(){
 $('#checkCloudSync')?.addEventListener('click',checkCloudSync);
 $('#exportDiagnostics')?.addEventListener('click',()=>{
   let runtimeEvents=[];try{runtimeEvents=JSON.parse(window.agntRuntime?.export?.()||'[]')}catch{}
-  const data=JSON.stringify({schemaVersion:2,appVersion:'1.46.37',exportedAt:new Date().toISOString(),runtimeEvents,sync:syncHealth.snapshot(syncDiagnosticContext())},null,2),blob=new Blob([data],{type:'application/json'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='AGNT-runtime-diagnostics.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)
+  const data=JSON.stringify({schemaVersion:2,appVersion:'1.46.40',exportedAt:new Date().toISOString(),runtimeEvents,sync:syncHealth.snapshot(syncDiagnosticContext())},null,2),blob=new Blob([data],{type:'application/json'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='AGNT-runtime-diagnostics.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)
 });
 $('#exportData').onclick=()=>{const blob=new Blob([JSON.stringify(completeBackupPayload(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`agnt-complete-backup-${todayKey()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),0)};
 $('#importData').onchange=async e=>{const file=e.target.files?.[0];e.target.value='';if(!file)return;try{const raw=JSON.parse(await file.text());if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('Invalid backup');if(!confirm('Import this AGNT backup?\n\nExisting records with the same date or ID may be updated.'))return;const importedDays=normaliseDaysMap(raw.days||{}),dayKeys=Object.keys(importedDays),prospectingIncluded=Array.isArray(raw.prospects)||Array.isArray(raw.prospectInteractions)||Array.isArray(raw.marketPulseEvents)||Array.isArray(raw.marketPulseHistory)||Array.isArray(raw.marketPulseLedger);if(raw.targets&&typeof raw.targets==='object')targets=normaliseTargets(raw.targets);if(Array.isArray(raw.workDays)&&raw.workDays.length)workDays=normaliseWorkDays(raw.workDays);if(typeof raw.agentName==='string'&&raw.agentName.trim())agentName=cleanText(raw.agentName,120);if(typeof raw.agentMobile==='string')agentMobile=cleanText(raw.agentMobile,50);if(raw.calendarPreference==='apple'||raw.calendarPreference==='outlook')calendarPreference=raw.calendarPreference;if(['system','light','dark'].includes(raw.appearancePreference))applyAppearance(raw.appearancePreference);days={...days,...importedDays};if(Array.isArray(raw.prospects))prospects=normaliseProspects(mergeBackupRecords(prospects,raw.prospects));if(Array.isArray(raw.prospectInteractions))prospectInteractions=normaliseProspectInteractions(mergeBackupRecords(prospectInteractions,raw.prospectInteractions));if(Array.isArray(raw.marketPulseEvents))marketPulseEvents=normaliseMarketPulseEvents(mergeBackupRecords(marketPulseEvents,raw.marketPulseEvents));if(Array.isArray(raw.marketPulseLedger))marketPulseLedger=normaliseLedger([...marketPulseLedger,...raw.marketPulseLedger]);if(Array.isArray(raw.marketPulseHistory))marketPulseHistory=normaliseMarketPulseHistory(mergeBackupRecords(marketPulseHistory,raw.marketPulseHistory));if(Array.isArray(raw.campaignHistory))campaignHistory=mergeBackupRecords(campaignHistory,raw.campaignHistory).sort((a,b)=>(Number(b.createdAt)||0)-(Number(a.createdAt)||0)).slice(0,20);if(Array.isArray(raw.bulkSmsTestLaunches))bulkSmsTestLaunches=mergeBackupRecords(bulkSmsTestLaunches,raw.bulkSmsTestLaunches).sort((a,b)=>(Number(b.createdAt)||0)-(Number(a.createdAt)||0)).slice(0,10);saveLocal();restoreBuyerSessionBackup(raw.buyerSession);renderAll();syncImportedBackup(dayKeys,prospectingIncluded);toast('Backup restored · cloud sync running')}catch(err){console.error('Backup import failed',err);toast('Backup could not be read')}};

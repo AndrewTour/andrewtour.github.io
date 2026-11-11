@@ -2153,3 +2153,12 @@ html body #app #prospectorContactsPanel .people-record-labels>.contact-value svg
 html body #app #prospectorContactsPanel .people-record-timing-wrap>.people-last-spoken {grid-row:4!important}
 html body #app #prospectorContactsPanel .people-record-timing-wrap>.prospect-select-mark {grid-row:5!important}
 html body #app :is(.people-record-timing,.pipeline-row-timing,.people-last-spoken)>b {white-space:nowrap!important;overflow-wrap:normal!important}
+
+/* Additional properties follow the flat contact profile hierarchy. */
+html body #app .contact-properties {margin:20px 0;padding:20px 0;border-top:1px solid var(--ds-rule);border-bottom:1px solid var(--ds-rule);min-width:0}
+html body #app .contact-properties h3 {margin:0 0 14px;font-size:14px;font-weight:600;color:var(--ds-ink)}
+html body #app .contact-primary-address {display:grid;gap:5px;margin:0 0 12px;line-height:1.5;overflow-wrap:anywhere}
+html body #app .contact-primary-address small {color:var(--ds-muted);font-size:11px}
+html body #app .contact-primary-address strong {color:var(--ds-ink);font-size:13px;font-weight:500}
+html body #app .contact-properties .device-contact-action {width:100%;text-align:left;min-height:48px}
+html body #app .contact-properties .device-contact-action span {min-width:0;overflow-wrap:anywhere}

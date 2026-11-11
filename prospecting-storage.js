@@ -1,4 +1,4 @@
-// AGNT v1.46.37
+// AGNT v1.46.40
 // Versioned, immutable, UID-local snapshots. Publish the head only after every
 // chunk and the pre-migration recovery manifest have been acknowledged.
 export const STORAGE_VERSION=3;
@@ -23,11 +23,11 @@ export async function encodeSnapshot(data){
   if(encoder.encode(JSON.stringify(manifest)).length>500000)throw new Error('Snapshot index is too large. Existing cloud data has been retained.');
   return{manifest,chunks};
 }
-export async function decodeSnapshot(data,read,isCurrent=()=>true){
+export async function decodeSnapshot(data,read,isCurrent=()=>true,fields=FIELDS){
   if(data.storageVersion===undefined)return data;
   if(![2,STORAGE_VERSION].includes(data.storageVersion))throw new Error('This data needs a newer AGNT version.');
   const result={...data};
-  for(const field of FIELDS){
+  for(const field of fields){
     if(field==='marketPulseLedger'&&data.storageVersion===2){result[field]=[];continue}
     const ids=data.fields?.[field];if(!Array.isArray(ids)||!ids.length)throw new Error('Incomplete snapshot index');
     const parts=[];
