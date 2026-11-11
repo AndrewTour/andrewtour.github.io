@@ -9,9 +9,9 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.46.41-workspace">
-<link rel="stylesheet" href="cleanup.css?v=1.46.41-workspace">
-<link rel="stylesheet" href="visual-system.css?v=1.46.41-workspace">
+<link rel="stylesheet" href="styles.css?v=1.46.43-workspace">
+<link rel="stylesheet" href="cleanup.css?v=1.46.43-workspace">
+<link rel="stylesheet" href="visual-system.css?v=1.46.43-workspace">
 <title>AGNT</title>
 </head>
 <body>
@@ -437,6 +437,8 @@
           </div>
         </section>
         <div class="schedule-plan-heading"><div><h3>Day plan</h3><p id="schedulePlanSummary"></p></div><button id="openTaskComposer" class="schedule-add-task" type="button"><span aria-hidden="true">+</span> Add task</button></div>
+        <section id="associateAlerts" class="associate-schedule" aria-label="Associate completion updates" aria-live="polite" hidden></section>
+        <section id="associateSchedule" class="associate-schedule" aria-label="Associate daily tasks" hidden></section>
         <section id="dailyTimeline" class="daily-timeline glass" aria-label="Day plan" aria-live="polite"></section>
         <button id="openDayReview" class="open-day-review hidden" type="button"><span>DAY IN REVIEW</span><strong>Review Day and Send Stats</strong><b aria-hidden="true">›</b></button>
       </div>
@@ -1083,6 +1085,7 @@ Thanks,
             </label>
           </div>
         </fieldset>
+        <section id="associateTeamControls" class="associate-team-controls" hidden></section>
         <button id="saveSettings" class="primary">Save settings</button>
         <button id="exportData" class="secondary">Export backup</button>
         <button id="restoreMarketOverview" class="secondary" type="button">Restore Market Overview</button>
@@ -1093,7 +1096,7 @@ Thanks,
         <label class="file-btn secondary">Import backup<input id="importData" type="file" accept="application/json"></label>
         <button id="signOut" class="danger">Sign out</button>
         <p id="modeNote"></p>
-        <small class="release-version">AGNT v1.46.41</small>
+        <small class="release-version">AGNT v1.46.43</small>
       </div>
     </section>
   </main>
@@ -1254,7 +1257,7 @@ Thanks,
 
 
 
-<script src="runtime.js?v=1.46.41-workspace"></script>
-<script type="module" src="app.js?v=1.46.41-workspace"></script>
+<script src="runtime.js?v=1.46.43-workspace"></script>
+<script type="module" src="app.js?v=1.46.43-workspace"></script>
 </body>
 </html>

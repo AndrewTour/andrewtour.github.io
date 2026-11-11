@@ -1,9 +1,9 @@
-const RELEASE='1.46.41-workspace';
+const RELEASE='1.46.43-workspace';
 const CACHE=`agnt-v${RELEASE}`;
 const SDK_CACHE='agnt-sdk-11.10.0';
 const SDK_BASE='https://www.gstatic.com/firebasejs/11.10.0/';
 const SDK=['firebase-app.js','firebase-auth.js','firebase-firestore.js'].map(name=>SDK_BASE+name);
-const ASSETS=['./snapshot-compare.js','./sync-health.js','./archive-cleanup.js','./market-retention.js','./prospecting-storage.js','./index.html',`./styles.css?v=${RELEASE}`,`./cleanup.css?v=${RELEASE}`,`./visual-system.css?v=${RELEASE}`,`./app.js?v=${RELEASE}`,`./runtime.js?v=${RELEASE}`,'./firebase-config.js','./manifest.json','./icons/icon-192.png','./icons/icon-512.png','./android/setup.html','./android/AGNT-Bulk-SMS.prf.xml'];
+const ASSETS=['./associate-profiles.js','./associate-firestore.js','./associate-task-data.js','./snapshot-compare.js','./sync-health.js','./archive-cleanup.js','./market-retention.js','./prospecting-storage.js','./index.html',`./styles.css?v=${RELEASE}`,`./cleanup.css?v=${RELEASE}`,`./visual-system.css?v=${RELEASE}`,`./app.js?v=${RELEASE}`,`./runtime.js?v=${RELEASE}`,'./firebase-config.js','./manifest.json','./icons/icon-192.png','./icons/icon-512.png','./android/setup.html','./android/AGNT-Bulk-SMS.prf.xml'];
 async function boundedFetch(request,options={}){
   const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),15000);
   try{const response=await fetch(request,{...options,signal:controller.signal});if(!response.ok)throw new Error('Asset request failed');return response}finally{clearTimeout(timeout)}
@@ -14,9 +14,9 @@ self.addEventListener('install',event=>event.waitUntil((async()=>{
   await Promise.all(ASSETS.map(async path=>{
     const response=await boundedFetch(new URL(path,self.location.href).href,{cache:'reload'});
     if(path==='./index.html'&&!(await response.clone().text()).includes(`app.js?v=${RELEASE}`))throw new Error('Release HTML mismatch');
-    if(path.startsWith('./app.js?')&&!(await response.clone().text()).includes("appVersion:'1.46.41'"))throw new Error('Release script mismatch');
-    if(path.startsWith('./runtime.js?')&&!(await response.clone().text()).includes("version='1.46.41'"))throw new Error('Runtime script mismatch');
-    if(['./prospecting-storage.js','./market-retention.js','./archive-cleanup.js'].includes(path)&&!(await response.clone().text()).includes('AGNT v1.46.41'))throw new Error('Storage release mismatch');
+    if(path.startsWith('./app.js?')&&!(await response.clone().text()).includes("appVersion:'1.46.43'"))throw new Error('Release script mismatch');
+    if(path.startsWith('./runtime.js?')&&!(await response.clone().text()).includes("version='1.46.43'"))throw new Error('Runtime script mismatch');
+    if(['./prospecting-storage.js','./market-retention.js','./archive-cleanup.js'].includes(path)&&!(await response.clone().text()).includes('AGNT v1.46.43'))throw new Error('Storage release mismatch');
     await cache.put(path,response);
   }));
   const sdkCache=await caches.open(SDK_CACHE);

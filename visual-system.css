@@ -2162,3 +2162,50 @@ html body #app .contact-primary-address small {color:var(--ds-muted);font-size:1
 html body #app .contact-primary-address strong {color:var(--ds-ink);font-size:13px;font-weight:500}
 html body #app .contact-properties .device-contact-action {width:100%;text-align:left;min-height:48px}
 html body #app .contact-properties .device-contact-action span {min-width:0;overflow-wrap:anywhere}
+
+/* Associate workflows extend the existing flat Schedule and team surfaces. */
+html body .associate-overlay {position:fixed;inset:0;z-index:1600;background:var(--ds-canvas,#fff);overflow-y:auto;overscroll-behavior:contain;padding:max(20px,env(safe-area-inset-top)) 20px max(24px,env(safe-area-inset-bottom));box-sizing:border-box}
+html body .associate-sheet {max-width:640px;margin:0 auto;padding:0;background:var(--ds-canvas);color:var(--ds-ink);display:grid;gap:20px}
+html body .associate-sheet header {display:flex;justify-content:space-between;align-items:start;gap:12px}
+html body .associate-sheet header h2 {margin:4px 0;font-size:24px}
+html body .associate-sheet header small {font-size:11px;color:var(--ds-muted)}
+html body .associate-sheet header button {min-width:44px;min-height:44px;font-size:24px;background:var(--ds-soft);color:var(--ds-ink);border:1px solid var(--ds-rule);border-radius:8px}
+html body .associate-sheet label {display:grid;gap:8px;font-size:13px;font-weight:500}
+html body .associate-sheet :is(input:not([type=checkbox]),textarea,select) {box-sizing:border-box;width:100%;padding:12px;border:1px solid var(--ds-rule);border-radius:8px;font:inherit;font-size:16px;background:var(--ds-canvas);color:var(--ds-ink);min-height:46px}
+html body .associate-sheet fieldset {min-width:0;border:0;border-top:1px solid var(--ds-rule);padding:20px 0;display:grid;gap:16px;margin:0}
+html body .associate-sheet :is(p,small) {line-height:1.5;color:var(--ds-muted)}
+html body .associate-sheet .associate-check {display:flex;align-items:center;gap:10px;min-height:44px}
+html body .associate-sheet input[type=checkbox] {width:20px;height:20px;accent-color:var(--ds-ink);flex-shrink:0}
+html body .associate-days {display:flex;flex-wrap:wrap;gap:4px 12px}
+html body .associate-days label {display:flex;align-items:center;gap:6px;min-height:44px}
+html body .associate-template-actions,html body .associate-editor-add {display:flex;flex-wrap:wrap;gap:8px}
+html body .associate-template-actions button {background:var(--ds-soft);color:var(--ds-ink);border:1px solid var(--ds-rule);border-radius:6px;padding:8px 12px;min-height:44px}
+html body .associate-template-actions button:disabled {opacity:.45}
+html body :is(.associate-schedule,.associate-review,.associate-team-controls) {padding:18px 0;margin:12px 0;border-top:1px solid var(--ds-rule);border-bottom:1px solid var(--ds-rule);color:var(--ds-ink);min-width:0}
+html body :is(.associate-schedule,.associate-review,.associate-team-controls)[hidden] {display:none!important}
+html body :is(.associate-schedule,.associate-review,.associate-team-controls) h3 {margin:0 0 6px;font-size:16px}
+html body :is(.associate-schedule,.associate-review,.associate-team-controls) p {font-size:12px;line-height:1.5;color:var(--ds-muted)}
+html body .associate-task {display:grid;grid-template-columns:44px minmax(0,1fr);gap:10px;padding:14px 0;border-bottom:1px solid var(--ds-rule)}
+html body .associate-task:last-child {border-bottom:0}
+html body .associate-task>button {width:32px;height:32px;min-width:32px;min-height:32px;margin:6px;border:1px solid var(--ds-rule);border-radius:6px;background:var(--ds-canvas);color:var(--ds-ink);font-size:20px;padding:0;position:relative}
+html body .associate-task>button:before {content:'';position:absolute;inset:-6px}
+html body .associate-task>div {min-width:0;overflow-wrap:anywhere}
+html body .associate-task strong {font-size:14px;font-weight:500;line-height:1.5}
+html body .associate-task :is(small,.associate-task-status) {display:block;margin-top:4px;font-size:11px;line-height:1.5;color:var(--ds-muted)}
+html body .associate-task.is-completed>button {background:var(--ds-success,#238856);color:#fff;border-color:var(--ds-success,#238856)}
+html body .associate-task.is-completed .associate-task-status {color:var(--ds-success,#238856)}
+html body .associate-task-actions {display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:4px}
+html body .associate-task-actions button {border:0;background:transparent;color:var(--ds-secondary);min-height:44px;padding:4px 0;font-size:11px;text-align:left}
+html body .associate-outstanding {margin:12px 0;border-left:2px solid var(--ds-accent);padding-left:12px}
+html body .associate-outstanding summary {min-height:44px;display:flex;align-items:center;font-size:13px;font-weight:500;cursor:pointer}
+html body .associate-review-day>small {display:block;margin-top:12px;font-size:11px;color:var(--ds-muted)}
+html body .associate-member-actions {display:grid;gap:8px;justify-items:end}
+html body .associate-member-actions button {min-height:44px}
+html body .associate-feedback {color:var(--ds-accent)!important}
+html body .associate-team-controls .device-contact-action {width:100%}
+
+html body .associate-completion-alert {display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:8px;border-top:1px solid var(--ds-rule);padding:10px 0}
+html body .associate-completion-alert button {min-height:44px;border:0;background:transparent;color:var(--ds-ink);font:inherit;text-align:left;padding:6px 0;overflow-wrap:anywhere}
+html body .associate-completion-alert strong {display:block;font-size:13px;font-weight:500}
+html body .associate-completion-alert span {display:block;margin-top:6px;color:var(--ds-muted);font-size:12px}
+html body .associate-completion-alert button:last-child {text-align:center;font-size:22px}
