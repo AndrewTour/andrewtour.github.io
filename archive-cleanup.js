@@ -1,4 +1,4 @@
-// AGNT v1.46.41
+// AGNT v1.46.48
 export const RECOVERY_DAYS=30;
 export function archiveCleanupPlan(head,documents,now=Date.now()){
   if(head?.storageVersion!==3)throw new Error('Retention snapshot is not committed');

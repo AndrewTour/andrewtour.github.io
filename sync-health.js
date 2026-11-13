@@ -1,4 +1,4 @@
-// AGNT v1.46.41 — diagnostic state only; no record data or Firebase access.
+// AGNT v1.46.48 — diagnostic state only; no record data or Firebase access.
 const CHANNELS=new Set(['days','profile','prospecting','leaderboard','team-leaderboard','other']);
 const CODES=new Set(['Error','TypeError','ReferenceError','RangeError','SyntaxError','SecurityError','QuotaExceededError','AbortError','permission-denied','unavailable','failed-precondition','resource-exhausted','aborted','deadline-exceeded','unauthenticated','invalid-argument','cancelled','not-found','already-exists','internal','data-loss','unimplemented','unknown']);
 const PHASES=new Set(['queued','retention','chunks','recovery','commit','decode','listener','server-check']);
@@ -19,6 +19,11 @@ export function createSyncHealth({now=()=>Date.now(),limit=160}={}){
   phase(id,value){const operation=operations.get(id);if(operation&&PHASES.has(value)&&operation.phase!==value){operation.phase=value;log('write-phase',operation.channel,{phase:value})}},
   finish(id,error=null){const operation=operations.get(id);if(!operation)return;operations.delete(id);const entry=channel(operation.channel),durationMs=Math.max(0,now()-operation.startedAt);if(error){entry.writeError={...safeSyncError(error),at:now(),phase:operation.phase};log('write-failed',operation.channel,{...entry.writeError,durationMs})}else{entry.lastWriteAt=now();entry.writeError=null;log('write-confirmed',operation.channel,{durationMs})}},
   read(scope,{fromCache=false,hasPendingWrites=false,probe=false}={}){if(fromCache||hasPendingWrites)return;const entry=channel(scope);entry.lastReadAt=now();if(!probe)entry.readError=null;log(probe?'check-server-read':'server-read',scope)},
+  reconcileProspecting({matches=false,serverVerified=false,pending=true}={}){
+   const entry=channel('prospecting');
+   if(!matches||!serverVerified||pending||operations.size||entry.readError||entry.writeError?.reason!=='concurrent-cloud-change')return false;
+   entry.writeError=null;log('conflict-reconciled','prospecting');return true;
+  },
   readFailed(scope,error){const entry=channel(scope);entry.readError={...safeSyncError(error),at:now()};log('read-failed',scope,entry.readError)},
   headConflict(fields){const allowed=new Set(['storageVersion','fields','clientUpdatedAt','updatedAt','maintenance','lastArchiveCleanupAt','prospects','interactions','marketPulseEvents','marketPulseHistory','marketPulseLedger','existence','other']);log('head-conflict','prospecting',{changedFields:[...new Set(fields.filter(key=>allowed.has(key)))]})},
   headOrderNormalised(){log('head-key-order-normalised','prospecting')},
