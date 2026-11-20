@@ -71,6 +71,7 @@ let latestDeviceArchiveSave=Promise.resolve();
 let marketRetentionDay='',archiveCleanupBusy=false;
 let marketRetentionExpiredIds=new Set();
 let prospectingCloudReady=false,prospectingCloudHead=null,prospectingReadSequence=0;
+let refreshProspectingCloud=null,prospectingNeedsRefresh=false;
 let pendingProspectingPayload=null, pendingProspectingSignature='', pendingProspectingRevision=0, prospectingWriteInFlight=false, prospectingSaveWaiters=[],prospectingRetryTimer=null,prospectingRetryDelay=2500,prospectingFailureNotified=false;
 let editingAppointment=null;
 let todayPage='overview';
@@ -246,7 +247,8 @@ function renderSyncHealth(){
   const profile=$('#profileSyncState'),copy=settingsSyncCopy();if(profile){profile.textContent=copy.profile;profile.classList.toggle('hidden',!copy.profile)}
   const host=$('#syncHealthSummary');if(!host)return;
   const health=syncHealth.snapshot(syncDiagnosticContext());
-  const label={'device-only':'Device only',offline:'Offline',error:'Sync needs attention',mismatch:'Device and cloud differ',pending:'Changes pending',unverified:'Connecting','last-verified':'No pending changes',verified:'Server reads verified'}[health.status];
+  const prospectingOnlyError=Object.entries(health.channels).filter(([,row])=>row.readError||row.writeError).every(([key])=>key==='prospecting')&&Boolean(health.channels.prospecting?.readError||health.channels.prospecting?.writeError);
+  const label={'device-only':'Device only',offline:'Offline',error:prospectingOnlyError?'Prospecting sync needs attention; changes queued on this device':'Sync needs attention',mismatch:'Device and cloud differ',pending:'Changes pending',unverified:'Connecting','last-verified':'No pending changes',verified:'Server reads verified'}[health.status];
   const writes=Object.values(health.channels).map(row=>row.lastWriteAt).filter(Boolean),lastWrite=Math.max(0,...writes);
   const time=lastWrite?new Date(lastWrite).toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',second:'2-digit'}):'';
   host.textContent=(health.context.deviceSaveIssue?'Device save needs attention':label)+(time?` · Last cloud save confirmed ${time}.`:' · No cloud save confirmed in this session yet.');
@@ -512,7 +514,7 @@ put('campaign-history',()=>JSON.stringify(campaignHistory.slice(0,20)));put('bul
   }
   return ok;
 }
-function clearActiveSession(){associateProfiles.stop();syncHealth.reset();syncCheckBusy=false;marketRetentionDay='';marketRetentionExpiredIds=new Set();prospectingCloudReady=false;prospectingCloudHead=null;prospectingReadSequence++;resetCloudVisuals();clearTimeout(localWarningTimer);localWarningTimer=null;settingsDraftFields.clear();localStorageFailures.clear();pendingLocalWrites.clear();deviceStorageErrors=[];deviceArchiveWritePending=false;cloudStartPending=null;teamInitialisationToken++;unsubDays?.();unsubProfile?.();unsubLeaderboard?.();unsubProspecting?.();unsubMarketPulseInbox?.();unsubTeamMembership?.();unsubTeamMembers?.();unsubAppointmentAssignees?.();unsubAssignedTeamAppointments?.();unsubAssignedTeamTasks?.();unsubDays=unsubProfile=unsubLeaderboard=unsubProspecting=unsubMarketPulseInbox=unsubTeamMembership=unsubTeamMembers=unsubAppointmentAssignees=unsubAssignedTeamAppointments=unsubAssignedTeamTasks=null;hideTeamAppointmentNotice({acknowledge:false});hideTeamManager({restoreFocus:false});closeTeamMemberRemoval({force:true});hideTeamLeaveConfirmation({force:true,restoreFocus:false});hideTeamCodeRefreshConfirmation({force:true,restoreFocus:false});closeSellerPriorityDeferral();clearInterval(timerTick);clearInterval(returningSnapshotCountdownTimer);clearTimeout(syncTimer);clearTimeout(leaderboardPublishTimer);clearTimeout(prospectingSaveTimer);clearTimeout(prospectingRetryTimer);clearTimeout(returningSnapshotTimer);clearTimeout(appResumeTimer);appResumeTimer=null;daySaveChains.clear();returningSnapshotTimer=returningSnapshotCountdownTimer=null;returningSnapshotEndsAt=0;prospectingSaveTimer=prospectingRetryTimer=null;prospectingRetryDelay=2500;prospectingFailureNotified=false;pendingProspectingPayload=null;pendingProspectingSignature='';pendingProspectingRevision=0;prospectingWriteInFlight=false;prospectingSaveWaiters.splice(0).forEach(({resolve})=>resolve());currentUser=null;uid='local';cloud=false;pendingSyncOperations=0;syncHasError=false;lastLeaderboardSignature='';lastTeamLeaderboardSignature='';lastProspectingSignature='';dirtyDayKeys=new Set();resetState()}
+function clearActiveSession(){associateProfiles.stop();syncHealth.reset();syncCheckBusy=false;marketRetentionDay='';marketRetentionExpiredIds=new Set();prospectingCloudReady=false;prospectingCloudHead=null;prospectingReadSequence++;refreshProspectingCloud=null;prospectingNeedsRefresh=false;resetCloudVisuals();clearTimeout(localWarningTimer);localWarningTimer=null;settingsDraftFields.clear();localStorageFailures.clear();pendingLocalWrites.clear();deviceStorageErrors=[];deviceArchiveWritePending=false;cloudStartPending=null;teamInitialisationToken++;unsubDays?.();unsubProfile?.();unsubLeaderboard?.();unsubProspecting?.();unsubMarketPulseInbox?.();unsubTeamMembership?.();unsubTeamMembers?.();unsubAppointmentAssignees?.();unsubAssignedTeamAppointments?.();unsubAssignedTeamTasks?.();unsubDays=unsubProfile=unsubLeaderboard=unsubProspecting=unsubMarketPulseInbox=unsubTeamMembership=unsubTeamMembers=unsubAppointmentAssignees=unsubAssignedTeamAppointments=unsubAssignedTeamTasks=null;hideTeamAppointmentNotice({acknowledge:false});hideTeamManager({restoreFocus:false});closeTeamMemberRemoval({force:true});hideTeamLeaveConfirmation({force:true,restoreFocus:false});hideTeamCodeRefreshConfirmation({force:true,restoreFocus:false});closeSellerPriorityDeferral();clearInterval(timerTick);clearInterval(returningSnapshotCountdownTimer);clearTimeout(syncTimer);clearTimeout(leaderboardPublishTimer);clearTimeout(prospectingSaveTimer);clearTimeout(prospectingRetryTimer);clearTimeout(returningSnapshotTimer);clearTimeout(appResumeTimer);appResumeTimer=null;daySaveChains.clear();returningSnapshotTimer=returningSnapshotCountdownTimer=null;returningSnapshotEndsAt=0;prospectingSaveTimer=prospectingRetryTimer=null;prospectingRetryDelay=2500;prospectingFailureNotified=false;pendingProspectingPayload=null;pendingProspectingSignature='';pendingProspectingRevision=0;prospectingWriteInFlight=false;prospectingSaveWaiters.splice(0).forEach(({resolve})=>resolve());currentUser=null;uid='local';cloud=false;pendingSyncOperations=0;syncHasError=false;lastLeaderboardSignature='';lastTeamLeaderboardSignature='';lastProspectingSignature='';dirtyDayKeys=new Set();resetState()}
 function displayAgentName(){return (agentName||currentUser?.displayName||currentUser?.email?.split('@')[0]||'Agent').trim()}
 function returningSnapshotReadyKey(){return `${storagePrefix(uid)}returning-snapshot-ready`}
 function returningSnapshotHasHistory(){
@@ -3816,9 +3818,9 @@ async function cleanupMarketArchive(owner,isCurrent){
     });
   }
 }
-async function writeProspectingSnapshot(payload,revision,savingUid,isCurrent,recoveryPayload=null,syncOperation=null){
+async function writeProspectingSnapshot(payload,revision,savingUid,isCurrent,recoveryPayload=null,syncOperation=null,expectedHead=prospectingCloudHead){
   const ref=doc(db,'users',savingUid,'prospecting','state');
-  const previous=prospectingCloudHead;
+  const previous=expectedHead;
   
   const io={
     async writeChunk(chunk){
@@ -5242,24 +5244,58 @@ function scheduleProspectingRetry(){
   if(prospectingRetryTimer||!cloud||!navigator.onLine||!readProspectingDirtyAt())return;
   const delay=prospectingRetryDelay;syncHealth.retry('prospecting',delay);prospectingRetryDelay=Math.min(60000,Math.round(prospectingRetryDelay*1.8));prospectingRetryTimer=setTimeout(()=>{prospectingRetryTimer=null;queueProspectingSave().catch(err=>{console.error('Prospecting retry failed',err);scheduleProspectingRetry()})},delay)
 }
+// Build at execution time: queued payloads may predate a verified cloud merge.
+function currentProspectingSnapshot(){
+  marketPulseHistory=normaliseMarketPulseHistory([...marketPulseHistory,...marketPulseEvents]);
+  const normalised={prospects:normaliseProspects(prospects),interactions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory,marketPulseLedger:normaliseLedger(marketPulseLedger)};
+  return{signature:prospectingSignature(normalised.prospects,normalised.interactions,normalised.marketPulseEvents,normalised.marketPulseHistory,normalised.marketPulseLedger),payload:Object.fromEntries(Object.entries(normalised).map(([field,rows])=>[field,compactProspectingCloudValue(rows)]))};
+}
 async function flushProspectingSave(){
   clearTimeout(prospectingSaveTimer);prospectingSaveTimer=null;
-  if(!cloud||!db||!uid||prospectingWriteInFlight||!pendingProspectingPayload)return;
-  if(!prospectingCloudReady||deviceArchiveReadFailures.has(uid)){prospectingSaveTimer=setTimeout(flushProspectingSave,500);return}
-  const savingUid=uid,savingUser=currentUser,savingEpoch=accountStateEpoch,isCurrent=()=>uid===savingUid&&currentUser===savingUser&&accountStateEpoch===savingEpoch;
-  let payload=pendingProspectingPayload,signature=pendingProspectingSignature;const revision=pendingProspectingRevision,waiters=prospectingSaveWaiters.splice(0);
+  if(!cloud||!db||!uid||prospectingWriteInFlight||!pendingProspectingPayload||prospectingRetryTimer)return;
+  if((!prospectingCloudReady&&!prospectingNeedsRefresh)||deviceArchiveReadFailures.has(uid)){prospectingSaveTimer=setTimeout(flushProspectingSave,500);return}
+  const savingUid=uid,savingUser=currentUser,savingEpoch=accountStateEpoch,isCurrent=()=>cloud&&uid===savingUid&&currentUser===savingUser&&accountStateEpoch===savingEpoch;
+  const queuedRevision=pendingProspectingRevision,waiters=prospectingSaveWaiters.splice(0);
   pendingProspectingPayload=null;pendingProspectingSignature='';pendingProspectingRevision=0;
-  if(signature===lastProspectingSignature){clearProspectingDirty(revision);reconcileProspectingSync();waiters.forEach(({resolve})=>resolve());return}
-  prospectingWriteInFlight=true;const syncOperation=beginSyncOperation('prospecting');
+  prospectingWriteInFlight=true;let syncOperation=null,failed=false;
   try{
+    // An acknowledged publication can precede async listener hydration. Never
+    // reuse its older head, or retry a conflict without merging server data.
+    if(prospectingNeedsRefresh){
+      if(!refreshProspectingCloud)throw new Error('Cloud refresh is not ready. Sync will retry.');
+      await refreshProspectingCloud();
+      if(!isCurrent())throw new Error('Account changed during sync');
+      prospectingNeedsRefresh=false;
+    }
+    if(!isCurrent())throw new Error('Account changed during sync');
+    const expectedHead=prospectingCloudHead;
+    let {payload,signature}=currentProspectingSnapshot();
+    const revision=Math.max(queuedRevision,readProspectingDirtyAt());
+    if(signature===lastProspectingSignature){clearProspectingDirty(revision);waiters.forEach(({resolve})=>resolve());return}
+    syncOperation=beginSyncOperation('prospecting');
     syncHealth.phase(syncOperation,'retention');const beforeRetention=payload;
     const retained=await retainMarketData({history:payload.marketPulseHistory,events:payload.marketPulseEvents,ledger:payload.marketPulseLedger,today:sydneyDateKey(),isCurrent});
     if(!isCurrent())throw new Error('Account changed during retention');
     payload={...payload,marketPulseHistory:retained.history,marketPulseEvents:retained.events,marketPulseLedger:retained.ledger};
     signature=prospectingSignature(payload.prospects,payload.interactions,payload.marketPulseEvents,payload.marketPulseHistory,payload.marketPulseLedger);
-    await writeProspectingSnapshot(payload,revision,savingUid,isCurrent,(beforeRetention.marketPulseHistory.length>retained.history.length||beforeRetention.marketPulseEvents.length>retained.events.length)?beforeRetention:null,syncOperation);if(!isCurrent()){waiters.forEach(({resolve})=>resolve());return}lastProspectingSignature=signature;clearProspectingDirty(revision);clearTimeout(prospectingRetryTimer);prospectingRetryTimer=null;prospectingRetryDelay=2500;prospectingFailureNotified=false;clearSyncError();endSyncOperation({operation:syncOperation});waiters.forEach(({resolve})=>resolve());scheduleArchiveCleanup(savingUid)}
-  catch(err){if(!isCurrent()){waiters.forEach(({resolve})=>resolve());return}console.error(err);endSyncOperation({error:err,operation:syncOperation});waiters.forEach(({reject})=>reject(err));window.agntRuntime?.record('prospecting-sync-error',err?.code||err?.name);if(!prospectingFailureNotified){prospectingFailureNotified=true;toast('Prospecting changes saved on this device. Cloud sync will retry.')}scheduleProspectingRetry()}
-  finally{if(isCurrent()){prospectingWriteInFlight=false;if(pendingProspectingPayload)prospectingSaveTimer=setTimeout(flushProspectingSave,80);reconcileProspectingSync();refreshSyncStatus()}}
+    await writeProspectingSnapshot(payload,revision,savingUid,isCurrent,(beforeRetention.marketPulseHistory.length>retained.history.length||beforeRetention.marketPulseEvents.length>retained.events.length)?beforeRetention:null,syncOperation,expectedHead);
+    if(!isCurrent()){waiters.forEach(({resolve})=>resolve());return}
+    prospectingNeedsRefresh=true;
+    lastProspectingSignature=signature;clearProspectingDirty(revision);clearTimeout(prospectingRetryTimer);prospectingRetryTimer=null;prospectingRetryDelay=2500;prospectingFailureNotified=false;clearSyncError();endSyncOperation({operation:syncOperation});waiters.forEach(({resolve})=>resolve());scheduleArchiveCleanup(savingUid);
+  }catch(err){
+    if(!isCurrent()){waiters.forEach(({resolve})=>resolve());return}
+    failed=true;prospectingNeedsRefresh=true;clearTimeout(prospectingSaveTimer);prospectingSaveTimer=null;
+    console.error(err);if(syncOperation!==null)endSyncOperation({error:err,operation:syncOperation});else{syncHealth.readFailed('prospecting',err);syncHasError=true;refreshSyncStatus()}waiters.forEach(({reject})=>reject(err));window.agntRuntime?.record('prospecting-sync-error',err?.code||err?.name);
+    if(!prospectingFailureNotified){prospectingFailureNotified=true;toast('Prospecting changes saved on this device. Cloud sync will retry.')}
+    scheduleProspectingRetry();
+  }finally{
+    if(isCurrent()){
+      prospectingWriteInFlight=false;
+      // Failed writes respect retry backoff even when another edit is queued.
+      if(pendingProspectingPayload&&!failed)prospectingSaveTimer=setTimeout(flushProspectingSave,80);
+      reconcileProspectingSync();refreshSyncStatus();
+    }
+  }
 }
 
 // Resolve only a verified prospecting conflict; a successful read alone is insufficient.
@@ -5274,12 +5310,11 @@ function reconcileProspectingSync(remoteSignature=lastProspectingSignature,serve
 }
 function queueProspectingSave(){
   if(!cloud||!db||!uid)return Promise.resolve();
-  marketPulseHistory=normaliseMarketPulseHistory([...marketPulseHistory,...marketPulseEvents]);
-  const normalised={prospects:normaliseProspects(prospects),interactions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory,marketPulseLedger:normaliseLedger(marketPulseLedger)},signature=prospectingSignature(normalised.prospects,normalised.interactions,normalised.marketPulseEvents,normalised.marketPulseHistory,normalised.marketPulseLedger),snapshot=Object.fromEntries(Object.entries(normalised).map(([field,rows])=>[field,compactProspectingCloudValue(rows)])),revision=readProspectingDirtyAt()||markProspectingDirty(prospectingLatestLocalAt());
+  const {payload:snapshot,signature}=currentProspectingSnapshot(),revision=readProspectingDirtyAt()||markProspectingDirty(prospectingLatestLocalAt());
   if(signature===lastProspectingSignature&&!pendingProspectingPayload&&!prospectingWriteInFlight){clearProspectingDirty(revision);reconcileProspectingSync();return Promise.resolve()}
   pendingProspectingPayload=snapshot;pendingProspectingSignature=signature;pendingProspectingRevision=Math.max(pendingProspectingRevision,revision);
   const promise=new Promise((resolve,reject)=>prospectingSaveWaiters.push({resolve,reject}));
-  clearTimeout(prospectingSaveTimer);prospectingSaveTimer=setTimeout(flushProspectingSave,160);
+  clearTimeout(prospectingSaveTimer);if(!prospectingRetryTimer)prospectingSaveTimer=setTimeout(flushProspectingSave,160);
   return promise;
 }
 async function saveProspecting({render=true,awaitCloud=true}={}){
@@ -6026,9 +6061,9 @@ async function startCloudSession(user,{promptTeamSetup=false}={}){
     }
     if(changed){saveLocal('profile');queueCloudVisuals('profile');scheduleLeaderboardPublish()}
   },err=>{syncHealth.readFailed('profile',err);refreshSyncStatus();console.error('Profile sync failed',err);if(isTransientTeamError(err)&&accountMode==='team'&&teamId)setTeamLayerStatus('cached','Team confirmation is waiting for a stable connection. Core sync is unaffected.');else setTeamLayerStatus('error','Team setup could not load. Core sync is unaffected.')});
-  prospectingCloudReady=false;prospectingCloudHead=null;prospectingReadSequence++;
-  let marketPulseInboxStarted=false;
-  unsubProspecting=onSnapshot(doc(db,'users',uid,'prospecting','state'),{includeMetadataChanges:true},async rawSnap=>{
+  prospectingCloudReady=false;prospectingCloudHead=null;prospectingReadSequence++;prospectingNeedsRefresh=false;
+  let marketPulseInboxStarted=false,latestProspectingRead=Promise.resolve();
+  const applyProspectingSnapshot=async rawSnap=>{
     const sequence=++prospectingReadSequence,epoch=accountStateEpoch;
     const isCurrent=()=>cloud&&uid===user.uid&&currentUser===user&&epoch===accountStateEpoch&&sequence===prospectingReadSequence;
     if(!isCurrent())return;
@@ -6038,7 +6073,7 @@ async function startCloudSession(user,{promptTeamSetup=false}={}){
     catch(err){if(isCurrent()){syncHealth.readFailed('prospecting',err);syncHasError=true;refreshSyncStatus();marketPulseAutomation={...marketPulseAutomation,state:'error',error:'Archive sync could not be verified. Existing local data is retained; reconnect and reopen AGNT to retry.'};renderMarketPulseAutomationSettings();console.error('Archive load failed',err)}return}
     if(!isCurrent())return;
     const serverReady=!rawSnap.metadata.fromCache&&!rawSnap.metadata.hasPendingWrites;
-    if(serverReady){prospectingCloudHead=rawSnap.exists()?rawSnap.data():null;syncHealth.read('prospecting',rawSnap.metadata);refreshSyncStatus()}
+    if(serverReady){syncHealth.read('prospecting',rawSnap.metadata);refreshSyncStatus()}
     if(hydrated?.storageVersion===3&&!rawSnap.metadata.fromCache&&!rawSnap.metadata.hasPendingWrites){
       const known=new Set(normaliseLedger(hydrated.marketPulseLedger).map(row=>row.id)),cutoff=retentionCutoff(sydneyDateKey());
       for(const event of [...marketPulseHistory,...marketPulseEvents,...(hydrated.marketPulseHistory||[]),...(hydrated.marketPulseEvents||[])]){
@@ -6067,13 +6102,26 @@ async function startCloudSession(user,{promptTeamSetup=false}={}){
       if(localSellerMerge?.retained&&!snap.metadata.hasPendingWrites&&!snap.metadata.fromCache)queueProspectingSave().catch(err=>console.error('Property details recovery sync failed',err))
       if((!hasMarketEvents&&nextMarketEvents.length||!hasMarketHistory&&nextMarketHistory.length)&&!snap.metadata.hasPendingWrites&&!snap.metadata.fromCache){queueProspectingSave().catch(err=>console.error('Market Updates migration failed',err))}
     }
+    if(!isCurrent())return;
+    if(serverReady)prospectingCloudHead=rawSnap.exists()?rawSnap.data():null;
     prospectingCloudReady=serverReady&&!(Number(rawSnap.data()?.maintenance?.until)>Date.now());
     if(serverReady)reconcileProspectingSync();
     refreshSyncStatus();
     if(prospectingCloudReady&&snap.exists()&&(rawSnap.data().storageVersion!==3||marketRetentionDay!==sydneyDateKey())){marketRetentionDay=sydneyDateKey();lastProspectingSignature='';queueProspectingSave().catch(err=>console.error('Archive migration will retry',err))}
     if(!marketPulseInboxStarted&&prospectingCloudReady){marketPulseInboxStarted=true;subscribeMarketPulseInbox()}
     refreshSyncStatus();
-  },err=>{syncHealth.readFailed('prospecting',err);refreshSyncStatus();console.error('Prospecting sync failed',err);dailyBriefingMarketReady=true;marketPulseAutomation={...marketPulseAutomation,state:'error',error:'Automatic MarketPulse intake is waiting for Prospector cloud sync.'};renderMarketPulseAutomationSettings();refreshReturningSnapshotIfVisible();toast('Prospecting data is saved locally. Cloud sync needs attention.')});
+  };
+  const observeProspectingSnapshot=rawSnap=>latestProspectingRead=applyProspectingSnapshot(rawSnap);
+  const sessionEpoch=accountStateEpoch,sessionCurrent=()=>cloud&&uid===user.uid&&currentUser===user&&accountStateEpoch===sessionEpoch;
+  refreshProspectingCloud=async()=>{
+    const rawSnap=await getDocFromServer(doc(db,'users',user.uid,'prospecting','state'));
+    if(!sessionCurrent())throw new Error('Account changed during sync');
+    let reading=observeProspectingSnapshot(rawSnap);
+    // A newer listener event may supersede this read during chunk hydration.
+    for(;;){await reading;if(!sessionCurrent())throw new Error('Account changed during sync');if(reading===latestProspectingRead)break;reading=latestProspectingRead}
+    if(!prospectingCloudReady)throw new Error('Cloud snapshot could not be verified. Sync will retry.');
+  };
+  unsubProspecting=onSnapshot(doc(db,'users',uid,'prospecting','state'),{includeMetadataChanges:true},observeProspectingSnapshot,err=>{syncHealth.readFailed('prospecting',err);refreshSyncStatus();console.error('Prospecting sync failed',err);dailyBriefingMarketReady=true;marketPulseAutomation={...marketPulseAutomation,state:'error',error:'Automatic MarketPulse intake is waiting for Prospector cloud sync.'};renderMarketPulseAutomationSettings();refreshReturningSnapshotIfVisible();toast('Prospecting data is saved locally. Cloud sync needs attention.')});
   refreshSyncStatus();showApp();scheduleLeaderboardPublish();for(const k of [...dirtyDayKeys]){const clean=dayData(k);if(clean.clientUpdatedAt)persistDayToCloud(k,{...clean},{quiet:true}).catch(()=>{})}
 }
 
@@ -6828,7 +6876,7 @@ $('#settingsView').addEventListener('change',event=>{const field=event.target;if
 $('#saveSettings').onclick=async()=>{const fields=['callsTarget','connectsTarget','dataTarget','weeklyKnockTarget'];const invalid=fields.find(id=>{const value=Number($('#'+id).value);return !Number.isSafeInteger(value)||value<=0});if(invalid){toast('Enter a whole number greater than zero for every target.');$('#'+invalid).focus();return}const savingOwner=uid,savingEpoch=accountStateEpoch;const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();agentMobile=cleanText($('#agentMobile').value,50);targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;calendarPreference=$('[name=calendarPreference]:checked')?.value==='apple'?'apple':'outlook';appearancePreference=normaliseAppearance($('[name=appearancePreference]:checked')?.value);applyAppearance(appearancePreference);settingsDraftFields.clear();await saveTargets();if(uid!==savingOwner||accountStateEpoch!==savingEpoch)return;if(cloud&&accountMode==='team'&&teamId&&uid){try{await setDoc(doc(db,'teams',teamId,'members',uid),{name:agentName,updatedAt:serverTimestamp()},{merge:true})}catch(err){console.error('Team profile name sync failed',err)}}renderAll();toast('Settings saved')};
 $('#signOut').onclick=async()=>{clearActiveSession();if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
 function mergeBackupRecords(current=[],incoming=[]){const byId=new Map();[...(Array.isArray(current)?current:[]),...(Array.isArray(incoming)?incoming:[])].forEach((item,index)=>{if(!item||typeof item!=='object')return;const id=cleanText(item.id,180)||`backup-record-${index}`;byId.set(id,item)});return[...byId.values()]}
-function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.46.48',exportedAt:new Date().toISOString(),targets,workDays,agentName,agentMobile,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),marketPulseLedger:normaliseLedger(marketPulseLedger),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
+function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.46.49',exportedAt:new Date().toISOString(),targets,workDays,agentName,agentMobile,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),marketPulseLedger:normaliseLedger(marketPulseLedger),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
 function restoreBuyerSessionBackup(value){if(!value||!Array.isArray(value.contacts))return false;buyerSession={contacts:value.contacts.map((contact,index)=>({id:cleanText(contact.id,80)||`buyer_${index}`,name:cleanText(contact.name,120)||'Unknown buyer',phone:normaliseDialNumber(contact.phone),address:cleanText(contact.address,240),doNotSms:Boolean(contact.doNotSms),status:cleanText(contact.status,40)})).filter(contact=>contact.phone),index:Math.max(0,Number(value.index)||0),active:Boolean(value.active),visible:false,fileName:cleanText(value.fileName,160),importedAt:Number(value.importedAt)||0};buyerSession.index=Math.min(buyerSession.index,buyerSession.contacts.length);return saveBuyerSession()}
 function syncImportedBackup(dayKeys=[],prospectingIncluded=false){if(!cloud)return;saveTargets().catch(err=>console.error('Imported settings sync failed',err));dayKeys.forEach(key=>saveDay(key,{quiet:true,awaitCloud:false,render:false}).catch?.(err=>console.error('Imported day sync failed',err)));if(prospectingIncluded)saveProspecting({render:false,awaitCloud:false}).catch(err=>console.error('Imported prospecting sync failed',err))}
 function missingMarketRecoveryRows(rows){
@@ -6946,7 +6994,7 @@ async function checkCloudSync(){
 $('#checkCloudSync')?.addEventListener('click',checkCloudSync);
 $('#exportDiagnostics')?.addEventListener('click',()=>{
   let runtimeEvents=[];try{runtimeEvents=JSON.parse(window.agntRuntime?.export?.()||'[]')}catch{}
-  const data=JSON.stringify({schemaVersion:2,appVersion:'1.46.48',exportedAt:new Date().toISOString(),runtimeEvents,deviceStorage:deviceStorageDiagnostics(),sync:syncHealth.snapshot(syncDiagnosticContext())},null,2),blob=new Blob([data],{type:'application/json'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='AGNT-runtime-diagnostics.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)
+  const data=JSON.stringify({schemaVersion:2,appVersion:'1.46.49',exportedAt:new Date().toISOString(),runtimeEvents,deviceStorage:deviceStorageDiagnostics(),sync:syncHealth.snapshot(syncDiagnosticContext())},null,2),blob=new Blob([data],{type:'application/json'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='AGNT-runtime-diagnostics.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)
 });
 $('#exportData').onclick=()=>{const blob=new Blob([JSON.stringify(completeBackupPayload(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`agnt-complete-backup-${todayKey()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),0)};
 $('#importData').onchange=async e=>{const file=e.target.files?.[0];e.target.value='';if(!file)return;try{const raw=JSON.parse(await file.text());if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('Invalid backup');if(!confirm('Import this AGNT backup?\n\nExisting records with the same date or ID may be updated.'))return;const importedDays=normaliseDaysMap(raw.days||{}),dayKeys=Object.keys(importedDays),prospectingIncluded=Array.isArray(raw.prospects)||Array.isArray(raw.prospectInteractions)||Array.isArray(raw.marketPulseEvents)||Array.isArray(raw.marketPulseHistory)||Array.isArray(raw.marketPulseLedger);if(raw.targets&&typeof raw.targets==='object')targets=normaliseTargets(raw.targets);if(Array.isArray(raw.workDays)&&raw.workDays.length)workDays=normaliseWorkDays(raw.workDays);if(typeof raw.agentName==='string'&&raw.agentName.trim())agentName=cleanText(raw.agentName,120);if(typeof raw.agentMobile==='string')agentMobile=cleanText(raw.agentMobile,50);if(raw.calendarPreference==='apple'||raw.calendarPreference==='outlook')calendarPreference=raw.calendarPreference;if(['system','light','dark'].includes(raw.appearancePreference))applyAppearance(raw.appearancePreference);days={...days,...importedDays};if(Array.isArray(raw.prospects))prospects=normaliseProspects(mergeBackupRecords(prospects,raw.prospects));if(Array.isArray(raw.prospectInteractions))prospectInteractions=normaliseProspectInteractions(mergeBackupRecords(prospectInteractions,raw.prospectInteractions));if(Array.isArray(raw.marketPulseEvents))marketPulseEvents=normaliseMarketPulseEvents(mergeBackupRecords(marketPulseEvents,raw.marketPulseEvents));if(Array.isArray(raw.marketPulseLedger))marketPulseLedger=normaliseLedger([...marketPulseLedger,...raw.marketPulseLedger]);if(Array.isArray(raw.marketPulseHistory))marketPulseHistory=normaliseMarketPulseHistory(mergeBackupRecords(marketPulseHistory,raw.marketPulseHistory));if(Array.isArray(raw.campaignHistory))campaignHistory=mergeBackupRecords(campaignHistory,raw.campaignHistory).sort((a,b)=>(Number(b.createdAt)||0)-(Number(a.createdAt)||0)).slice(0,20);if(Array.isArray(raw.bulkSmsTestLaunches))bulkSmsTestLaunches=mergeBackupRecords(bulkSmsTestLaunches,raw.bulkSmsTestLaunches).sort((a,b)=>(Number(b.createdAt)||0)-(Number(a.createdAt)||0)).slice(0,10);saveLocal();restoreBuyerSessionBackup(raw.buyerSession);renderAll();syncImportedBackup(dayKeys,prospectingIncluded);toast('Backup restored · cloud sync running')}catch(err){console.error('Backup import failed',err);toast('Backup could not be read')}};
