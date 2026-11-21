@@ -9,9 +9,9 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.46.49-workspace">
-<link rel="stylesheet" href="cleanup.css?v=1.46.49-workspace">
-<link rel="stylesheet" href="visual-system.css?v=1.46.49-workspace">
+<link rel="stylesheet" href="styles.css?v=1.46.50-siri">
+<link rel="stylesheet" href="cleanup.css?v=1.46.50-siri">
+<link rel="stylesheet" href="visual-system.css?v=1.46.50-siri">
 <title>AGNT</title>
 </head>
 <body>
@@ -601,6 +601,7 @@
           <div class="ofi-duration-summary"><span>OPEN FOR INSPECTION</span><strong id="ofiDurationText">30 minute booking</strong><small id="ofiSchedulePreview">Select a time to preview the booking.</small></div>
           <label class="auction-toggle"><input id="appointmentAuction" type="checkbox"><span><b>Auction</b><small>OFI changes to 15 minutes and the auction starts immediately after.</small></span><i aria-hidden="true"></i></label>
         </div>
+        <p id="siriBookingHint" role="status" hidden></p>
         <div id="appointmentFormError" class="form-error hidden" role="alert"></div>
         <button id="appointmentSubmitButton" class="primary" type="submit">Book appointment</button>
       </form>
@@ -1096,7 +1097,7 @@ Thanks,
         <label class="file-btn secondary">Import backup<input id="importData" type="file" accept="application/json"></label>
         <button id="signOut" class="danger">Sign out</button>
         <p id="modeNote"></p>
-        <small class="release-version">AGNT v1.46.49</small>
+        <small class="release-version">AGNT v1.46.50</small>
       </div>
     </section>
   </main>
@@ -1134,6 +1135,7 @@ Thanks,
     <span class="appointment-assignment-kicker">ASSIGN APPOINTMENT</span>
     <h2 id="appointmentAssignmentTitle">Who is this appointment for?</h2>
     <p>The person booking it keeps the appointment stat.</p>
+    <p id="siriAssignmentHint" role="status" hidden></p>
     <label>Assigned to<select id="appointmentAssignmentSelect"><option value="">Me</option></select></label>
     <div class="appointment-assignment-actions"><button id="cancelAppointmentAssignment" class="secondary" type="button">Cancel</button><button id="confirmAppointmentAssignment" class="primary" type="button">Confirm booking</button></div>
   </section>
@@ -1257,7 +1259,7 @@ Thanks,
 
 
 
-<script src="runtime.js?v=1.46.49-workspace"></script>
-<script type="module" src="app.js?v=1.46.49-workspace"></script>
+<script src="runtime.js?v=1.46.50-siri"></script>
+<script type="module" src="app.js?v=1.46.50-siri"></script>
 </body>
 </html>

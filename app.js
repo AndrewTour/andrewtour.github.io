@@ -1,3 +1,4 @@
+import { parseSiriBooking, matchSiriAssignee } from './siri-booking.js?v=1.46.50';
 import {createAssociateProfiles} from './associate-profiles.js';
 import {stableSnapshotString,compareSnapshotHeads} from './snapshot-compare.js';
 import {createSyncHealth} from './sync-health.js';
@@ -154,7 +155,17 @@ function discardDetailReturn(){workflowDetailReturns.pop()}
 function startDetailViewport(){if(!workflowRestoring)settleWorkflowScroll({view:activeViewId(),windowScroll:0,scroll:0},0)}
 function rememberWorkflowEntry(name){workflowEntries[name]=captureWorkflowPlace()}
 function returnWorkflowEntry(name){const place=workflowEntries[name];workflowEntries[name]=null;return restoreWorkflowPlace(place)}
-function returnFromBooking(){if(pendingProspectAppointmentFlow){cancelProspectAppointmentFlow();return}if(editingAppointment){closeAppointmentEditor();return}if(returnWorkflowEntry('booking'))return;workspaceBookingEditor=false;syncWorkspaceChrome()}
+function returnFromBooking(){
+  if(pendingProspectAppointmentFlow){cancelProspectAppointmentFlow();return}
+  if(editingAppointment){closeAppointmentEditor();return}
+  const form=$('#appointmentForm');
+  if(siriAppointmentDrafts.has(form)){
+    if(!confirm('Discard this appointment draft?'))return;
+    form.reset();resetAppointmentContactLink();updateOfiFormState();
+  }
+  if(returnWorkflowEntry('booking'))return;
+  workspaceBookingEditor=false;syncWorkspaceChrome();
+}
 function closeFollowUpQueue(){if(returnWorkflowEntry('followups'))return;openWorkspaceRoute('contacts')}
 function syncFollowUpBackLabel(){const back=$('#backFromFollowUps'),place=workflowEntries.followups;if(back)back.textContent=place?.view==='scheduleView'?'‹ Back to Day Plan':place?.view==='todayView'?'‹ Back to Today':'‹ Back to People'}
 function openBuyerProfileFromWorkflow(id){rememberDetailReturn();$('#prospectingDashboard').classList.add('hidden');$('#prospectingSession').classList.add('hidden');$('#prospectDetail').classList.remove('hidden');renderBuyerDetail(id);startDetailViewport()}
@@ -2671,9 +2682,22 @@ function renderAppointmentAssignmentPopup(preferredUid=uid){
   select.innerHTML=members.map(member=>`<option value="${escapeHtml(member.uid)}">${escapeHtml(String(member.uid)===uid?'Me':teamAppointmentBookingDisplayName(member))}</option>`).join('');
   select.value=members.some(member=>String(member.uid)===String(preferredUid))?String(preferredUid):uid;
 }
-function showAppointmentAssignmentPopup(){
+function showAppointmentAssignmentPopup(spokenAssignee=''){
   const modal=$('#appointmentAssignmentModal');if(!modal||!pendingAppointmentAssignment)return;
-  renderAppointmentAssignmentPopup(uid);modal.classList.remove('hidden');modal.setAttribute('aria-hidden','false');document.body.classList.add('appointment-assignment-open');requestAnimationFrame(()=>$('#appointmentAssignmentSelect')?.focus({preventScroll:true}));
+  const spokenUid=spokenAssignee ? resolveSiriAppointmentAssignee(spokenAssignee) : uid;
+  renderAppointmentAssignmentPopup(spokenUid);
+  const select=$('#appointmentAssignmentSelect');
+  const hint=$('#siriAssignmentHint');
+  if(hint){
+    hint.hidden=!spokenAssignee;
+    hint.textContent=spokenAssignee
+      ? (spokenUid ? `Requested by Siri: ${spokenAssignee}. Check the selection before confirming.`
+        : `No unique team match for “${spokenAssignee}”. Choose the assignee below.`)
+      : '';
+  }
+  if(spokenAssignee&&!spokenUid)select.selectedIndex=-1;
+  $('#confirmAppointmentAssignment').disabled=!select.value;
+  modal.classList.remove('hidden');modal.setAttribute('aria-hidden','false');document.body.classList.add('appointment-assignment-open');requestAnimationFrame(()=>$('#appointmentAssignmentSelect')?.focus({preventScroll:true}));
 }
 function hideAppointmentAssignmentPopup({clear=true}={}){
   const modal=$('#appointmentAssignmentModal');modal?.classList.add('hidden');modal?.setAttribute('aria-hidden','true');document.body.classList.remove('appointment-assignment-open');if(clear)pendingAppointmentAssignment=null;
@@ -6586,14 +6610,22 @@ $('#appointmentForm').onsubmit=async e=>{
   const wasEditing=Boolean(editingAppointment),wasProspectFlow=Boolean(pendingProspectAppointmentFlow);
   const existingAssignedToUid=wasEditing?String(dayData(editingAppointment.sourceDate).appointments.find(a=>String(a.id)===String(editingAppointment.id))?.assignedToUid||uid):uid;
   const context={form:e.target,viewedDate,returnState,contactName,contactNumber,address,appointmentContext,date,time,type,auction,wasEditing,wasProspectFlow,navigationOwner:uid,accountEpoch:accountStateEpoch,navigationEpoch:workflowEpoch,prospectFlow:pendingProspectAppointmentFlow};
-  if(!wasEditing&&cloud&&accountMode==='team'&&teamId&&appointmentAssignees.length>1){
-    pendingAppointmentAssignment=context;showAppointmentAssignmentPopup();return;
+  const voiceDraft=siriAppointmentDrafts.get(e.target);
+  const spokenAssignee=!wasEditing&&voiceDraft?.owner===uid&&voiceDraft.epoch===accountStateEpoch ? voiceDraft.assignee : '';
+  if(!wasEditing&&cloud&&accountMode==='team'&&teamId&&(appointmentAssignees.length>1||spokenAssignee&&appointmentAssignees.length)){
+    pendingAppointmentAssignment=context;showAppointmentAssignmentPopup(spokenAssignee);return;
+  }
+  if(spokenAssignee&&resolveSiriAppointmentAssignee(spokenAssignee)!==uid){
+    error.textContent=`Team assignment for “${spokenAssignee}” is unavailable. Check your team access before booking.`;
+    error.classList.remove('hidden');
+    return;
   }
   await finishAppointmentFormSubmission(context,existingAssignedToUid);
 };
 $('#closeAppointmentEditor').onclick=closeAppointmentEditor;
 $('#cancelAppointmentAssignment')?.addEventListener('click',()=>hideAppointmentAssignmentPopup());
-$('#confirmAppointmentAssignment')?.addEventListener('click',async()=>{if(!pendingAppointmentAssignment)return;const context=pendingAppointmentAssignment,assignedToUid=$('#appointmentAssignmentSelect')?.value||uid;hideAppointmentAssignmentPopup({clear:false});pendingAppointmentAssignment=null;await finishAppointmentFormSubmission(context,assignedToUid)});
+$('#appointmentAssignmentSelect')?.addEventListener('change',e=>{ $('#confirmAppointmentAssignment').disabled=!e.target.value; });
+$('#confirmAppointmentAssignment')?.addEventListener('click',async()=>{const assignedToUid=$('#appointmentAssignmentSelect')?.value;if(!pendingAppointmentAssignment||!assignedToUid)return;const context=pendingAppointmentAssignment;hideAppointmentAssignmentPopup({clear:false});pendingAppointmentAssignment=null;await finishAppointmentFormSubmission(context,assignedToUid)});
 $('#appointmentAssignmentModal')?.addEventListener('click',e=>{if(e.target.id==='appointmentAssignmentModal')hideAppointmentAssignmentPopup()});
 
 if($('#teamAppointmentGotIt'))$('#teamAppointmentGotIt').onclick=e=>{e.preventDefault();e.stopPropagation();hideTeamAppointmentNotice({acknowledge:true})};
@@ -6876,7 +6908,7 @@ $('#settingsView').addEventListener('change',event=>{const field=event.target;if
 $('#saveSettings').onclick=async()=>{const fields=['callsTarget','connectsTarget','dataTarget','weeklyKnockTarget'];const invalid=fields.find(id=>{const value=Number($('#'+id).value);return !Number.isSafeInteger(value)||value<=0});if(invalid){toast('Enter a whole number greater than zero for every target.');$('#'+invalid).focus();return}const savingOwner=uid,savingEpoch=accountStateEpoch;const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();agentMobile=cleanText($('#agentMobile').value,50);targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;calendarPreference=$('[name=calendarPreference]:checked')?.value==='apple'?'apple':'outlook';appearancePreference=normaliseAppearance($('[name=appearancePreference]:checked')?.value);applyAppearance(appearancePreference);settingsDraftFields.clear();await saveTargets();if(uid!==savingOwner||accountStateEpoch!==savingEpoch)return;if(cloud&&accountMode==='team'&&teamId&&uid){try{await setDoc(doc(db,'teams',teamId,'members',uid),{name:agentName,updatedAt:serverTimestamp()},{merge:true})}catch(err){console.error('Team profile name sync failed',err)}}renderAll();toast('Settings saved')};
 $('#signOut').onclick=async()=>{clearActiveSession();if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
 function mergeBackupRecords(current=[],incoming=[]){const byId=new Map();[...(Array.isArray(current)?current:[]),...(Array.isArray(incoming)?incoming:[])].forEach((item,index)=>{if(!item||typeof item!=='object')return;const id=cleanText(item.id,180)||`backup-record-${index}`;byId.set(id,item)});return[...byId.values()]}
-function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.46.49',exportedAt:new Date().toISOString(),targets,workDays,agentName,agentMobile,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),marketPulseLedger:normaliseLedger(marketPulseLedger),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
+function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.46.50',exportedAt:new Date().toISOString(),targets,workDays,agentName,agentMobile,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),marketPulseLedger:normaliseLedger(marketPulseLedger),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
 function restoreBuyerSessionBackup(value){if(!value||!Array.isArray(value.contacts))return false;buyerSession={contacts:value.contacts.map((contact,index)=>({id:cleanText(contact.id,80)||`buyer_${index}`,name:cleanText(contact.name,120)||'Unknown buyer',phone:normaliseDialNumber(contact.phone),address:cleanText(contact.address,240),doNotSms:Boolean(contact.doNotSms),status:cleanText(contact.status,40)})).filter(contact=>contact.phone),index:Math.max(0,Number(value.index)||0),active:Boolean(value.active),visible:false,fileName:cleanText(value.fileName,160),importedAt:Number(value.importedAt)||0};buyerSession.index=Math.min(buyerSession.index,buyerSession.contacts.length);return saveBuyerSession()}
 function syncImportedBackup(dayKeys=[],prospectingIncluded=false){if(!cloud)return;saveTargets().catch(err=>console.error('Imported settings sync failed',err));dayKeys.forEach(key=>saveDay(key,{quiet:true,awaitCloud:false,render:false}).catch?.(err=>console.error('Imported day sync failed',err)));if(prospectingIncluded)saveProspecting({render:false,awaitCloud:false}).catch(err=>console.error('Imported prospecting sync failed',err))}
 function missingMarketRecoveryRows(rows){
@@ -6994,7 +7026,7 @@ async function checkCloudSync(){
 $('#checkCloudSync')?.addEventListener('click',checkCloudSync);
 $('#exportDiagnostics')?.addEventListener('click',()=>{
   let runtimeEvents=[];try{runtimeEvents=JSON.parse(window.agntRuntime?.export?.()||'[]')}catch{}
-  const data=JSON.stringify({schemaVersion:2,appVersion:'1.46.49',exportedAt:new Date().toISOString(),runtimeEvents,deviceStorage:deviceStorageDiagnostics(),sync:syncHealth.snapshot(syncDiagnosticContext())},null,2),blob=new Blob([data],{type:'application/json'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='AGNT-runtime-diagnostics.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)
+  const data=JSON.stringify({schemaVersion:2,appVersion:'1.46.50',exportedAt:new Date().toISOString(),runtimeEvents,deviceStorage:deviceStorageDiagnostics(),sync:syncHealth.snapshot(syncDiagnosticContext())},null,2),blob=new Blob([data],{type:'application/json'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='AGNT-runtime-diagnostics.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)
 });
 $('#exportData').onclick=()=>{const blob=new Blob([JSON.stringify(completeBackupPayload(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`agnt-complete-backup-${todayKey()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),0)};
 $('#importData').onchange=async e=>{const file=e.target.files?.[0];e.target.value='';if(!file)return;try{const raw=JSON.parse(await file.text());if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('Invalid backup');if(!confirm('Import this AGNT backup?\n\nExisting records with the same date or ID may be updated.'))return;const importedDays=normaliseDaysMap(raw.days||{}),dayKeys=Object.keys(importedDays),prospectingIncluded=Array.isArray(raw.prospects)||Array.isArray(raw.prospectInteractions)||Array.isArray(raw.marketPulseEvents)||Array.isArray(raw.marketPulseHistory)||Array.isArray(raw.marketPulseLedger);if(raw.targets&&typeof raw.targets==='object')targets=normaliseTargets(raw.targets);if(Array.isArray(raw.workDays)&&raw.workDays.length)workDays=normaliseWorkDays(raw.workDays);if(typeof raw.agentName==='string'&&raw.agentName.trim())agentName=cleanText(raw.agentName,120);if(typeof raw.agentMobile==='string')agentMobile=cleanText(raw.agentMobile,50);if(raw.calendarPreference==='apple'||raw.calendarPreference==='outlook')calendarPreference=raw.calendarPreference;if(['system','light','dark'].includes(raw.appearancePreference))applyAppearance(raw.appearancePreference);days={...days,...importedDays};if(Array.isArray(raw.prospects))prospects=normaliseProspects(mergeBackupRecords(prospects,raw.prospects));if(Array.isArray(raw.prospectInteractions))prospectInteractions=normaliseProspectInteractions(mergeBackupRecords(prospectInteractions,raw.prospectInteractions));if(Array.isArray(raw.marketPulseEvents))marketPulseEvents=normaliseMarketPulseEvents(mergeBackupRecords(marketPulseEvents,raw.marketPulseEvents));if(Array.isArray(raw.marketPulseLedger))marketPulseLedger=normaliseLedger([...marketPulseLedger,...raw.marketPulseLedger]);if(Array.isArray(raw.marketPulseHistory))marketPulseHistory=normaliseMarketPulseHistory(mergeBackupRecords(marketPulseHistory,raw.marketPulseHistory));if(Array.isArray(raw.campaignHistory))campaignHistory=mergeBackupRecords(campaignHistory,raw.campaignHistory).sort((a,b)=>(Number(b.createdAt)||0)-(Number(a.createdAt)||0)).slice(0,20);if(Array.isArray(raw.bulkSmsTestLaunches))bulkSmsTestLaunches=mergeBackupRecords(bulkSmsTestLaunches,raw.bulkSmsTestLaunches).sort((a,b)=>(Number(b.createdAt)||0)-(Number(a.createdAt)||0)).slice(0,10);saveLocal();restoreBuyerSessionBackup(raw.buyerSession);renderAll();syncImportedBackup(dayKeys,prospectingIncluded);toast('Backup restored · cloud sync running')}catch(err){console.error('Backup import failed',err);toast('Backup could not be read')}};
@@ -7014,3 +7046,82 @@ init().catch(err=>{console.error('AGNT initialisation failed',err);$('#bootGate'
 
 configureBulkSmsPlatform();
 loadBuyerSession();
+
+
+// The native shortcut only navigates or fills existing forms. The web app owns all saves.
+const siriAppointmentDrafts=new WeakMap();
+const siriViewRoutes=new Set(['today','schedule','followups','pipeline','buyers','marketpulse','bookings','performance']);
+let lastOpenedSiriRequest='';
+$('#appointmentForm')?.addEventListener('reset',e=>{
+  siriAppointmentDrafts.delete(e.currentTarget);
+  const hint=$('#siriBookingHint');
+  if(hint){hint.hidden=true;hint.textContent=''}
+});
+function resolveSiriAppointmentAssignee(name){
+  if(/^me$/i.test(name.trim()))return uid;
+  if(accountMode!=='team'||!teamId)return '';
+  const members=appointmentAssignees.map(member=>({
+    id:String(member.uid||''),
+    names:[member.name,teamAppointmentBookingDisplayName(member)],
+  })).filter(member=>member.id);
+  return matchSiriAssignee(name,members);
+}
+function siriWorkspaceBusy(){
+  const appointment=$('#appointmentForm');
+  const visible=el=>Boolean(el&&!el.closest('.hidden,[hidden],[aria-hidden="true"]')&&el.getClientRects().length);
+  const openDialog=$$('[aria-modal="true"]').some(visible);
+  const prospectEditor=$('#prospectingView.active #prospectDetail:not(.hidden) form');
+  const appointmentInProgress=visible(appointment)&&(
+    editingAppointment||pendingProspectAppointmentFlow||appointment.dataset.submitting==='1'||
+    ['#appointmentContactName','#appointmentContactNumber','#appointmentAddress'].some(selector=>$(selector)?.value.trim())
+  );
+  return openDialog||appointmentInProgress||visible(prospectEditor);
+}
+function openSiriAppointment(booking){
+  openWorkspaceRoute('new-booking');
+  const form=$('#appointmentForm');
+  form.reset();
+  resetAppointmentContactLink();
+  appointmentDate=booking.day;
+  renderAppointments();
+  $('#appointmentAddress').value=booking.address;
+  $('#appointmentDatePicker').value=booking.day;
+  $('#appointmentTime').value=booking.time;
+  form.querySelector(`[name="appointmentType"][value="${booking.type}"]`).checked=true;
+  updateOfiFormState();
+  siriAppointmentDrafts.set(form,{owner:uid,epoch:accountStateEpoch,assignee:booking.assignee});
+  const hint=$('#siriBookingHint');
+  hint.textContent=booking.type==='OFI'
+    ? `Requested assignee: ${booking.assignee}. Review the booking details.`
+    : `Requested assignee: ${booking.assignee}. Add the client name and phone before booking.`;
+  hint.hidden=false;
+  const error=$('#appointmentFormError');
+  error.textContent='';error.classList.add('hidden');
+}
+if(window.webkit?.messageHandlers?.agntNative){
+  window.agntOpenShortcut=request=>{
+    const { id, route, text='', requestedAt }=request||{};
+    if(typeof id!=='string'||typeof text!=='string'||!Number.isFinite(requestedAt))return 'invalid';
+    if(id===lastOpenedSiriRequest)return 'opened';
+    if(!startupReady||!uid||document.hidden||$('#app')?.classList.contains('hidden'))return 'waiting';
+    if($('#returningSnapshotScreen:not(.hidden)')||$('#welcomeScreen:not(.hidden)'))return 'waiting';
+    if(siriWorkspaceBusy())return 'busy';
+    if(siriViewRoutes.has(route)){
+      if(route==='today'||route==='schedule')selectedDate=todayKey();
+      if(['followups','pipeline','buyers'].includes(route))prepareProspectingMenuHome();
+      openWorkspaceRoute(route);
+    }else if(route==='task'&&text.trim()){
+      selectedDate=todayKey();
+      openWorkspaceRoute('schedule');
+      openTaskComposer();
+      $('#taskTitle').value=text.trim().slice(0,160);
+    }else if(route==='appointment'){
+      const draft=parseSiriBooking(text,requestedAt);
+      if(!draft||new Date(`${draft.day}T${draft.time}`).getTime()<=Date.now())return 'invalid-booking';
+      if(['#appointmentContactName','#appointmentContactNumber','#appointmentAddress'].some(selector=>$(selector)?.value.trim()))return 'busy';
+      openSiriAppointment(draft);
+    }else return 'invalid';
+    lastOpenedSiriRequest=id;
+    return 'opened';
+  };
+}
