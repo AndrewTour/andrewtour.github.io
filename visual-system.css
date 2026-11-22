@@ -2255,3 +2255,27 @@ html body #app #todayView:not(.off-day-opportunity-mode) .metric-copy {
   transform:scale(var(--focus-copy-scale,1));transform-origin:left center;
 }
 html body #app #todayView:not(.off-day-opportunity-mode) .metric-copy>span {min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Anchor the People shell to its pre-keyboard geometry in the native wrapper. */
+html.people-search-viewport body #app {
+  position:relative;
+  height:var(--app-height);min-height:var(--app-height);max-height:var(--app-height);
+}
+html.people-search-viewport body #app .tabbar {position:absolute;bottom:0}
+html.people-search-viewport body #contactAlphabet {
+  top:calc(var(--app-height) * .5 + min(var(--app-height) * .1,90px));
+  height:min(calc(var(--app-height) * .52),390px);
+  max-height:calc(var(--app-height) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 150px);
+}
+
+/* Tab feedback precedes route rendering. Keep the committed tab's accessibility state. */
+html body #app[data-pending-tab] .tabbar.workspace-navigation button.active {color:var(--ds-muted)!important}
+html body #app[data-pending-tab] .tabbar.workspace-navigation button.active::before {opacity:0!important}
+html body #app .tabbar.workspace-navigation button {--pending-tab-colour:var(--ds-accent)}
+html body #app .tabbar.workspace-navigation button[data-workspace-area="market"] {--pending-tab-colour:var(--ds-marketpulse)}
+html body #app[data-pending-tab="today"] .tabbar.workspace-navigation [data-workspace-area="today"],
+html body #app[data-pending-tab="people"] .tabbar.workspace-navigation [data-workspace-area="people"],
+html body #app[data-pending-tab="market"] .tabbar.workspace-navigation [data-workspace-area="market"],
+html body #app[data-pending-tab="performance"] .tabbar.workspace-navigation [data-workspace-area="performance"] {
+  color:var(--pending-tab-colour)!important;
+}

@@ -1,4 +1,4 @@
-import { parseSiriBooking, matchSiriAssignee } from './siri-booking.js?v=1.46.57';
+import { parseSiriBooking, matchSiriAssignee } from './siri-booking.js?v=1.46.58';
 import {createAssociateProfiles} from './associate-profiles.js';
 import {stableSnapshotString,compareSnapshotHeads} from './snapshot-compare.js';
 import {createSyncHealth} from './sync-health.js';
@@ -152,12 +152,29 @@ function restoreWorkflowPlace(place){
   }finally{workflowRestoring=false}
 }
 function rememberDetailReturn(){if(workflowRestoring)return;workflowDetailReturns.push(captureWorkflowPlace());if(workflowDetailReturns.length>8)workflowDetailReturns.shift()}
-function returnDetailWorkflow(){while(workflowDetailReturns.length){const place=workflowDetailReturns.pop();if(restoreWorkflowPlace(place))return true}return false}
+function returnDetailWorkflow(){
+  while(workflowDetailReturns.length){
+    const place=workflowDetailReturns.pop();
+    if(!restoreWorkflowPlace(place))continue;
+    queueDetailMotion(place.detailKind?'#prospectDetail':place.session?'#prospectingSession':place.view==='prospectingView'?'#prospectingDashboard':'.view.active','back');
+    return true;
+  }
+  return false;
+}
 function finishDetailEditor(){const place=workflowDetailReturns.at(-1);return Boolean(place&&(place.detailKind||place.session)&&returnDetailWorkflow())}
 function discardDetailReturn(){workflowDetailReturns.pop()}
-function startDetailViewport(){if(!workflowRestoring)settleWorkflowScroll({view:activeViewId(),windowScroll:0,scroll:0},0)}
+function startDetailViewport(){
+  if(workflowRestoring)return;
+  settleWorkflowScroll({view:activeViewId(),windowScroll:0,scroll:0},0);
+  queueDetailMotion('#prospectDetail:not(.hidden)','forward');
+}
 function rememberWorkflowEntry(name){workflowEntries[name]=captureWorkflowPlace()}
-function returnWorkflowEntry(name){const place=workflowEntries[name];workflowEntries[name]=null;return restoreWorkflowPlace(place)}
+function returnWorkflowEntry(name){
+  const place=workflowEntries[name];workflowEntries[name]=null;
+  const restored=restoreWorkflowPlace(place);
+  if(restored&&name==='booking')queueDetailMotion(place.detailKind?'#prospectDetail':'.view.active','back');
+  return restored;
+}
 function returnFromBooking(){
   if(pendingProspectAppointmentFlow){cancelProspectAppointmentFlow();return}
   if(editingAppointment){closeAppointmentEditor();return}
@@ -2793,7 +2810,7 @@ function beginEditAppointment(id,sourceDate){if(!workflowEntries.booking)remembe
   appointmentDate=appointmentCreatedDate(appointment,sourceDate)||todayKey();
   $('#appointmentContactName').value=appointment.contactName||'';$('#appointmentContactNumber').value=appointment.contactNumber||'';$('#appointmentAddress').value=appointment.address||'';$('#appointmentContext').value=appointment.context||'';$('#appointmentDatePicker').value=appointmentScheduledDate(appointment,sourceDate);$('#appointmentTime').value=appointment.time||'12:00';
   const type=appointmentType(appointment);$$('[name=appointmentType]').forEach(el=>el.checked=el.value===type);$('#appointmentAuction').checked=appointmentHasAuction(appointment);renderAppointmentAssigneePicker(appointment.assignedToUid||uid);updateOfiFormState();
-  renderAppointments();$('#appointmentContactName')?.focus({preventScroll:true});
+  renderAppointments();queueDetailMotion('#appointmentForm','forward');$('#appointmentContactName')?.focus({preventScroll:true});
 }
 function closeAppointmentEditor(){
   if(!editingAppointment)return;
@@ -6201,34 +6218,58 @@ function bindFocusViewport(){
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)sizeFocusPanel()});
   sizeFocusPanel();
 }
-let viewportFrame=0;
+let viewportFrame=0,peopleSearchHeight=0,peopleSearchWidth=0,peopleSearchBlurTimer=0;
+function viewportMeasurements(){
+  const vv=window.visualViewport;
+  const width=Math.round(window.innerWidth);
+  const visualHeight=Math.round(vv?.height||window.innerHeight);
+  const top=Math.round(vv?.offsetTop||0);
+  const heights=[window.innerHeight,document.documentElement.clientHeight,visualHeight+top];
+  const standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+  if(standalone&&!window.matchMedia('(orientation: landscape)').matches)
+    heights.push(window.screen?.height||0,window.screen?.availHeight||0);
+  return{width,visualHeight,top,height:Math.round(Math.max(...heights.filter(Number.isFinite)))};
+}
 function updateAppViewport(){
-  cancelAnimationFrame(viewportFrame);
+  if(viewportFrame)return;
   viewportFrame=requestAnimationFrame(()=>{
-    const standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
-    const vv=window.visualViewport;
-    // Restore the approved v1.41.27 shell measurements in portrait Home Screen mode.
-    const candidates=[window.innerHeight,document.documentElement.clientHeight];
-    if(vv)candidates.push(vv.height+vv.offsetTop);
-    const landscape=window.matchMedia('(orientation: landscape)').matches;
-    if(standalone&&!landscape)candidates.push(window.screen?.height||0,window.screen?.availHeight||0);
-    const height=Math.round(Math.max(...candidates.filter(Number.isFinite)));
-    const visualHeight=Math.round(vv?.height||window.innerHeight);
+    viewportFrame=0;
+    const {width,visualHeight,top,height:measured}=viewportMeasurements();
+    const searchFocused=document.activeElement===$('#prospectSearch');
+    if(peopleSearchWidth!==width||!searchFocused&&measured>=peopleSearchHeight-2)peopleSearchHeight=0;
+    const height=Math.max(measured,peopleSearchHeight);
     const keyboardOpen=height-visualHeight>180;
     const root=document.documentElement;
-    root.style.setProperty('--app-height',`${height}px`);
-    root.style.setProperty('--visual-height',`${visualHeight}px`);
-    root.style.setProperty('--visual-top',`${Math.round(vv?.offsetTop||0)}px`);
-    root.style.setProperty('--sheet-height',`${keyboardOpen?visualHeight:height}px`);
-    root.style.setProperty('--sheet-top',`${keyboardOpen?Math.round(vv?.offsetTop||0):0}px`);
+    // Keep the People shell at its pre-keyboard height; mobile WebKit supplies the keyboard movement.
+    const next={'--app-height':height,'--visual-height':visualHeight,'--visual-top':top,
+      '--sheet-height':keyboardOpen?visualHeight:height,'--sheet-top':keyboardOpen?top:0};
+    for(const [name,size] of Object.entries(next)){
+      const value=size+'px';
+      if(root.style.getPropertyValue(name)!==value)root.style.setProperty(name,value);
+    }
     root.classList.toggle('keyboard-open',keyboardOpen);
-    sizeFocusPanel();
+    root.classList.toggle('people-search-viewport',Boolean(peopleSearchHeight));
+    if($('#todayView')?.classList.contains('active'))sizeFocusPanel();
   });
 }
 
 function bindViewport(){
   bindFocusViewport();
   updateAppViewport();
+  const search=$('#prospectSearch');
+  search?.addEventListener('focus',()=>{
+    if(!window.webkit?.messageHandlers?.agntNative)return;
+    clearTimeout(peopleSearchBlurTimer);
+    const {width,height}=viewportMeasurements();
+    peopleSearchWidth=width;
+    peopleSearchHeight=Math.max(peopleSearchHeight,height);
+    updateAppViewport();
+  });
+  search?.addEventListener('blur',()=>{
+    if(!peopleSearchHeight)return;
+    clearTimeout(peopleSearchBlurTimer);
+    peopleSearchBlurTimer=setTimeout(()=>{peopleSearchHeight=0;updateAppViewport()},500);
+  });
   window.addEventListener('resize',updateAppViewport,{passive:true});
   window.addEventListener('orientationchange',()=>setTimeout(updateAppViewport,180),{passive:true});
   window.visualViewport?.addEventListener('resize',updateAppViewport,{passive:true});
@@ -6236,7 +6277,7 @@ function bindViewport(){
 }
 function resumePendingExternalAction(){if(maybeShowManualCallOutcome())return true;if(resumeMyMarketOwnerSmsReturn())return true;if(resumeHotSpotSmsReturn())return true;if(resumeBuyerMatchSmsReturn())return true;if(resumeAppointmentSmsReturn())return true;if(resumeAppointmentFollowUpCallReturn())return true;return resumeProspectCallReturn()}
 let resumeEpoch=0;
-function handleAppSuspend(){cancelPendingWorkspaceRoute();resumeEpoch++;persistOpenContactDraft();if(buyerSession.active)saveBuyerSession();if(pendingProspectingPayload)flushProspectingSave()}
+function handleAppSuspend(){cancelPendingWorkspaceRoute();cancelWorkspaceMotion();resumeEpoch++;persistOpenContactDraft();if(buyerSession.active)saveBuyerSession();if(pendingProspectingPayload)flushProspectingSave()}
 async function handleAppResume(){
   if(document.hidden||!startupReady||$('#app')?.classList.contains('hidden'))return;
   const epoch=resumeEpoch,owner=uid;updateAppViewport();const rolled=adoptCurrentDay();resumePendingExternalAction();
@@ -6328,24 +6369,76 @@ function syncWorkspaceChrome(id=activeViewId()){
   if(toolbar.innerHTML!==markup)toolbar.innerHTML=markup;
   setWorkspaceAttribute(toolbar,'aria-label',`${titles[area]} views`);
 }
-// User navigation settles before expensive rendering. Internal workflows stay synchronous.
-let workspaceRouteTimer=0,workspaceRouteFrame=0,pendingWorkspaceRoute=null;
+// Paint tab feedback before route rendering. Programmatic navigation stays synchronous.
+const workspaceRootRoutes=new Set(['today','people','market','performance']);
+let workspaceRouteFrame=0,pendingWorkspaceRoute=null,workspaceCleanupTimer=0;
+let workspaceScrollOwner=null;
+const workspaceTabScroll=new Map();
+let workspaceAnimation=null,workspaceAnimationFrame=0;
+
+function cancelWorkspaceMotion(){
+  if(workspaceAnimationFrame)cancelAnimationFrame(workspaceAnimationFrame);
+  workspaceAnimationFrame=0;
+  workspaceAnimation?.cancel();
+  workspaceAnimation=null;
+}
+function playWorkspaceMotion(node,direction){
+  cancelWorkspaceMotion();
+  if(!node?.animate||document.hidden||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const tab=direction==='tab';
+  workspaceAnimation=node.animate(tab?[{opacity:.94},{opacity:1}]:[
+    {opacity:.84,translate:direction==='back'?'-8px 0':'8px 0'},{opacity:1,translate:'0 0'}
+  ],{duration:tab?135:165,easing:'cubic-bezier(.2,.7,.2,1)'});
+}
+function queueDetailMotion(selector,direction){
+  cancelWorkspaceMotion();
+  const owner=uid,view=activeViewId();
+  workspaceAnimationFrame=requestAnimationFrame(()=>{
+    workspaceAnimationFrame=0;
+    if(uid!==owner||activeViewId()!==view)return;
+    const node=$(selector);
+    if(node?.getClientRects().length)playWorkspaceMotion(node,direction);
+  });
+}
+function currentWorkspaceRoot(){
+  const view=activeViewId();
+  if(view==='todayView')return 'today';
+  if(view==='insightsView')return 'performance';
+  if(view!=='prospectingView'||$('#prospectingDashboard')?.classList.contains('hidden'))return '';
+  if(prospectSection==='contacts')return 'people:'+prospectContactsMode+':'+($('#prospectSearch')?.value||'');
+  if(prospectSection==='market'&&marketPageMode==='hub'&&!myMarketDetailKey)return 'market';
+  return '';
+}
 function cancelPendingWorkspaceRoute(){
-  clearTimeout(workspaceRouteTimer);workspaceRouteTimer=0;
   if(workspaceRouteFrame)cancelAnimationFrame(workspaceRouteFrame);
   workspaceRouteFrame=0;pendingWorkspaceRoute=null;
+  $('#app')?.removeAttribute('data-pending-tab');
 }
 function requestWorkspaceRoute(route){
   cancelPendingWorkspaceRoute();
-  const owner=uid;pendingWorkspaceRoute={route,owner};
-  workspaceRouteTimer=setTimeout(()=>{
-    workspaceRouteTimer=0;
+  cancelWorkspaceMotion();
+  const tab=workspaceRootRoutes.has(route);
+  const owner=uid;
+  pendingWorkspaceRoute={route,owner,tab};
+  if(tab)$('#app')?.setAttribute('data-pending-tab',route);
+  workspaceRouteFrame=requestAnimationFrame(()=>{
     workspaceRouteFrame=requestAnimationFrame(()=>{
-      workspaceRouteFrame=0;const next=pendingWorkspaceRoute;pendingWorkspaceRoute=null;
+      const next=pendingWorkspaceRoute;
+      cancelPendingWorkspaceRoute();
       if(!next||next.owner!==uid||document.hidden||!startupReady||$('#app')?.classList.contains('hidden'))return;
-      openWorkspaceRoute(next.route);
+      if(!next.tab){openWorkspaceRoute(next.route);return}
+      if(workspaceScrollOwner!==uid){workspaceTabScroll.clear();workspaceScrollOwner=uid;}
+      const from=currentWorkspaceRoot(),origin=$('.view.active');
+      if(from)workspaceTabScroll.set(from.split(':',1)[0],{key:from,top:origin?.scrollTop||0});
+      openWorkspaceRoute(next.route,{deferListCleanup:true});
+      const to=currentWorkspaceRoot(),destination=$('.view.active');
+      if(to&&to!==from&&destination){
+        const saved=workspaceTabScroll.get(to.split(':',1)[0]);
+        destination.scrollTop=saved?.key===to?saved.top:0;
+        playWorkspaceMotion(destination,'tab');
+      }
     });
-  },60);
+  });
 }
 function releaseWorkspaceList(element){
   if(!element||!element.childNodes.length||element.querySelector('form,textarea,select,input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),[contenteditable="true"]'))return;
@@ -6363,11 +6456,20 @@ function releaseInactiveWorkspaceLists(route){
   }else if(route==='market')releaseWorkspaceList($('#marketPulseList'));
   else releaseWorkspaceList($('#myMarketProperties'));
 }
-function openWorkspaceRoute(route){
+function openWorkspaceRoute(route,{deferListCleanup=false}={}){
   const entry=captureWorkflowPlace();
   cancelPendingWorkspaceRoute();
+  clearTimeout(workspaceCleanupTimer);
   window.agntRuntime?.record('navigation-start');
-  releaseInactiveWorkspaceLists(route);
+  if(deferListCleanup){
+    const owner=uid;
+    workspaceCleanupTimer=setTimeout(()=>{
+      if(owner!==uid||document.hidden||pendingWorkspaceRoute)return;
+      const view=activeViewId(),section=view==='prospectingView'
+        ?(prospectSection==='market'?(marketPageMode==='hub'?'market':marketPageMode):prospectSection):view;
+      releaseInactiveWorkspaceLists(section);
+    },220);
+  }else releaseInactiveWorkspaceLists(route);
   workspaceNavigationDepth++;
   try{const result=applyWorkspaceRoute(route,entry);window.agntRuntime?.record('navigation-ready');return result}finally{workspaceNavigationDepth--;if(!workspaceNavigationDepth)syncWorkspaceChrome()}
 }
@@ -6396,7 +6498,7 @@ function applyWorkspaceRoute(route,entry=captureWorkflowPlace()){
     workspaceBookingEditor=false;appointmentHistoryMode=null;switchView('appointmentsView',{bookingMode:'browse'});return;
   }
   if(route==='new-booking'){
-    workflowEntries.booking=entry;workspaceBookingEditor=true;appointmentHistoryMode=null;appointmentDate=todayKey();switchView('appointmentsView');return;
+    workflowEntries.booking=entry;workspaceBookingEditor=true;appointmentHistoryMode=null;appointmentDate=todayKey();switchView('appointmentsView');queueDetailMotion('#appointmentForm','forward');return;
   }
   if(route==='booking-back'){
     returnFromBooking();return;
@@ -6417,7 +6519,7 @@ function applyWorkspaceRoute(route,entry=captureWorkflowPlace()){
   }
 }
 
-function switchView(id,{bookingMode='editor'}={}){if(!workspaceNavigationDepth){cancelPendingWorkspaceRoute();releaseInactiveWorkspaceLists(id==='prospectingView'?(prospectSection==='market'?(marketPageMode==='hub'?'market':marketPageMode):prospectSection):id);}if(id==='appointmentsView')workspaceBookingEditor=bookingMode!=='browse';if(!document.getElementById(id)?.classList.contains('view'))id='todayView';$$('.view').forEach(v=>setWorkspaceClass(v,'active',v.id===id));updateTopbar(id);updateBackTodayVisibility(id);if(id==='todayView')renderToday();if(id==='scheduleView'){setTodayPage(todayPage);if(todayPage==='overview')renderTimeline();}if(id==='appointmentsView'){$('#appointmentMainContent')?.classList.toggle('hidden',Boolean(appointmentHistoryMode));$('#appointmentHistoryScreen')?.classList.toggle('hidden',!appointmentHistoryMode);renderAppointments()}if(id==='prospectingView')renderProspecting();if(id==='insightsView')renderInsights();if(id==='settingsView')renderSettings();syncWorkspaceChrome(id)}
+function switchView(id,{bookingMode='editor'}={}){if(activeViewId()!==id)cancelWorkspaceMotion();if(!workspaceNavigationDepth){cancelPendingWorkspaceRoute();releaseInactiveWorkspaceLists(id==='prospectingView'?(prospectSection==='market'?(marketPageMode==='hub'?'market':marketPageMode):prospectSection):id);}if(id==='appointmentsView')workspaceBookingEditor=bookingMode!=='browse';if(!document.getElementById(id)?.classList.contains('view'))id='todayView';$$('.view').forEach(v=>setWorkspaceClass(v,'active',v.id===id));updateTopbar(id);updateBackTodayVisibility(id);if(id==='todayView')renderToday();if(id==='scheduleView'){setTodayPage(todayPage);if(todayPage==='overview')renderTimeline();}if(id==='appointmentsView'){$('#appointmentMainContent')?.classList.toggle('hidden',Boolean(appointmentHistoryMode));$('#appointmentHistoryScreen')?.classList.toggle('hidden',!appointmentHistoryMode);renderAppointments()}if(id==='prospectingView')renderProspecting();if(id==='insightsView')renderInsights();if(id==='settingsView')renderSettings();syncWorkspaceChrome(id)}
 function returnToActiveTabRoot(id){
   if(id==='prospectingView'){
     const detail=$('#prospectDetail'),form=detail?.classList.contains('hidden')?null:detail?.querySelector('form');
@@ -6974,7 +7076,7 @@ $('#settingsView').addEventListener('change',event=>{const field=event.target;if
 $('#saveSettings').onclick=async()=>{const fields=['callsTarget','connectsTarget','dataTarget','weeklyKnockTarget'];const invalid=fields.find(id=>{const value=Number($('#'+id).value);return !Number.isSafeInteger(value)||value<=0});if(invalid){toast('Enter a whole number greater than zero for every target.');$('#'+invalid).focus();return}const savingOwner=uid,savingEpoch=accountStateEpoch;const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();agentMobile=cleanText($('#agentMobile').value,50);targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;calendarPreference=$('[name=calendarPreference]:checked')?.value==='apple'?'apple':'outlook';appearancePreference=normaliseAppearance($('[name=appearancePreference]:checked')?.value);applyAppearance(appearancePreference);settingsDraftFields.clear();await saveTargets();if(uid!==savingOwner||accountStateEpoch!==savingEpoch)return;if(cloud&&accountMode==='team'&&teamId&&uid){try{await setDoc(doc(db,'teams',teamId,'members',uid),{name:agentName,updatedAt:serverTimestamp()},{merge:true})}catch(err){console.error('Team profile name sync failed',err)}}renderAll();toast('Settings saved')};
 $('#signOut').onclick=async()=>{clearActiveSession();await stopPhoneNotifications().catch(()=>{});if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
 function mergeBackupRecords(current=[],incoming=[]){const byId=new Map();[...(Array.isArray(current)?current:[]),...(Array.isArray(incoming)?incoming:[])].forEach((item,index)=>{if(!item||typeof item!=='object')return;const id=cleanText(item.id,180)||`backup-record-${index}`;byId.set(id,item)});return[...byId.values()]}
-function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.46.57',exportedAt:new Date().toISOString(),targets,workDays,agentName,agentMobile,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),marketPulseLedger:normaliseLedger(marketPulseLedger),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
+function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.46.58',exportedAt:new Date().toISOString(),targets,workDays,agentName,agentMobile,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),marketPulseLedger:normaliseLedger(marketPulseLedger),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
 function restoreBuyerSessionBackup(value){if(!value||!Array.isArray(value.contacts))return false;buyerSession={contacts:value.contacts.map((contact,index)=>({id:cleanText(contact.id,80)||`buyer_${index}`,name:cleanText(contact.name,120)||'Unknown buyer',phone:normaliseDialNumber(contact.phone),address:cleanText(contact.address,240),doNotSms:Boolean(contact.doNotSms),status:cleanText(contact.status,40)})).filter(contact=>contact.phone),index:Math.max(0,Number(value.index)||0),active:Boolean(value.active),visible:false,fileName:cleanText(value.fileName,160),importedAt:Number(value.importedAt)||0};buyerSession.index=Math.min(buyerSession.index,buyerSession.contacts.length);return saveBuyerSession()}
 function syncImportedBackup(dayKeys=[],prospectingIncluded=false){if(!cloud)return;saveTargets().catch(err=>console.error('Imported settings sync failed',err));dayKeys.forEach(key=>saveDay(key,{quiet:true,awaitCloud:false,render:false}).catch?.(err=>console.error('Imported day sync failed',err)));if(prospectingIncluded)saveProspecting({render:false,awaitCloud:false}).catch(err=>console.error('Imported prospecting sync failed',err))}
 function missingMarketRecoveryRows(rows){
@@ -7092,7 +7194,7 @@ async function checkCloudSync(){
 $('#checkCloudSync')?.addEventListener('click',checkCloudSync);
 $('#exportDiagnostics')?.addEventListener('click',()=>{
   let runtimeEvents=[];try{runtimeEvents=JSON.parse(window.agntRuntime?.export?.()||'[]')}catch{}
-  const data=JSON.stringify({schemaVersion:2,appVersion:'1.46.57',exportedAt:new Date().toISOString(),runtimeEvents,deviceStorage:deviceStorageDiagnostics(),sync:syncHealth.snapshot(syncDiagnosticContext())},null,2),blob=new Blob([data],{type:'application/json'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='AGNT-runtime-diagnostics.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)
+  const data=JSON.stringify({schemaVersion:2,appVersion:'1.46.58',exportedAt:new Date().toISOString(),runtimeEvents,deviceStorage:deviceStorageDiagnostics(),sync:syncHealth.snapshot(syncDiagnosticContext())},null,2),blob=new Blob([data],{type:'application/json'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='AGNT-runtime-diagnostics.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)
 });
 $('#exportData').onclick=()=>{const blob=new Blob([JSON.stringify(completeBackupPayload(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`agnt-complete-backup-${todayKey()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),0)};
 $('#importData').onchange=async e=>{const file=e.target.files?.[0];e.target.value='';if(!file)return;try{const raw=JSON.parse(await file.text());if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('Invalid backup');if(!confirm('Import this AGNT backup?\n\nExisting records with the same date or ID may be updated.'))return;const importedDays=normaliseDaysMap(raw.days||{}),dayKeys=Object.keys(importedDays),prospectingIncluded=Array.isArray(raw.prospects)||Array.isArray(raw.prospectInteractions)||Array.isArray(raw.marketPulseEvents)||Array.isArray(raw.marketPulseHistory)||Array.isArray(raw.marketPulseLedger);if(raw.targets&&typeof raw.targets==='object')targets=normaliseTargets(raw.targets);if(Array.isArray(raw.workDays)&&raw.workDays.length)workDays=normaliseWorkDays(raw.workDays);if(typeof raw.agentName==='string'&&raw.agentName.trim())agentName=cleanText(raw.agentName,120);if(typeof raw.agentMobile==='string')agentMobile=cleanText(raw.agentMobile,50);if(raw.calendarPreference==='apple'||raw.calendarPreference==='outlook')calendarPreference=raw.calendarPreference;if(['system','light','dark'].includes(raw.appearancePreference))applyAppearance(raw.appearancePreference);days={...days,...importedDays};if(Array.isArray(raw.prospects))prospects=normaliseProspects(mergeBackupRecords(prospects,raw.prospects));if(Array.isArray(raw.prospectInteractions))prospectInteractions=normaliseProspectInteractions(mergeBackupRecords(prospectInteractions,raw.prospectInteractions));if(Array.isArray(raw.marketPulseEvents))marketPulseEvents=normaliseMarketPulseEvents(mergeBackupRecords(marketPulseEvents,raw.marketPulseEvents));if(Array.isArray(raw.marketPulseLedger))marketPulseLedger=normaliseLedger([...marketPulseLedger,...raw.marketPulseLedger]);if(Array.isArray(raw.marketPulseHistory))marketPulseHistory=normaliseMarketPulseHistory(mergeBackupRecords(marketPulseHistory,raw.marketPulseHistory));if(Array.isArray(raw.campaignHistory))campaignHistory=mergeBackupRecords(campaignHistory,raw.campaignHistory).sort((a,b)=>(Number(b.createdAt)||0)-(Number(a.createdAt)||0)).slice(0,20);if(Array.isArray(raw.bulkSmsTestLaunches))bulkSmsTestLaunches=mergeBackupRecords(bulkSmsTestLaunches,raw.bulkSmsTestLaunches).sort((a,b)=>(Number(b.createdAt)||0)-(Number(a.createdAt)||0)).slice(0,10);saveLocal();restoreBuyerSessionBackup(raw.buyerSession);renderAll();syncImportedBackup(dayKeys,prospectingIncluded);toast('Backup restored · cloud sync running')}catch(err){console.error('Backup import failed',err);toast('Backup could not be read')}};
