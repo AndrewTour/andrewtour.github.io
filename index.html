@@ -9,9 +9,9 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.46.52-siri">
-<link rel="stylesheet" href="cleanup.css?v=1.46.52-siri">
-<link rel="stylesheet" href="visual-system.css?v=1.46.52-siri">
+<link rel="stylesheet" href="styles.css?v=1.46.53-siri">
+<link rel="stylesheet" href="cleanup.css?v=1.46.53-siri">
+<link rel="stylesheet" href="visual-system.css?v=1.46.53-siri">
 <title>AGNT</title>
 </head>
 <body>
@@ -1086,6 +1086,22 @@ Thanks,
             </label>
           </div>
         </fieldset>
+        <fieldset id="phoneNotificationSettings" hidden>
+          <legend>iPhone Notifications</legend>
+          <div id="nativeReminderOptions" hidden>
+            <label><input type="checkbox" id="agntLocalReminders"> Appointment, follow-up and task reminders</label>
+            <p>Appointments 30 minutes before, follow-ups at 9 am on their due date, tasks at their scheduled time.</p>
+          </div>
+          <div id="agntPushOptions" hidden>
+            <label><input type="checkbox" id="agntNotifyMarket" checked> MarketPulse updates</label>
+            <label><input type="checkbox" id="agntNotifyTeam" checked> Team bookings</label>
+            <label><input type="checkbox" id="agntNotifyHourly" checked> Hourly Calls, Connects and Data pace</label>
+            <label><input type="checkbox" id="agntNotifyCompetition" checked> Leaderboard changes and first-place targets</label>
+            <button id="agntSavePush" class="secondary" type="button">Enable or update alerts</button>
+            <button id="agntDisablePush" class="secondary" type="button">Turn off alerts</button>
+          </div>
+          <p id="agntNotifyStatus" role="status" aria-live="polite"></p>
+        </fieldset>
         <section id="associateTeamControls" class="associate-team-controls" hidden></section>
         <button id="saveSettings" class="primary">Save settings</button>
         <button id="exportData" class="secondary">Export backup</button>
@@ -1097,7 +1113,7 @@ Thanks,
         <label class="file-btn secondary">Import backup<input id="importData" type="file" accept="application/json"></label>
         <button id="signOut" class="danger">Sign out</button>
         <p id="modeNote"></p>
-        <small class="release-version">AGNT v1.46.52</small>
+        <small class="release-version">AGNT v1.46.53</small>
       </div>
     </section>
   </main>
@@ -1259,7 +1275,7 @@ Thanks,
 
 
 
-<script src="runtime.js?v=1.46.52-siri"></script>
-<script type="module" src="app.js?v=1.46.52-siri"></script>
+<script src="runtime.js?v=1.46.53-siri"></script>
+<script type="module" src="app.js?v=1.46.53-siri"></script>
 </body>
 </html>

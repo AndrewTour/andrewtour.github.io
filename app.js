@@ -1,4 +1,4 @@
-import { parseSiriBooking, matchSiriAssignee } from './siri-booking.js?v=1.46.52';
+import { parseSiriBooking, matchSiriAssignee } from './siri-booking.js?v=1.46.53';
 import {createAssociateProfiles} from './associate-profiles.js';
 import {stableSnapshotString,compareSnapshotHeads} from './snapshot-compare.js';
 import {createSyncHealth} from './sync-health.js';
@@ -96,6 +96,7 @@ let sellerPriorityDecisionPending=false;
 let sellerPriorityReturnView='';
 // v1.46.22 — isolate transient state and pending completions across account resets.
 let accountStateEpoch=0,appointmentOutcomeModalEpoch=0;
+let agntReminderDirty=true;
 let siriCallDraft=null,lastOpenedSiriCall=null,siriCallChoice=null;
 const appointmentOutcomeSaves=new Map();
 function normaliseTargets(raw={}){return Object.fromEntries(Object.entries(DEFAULTS).map(([key,fallback])=>{const value=Number(raw?.[key]);return[key,Number.isSafeInteger(value)&&value>0?value:fallback]}))}
@@ -511,6 +512,7 @@ async function restoreProspectingDevice(owner){
   }catch(err){if(uid===owner&&accountStateEpoch===epoch)deviceArchiveReadFailures.add(owner);console.error('Device archive load failed',err);toast('Device archive unavailable. AGNT will check cloud sync before importing.')}
 }
 function saveLocal(scope='all'){
+  agntReminderDirty=true;
   const prefix=storagePrefix(uid);let ok=true;
   const put=(name,read)=>{if(!writeRecord(prefix+name,read))ok=false};
   if(scope==='all'||scope==='days'){
@@ -2169,7 +2171,7 @@ function timelinePlanItemMarkup(item,status){
   const marker=status==='complete'?'✓':status==='attention'?'!':status==='current'?'●':'○',part=item.partTotal>1?` · PART ${item.partIndex}/${item.partTotal}`:'',kicker=`${item.kicker||'TODAY'}${part}`,action=item.action?`<button class="timeline-plan-action ${status==='complete'?'is-complete':''}" type="button" data-plan-action="${escapeHtml(item.action)}" data-event-id="${escapeHtml(item.eventId||'')}">${escapeHtml(item.label||'Open')}</button>`:'',bulkSms=item.kind==='market'&&status!=='complete'&&marketPulseBulkSmsHasMobile(item.eventId)?`<button class="timeline-plan-action timeline-bulk-sms-action" type="button" data-market-bulk-sms="${escapeHtml(item.eventId||'')}" aria-label="Open Bulk SMS" title="Bulk SMS">${bulkSmsMessageIconMarkup()}</button>`:'',call=(item.kind==='appointment'||item.kind==='ofi')&&item.dial?`<a class="timeline-call" href="tel:${escapeHtml(item.dial)}" ${item.isTeamAssigned?'':`data-appointment-followup-call="${escapeHtml(calendarExportId(item.appointment,item.sourceDate))}" data-source-date="${escapeHtml(item.sourceDate)}"`}>Call</a>`:'',actions=action||bulkSms||call?`<div class="timeline-plan-actions">${action}${bulkSms}${call}</div>`:'',buyerDetails=item.kind==='buyer-match'?'':timelineBuyerMatchesMarkup(item.matches),markerHtml=item.kind==='task'?`<button class="timeline-marker timeline-task-check" type="button" data-toggle-task="${escapeHtml(item.task.id)}" aria-label="${status==='complete'?'Reopen':'Complete'} task" aria-pressed="${status==='complete'}">${status==='complete'?'✓':''}</button>`:`<span class="timeline-marker" aria-hidden="true">${marker}</span>`;
   return `<article class="timeline-item ${status} ${escapeHtml(item.kind)} plan-item${status==='current'?' time-active':''}" data-plan-id="${escapeHtml(item.id)}"><time><b>${escapeHtml(timelineTimeLabel(item.minutes))}</b><i>${escapeHtml(timelineTimeLabel(item.minutes+(item.duration||15)))}</i></time>${markerHtml}<div class="timeline-plan-copy"><div class="schedule-row-labels"><span class="timeline-item-kicker">${escapeHtml(coachSentenceCase(kicker).replace(/marketpulse/gi,'MarketPulse'))}</span>${scheduleStatusMarkup(status,item)}</div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.meta)}</small>${buyerDetails}${timelinePlanStreetsMarkup(item.streets)}${actions}</div></article>`;
 }
-function renderTimeline(){
+function renderTimeline(){agntReminderDirty=true;
   associateProfiles.renderSchedule();
   if(sellerPriorityDecisionPending)return;
   if(!$('#scheduleView')?.classList.contains('active'))return;
@@ -2542,7 +2544,7 @@ function appointmentCardMarkup(entry,{dailyLog=false,history=false}={}){
   const assignmentMeta=isTeamAssigned?`<small class="appointment-team-assigned-meta">Booked for you by ${escapeHtml(teamAppointmentSetterFirstName(a.setterName||'a teammate'))}</small>`:(!isTeamAssigned&&a.assignedToUid&&String(a.assignedToUid)!==String(uid)&&a.assignedToName?`<small class="appointment-booked-for-teammate">Booked for ${escapeHtml(teamAppointmentSetterFirstName(a.assignedToName))}</small>`:'');
   const dueMeta=history&&!isTeamAssigned&&a.followUpDate?`<small class="appointment-followup-timestamp ${a.followUpDate<todayKey()?'overdue':''}">Follow-up due ${escapeHtml(shortAppointmentDate(a.followUpDate))}</small>`:'';
   const marketIntel=appointmentMarketPulseMarkup(a,sourceDate);
-  const cardAttrs=isTeamAssigned?'':`data-appointment-card-edit="${escapeHtml(a.id)}" role="button" tabindex="0" aria-label="Edit ${type} appointment at ${address}"`;
+  const cardAttrs=isTeamAssigned?`data-agnt-team-booking="${escapeHtml(a.teamAppointmentId||a.id)}"`:`data-appointment-card-edit="${escapeHtml(a.id)}" role="button" tabindex="0" aria-label="Edit ${type} appointment at ${address}"`;
   return `<article class="appointment-card appointment-card-premium appointment-followup-card ${lifecycle} ${isTeamAssigned?'team-assigned':''}" ${cardAttrs} data-source-date="${escapeHtml(sourceDate)}">
     ${isTeamAssigned?'':`<button class="appointment-delete" data-delete-appointment="${escapeHtml(a.id)}" data-source-date="${escapeHtml(sourceDate)}" aria-label="Delete appointment" title="Delete appointment">×</button>`}
     <div class="appointment-card-copy"><div class="appointment-card-top"><span class="appointment-type-badge">${type}</span><span class="appointment-status-badge ${lifecycle}">${escapeHtml(statusText)}</span></div><strong>${address}</strong><small>${contact}${phone?` · ${phone}`:''}</small>${ofiSchedule}${loggedMeta}${bookedMeta}${assignmentMeta}${dueMeta}${contextNote}${marketIntel}${note}</div>
@@ -6908,9 +6910,9 @@ $$('[name=appearancePreference]').forEach(el=>el.addEventListener('change',()=>{
 $('#settingsView').addEventListener('input',event=>{const field=event.target;if(field.matches('#agentName,#agentMobile,#callsTarget,#connectsTarget,#dataTarget,#weeklyKnockTarget,[name=workDay],[name=calendarPreference],[name=appearancePreference]'))settingsDraftFields.add(field.name||field.id)});
 $('#settingsView').addEventListener('change',event=>{const field=event.target;if(field.matches('[name=workDay],[name=calendarPreference],[name=appearancePreference]'))settingsDraftFields.add(field.name||field.id)});
 $('#saveSettings').onclick=async()=>{const fields=['callsTarget','connectsTarget','dataTarget','weeklyKnockTarget'];const invalid=fields.find(id=>{const value=Number($('#'+id).value);return !Number.isSafeInteger(value)||value<=0});if(invalid){toast('Enter a whole number greater than zero for every target.');$('#'+invalid).focus();return}const savingOwner=uid,savingEpoch=accountStateEpoch;const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();agentMobile=cleanText($('#agentMobile').value,50);targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;calendarPreference=$('[name=calendarPreference]:checked')?.value==='apple'?'apple':'outlook';appearancePreference=normaliseAppearance($('[name=appearancePreference]:checked')?.value);applyAppearance(appearancePreference);settingsDraftFields.clear();await saveTargets();if(uid!==savingOwner||accountStateEpoch!==savingEpoch)return;if(cloud&&accountMode==='team'&&teamId&&uid){try{await setDoc(doc(db,'teams',teamId,'members',uid),{name:agentName,updatedAt:serverTimestamp()},{merge:true})}catch(err){console.error('Team profile name sync failed',err)}}renderAll();toast('Settings saved')};
-$('#signOut').onclick=async()=>{clearActiveSession();if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
+$('#signOut').onclick=async()=>{clearActiveSession();await stopPhoneNotifications().catch(()=>{});if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
 function mergeBackupRecords(current=[],incoming=[]){const byId=new Map();[...(Array.isArray(current)?current:[]),...(Array.isArray(incoming)?incoming:[])].forEach((item,index)=>{if(!item||typeof item!=='object')return;const id=cleanText(item.id,180)||`backup-record-${index}`;byId.set(id,item)});return[...byId.values()]}
-function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.46.52',exportedAt:new Date().toISOString(),targets,workDays,agentName,agentMobile,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),marketPulseLedger:normaliseLedger(marketPulseLedger),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
+function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.46.53',exportedAt:new Date().toISOString(),targets,workDays,agentName,agentMobile,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),marketPulseLedger:normaliseLedger(marketPulseLedger),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
 function restoreBuyerSessionBackup(value){if(!value||!Array.isArray(value.contacts))return false;buyerSession={contacts:value.contacts.map((contact,index)=>({id:cleanText(contact.id,80)||`buyer_${index}`,name:cleanText(contact.name,120)||'Unknown buyer',phone:normaliseDialNumber(contact.phone),address:cleanText(contact.address,240),doNotSms:Boolean(contact.doNotSms),status:cleanText(contact.status,40)})).filter(contact=>contact.phone),index:Math.max(0,Number(value.index)||0),active:Boolean(value.active),visible:false,fileName:cleanText(value.fileName,160),importedAt:Number(value.importedAt)||0};buyerSession.index=Math.min(buyerSession.index,buyerSession.contacts.length);return saveBuyerSession()}
 function syncImportedBackup(dayKeys=[],prospectingIncluded=false){if(!cloud)return;saveTargets().catch(err=>console.error('Imported settings sync failed',err));dayKeys.forEach(key=>saveDay(key,{quiet:true,awaitCloud:false,render:false}).catch?.(err=>console.error('Imported day sync failed',err)));if(prospectingIncluded)saveProspecting({render:false,awaitCloud:false}).catch(err=>console.error('Imported prospecting sync failed',err))}
 function missingMarketRecoveryRows(rows){
@@ -7028,7 +7030,7 @@ async function checkCloudSync(){
 $('#checkCloudSync')?.addEventListener('click',checkCloudSync);
 $('#exportDiagnostics')?.addEventListener('click',()=>{
   let runtimeEvents=[];try{runtimeEvents=JSON.parse(window.agntRuntime?.export?.()||'[]')}catch{}
-  const data=JSON.stringify({schemaVersion:2,appVersion:'1.46.52',exportedAt:new Date().toISOString(),runtimeEvents,deviceStorage:deviceStorageDiagnostics(),sync:syncHealth.snapshot(syncDiagnosticContext())},null,2),blob=new Blob([data],{type:'application/json'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='AGNT-runtime-diagnostics.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)
+  const data=JSON.stringify({schemaVersion:2,appVersion:'1.46.53',exportedAt:new Date().toISOString(),runtimeEvents,deviceStorage:deviceStorageDiagnostics(),sync:syncHealth.snapshot(syncDiagnosticContext())},null,2),blob=new Blob([data],{type:'application/json'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='AGNT-runtime-diagnostics.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)
 });
 $('#exportData').onclick=()=>{const blob=new Blob([JSON.stringify(completeBackupPayload(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`agnt-complete-backup-${todayKey()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),0)};
 $('#importData').onchange=async e=>{const file=e.target.files?.[0];e.target.value='';if(!file)return;try{const raw=JSON.parse(await file.text());if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('Invalid backup');if(!confirm('Import this AGNT backup?\n\nExisting records with the same date or ID may be updated.'))return;const importedDays=normaliseDaysMap(raw.days||{}),dayKeys=Object.keys(importedDays),prospectingIncluded=Array.isArray(raw.prospects)||Array.isArray(raw.prospectInteractions)||Array.isArray(raw.marketPulseEvents)||Array.isArray(raw.marketPulseHistory)||Array.isArray(raw.marketPulseLedger);if(raw.targets&&typeof raw.targets==='object')targets=normaliseTargets(raw.targets);if(Array.isArray(raw.workDays)&&raw.workDays.length)workDays=normaliseWorkDays(raw.workDays);if(typeof raw.agentName==='string'&&raw.agentName.trim())agentName=cleanText(raw.agentName,120);if(typeof raw.agentMobile==='string')agentMobile=cleanText(raw.agentMobile,50);if(raw.calendarPreference==='apple'||raw.calendarPreference==='outlook')calendarPreference=raw.calendarPreference;if(['system','light','dark'].includes(raw.appearancePreference))applyAppearance(raw.appearancePreference);days={...days,...importedDays};if(Array.isArray(raw.prospects))prospects=normaliseProspects(mergeBackupRecords(prospects,raw.prospects));if(Array.isArray(raw.prospectInteractions))prospectInteractions=normaliseProspectInteractions(mergeBackupRecords(prospectInteractions,raw.prospectInteractions));if(Array.isArray(raw.marketPulseEvents))marketPulseEvents=normaliseMarketPulseEvents(mergeBackupRecords(marketPulseEvents,raw.marketPulseEvents));if(Array.isArray(raw.marketPulseLedger))marketPulseLedger=normaliseLedger([...marketPulseLedger,...raw.marketPulseLedger]);if(Array.isArray(raw.marketPulseHistory))marketPulseHistory=normaliseMarketPulseHistory(mergeBackupRecords(marketPulseHistory,raw.marketPulseHistory));if(Array.isArray(raw.campaignHistory))campaignHistory=mergeBackupRecords(campaignHistory,raw.campaignHistory).sort((a,b)=>(Number(b.createdAt)||0)-(Number(a.createdAt)||0)).slice(0,20);if(Array.isArray(raw.bulkSmsTestLaunches))bulkSmsTestLaunches=mergeBackupRecords(bulkSmsTestLaunches,raw.bulkSmsTestLaunches).sort((a,b)=>(Number(b.createdAt)||0)-(Number(a.createdAt)||0)).slice(0,10);saveLocal();restoreBuyerSessionBackup(raw.buyerSession);renderAll();syncImportedBackup(dayKeys,prospectingIncluded);toast('Backup restored · cloud sync running')}catch(err){console.error('Backup import failed',err);toast('Backup could not be read')}};
@@ -7253,3 +7255,240 @@ if(window.webkit?.messageHandlers?.agntNative){
     return 'opened';
   };
 }
+
+// Local reminders stay in the iOS wrapper; closed-app team alerts use Web Push.
+const agntReminderBridge=window.webkit?.messageHandlers?.agntReminders;
+const agntWebPush=Boolean(window.navigator.standalone===true&&'PushManager'in window&&'Notification'in window&&'serviceWorker'in navigator);
+const agntPushURL='https://us-central1-'+firebaseConfig.projectId+'.cloudfunctions.net/agntNotificationSettings';
+const agntPushInputs={market:'#agntNotifyMarket',team:'#agntNotifyTeam',hourly:'#agntNotifyHourly',competition:'#agntNotifyCompetition'};
+let agntPhoneOwner='',agntReminderSignature='',agntReminderRequestAt=0,agntPushBusy=false,agntPushRegisteredFor='';
+let agntAlertRoute=null,agntPushContext=null,agntPushPreparing=null,agntReminderDay='';
+
+function agntLocalRemindersEnabled(){
+  try{return uid&&localStorage.getItem(storagePrefix(uid)+'ios-reminders')==='on';}catch{return false;}
+}
+function phoneNotificationStatus(text){const node=$('#agntNotifyStatus');if(node)node.textContent=text;}
+function agntReminderRows(now=new Date()){
+  const rows=[],utc=now.getTime();
+  for(let offset=0;offset<14;offset++){
+    const day=new Date(now);day.setDate(day.getDate()+offset);
+    const key=dateKey(day);
+    for(const {appointment:a,sourceDate,isTeamAssigned} of appointmentEntriesForDate(key)){
+      if((a.assignedToUid&&a.assignedToUid!==uid)||appointmentLifecycle(a,sourceDate)!=='upcoming')continue;
+      const time=appointmentTimestamp(a,sourceDate), id=String(a.teamAppointmentId||a.id||'');
+      const at=time-30*60000;
+      if(id&&Number.isFinite(at)&&at>utc)rows.push({key:'booking:'+id,route:'bookings',id,at,
+        team:isTeamAssigned?teamId:'',title:'Appointment reminder',body:'Check your upcoming appointment in AGNT.'});
+    }
+    const at=new Date(day);at.setHours(9,0,0,0);
+    if(at>now){
+      for(const p of prospectFollowUpsForDate(key).filter(p=>p.nextFollowUp===key)){
+        rows.push({key:'followup:'+p.id,route:'contact',id:String(p.id),at:at.getTime(),
+          title:'Follow-up due',body:'Open AGNT to follow up with a contact.'});
+      }
+      for(const {appointment:a,sourceDate} of scheduledFollowUpsForDate(key)){
+        if(a.followUpDate!==key||a.assignedToUid&&a.assignedToUid!==uid)continue;
+        const id=calendarExportId(a,sourceDate);
+        rows.push({key:'booking-followup:'+id,route:'booking-followup',id,sourceDate,at:at.getTime(),
+          title:'Appointment follow-up due',body:'Open AGNT to follow up on an appointment.'});
+      }
+    }
+    for(const {task} of taskEntriesForDate(key)){
+      if(task.completedAt||!task.time||task.assignedToUid&&task.assignedToUid!==uid||task.scheduledAt<=utc)continue;
+      rows.push({key:'task:'+task.id,route:'schedule',id:String(task.id),sourceDate:key,at:task.scheduledAt,
+        title:'AGNT task reminder',body:'A task is due in your Day Plan.'});
+    }
+  }
+  return [...new Map(rows.sort((a,b)=>a.at-b.at).map(row=>[row.key,row])).values()]
+    .sort((a,b)=>a.at-b.at).slice(0,48);
+}
+
+function updateAGNTPhoneNotifications(){
+  handleAGNTAlertRoute();
+  const owner=currentUser?.uid;
+  if(!startupReady||!owner||owner!==uid||!(agntReminderBridge||agntWebPush))return;
+  if(agntPhoneOwner!==owner){
+    agntPhoneOwner=owner;
+    $('#phoneNotificationSettings').hidden=false;
+    $('#nativeReminderOptions').hidden=!agntReminderBridge;
+    $('#agntPushOptions').hidden=!agntWebPush;
+    $('#agntLocalReminders').checked=Boolean(agntLocalRemindersEnabled());
+    let profile;
+    try{profile=JSON.parse(localStorage.getItem(storagePrefix(owner)+'push-topics')||'null');}catch{}
+    agntReminderDirty=true;agntReminderSignature='';
+    if(agntReminderBridge&&!agntLocalRemindersEnabled())agntReminderBridge.postMessage({kind:'clear'});
+    if(agntWebPush){
+      prepareAGNTWebPush().catch(()=>{});
+      for(const [topic,selector] of Object.entries(agntPushInputs))$(selector).checked=profile?.includes(topic)??true;
+      if(profile?.length)refreshAGNTWebPush(profile).catch(()=>phoneNotificationStatus('Alerts could not refresh. Check connection and update alerts in Settings.'));
+    }
+  }
+  if(!agntReminderBridge||!agntLocalRemindersEnabled()||document.hidden)return;
+  if(Date.now()-agntReminderRequestAt<4000)return;
+  if(!agntReminderDirty&&agntReminderDay===todayKey())return;
+  agntReminderDirty=false;agntReminderDay=todayKey();agntReminderRequestAt=Date.now();
+  const rows=agntReminderRows(),signature=JSON.stringify([owner,rows]);
+  if(signature!==agntReminderSignature){
+    agntReminderSignature=signature;
+    agntReminderBridge.postMessage({kind:'sync',owner,rows});
+  }
+}
+function agntSetAlertRoute(value){
+  if(!value||typeof value.owner!=='string'||!['today','contact','bookings','leaderboard','marketpulse','schedule','booking-followup'].includes(value.route))return 'invalid';
+  agntAlertRoute={...value,expiresAt:Date.now()+60000};
+  handleAGNTAlertRoute();
+  return 'queued';
+}
+function handleAGNTAlertRoute(){
+  if(!agntAlertRoute)return;
+  const entry=agntAlertRoute;
+  if(entry.expiresAt<Date.now()){agntAlertRoute=null;return;}
+  if(!startupReady||!currentUser?.uid||currentUser.uid!==uid||document.hidden||$('#app')?.classList.contains('hidden'))return;
+  if(entry.owner!==uid || entry.team&&teamId&&entry.team!==teamId){agntAlertRoute=null;return;}
+  if(entry.team&&entry.team!==teamId)return;
+  if($('#returningSnapshotScreen:not(.hidden)')||$('#welcomeScreen:not(.hidden)')||siriWorkspaceBusy())return;
+  if(entry.route==='contact'){
+    const contact=prospectById(entry.id);
+    if(!contact||contact.archived)return;
+    openWorkspaceRoute('contacts');
+    renderProspectDetail(contact.id);
+  }else if(entry.route==='booking-followup'){
+    const row=appointmentRecordEntry(entry.id,entry.sourceDate);
+    if(!row)return;
+    openWorkspaceRoute('bookings');
+    updateAppointmentOutcome(entry.id,entry.sourceDate);
+  }else if(entry.route==='schedule'){
+    if(validDateKey(entry.sourceDate))selectedDate=entry.sourceDate;
+    openWorkspaceRoute('schedule');
+    requestAnimationFrame(()=>document.querySelector('[data-toggle-task="'+CSS.escape(entry.id||'')+'"]')?.scrollIntoView({block:'center'}));
+  }else if(entry.route==='bookings'){
+    const assigned=entry.team&&entry.id?assignedTeamAppointments.find(row=>row.teamAppointmentId===entry.id):null;
+    if(entry.team&&entry.id&&!assigned)return;
+    openWorkspaceRoute('bookings');
+    if(entry.id)requestAnimationFrame(()=>{
+      const attr=assigned?'data-agnt-team-booking':'data-appointment-card-edit';
+      document.querySelector('['+attr+'="'+CSS.escape(entry.id)+'"]')?.scrollIntoView({block:'center'});
+    });
+  }else{
+    if(entry.route==='today')selectedDate=todayKey();
+    openWorkspaceRoute(entry.route);
+  }
+  agntAlertRoute=null;
+}
+window.agntOpenNotification=agntSetAlertRoute;
+window.agntReminderPermission=(owner,granted)=>{
+  if(owner!==uid||owner!==currentUser?.uid)return;
+  if(!granted){
+    $('#agntLocalReminders').checked=false;
+    try{if(uid)localStorage.removeItem(storagePrefix(uid)+'ios-reminders');}catch{}
+    phoneNotificationStatus('Allow AGNT notifications in iPhone Settings to use reminders.');
+  }else{
+    agntReminderSignature='';agntReminderRequestAt=0;agntReminderDirty=true;
+    updateAGNTPhoneNotifications();
+    phoneNotificationStatus('iPhone reminders enabled.');
+  }
+};
+$('#agntLocalReminders')?.addEventListener('change',event=>{
+  if(!uid||!agntReminderBridge)return;
+  const enabled=event.currentTarget.checked;
+  try{localStorage.setItem(storagePrefix(uid)+'ios-reminders',enabled?'on':'off');}catch{}
+  agntReminderSignature='';
+  agntReminderRequestAt=0;agntReminderDirty=true;
+  agntReminderBridge.postMessage({kind:enabled?'permission':'clear',owner:uid});
+  if(!enabled)phoneNotificationStatus('iPhone reminders turned off.');
+});
+
+async function agntPushRequest(user,sub,enabled){
+  const token=await user.getIdToken();
+  const result=await fetch(agntPushURL,{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
+    body:JSON.stringify({subscription:sub.toJSON(),enabled,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone}),
+    signal:AbortSignal.timeout(8000)});
+  if(!result.ok)throw new Error('Could not update AGNT alerts');
+}
+async function prepareAGNTWebPush(){
+  if(!agntWebPush||agntPushContext||!navigator.serviceWorker.controller)return;
+  if(agntPushPreparing)return agntPushPreparing;
+  agntPushPreparing=(async()=>{
+    const registration=await navigator.serviceWorker.ready;
+    const keyResponse=await fetch(agntPushURL,{signal:AbortSignal.timeout(8000)});
+    if(!keyResponse.ok)throw new Error('Notification service unavailable');
+    const {publicKey}=await keyResponse.json();
+    const key=Uint8Array.from(atob(publicKey.replace(/-/g,'+').replace(/_/g,'/')),char=>char.charCodeAt(0));
+    if(key.length!==65)throw new Error('Invalid push key');
+    const subscription=await registration.pushManager.getSubscription();
+    agntPushContext={registration,key,subscription};
+  })();
+  try{await agntPushPreparing;}finally{agntPushPreparing=null;}
+}
+async function refreshAGNTWebPush(list) {
+  const user=currentUser;
+  if(!user?.uid||agntPushRegisteredFor===user.uid||!navigator.serviceWorker.controller)return;
+  const sub=await (await navigator.serviceWorker.ready).pushManager.getSubscription();
+  if(!sub||currentUser?.uid!==user.uid)return;
+  await agntPushRequest(user,sub,list);
+  if(currentUser?.uid===user.uid)agntPushRegisteredFor=user.uid;
+}
+async function manageAGNTWebPush(enable) {
+  const user=currentUser;
+  if(!user?.uid||agntPushBusy)return;
+  agntPushBusy=true;
+  try{
+    const list=Object.entries(agntPushInputs).filter(([,selector])=>$(selector).checked).map(([topic])=>topic);
+    if(!enable){
+      await stopPhoneNotifications({webOnly:true});
+      phoneNotificationStatus('Push alerts turned off.');
+      return;
+    }
+    if(!list.length){phoneNotificationStatus('Choose at least one alert.');return;}
+    if(Notification.permission==='denied'){
+      phoneNotificationStatus('Allow AGNT notifications in iPhone Settings.');return;
+    }
+    if(!navigator.serviceWorker.controller){phoneNotificationStatus('Reopen the Home Screen app to finish enabling alerts.');return;}
+    if(!agntPushContext){
+      await prepareAGNTWebPush();
+      phoneNotificationStatus('Tap Enable or update alerts to finish.');
+      return;
+    }
+    const {registration,key,subscription}=agntPushContext;
+    // WebKit requires this call to be made in the user gesture.
+    const sub=subscription||await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key});
+    if(currentUser?.uid!==user.uid){await sub.unsubscribe();return;}
+    try{await agntPushRequest(user,sub,list);}
+    catch(error){if(!subscription)await sub.unsubscribe().catch(()=>{});throw error;}
+    if(currentUser?.uid!==user.uid){await sub.unsubscribe().catch(()=>{});return;}
+    localStorage.setItem(storagePrefix(user.uid)+'push-topics',JSON.stringify(list));
+    agntPushRegisteredFor=user.uid;agntPushContext.subscription=sub;
+    phoneNotificationStatus('iPhone alerts enabled.');
+  }catch{phoneNotificationStatus('Could not update alerts. Check connection and try again.');}
+  finally{agntPushBusy=false;}
+}
+async function stopPhoneNotifications({webOnly=false}={}){
+  if(!webOnly)agntReminderBridge?.postMessage({kind:'clear'});
+  const user=currentUser;
+  if(!agntWebPush||!user?.uid||!navigator.serviceWorker.controller)return;
+  const registration=await navigator.serviceWorker.getRegistration();
+  if(!registration)return;
+  for(const alert of await registration.getNotifications())alert.close();
+  const sub=await registration.pushManager.getSubscription();
+  if(sub){
+    try{await sub.unsubscribe();}catch{}
+    await agntPushRequest(user,sub,false).catch(()=>{});
+  }
+  try{localStorage.removeItem(storagePrefix(user.uid)+'push-topics');}catch{}
+  agntPushRegisteredFor='';
+  if(agntPushContext)agntPushContext.subscription=null;
+}
+$('#agntSavePush')?.addEventListener('click',()=>manageAGNTWebPush(true));
+$('#agntDisablePush')?.addEventListener('click',()=>manageAGNTWebPush(false));
+navigator.serviceWorker?.addEventListener('controllerchange',()=>prepareAGNTWebPush().catch(()=>{}));
+navigator.serviceWorker?.addEventListener('message',event=>{
+  if(event.data?.kind==='agnt-notification')agntSetAlertRoute(event.data.payload);
+});
+if(location.hash.startsWith('#agnt-alert=')){
+  try{agntSetAlertRoute(JSON.parse(decodeURIComponent(location.hash.slice(12))));}catch{}
+  history.replaceState(history.state,'',location.pathname+location.search);
+}
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden)updateAGNTPhoneNotifications();
+});
+setInterval(updateAGNTPhoneNotifications,5000);
