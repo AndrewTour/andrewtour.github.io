@@ -14167,3 +14167,30 @@ html[data-theme="dark"] .seller-session-context{background:transparent!important
 html[data-theme="dark"] .seller-session-context>div{background:transparent!important}
 html[data-theme="dark"] .seller-session-followup.is-set strong{color:#78cf9d!important}
 
+
+.siri-call-choice {
+  box-sizing: border-box;
+  width: min(420px, calc(100% - 32px));
+  max-height: 75dvh;
+  padding: 20px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--bg, Canvas);
+  color: var(--text, CanvasText);
+}
+.siri-call-choice::backdrop { background: rgb(0 0 0 / .45); }
+.siri-call-choice h2 { margin: 0; font-size: 1.25rem; }
+.siri-call-choice p { margin: 8px 0 14px; }
+.siri-call-choice button {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  overflow-wrap: anywhere;
+}

@@ -1,4 +1,4 @@
-import { parseSiriBooking, matchSiriAssignee } from './siri-booking.js?v=1.46.50';
+import { parseSiriBooking, matchSiriAssignee } from './siri-booking.js?v=1.46.52';
 import {createAssociateProfiles} from './associate-profiles.js';
 import {stableSnapshotString,compareSnapshotHeads} from './snapshot-compare.js';
 import {createSyncHealth} from './sync-health.js';
@@ -96,9 +96,11 @@ let sellerPriorityDecisionPending=false;
 let sellerPriorityReturnView='';
 // v1.46.22 — isolate transient state and pending completions across account resets.
 let accountStateEpoch=0,appointmentOutcomeModalEpoch=0;
+let siriCallDraft=null,lastOpenedSiriCall=null,siriCallChoice=null;
 const appointmentOutcomeSaves=new Map();
 function normaliseTargets(raw={}){return Object.fromEntries(Object.entries(DEFAULTS).map(([key,fallback])=>{const value=Number(raw?.[key]);return[key,Number.isSafeInteger(value)&&value>0?value:fallback]}))}
 function resetAccountTransientState(){
+  clearSiriCallChoice();siriCallDraft=null;lastOpenedSiriCall=null;
   syncHealth.reset();syncCheckBusy=false;
   closeManualDialler({restoreFocus:false});savedCallPhoneSource=null;savedCallPhoneIndex.clear();manualDiallerNumber='';manualCallSaveBusy=false;closeManualCallOutcome({clear:false});accountStateEpoch++;appointmentOutcomeModalEpoch++;appointmentOutcomeSaves.clear();appointmentSubmitLocks.clear();
   clearTimeout(prospectingSaveTimer);clearTimeout(prospectingRetryTimer);prospectingSaveTimer=prospectingRetryTimer=null;
@@ -6908,7 +6910,7 @@ $('#settingsView').addEventListener('change',event=>{const field=event.target;if
 $('#saveSettings').onclick=async()=>{const fields=['callsTarget','connectsTarget','dataTarget','weeklyKnockTarget'];const invalid=fields.find(id=>{const value=Number($('#'+id).value);return !Number.isSafeInteger(value)||value<=0});if(invalid){toast('Enter a whole number greater than zero for every target.');$('#'+invalid).focus();return}const savingOwner=uid,savingEpoch=accountStateEpoch;const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();agentMobile=cleanText($('#agentMobile').value,50);targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;calendarPreference=$('[name=calendarPreference]:checked')?.value==='apple'?'apple':'outlook';appearancePreference=normaliseAppearance($('[name=appearancePreference]:checked')?.value);applyAppearance(appearancePreference);settingsDraftFields.clear();await saveTargets();if(uid!==savingOwner||accountStateEpoch!==savingEpoch)return;if(cloud&&accountMode==='team'&&teamId&&uid){try{await setDoc(doc(db,'teams',teamId,'members',uid),{name:agentName,updatedAt:serverTimestamp()},{merge:true})}catch(err){console.error('Team profile name sync failed',err)}}renderAll();toast('Settings saved')};
 $('#signOut').onclick=async()=>{clearActiveSession();if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
 function mergeBackupRecords(current=[],incoming=[]){const byId=new Map();[...(Array.isArray(current)?current:[]),...(Array.isArray(incoming)?incoming:[])].forEach((item,index)=>{if(!item||typeof item!=='object')return;const id=cleanText(item.id,180)||`backup-record-${index}`;byId.set(id,item)});return[...byId.values()]}
-function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.46.50',exportedAt:new Date().toISOString(),targets,workDays,agentName,agentMobile,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),marketPulseLedger:normaliseLedger(marketPulseLedger),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
+function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.46.52',exportedAt:new Date().toISOString(),targets,workDays,agentName,agentMobile,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),marketPulseLedger:normaliseLedger(marketPulseLedger),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
 function restoreBuyerSessionBackup(value){if(!value||!Array.isArray(value.contacts))return false;buyerSession={contacts:value.contacts.map((contact,index)=>({id:cleanText(contact.id,80)||`buyer_${index}`,name:cleanText(contact.name,120)||'Unknown buyer',phone:normaliseDialNumber(contact.phone),address:cleanText(contact.address,240),doNotSms:Boolean(contact.doNotSms),status:cleanText(contact.status,40)})).filter(contact=>contact.phone),index:Math.max(0,Number(value.index)||0),active:Boolean(value.active),visible:false,fileName:cleanText(value.fileName,160),importedAt:Number(value.importedAt)||0};buyerSession.index=Math.min(buyerSession.index,buyerSession.contacts.length);return saveBuyerSession()}
 function syncImportedBackup(dayKeys=[],prospectingIncluded=false){if(!cloud)return;saveTargets().catch(err=>console.error('Imported settings sync failed',err));dayKeys.forEach(key=>saveDay(key,{quiet:true,awaitCloud:false,render:false}).catch?.(err=>console.error('Imported day sync failed',err)));if(prospectingIncluded)saveProspecting({render:false,awaitCloud:false}).catch(err=>console.error('Imported prospecting sync failed',err))}
 function missingMarketRecoveryRows(rows){
@@ -7026,7 +7028,7 @@ async function checkCloudSync(){
 $('#checkCloudSync')?.addEventListener('click',checkCloudSync);
 $('#exportDiagnostics')?.addEventListener('click',()=>{
   let runtimeEvents=[];try{runtimeEvents=JSON.parse(window.agntRuntime?.export?.()||'[]')}catch{}
-  const data=JSON.stringify({schemaVersion:2,appVersion:'1.46.50',exportedAt:new Date().toISOString(),runtimeEvents,deviceStorage:deviceStorageDiagnostics(),sync:syncHealth.snapshot(syncDiagnosticContext())},null,2),blob=new Blob([data],{type:'application/json'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='AGNT-runtime-diagnostics.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)
+  const data=JSON.stringify({schemaVersion:2,appVersion:'1.46.52',exportedAt:new Date().toISOString(),runtimeEvents,deviceStorage:deviceStorageDiagnostics(),sync:syncHealth.snapshot(syncDiagnosticContext())},null,2),blob=new Blob([data],{type:'application/json'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='AGNT-runtime-diagnostics.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)
 });
 $('#exportData').onclick=()=>{const blob=new Blob([JSON.stringify(completeBackupPayload(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`agnt-complete-backup-${todayKey()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),0)};
 $('#importData').onchange=async e=>{const file=e.target.files?.[0];e.target.value='';if(!file)return;try{const raw=JSON.parse(await file.text());if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('Invalid backup');if(!confirm('Import this AGNT backup?\n\nExisting records with the same date or ID may be updated.'))return;const importedDays=normaliseDaysMap(raw.days||{}),dayKeys=Object.keys(importedDays),prospectingIncluded=Array.isArray(raw.prospects)||Array.isArray(raw.prospectInteractions)||Array.isArray(raw.marketPulseEvents)||Array.isArray(raw.marketPulseHistory)||Array.isArray(raw.marketPulseLedger);if(raw.targets&&typeof raw.targets==='object')targets=normaliseTargets(raw.targets);if(Array.isArray(raw.workDays)&&raw.workDays.length)workDays=normaliseWorkDays(raw.workDays);if(typeof raw.agentName==='string'&&raw.agentName.trim())agentName=cleanText(raw.agentName,120);if(typeof raw.agentMobile==='string')agentMobile=cleanText(raw.agentMobile,50);if(raw.calendarPreference==='apple'||raw.calendarPreference==='outlook')calendarPreference=raw.calendarPreference;if(['system','light','dark'].includes(raw.appearancePreference))applyAppearance(raw.appearancePreference);days={...days,...importedDays};if(Array.isArray(raw.prospects))prospects=normaliseProspects(mergeBackupRecords(prospects,raw.prospects));if(Array.isArray(raw.prospectInteractions))prospectInteractions=normaliseProspectInteractions(mergeBackupRecords(prospectInteractions,raw.prospectInteractions));if(Array.isArray(raw.marketPulseEvents))marketPulseEvents=normaliseMarketPulseEvents(mergeBackupRecords(marketPulseEvents,raw.marketPulseEvents));if(Array.isArray(raw.marketPulseLedger))marketPulseLedger=normaliseLedger([...marketPulseLedger,...raw.marketPulseLedger]);if(Array.isArray(raw.marketPulseHistory))marketPulseHistory=normaliseMarketPulseHistory(mergeBackupRecords(marketPulseHistory,raw.marketPulseHistory));if(Array.isArray(raw.campaignHistory))campaignHistory=mergeBackupRecords(campaignHistory,raw.campaignHistory).sort((a,b)=>(Number(b.createdAt)||0)-(Number(a.createdAt)||0)).slice(0,20);if(Array.isArray(raw.bulkSmsTestLaunches))bulkSmsTestLaunches=mergeBackupRecords(bulkSmsTestLaunches,raw.bulkSmsTestLaunches).sort((a,b)=>(Number(b.createdAt)||0)-(Number(a.createdAt)||0)).slice(0,10);saveLocal();restoreBuyerSessionBackup(raw.buyerSession);renderAll();syncImportedBackup(dayKeys,prospectingIncluded);toast('Backup restored · cloud sync running')}catch(err){console.error('Backup import failed',err);toast('Backup could not be read')}};
@@ -7098,14 +7100,140 @@ function openSiriAppointment(booking){
   const error=$('#appointmentFormError');
   error.textContent='';error.classList.add('hidden');
 }
+function siriCallContactKey(name){
+  return String(name||'').normalize('NFD').replace(/\p{M}/gu,'')
+    .toLowerCase().replace(/[’']/g,'').replace(/[^\p{L}\p{N}]+/gu,' ').trim();
+}
+function siriCallContactBlocked(contact){
+  return prospectInteractions.some(item=>item.prospectId===contact.id&&item.outcome==='Do not contact')||
+    (contact.tags||[]).some(tag=>['dnc','dnd','do not call','do not contact'].includes(siriCallContactKey(tag)));
+}
+function siriCallDialNumber(text){
+  const value=text.trim().replace(/^tel:/i,'');
+  if(!/^[+0-9() .\s\-]+$/.test(value))return '';
+  const digits=value.replace(/[^+0-9]/g,'').replace(/^00/,'+');
+  return /^\+?[0-9]{8,15}$/.test(digits)?digits:'';
+}
+function setSiriCallDraft(id,number,contactId=null){
+  if(siriCallDraft?.id===id)return 'invalid';
+  siriCallDraft={id,owner:uid,epoch:accountStateEpoch,contactId,number};
+  return {status:'call-ready',number};
+}
+function clearSiriCallChoice(){
+  if(!siriCallChoice)return;
+  const {dialog,timeout}=siriCallChoice;
+  siriCallChoice=null;
+  clearTimeout(timeout);
+  if(dialog.open)dialog.close();
+  dialog.remove();
+}
+function showSiriCallChoice(id,number,matches,requestedAt){
+  const dialog=document.createElement('dialog');
+  dialog.className='siri-call-choice';
+  dialog.setAttribute('aria-labelledby','siriCallChoiceTitle');
+  const title=document.createElement('h2');
+  title.id='siriCallChoiceTitle';
+  title.textContent='Choose a contact';
+  const intro=document.createElement('p');
+  intro.textContent='These contacts share '+displayDialNumber(number)+'.';
+  dialog.append(title,intro);
+  const choice={id,owner:uid,epoch:accountStateEpoch,number,dialog,selected:null,timeout:null};
+  const select=contactId=>{
+    if(siriCallChoice!==choice)return;
+    if(choice.owner!==uid||choice.epoch!==accountStateEpoch){clearSiriCallChoice();return;}
+    choice.selected=contactId;
+    dialog.close();
+  };
+  for(const contact of matches){
+    const button=document.createElement('button');
+    button.type='button';
+    button.textContent=[contact.name,[contact.address,contact.suburb].filter(Boolean).join(', ')||contact.company].filter(Boolean).join(' · ');
+    button.addEventListener('click',()=>select(contact.id));
+    dialog.append(button);
+  }
+  const cancel=document.createElement('button');
+  cancel.type='button';
+  cancel.textContent='Cancel';
+  cancel.addEventListener('click',()=>select(''));
+  dialog.append(cancel);
+  dialog.addEventListener('cancel',event=>{event.preventDefault();select('')});
+  document.body.append(dialog);
+  siriCallChoice=choice;
+  choice.timeout=setTimeout(()=>{if(siriCallChoice===choice)clearSiriCallChoice()},Math.max(0,requestedAt+300000-Date.now()));
+  dialog.showModal();
+}
+function prepareSiriNumberCall(id,text,requestedAt){
+  const number=siriCallDialNumber(text);
+  if(!number)return 'call-invalid-number';
+  const choice=siriCallChoice;
+  if(choice?.id===id&&choice.selected===null)return 'waiting';
+  if(choice?.id===id&&choice.selected===''){clearSiriCallChoice();return 'call-cancelled';}
+  if(siriWorkspaceBusy())return 'busy';
+  const matches=savedContactsForCall(number);
+  if(matches.some(siriCallContactBlocked)){clearSiriCallChoice();return 'call-blocked';}
+  const active=matches.filter(contact=>!contact.archived);
+  if(choice?.id===id){
+    const selected=active.find(contact=>contact.id===choice.selected);
+    clearSiriCallChoice();
+    return selected?setSiriCallDraft(id,number,selected.id):'call-match-changed';
+  }
+  if(active.length>1){showSiriCallChoice(id,number,active,requestedAt);return 'waiting';}
+  if(!active.length&&matches.length)return 'call-archived';
+  return setSiriCallDraft(id,number,active[0]?.id);
+}
+function prepareSiriCall(id,text){
+  const wanted=siriCallContactKey(text);
+  if(!wanted)return 'call-not-found';
+  if(siriCallDraft?.id===id)return 'invalid';
+  const active=prospects.filter(contact=>!contact.archived);
+  const exact=active.filter(contact=>siriCallContactKey(contact.name)===wanted);
+  const matches=wanted.includes(' ')?exact:active.filter(contact=>siriCallContactKey(contact.name).split(' ')[0]===wanted);
+  if(matches.length!==1)return matches.length?'call-ambiguous':'call-not-found';
+  const contact=matches[0];
+  if(siriCallContactBlocked(contact))return 'call-blocked';
+  const number=normaliseDialNumber(primaryProspectPhone(contact));
+  if(!/^\+?[0-9]{8,15}$/.test(number))return 'call-no-number';
+  return setSiriCallDraft(id,number,contact.id);
+}
+function openSiriCallOutcome(id,startedAt){
+  if(!Number.isFinite(startedAt)||startedAt<=0)return 'invalid';
+  if(!startupReady||document.hidden)return 'waiting';
+  if(lastOpenedSiriCall?.id===id&&lastOpenedSiriCall.owner===uid&&lastOpenedSiriCall.epoch===accountStateEpoch)return 'opened';
+  const draft=siriCallDraft;
+  if(!draft||draft.id!==id||draft.owner!==uid||draft.epoch!==accountStateEpoch)return 'invalid';
+  if($('#app')?.classList.contains('hidden')||$('#returningSnapshotScreen:not(.hidden)')||$('#welcomeScreen:not(.hidden)'))return 'waiting';
+  if(siriWorkspaceBusy())return 'busy';
+  if(draft.contactId){
+    const contact=prospectById(draft.contactId);
+    if(!contact||contact.archived)return 'invalid';
+    switchView('prospectingView');
+    openProspectLog(contact.id);
+    recordCallHistory({id,number:draft.number,name:contact.name,launchedAt:startedAt,owner:uid});
+  }else{
+    const pending=readPendingManualCall();
+    if(pending&&!pending.outcomeLogged&&pending.id!==id)return 'busy';
+    if(pending?.id!==id){
+      writePendingManualCall({id,number:draft.number,launchedAt:startedAt,owner:uid,outcomeLogged:false,source:'siri-number'});
+    }
+    if(!showManualCallOutcome())return 'invalid';
+  }
+  lastOpenedSiriCall=draft;
+  siriCallDraft=null;
+  return 'opened';
+}
 if(window.webkit?.messageHandlers?.agntNative){
+  window.agntOpenSiriCallOutcome=openSiriCallOutcome;
   window.agntOpenShortcut=request=>{
     const { id, route, text='', requestedAt }=request||{};
     if(typeof id!=='string'||typeof text!=='string'||!Number.isFinite(requestedAt))return 'invalid';
     if(id===lastOpenedSiriRequest)return 'opened';
     if(!startupReady||!uid||document.hidden||$('#app')?.classList.contains('hidden'))return 'waiting';
     if($('#returningSnapshotScreen:not(.hidden)')||$('#welcomeScreen:not(.hidden)'))return 'waiting';
+    if(Date.now()-requestedAt>=300000)return 'invalid';
+    if(siriCallChoice&&siriCallChoice.id!==id)clearSiriCallChoice();
+    if(route==='call-number')return prepareSiriNumberCall(id,text,requestedAt);
     if(siriWorkspaceBusy())return 'busy';
+    if(route==='call')return prepareSiriCall(id,text);
     if(siriViewRoutes.has(route)){
       if(route==='today'||route==='schedule')selectedDate=todayKey();
       if(['followups','pipeline','buyers'].includes(route))prepareProspectingMenuHome();
