@@ -9,9 +9,9 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.46.54-siri">
-<link rel="stylesheet" href="cleanup.css?v=1.46.54-siri">
-<link rel="stylesheet" href="visual-system.css?v=1.46.54-siri">
+<link rel="stylesheet" href="styles.css?v=1.46.56-siri">
+<link rel="stylesheet" href="cleanup.css?v=1.46.56-siri">
+<link rel="stylesheet" href="visual-system.css?v=1.46.56-siri">
 <title>AGNT</title>
 </head>
 <body>
@@ -1091,12 +1091,13 @@ Thanks,
           <div id="nativeReminderOptions" hidden>
             <label><input type="checkbox" id="agntLocalReminders"> Appointment, follow-up and task reminders</label>
             <p>Appointments 30 minutes before, follow-ups at 9 am on their due date, tasks at their scheduled time.</p>
+            <label><input type="checkbox" id="agntReminderDetails"> Show client names and appointment addresses in notifications</label>
           </div>
           <div id="agntPushOptions" hidden>
             <label><input type="checkbox" id="agntNotifyMarket" checked> MarketPulse updates</label>
             <label><input type="checkbox" id="agntNotifyTeam" checked> Team bookings</label>
             <label><input type="checkbox" id="agntNotifyHourly" checked> Hourly Calls, Connects and Data pace</label>
-            <label><input type="checkbox" id="agntNotifyCompetition" checked> Leaderboard changes and first-place targets</label>
+            <label><input type="checkbox" id="agntNotifyCompetition" checked> Leaderboard moves and daily targets</label>
             <button id="agntSavePush" class="secondary" type="button">Enable or update alerts</button>
             <button id="agntDisablePush" class="secondary" type="button">Turn off alerts</button>
           </div>
@@ -1113,7 +1114,7 @@ Thanks,
         <label class="file-btn secondary">Import backup<input id="importData" type="file" accept="application/json"></label>
         <button id="signOut" class="danger">Sign out</button>
         <p id="modeNote"></p>
-        <small class="release-version">AGNT v1.46.54</small>
+        <small class="release-version">AGNT v1.46.56</small>
       </div>
     </section>
   </main>
@@ -1275,7 +1276,7 @@ Thanks,
 
 
 
-<script src="runtime.js?v=1.46.54-siri"></script>
-<script type="module" src="app.js?v=1.46.54-siri"></script>
+<script src="runtime.js?v=1.46.56-siri"></script>
+<script type="module" src="app.js?v=1.46.56-siri"></script>
 </body>
 </html>

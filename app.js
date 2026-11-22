@@ -1,4 +1,4 @@
-import { parseSiriBooking, matchSiriAssignee } from './siri-booking.js?v=1.46.54';
+import { parseSiriBooking, matchSiriAssignee } from './siri-booking.js?v=1.46.56';
 import {createAssociateProfiles} from './associate-profiles.js';
 import {stableSnapshotString,compareSnapshotHeads} from './snapshot-compare.js';
 import {createSyncHealth} from './sync-health.js';
@@ -6912,7 +6912,7 @@ $('#settingsView').addEventListener('change',event=>{const field=event.target;if
 $('#saveSettings').onclick=async()=>{const fields=['callsTarget','connectsTarget','dataTarget','weeklyKnockTarget'];const invalid=fields.find(id=>{const value=Number($('#'+id).value);return !Number.isSafeInteger(value)||value<=0});if(invalid){toast('Enter a whole number greater than zero for every target.');$('#'+invalid).focus();return}const savingOwner=uid,savingEpoch=accountStateEpoch;const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();agentMobile=cleanText($('#agentMobile').value,50);targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;calendarPreference=$('[name=calendarPreference]:checked')?.value==='apple'?'apple':'outlook';appearancePreference=normaliseAppearance($('[name=appearancePreference]:checked')?.value);applyAppearance(appearancePreference);settingsDraftFields.clear();await saveTargets();if(uid!==savingOwner||accountStateEpoch!==savingEpoch)return;if(cloud&&accountMode==='team'&&teamId&&uid){try{await setDoc(doc(db,'teams',teamId,'members',uid),{name:agentName,updatedAt:serverTimestamp()},{merge:true})}catch(err){console.error('Team profile name sync failed',err)}}renderAll();toast('Settings saved')};
 $('#signOut').onclick=async()=>{clearActiveSession();await stopPhoneNotifications().catch(()=>{});if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
 function mergeBackupRecords(current=[],incoming=[]){const byId=new Map();[...(Array.isArray(current)?current:[]),...(Array.isArray(incoming)?incoming:[])].forEach((item,index)=>{if(!item||typeof item!=='object')return;const id=cleanText(item.id,180)||`backup-record-${index}`;byId.set(id,item)});return[...byId.values()]}
-function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.46.54',exportedAt:new Date().toISOString(),targets,workDays,agentName,agentMobile,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),marketPulseLedger:normaliseLedger(marketPulseLedger),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
+function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.46.56',exportedAt:new Date().toISOString(),targets,workDays,agentName,agentMobile,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),marketPulseLedger:normaliseLedger(marketPulseLedger),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
 function restoreBuyerSessionBackup(value){if(!value||!Array.isArray(value.contacts))return false;buyerSession={contacts:value.contacts.map((contact,index)=>({id:cleanText(contact.id,80)||`buyer_${index}`,name:cleanText(contact.name,120)||'Unknown buyer',phone:normaliseDialNumber(contact.phone),address:cleanText(contact.address,240),doNotSms:Boolean(contact.doNotSms),status:cleanText(contact.status,40)})).filter(contact=>contact.phone),index:Math.max(0,Number(value.index)||0),active:Boolean(value.active),visible:false,fileName:cleanText(value.fileName,160),importedAt:Number(value.importedAt)||0};buyerSession.index=Math.min(buyerSession.index,buyerSession.contacts.length);return saveBuyerSession()}
 function syncImportedBackup(dayKeys=[],prospectingIncluded=false){if(!cloud)return;saveTargets().catch(err=>console.error('Imported settings sync failed',err));dayKeys.forEach(key=>saveDay(key,{quiet:true,awaitCloud:false,render:false}).catch?.(err=>console.error('Imported day sync failed',err)));if(prospectingIncluded)saveProspecting({render:false,awaitCloud:false}).catch(err=>console.error('Imported prospecting sync failed',err))}
 function missingMarketRecoveryRows(rows){
@@ -7030,7 +7030,7 @@ async function checkCloudSync(){
 $('#checkCloudSync')?.addEventListener('click',checkCloudSync);
 $('#exportDiagnostics')?.addEventListener('click',()=>{
   let runtimeEvents=[];try{runtimeEvents=JSON.parse(window.agntRuntime?.export?.()||'[]')}catch{}
-  const data=JSON.stringify({schemaVersion:2,appVersion:'1.46.54',exportedAt:new Date().toISOString(),runtimeEvents,deviceStorage:deviceStorageDiagnostics(),sync:syncHealth.snapshot(syncDiagnosticContext())},null,2),blob=new Blob([data],{type:'application/json'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='AGNT-runtime-diagnostics.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)
+  const data=JSON.stringify({schemaVersion:2,appVersion:'1.46.56',exportedAt:new Date().toISOString(),runtimeEvents,deviceStorage:deviceStorageDiagnostics(),sync:syncHealth.snapshot(syncDiagnosticContext())},null,2),blob=new Blob([data],{type:'application/json'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='AGNT-runtime-diagnostics.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)
 });
 $('#exportData').onclick=()=>{const blob=new Blob([JSON.stringify(completeBackupPayload(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`agnt-complete-backup-${todayKey()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),0)};
 $('#importData').onchange=async e=>{const file=e.target.files?.[0];e.target.value='';if(!file)return;try{const raw=JSON.parse(await file.text());if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('Invalid backup');if(!confirm('Import this AGNT backup?\n\nExisting records with the same date or ID may be updated.'))return;const importedDays=normaliseDaysMap(raw.days||{}),dayKeys=Object.keys(importedDays),prospectingIncluded=Array.isArray(raw.prospects)||Array.isArray(raw.prospectInteractions)||Array.isArray(raw.marketPulseEvents)||Array.isArray(raw.marketPulseHistory)||Array.isArray(raw.marketPulseLedger);if(raw.targets&&typeof raw.targets==='object')targets=normaliseTargets(raw.targets);if(Array.isArray(raw.workDays)&&raw.workDays.length)workDays=normaliseWorkDays(raw.workDays);if(typeof raw.agentName==='string'&&raw.agentName.trim())agentName=cleanText(raw.agentName,120);if(typeof raw.agentMobile==='string')agentMobile=cleanText(raw.agentMobile,50);if(raw.calendarPreference==='apple'||raw.calendarPreference==='outlook')calendarPreference=raw.calendarPreference;if(['system','light','dark'].includes(raw.appearancePreference))applyAppearance(raw.appearancePreference);days={...days,...importedDays};if(Array.isArray(raw.prospects))prospects=normaliseProspects(mergeBackupRecords(prospects,raw.prospects));if(Array.isArray(raw.prospectInteractions))prospectInteractions=normaliseProspectInteractions(mergeBackupRecords(prospectInteractions,raw.prospectInteractions));if(Array.isArray(raw.marketPulseEvents))marketPulseEvents=normaliseMarketPulseEvents(mergeBackupRecords(marketPulseEvents,raw.marketPulseEvents));if(Array.isArray(raw.marketPulseLedger))marketPulseLedger=normaliseLedger([...marketPulseLedger,...raw.marketPulseLedger]);if(Array.isArray(raw.marketPulseHistory))marketPulseHistory=normaliseMarketPulseHistory(mergeBackupRecords(marketPulseHistory,raw.marketPulseHistory));if(Array.isArray(raw.campaignHistory))campaignHistory=mergeBackupRecords(campaignHistory,raw.campaignHistory).sort((a,b)=>(Number(b.createdAt)||0)-(Number(a.createdAt)||0)).slice(0,20);if(Array.isArray(raw.bulkSmsTestLaunches))bulkSmsTestLaunches=mergeBackupRecords(bulkSmsTestLaunches,raw.bulkSmsTestLaunches).sort((a,b)=>(Number(b.createdAt)||0)-(Number(a.createdAt)||0)).slice(0,10);saveLocal();restoreBuyerSessionBackup(raw.buyerSession);renderAll();syncImportedBackup(dayKeys,prospectingIncluded);toast('Backup restored · cloud sync running')}catch(err){console.error('Backup import failed',err);toast('Backup could not be read')}};
@@ -7268,8 +7268,30 @@ function agntLocalRemindersEnabled(){
   try{return uid&&localStorage.getItem(storagePrefix(uid)+'ios-reminders')==='on';}catch{return false;}
 }
 function phoneNotificationStatus(text){const node=$('#agntNotifyStatus');if(node)node.textContent=text;}
+function agntReminderDetailsEnabled(){
+  try{return Boolean(uid&&localStorage.getItem(storagePrefix(uid)+'ios-reminder-details')==='on');}catch{return false;}
+}
+function agntCallReminderContact(task){
+  const name=String(task.title||'').match(/^call\s+(.+)$/i)?.[1];
+  if(!name)return null;
+  const wanted=siriCallContactKey(name);
+  if(!wanted)return null;
+  const matches=prospects.filter(p=>!p.archived&&(
+    wanted.includes(' ')?siriCallContactKey(p.name)===wanted:siriCallContactKey(p.name).split(' ')[0]===wanted
+  ));
+  const contact=matches.length===1?matches[0]:null;
+  return contact&&primaryProspectPhone(contact)&&!siriCallContactBlocked(contact)?contact:null;
+}
+function agntReminderContentKey(row){
+  // Native requests with the same ID/time are kept. Replace them when the preview changes.
+  let hash=2166136261;
+  for(const char of JSON.stringify([row.route,row.id,row.sourceDate,row.team,row.title,row.body])){
+    hash=Math.imul(hash^char.codePointAt(0),16777619);
+  }
+  return row.key.slice(0,135)+':'+(hash>>>0).toString(16);
+}
 function agntReminderRows(now=new Date()){
-  const rows=[],utc=now.getTime();
+  const rows=[],utc=now.getTime(),details=agntReminderDetailsEnabled();
   for(let offset=0;offset<14;offset++){
     const day=new Date(now);day.setDate(day.getDate()+offset);
     const key=dateKey(day);
@@ -7282,13 +7304,18 @@ function agntReminderRows(now=new Date()){
       // Use the assignment time so reopening AGNT after an earlier alert cannot schedule a second one.
       const at=assignedAt>=leadTime&&assignedAt<time?time:leadTime;
       if(id&&Number.isFinite(at)&&at>utc)rows.push({key:'booking:'+id,route:'bookings',id,at,
-        team:isTeamAssigned?teamId:'',title:'Appointment reminder',body:'Check your upcoming appointment in AGNT.'});
+        sourceDate,team:isTeamAssigned?teamId:'',
+        title:teamAppointmentConfirmationLabel(appointmentType(a))+' · '+appointmentTimeLabel(a,sourceDate),
+        body:(details?[cleanText(a.contactName,45),cleanText(a.address,95)].filter(Boolean).join(' · '):'')||
+          'Tap to open the appointment in AGNT.'});
     }
     const at=new Date(day);at.setHours(9,0,0,0);
     if(at>now){
       for(const p of prospectFollowUpsForDate(key).filter(p=>p.nextFollowUp===key)){
+        const canCall=Boolean(primaryProspectPhone(p)&&!siriCallContactBlocked(p));
         rows.push({key:'followup:'+p.id,route:'contact',id:String(p.id),at:at.getTime(),
-          title:'Follow-up due',body:'Open AGNT to follow up with a contact.'});
+          title:canCall?'Call follow-up due':'Follow-up due',body:details&&p.name?
+            (canCall?'Call ':'Follow up with ')+cleanText(p.name,100):'Tap to open the contact in AGNT.'});
       }
       for(const {appointment:a,sourceDate} of scheduledFollowUpsForDate(key)){
         if(a.followUpDate!==key||a.assignedToUid&&a.assignedToUid!==uid)continue;
@@ -7299,12 +7326,15 @@ function agntReminderRows(now=new Date()){
     }
     for(const {task} of taskEntriesForDate(key)){
       if(task.completedAt||!task.time||task.assignedToUid&&task.assignedToUid!==uid||task.scheduledAt<=utc)continue;
-      rows.push({key:'task:'+task.id,route:'schedule',id:String(task.id),sourceDate:key,at:task.scheduledAt,
-        title:'AGNT task reminder',body:'A task is due in your Day Plan.'});
+      const contact=agntCallReminderContact(task);
+      rows.push({key:'task:'+task.id,route:contact?'contact':'schedule',id:String(contact?.id||task.id),
+        sourceDate:key,at:task.scheduledAt,title:contact?'Call scheduled · '+task.time:'AGNT task reminder',
+        body:contact?(details?'Call '+cleanText(contact.name,100):'Tap to open the contact in AGNT.'):
+          'A task is due in your Day Plan.'});
     }
   }
   return [...new Map(rows.sort((a,b)=>a.at-b.at).map(row=>[row.key,row])).values()]
-    .sort((a,b)=>a.at-b.at).slice(0,48);
+    .sort((a,b)=>a.at-b.at).slice(0,48).map(row=>({...row,key:agntReminderContentKey(row)}));
 }
 
 function updateAGNTPhoneNotifications(){
@@ -7317,6 +7347,7 @@ function updateAGNTPhoneNotifications(){
     $('#nativeReminderOptions').hidden=!agntReminderBridge;
     $('#agntPushOptions').hidden=!agntWebPush;
     $('#agntLocalReminders').checked=Boolean(agntLocalRemindersEnabled());
+    $('#agntReminderDetails').checked=agntReminderDetailsEnabled();
     let profile;
     try{profile=JSON.parse(localStorage.getItem(storagePrefix(owner)+'push-topics')||'null');}catch{}
     agntReminderDirty=true;agntReminderSignature='';
@@ -7369,6 +7400,7 @@ function handleAGNTAlertRoute(){
     const assigned=entry.team&&entry.id?assignedTeamAppointments.find(row=>row.teamAppointmentId===entry.id):null;
     if(entry.team&&entry.id&&!assigned)return;
     if(assigned)appointmentDate=appointmentScheduledDate(assigned,assigned.createdDate||todayKey());
+    else if(validDateKey(entry.sourceDate))appointmentDate=entry.sourceDate;
     openWorkspaceRoute('bookings');
     if(entry.id)requestAnimationFrame(()=>{
       const attr=assigned?'data-agnt-team-booking':'data-appointment-card-edit';
@@ -7401,6 +7433,13 @@ $('#agntLocalReminders')?.addEventListener('change',event=>{
   agntReminderRequestAt=0;agntReminderDirty=true;
   agntReminderBridge.postMessage({kind:enabled?'permission':'clear',owner:uid});
   if(!enabled)phoneNotificationStatus('iPhone reminders turned off.');
+});
+
+$('#agntReminderDetails')?.addEventListener('change',event=>{
+  if(!uid||currentUser?.uid!==uid||!agntReminderBridge)return;
+  try{localStorage.setItem(storagePrefix(uid)+'ios-reminder-details',event.currentTarget.checked?'on':'off');}catch{}
+  agntReminderRequestAt=0;agntReminderDirty=true;
+  updateAGNTPhoneNotifications();
 });
 
 async function agntPushRequest(user,sub,enabled){
