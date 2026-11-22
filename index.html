@@ -9,9 +9,9 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.46.56-siri">
-<link rel="stylesheet" href="cleanup.css?v=1.46.56-siri">
-<link rel="stylesheet" href="visual-system.css?v=1.46.56-siri">
+<link rel="stylesheet" href="styles.css?v=1.46.57-siri">
+<link rel="stylesheet" href="cleanup.css?v=1.46.57-siri">
+<link rel="stylesheet" href="visual-system.css?v=1.46.57-siri">
 <title>AGNT</title>
 </head>
 <body>
@@ -25,9 +25,18 @@
     <input id="email" type="email" autocomplete="email" placeholder="Email" aria-label="Email" required>
     <input id="password" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password" minlength="6" required>
     <button class="primary" type="submit">Sign in</button>
+    <button id="forgotPassword" class="text-btn" type="button">Forgot password?</button>
     <button id="createAccount" class="secondary" type="button">Create account</button>
     <button id="localMode" class="text-btn" type="button">Continue on this device only</button>
     <small id="authMessage"></small>
+  </form>
+  <form id="authResetForm" class="auth-card glass hidden" aria-labelledby="authResetTitle">
+    <h1 id="authResetTitle">Reset your password</h1>
+    <p>Enter the email you use to sign in to AGNT.</p>
+    <input id="authResetEmail" type="email" name="email" autocomplete="email" autocapitalize="none" spellcheck="false" placeholder="Email" aria-label="Email" required>
+    <button id="authResetSubmit" class="primary" type="submit">Send reset link</button>
+    <button id="authResetBack" class="text-btn" type="button">Back to sign in</button>
+    <small id="authResetMessage" role="status" aria-live="polite" aria-atomic="true"></small>
   </form>
 </div>
 
@@ -1114,7 +1123,7 @@ Thanks,
         <label class="file-btn secondary">Import backup<input id="importData" type="file" accept="application/json"></label>
         <button id="signOut" class="danger">Sign out</button>
         <p id="modeNote"></p>
-        <small class="release-version">AGNT v1.46.56</small>
+        <small class="release-version">AGNT v1.46.57</small>
       </div>
     </section>
   </main>
@@ -1276,7 +1285,7 @@ Thanks,
 
 
 
-<script src="runtime.js?v=1.46.56-siri"></script>
-<script type="module" src="app.js?v=1.46.56-siri"></script>
+<script src="runtime.js?v=1.46.57-siri"></script>
+<script type="module" src="app.js?v=1.46.57-siri"></script>
 </body>
 </html>

@@ -1247,6 +1247,9 @@ html body #authGate button.primary {background:var(--ds-ink)!important;color:var
 html body #authGate button.secondary {background:var(--ds-soft)!important;color:var(--ds-ink)!important;border-color:var(--ds-rule)!important}
 html body #authGate #localMode {min-height:44px!important;font-size:12px!important;color:var(--ds-muted)!important}
 html body #authGate #authMessage {font-size:12px!important;line-height:1.5!important}
+html body #authGate :is(#forgotPassword,#authResetBack) {min-height:44px!important;font-size:13px!important;color:var(--ds-ink)!important}
+html body #authGate :is(#authResetForm h1,#authResetForm p,#authResetForm button,#authResetMessage,#forgotPassword) {text-transform:none}
+html body #authGate #authResetMessage {display:block;margin-top:8px;font-size:12px!important;line-height:1.5!important;color:var(--ds-muted)!important}
 html body #returningSnapshotScreen {--morning-bg:var(--ds-canvas);--morning-ink:var(--ds-ink);--morning-muted:var(--ds-muted);--morning-border:var(--ds-rule);--morning-blue:var(--ds-info)}
 html body #returningSnapshotScreen .morning-live-content {align-content:start!important;gap:0!important;padding:0!important}
 html body #returningSnapshotScreen .morning-live-hero {display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;column-gap:16px!important;padding:20px 0!important;margin:0!important;min-height:0!important;background:transparent!important;border:0!important;box-shadow:none!important}

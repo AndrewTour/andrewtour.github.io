@@ -1,4 +1,4 @@
-import { parseSiriBooking, matchSiriAssignee } from './siri-booking.js?v=1.46.56';
+import { parseSiriBooking, matchSiriAssignee } from './siri-booking.js?v=1.46.57';
 import {createAssociateProfiles} from './associate-profiles.js';
 import {stableSnapshotString,compareSnapshotHeads} from './snapshot-compare.js';
 import {createSyncHealth} from './sync-health.js';
@@ -7,7 +7,7 @@ import {retainMarketData,retentionCutoff,normaliseLedger,marketTotals} from './m
 import {digest,encodeSnapshot,decodeSnapshot,publishSnapshot,saveDeviceSnapshot,loadDeviceSnapshot} from './prospecting-storage.js';
 import { firebaseConfig } from './firebase-config.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js';
-import { getAuth, setPersistence, browserLocalPersistence, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut as firebaseSignOut } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
+import { getAuth, setPersistence, browserLocalPersistence, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut as firebaseSignOut } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
 import { initializeFirestore, memoryLocalCache, collection, doc, setDoc, getDoc, getDocs, query, where, writeBatch, runTransaction, getDocFromServer, getDocsFromServer, onSnapshot, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
 
 const syncHealth=createSyncHealth();
@@ -6465,6 +6465,68 @@ function shiftHeaderDate(delta){
 
 function openCalendar(){$('#calendarModal').classList.add('open');renderCalendar()}
 
+function bindPasswordRecovery(){
+  const signIn=$('#authForm'), form=$('#authResetForm'), email=$('#authResetEmail');
+  const message=$('#authResetMessage'), send=$('#authResetSubmit'), open=$('#forgotPassword');
+  const confirmation='If an AGNT account uses this email, you’ll get a reset link. Check your inbox and junk folder.';
+  let pending=false;
+
+  open.addEventListener('click',()=>{
+    if(!pending)email.value=$('#email').value.trim();
+    message.textContent=pending?'Sending reset link…':'';
+    signIn.classList.add('hidden');
+    form.classList.remove('hidden');
+    email.focus();
+  });
+
+  $('#authResetBack').addEventListener('click',()=>{
+    if(email.value&&email.validity.valid)$('#email').value=email.value.trim();
+    form.classList.add('hidden');
+    signIn.classList.remove('hidden');
+    open.focus();
+  });
+
+  form.addEventListener('submit',async event=>{
+    event.preventDefault();
+    if(pending||form.classList.contains('hidden')||!form.reportValidity())return;
+    if(!auth){
+      message.textContent='AGNT couldn’t connect to sign-in. Check your connection and try again.';
+      return;
+    }
+    pending=true;
+    send.disabled=true;
+    email.readOnly=true;
+    message.textContent='Sending reset link…';
+    try{
+      await sendPasswordResetEmail(auth,email.value.trim());
+      message.textContent=confirmation;
+    }catch(error){
+      switch(error?.code){
+        case 'auth/user-not-found':
+        case 'auth/user-disabled':
+          message.textContent=confirmation;
+          break;
+        case 'auth/network-request-failed':
+          message.textContent='Check your internet connection and try again.';
+          break;
+        case 'auth/too-many-requests':
+          message.textContent='Too many attempts. Wait a few minutes and try again.';
+          break;
+        case 'auth/invalid-email':
+          message.textContent='Enter a valid email address.';
+          break;
+        default:
+          message.textContent='AGNT couldn’t request a reset link. Please try again.';
+      }
+    }finally{
+      pending=false;
+      send.disabled=false;
+      email.readOnly=false;
+    }
+  });
+}
+bindPasswordRecovery();
+
 $('#authForm').addEventListener('submit',async e=>{e.preventDefault();startupDeviceOnly=false;showAuthMessage('Signing in…');try{await signInWithEmailAndPassword(auth,$('#email').value,$('#password').value)}catch(err){console.error('Sign in failed',err);showAuthMessage(consumerAuthError(err,'sign in'))}});
 $('#createAccount').onclick=async()=>{startupDeviceOnly=false;showAuthMessage('Creating account…');creatingAccount=true;try{const credential=await createUserWithEmailAndPassword(auth,$('#email').value,$('#password').value);newAccountUidPending=credential.user.uid;try{await setDoc(doc(db,'users',credential.user.uid),{teamOnboardingSuggested:true,teamSchemaVersion:TEAM_SCHEMA_VERSION,email:credential.user.email||'',createdAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true})}catch(err){console.error('Team onboarding marker failed',err)}creatingAccount=false;await startCloud(credential.user,{promptTeamSetup:true})}catch(err){creatingAccount=false;showAuthMessage(consumerAuthError(err,'create'))}};
 
@@ -6912,7 +6974,7 @@ $('#settingsView').addEventListener('change',event=>{const field=event.target;if
 $('#saveSettings').onclick=async()=>{const fields=['callsTarget','connectsTarget','dataTarget','weeklyKnockTarget'];const invalid=fields.find(id=>{const value=Number($('#'+id).value);return !Number.isSafeInteger(value)||value<=0});if(invalid){toast('Enter a whole number greater than zero for every target.');$('#'+invalid).focus();return}const savingOwner=uid,savingEpoch=accountStateEpoch;const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();agentMobile=cleanText($('#agentMobile').value,50);targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;calendarPreference=$('[name=calendarPreference]:checked')?.value==='apple'?'apple':'outlook';appearancePreference=normaliseAppearance($('[name=appearancePreference]:checked')?.value);applyAppearance(appearancePreference);settingsDraftFields.clear();await saveTargets();if(uid!==savingOwner||accountStateEpoch!==savingEpoch)return;if(cloud&&accountMode==='team'&&teamId&&uid){try{await setDoc(doc(db,'teams',teamId,'members',uid),{name:agentName,updatedAt:serverTimestamp()},{merge:true})}catch(err){console.error('Team profile name sync failed',err)}}renderAll();toast('Settings saved')};
 $('#signOut').onclick=async()=>{clearActiveSession();await stopPhoneNotifications().catch(()=>{});if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
 function mergeBackupRecords(current=[],incoming=[]){const byId=new Map();[...(Array.isArray(current)?current:[]),...(Array.isArray(incoming)?incoming:[])].forEach((item,index)=>{if(!item||typeof item!=='object')return;const id=cleanText(item.id,180)||`backup-record-${index}`;byId.set(id,item)});return[...byId.values()]}
-function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.46.56',exportedAt:new Date().toISOString(),targets,workDays,agentName,agentMobile,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),marketPulseLedger:normaliseLedger(marketPulseLedger),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
+function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.46.57',exportedAt:new Date().toISOString(),targets,workDays,agentName,agentMobile,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),marketPulseLedger:normaliseLedger(marketPulseLedger),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
 function restoreBuyerSessionBackup(value){if(!value||!Array.isArray(value.contacts))return false;buyerSession={contacts:value.contacts.map((contact,index)=>({id:cleanText(contact.id,80)||`buyer_${index}`,name:cleanText(contact.name,120)||'Unknown buyer',phone:normaliseDialNumber(contact.phone),address:cleanText(contact.address,240),doNotSms:Boolean(contact.doNotSms),status:cleanText(contact.status,40)})).filter(contact=>contact.phone),index:Math.max(0,Number(value.index)||0),active:Boolean(value.active),visible:false,fileName:cleanText(value.fileName,160),importedAt:Number(value.importedAt)||0};buyerSession.index=Math.min(buyerSession.index,buyerSession.contacts.length);return saveBuyerSession()}
 function syncImportedBackup(dayKeys=[],prospectingIncluded=false){if(!cloud)return;saveTargets().catch(err=>console.error('Imported settings sync failed',err));dayKeys.forEach(key=>saveDay(key,{quiet:true,awaitCloud:false,render:false}).catch?.(err=>console.error('Imported day sync failed',err)));if(prospectingIncluded)saveProspecting({render:false,awaitCloud:false}).catch(err=>console.error('Imported prospecting sync failed',err))}
 function missingMarketRecoveryRows(rows){
@@ -7030,7 +7092,7 @@ async function checkCloudSync(){
 $('#checkCloudSync')?.addEventListener('click',checkCloudSync);
 $('#exportDiagnostics')?.addEventListener('click',()=>{
   let runtimeEvents=[];try{runtimeEvents=JSON.parse(window.agntRuntime?.export?.()||'[]')}catch{}
-  const data=JSON.stringify({schemaVersion:2,appVersion:'1.46.56',exportedAt:new Date().toISOString(),runtimeEvents,deviceStorage:deviceStorageDiagnostics(),sync:syncHealth.snapshot(syncDiagnosticContext())},null,2),blob=new Blob([data],{type:'application/json'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='AGNT-runtime-diagnostics.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)
+  const data=JSON.stringify({schemaVersion:2,appVersion:'1.46.57',exportedAt:new Date().toISOString(),runtimeEvents,deviceStorage:deviceStorageDiagnostics(),sync:syncHealth.snapshot(syncDiagnosticContext())},null,2),blob=new Blob([data],{type:'application/json'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='AGNT-runtime-diagnostics.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)
 });
 $('#exportData').onclick=()=>{const blob=new Blob([JSON.stringify(completeBackupPayload(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`agnt-complete-backup-${todayKey()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),0)};
 $('#importData').onchange=async e=>{const file=e.target.files?.[0];e.target.value='';if(!file)return;try{const raw=JSON.parse(await file.text());if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('Invalid backup');if(!confirm('Import this AGNT backup?\n\nExisting records with the same date or ID may be updated.'))return;const importedDays=normaliseDaysMap(raw.days||{}),dayKeys=Object.keys(importedDays),prospectingIncluded=Array.isArray(raw.prospects)||Array.isArray(raw.prospectInteractions)||Array.isArray(raw.marketPulseEvents)||Array.isArray(raw.marketPulseHistory)||Array.isArray(raw.marketPulseLedger);if(raw.targets&&typeof raw.targets==='object')targets=normaliseTargets(raw.targets);if(Array.isArray(raw.workDays)&&raw.workDays.length)workDays=normaliseWorkDays(raw.workDays);if(typeof raw.agentName==='string'&&raw.agentName.trim())agentName=cleanText(raw.agentName,120);if(typeof raw.agentMobile==='string')agentMobile=cleanText(raw.agentMobile,50);if(raw.calendarPreference==='apple'||raw.calendarPreference==='outlook')calendarPreference=raw.calendarPreference;if(['system','light','dark'].includes(raw.appearancePreference))applyAppearance(raw.appearancePreference);days={...days,...importedDays};if(Array.isArray(raw.prospects))prospects=normaliseProspects(mergeBackupRecords(prospects,raw.prospects));if(Array.isArray(raw.prospectInteractions))prospectInteractions=normaliseProspectInteractions(mergeBackupRecords(prospectInteractions,raw.prospectInteractions));if(Array.isArray(raw.marketPulseEvents))marketPulseEvents=normaliseMarketPulseEvents(mergeBackupRecords(marketPulseEvents,raw.marketPulseEvents));if(Array.isArray(raw.marketPulseLedger))marketPulseLedger=normaliseLedger([...marketPulseLedger,...raw.marketPulseLedger]);if(Array.isArray(raw.marketPulseHistory))marketPulseHistory=normaliseMarketPulseHistory(mergeBackupRecords(marketPulseHistory,raw.marketPulseHistory));if(Array.isArray(raw.campaignHistory))campaignHistory=mergeBackupRecords(campaignHistory,raw.campaignHistory).sort((a,b)=>(Number(b.createdAt)||0)-(Number(a.createdAt)||0)).slice(0,20);if(Array.isArray(raw.bulkSmsTestLaunches))bulkSmsTestLaunches=mergeBackupRecords(bulkSmsTestLaunches,raw.bulkSmsTestLaunches).sort((a,b)=>(Number(b.createdAt)||0)-(Number(a.createdAt)||0)).slice(0,10);saveLocal();restoreBuyerSessionBackup(raw.buyerSession);renderAll();syncImportedBackup(dayKeys,prospectingIncluded);toast('Backup restored · cloud sync running')}catch(err){console.error('Backup import failed',err);toast('Backup could not be read')}};
