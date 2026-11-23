@@ -9,9 +9,9 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.46.60-siri">
-<link rel="stylesheet" href="cleanup.css?v=1.46.60-siri">
-<link rel="stylesheet" href="visual-system.css?v=1.46.60-siri">
+<link rel="stylesheet" href="styles.css?v=1.46.61-siri">
+<link rel="stylesheet" href="cleanup.css?v=1.46.61-siri">
+<link rel="stylesheet" href="visual-system.css?v=1.46.61-siri">
 <title>AGNT</title>
 </head>
 <body>
@@ -340,7 +340,16 @@
   </header>
 
   <main>
-    <nav id="workspaceToolbar" class="workspace-toolbar" aria-label="Today views"></nav>
+    <div class="workspace-toolbar-row">
+      <nav id="workspaceToolbar" class="workspace-toolbar" aria-label="Today views"></nav>
+      <div class="leaderboard-period-bar">
+        <div class="leaderboard-mode-tabs" role="tablist" aria-label="Leaderboard period">
+          <button id="leaderboardDayTab" class="active" type="button" role="tab" aria-selected="true" aria-controls="leaderboardList" data-leaderboard-mode="day">Daily</button>
+          <button id="leaderboardWeekTab" type="button" role="tab" aria-selected="false" aria-controls="leaderboardList" data-leaderboard-mode="week">Weekly</button>
+        </div>
+        <div id="leaderboardStatus" class="leaderboard-live">LIVE</div>
+      </div>
+    </div>
     <section id="todayView" class="view active dashboard">
       <section class="score-week glass">
         <div class="score-overview">
@@ -631,13 +640,6 @@
 
     <section id="insightsView" class="view leaderboard-only-view">
       <div id="leaderboardInsights" class="insights-page active">
-        <div class="leaderboard-period-bar">
-          <div class="leaderboard-mode-tabs" role="tablist" aria-label="Leaderboard period">
-            <button id="leaderboardDayTab" class="active" type="button" role="tab" aria-selected="true" aria-controls="leaderboardList" data-leaderboard-mode="day">Daily</button>
-            <button id="leaderboardWeekTab" type="button" role="tab" aria-selected="false" aria-controls="leaderboardList" data-leaderboard-mode="week">Weekly</button>
-          </div>
-          <div id="leaderboardStatus" class="leaderboard-live">LIVE</div>
-        </div>
         <section class="leaderboard-dashboard glass" aria-label="Your progress for the selected period">
           <div class="leaderboard-period-summary">
             <div class="leaderboard-ring" id="leaderboardRing" role="img" style="--score:0"><strong id="leaderboardTopScore">0%</strong><span id="leaderboardRingLabel">Day</span></div>
@@ -662,7 +664,6 @@
             </div>
           </div>
           <div id="leaderboardList" class="leaderboard-list leaderboard-unified-list" aria-live="polite"><div class="empty">Waiting for team data…</div></div>
-          <p id="leaderboardNote" class="leaderboard-note">Ranked by overall completion. Tap an agent for their appointment summary.</p>
         </section>
       </div>
     </section>
@@ -1125,7 +1126,7 @@ Thanks,
         <label class="file-btn secondary">Import backup<input id="importData" type="file" accept="application/json"></label>
         <button id="signOut" class="danger">Sign out</button>
         <p id="modeNote"></p>
-        <small class="release-version">AGNT v1.46.60</small>
+        <small class="release-version">AGNT v1.46.61</small>
       </div>
     </section>
   </main>
@@ -1287,7 +1288,7 @@ Thanks,
 
 
 
-<script src="runtime.js?v=1.46.60-siri"></script>
-<script type="module" src="app.js?v=1.46.60-siri"></script>
+<script src="runtime.js?v=1.46.61-siri"></script>
+<script type="module" src="app.js?v=1.46.61-siri"></script>
 </body>
 </html>
