@@ -9,9 +9,9 @@
 <meta name="apple-mobile-web-app-title" content="AGNT">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=1.46.61-siri">
-<link rel="stylesheet" href="cleanup.css?v=1.46.61-siri">
-<link rel="stylesheet" href="visual-system.css?v=1.46.61-siri">
+<link rel="stylesheet" href="styles.css?v=1.46.63-siri">
+<link rel="stylesheet" href="cleanup.css?v=1.46.63-siri">
+<link rel="stylesheet" href="visual-system.css?v=1.46.63-siri">
 <title>AGNT</title>
 </head>
 <body>
@@ -293,7 +293,7 @@
   </section>
 </div>
 
-<div id="dayReviewOverlay" class="day-review-overlay hidden" aria-hidden="true">
+<div id="dayReviewOverlay" data-motion-sheet class="day-review-overlay hidden" aria-hidden="true">
   <section class="day-review-card" role="dialog" aria-modal="true" aria-labelledby="dayReviewTitle">
     <div class="day-review-head"><span>REVIEW DAY AND SEND STATS</span><strong id="dayReviewScore">0%</strong></div>
     <h2 id="dayReviewTitle">Day reviewed. Tomorrow is clearer.</h2>
@@ -344,6 +344,7 @@
       <nav id="workspaceToolbar" class="workspace-toolbar" aria-label="Today views"></nav>
       <div class="leaderboard-period-bar">
         <div class="leaderboard-mode-tabs" role="tablist" aria-label="Leaderboard period">
+          <span id="leaderboardPeriodIndicator" aria-hidden="true"></span>
           <button id="leaderboardDayTab" class="active" type="button" role="tab" aria-selected="true" aria-controls="leaderboardList" data-leaderboard-mode="day">Daily</button>
           <button id="leaderboardWeekTab" type="button" role="tab" aria-selected="false" aria-controls="leaderboardList" data-leaderboard-mode="week">Weekly</button>
         </div>
@@ -950,7 +951,7 @@ Thanks,
             </section>
 
             <section id="broadcastStepSuccess" class="broadcast-step-page hidden" data-broadcast-step="4">
-              <div class="broadcast-success-mark" aria-hidden="true">✓</div>
+              <div class="broadcast-success-mark" aria-hidden="true"><svg class="completion-check" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.5 8 3 3 6-6" pathLength="1"/></svg></div>
               <header class="broadcast-step-heading broadcast-success-heading">
                 <span>SHORTCUT LAUNCHED</span>
                 <h3>Opened in AGNT Bulk SMS</h3>
@@ -1126,7 +1127,7 @@ Thanks,
         <label class="file-btn secondary">Import backup<input id="importData" type="file" accept="application/json"></label>
         <button id="signOut" class="danger">Sign out</button>
         <p id="modeNote"></p>
-        <small class="release-version">AGNT v1.46.61</small>
+        <small class="release-version">AGNT v1.46.63</small>
       </div>
     </section>
   </main>
@@ -1146,7 +1147,7 @@ Thanks,
     <div id="calendarGrid" class="calendar-grid"></div>
   </div>
 </div>
-<div id="taskComposerModal" class="task-composer-modal hidden" aria-hidden="true">
+<div id="taskComposerModal" data-motion-sheet class="task-composer-modal hidden" aria-hidden="true">
   <section class="task-composer-card glass" role="dialog" aria-modal="true" aria-labelledby="taskComposerTitle">
     <div class="task-composer-head"><div><span>NEW TASK</span><h2 id="taskComposerTitle">Add a task</h2></div><button id="closeTaskComposer" type="button" aria-label="Close task">×</button></div>
     <form id="taskForm">
@@ -1159,7 +1160,7 @@ Thanks,
     </form>
   </section>
 </div>
-<div id="appointmentAssignmentModal" class="appointment-assignment-modal hidden" aria-hidden="true">
+<div id="appointmentAssignmentModal" data-motion-sheet class="appointment-assignment-modal hidden" aria-hidden="true">
   <section class="appointment-assignment-card glass" role="dialog" aria-modal="true" aria-labelledby="appointmentAssignmentTitle">
     <span class="appointment-assignment-kicker">ASSIGN APPOINTMENT</span>
     <h2 id="appointmentAssignmentTitle">Who is this appointment for?</h2>
@@ -1178,7 +1179,7 @@ Thanks,
   </section>
 </div>
 
-<div id="sellerPriorityDeferralModal" class="modal action-sheet-modal seller-priority-deferral-modal" aria-hidden="true">
+<div id="sellerPriorityDeferralModal" data-motion-sheet class="modal action-sheet-modal seller-priority-deferral-modal" aria-hidden="true">
   <section class="action-sheet glass seller-priority-deferral-sheet" role="dialog" aria-modal="true" aria-labelledby="sellerPriorityDeferralTitle">
     <div class="action-sheet-handle"></div>
     <div class="action-sheet-head"><div><small>SELLER PRIORITY</small><h2 id="sellerPriorityDeferralTitle">Move to the next action?</h2></div><button id="closeSellerPriorityDeferral" type="button" class="action-sheet-close" aria-label="Close">×</button></div>
@@ -1194,7 +1195,7 @@ Thanks,
   </section>
 </div>
 
-<div id="followUpModal" class="modal action-sheet-modal" aria-hidden="true">
+<div id="followUpModal" data-motion-sheet class="modal action-sheet-modal" aria-hidden="true">
   <div class="action-sheet glass" role="dialog" aria-modal="true" aria-labelledby="followUpModalTitle">
     <div class="action-sheet-handle"></div>
     <div class="action-sheet-head">
@@ -1207,7 +1208,7 @@ Thanks,
   </div>
 </div>
 
-<div id="outcomeModal" class="modal action-sheet-modal" aria-hidden="true">
+<div id="outcomeModal" data-motion-sheet class="modal action-sheet-modal" aria-hidden="true">
   <div class="action-sheet glass outcome-sheet" role="dialog" aria-modal="true" aria-labelledby="outcomeModalTitle">
     <div class="action-sheet-handle"></div>
     <div class="action-sheet-head">
@@ -1231,7 +1232,7 @@ Thanks,
 </div>
 
 
-<div id="manualDiallerModal" class="modal manual-dialler-modal" aria-hidden="true">
+<div id="manualDiallerModal" data-motion-sheet class="modal manual-dialler-modal" aria-hidden="true">
   <section class="manual-dialler glass" role="dialog" aria-modal="true" aria-labelledby="manualDiallerTitle">
     <div class="manual-dialler-head"><button id="closeManualDialler" type="button" aria-label="Close keypad">×</button><div><small>QUICK CALL</small><h2 id="manualDiallerTitle">Call a number</h2></div><button id="manualDiallerHistoryToggle" type="button" aria-label="Call history">History</button></div>
     <div id="manualDiallerContact" class="manual-dialler-contact" aria-live="polite" aria-atomic="true" hidden></div>
@@ -1257,7 +1258,7 @@ Thanks,
   </section>
 </div>
 
-<div id="manualCallOutcomeModal" class="modal action-sheet-modal manual-call-outcome-modal" aria-hidden="true">
+<div id="manualCallOutcomeModal" data-motion-sheet class="modal action-sheet-modal manual-call-outcome-modal" aria-hidden="true">
   <section class="action-sheet glass manual-call-outcome-sheet" role="dialog" aria-modal="true" aria-labelledby="manualCallOutcomeTitle">
     <div class="action-sheet-handle"></div>
     <div class="action-sheet-head"><div><small>CALL OUTCOME</small><h2 id="manualCallOutcomeTitle">How did the call go?</h2><p id="manualCallOutcomeNumber"></p></div><button id="closeManualCallOutcome" type="button" class="action-sheet-close" aria-label="Close">×</button></div>
@@ -1288,7 +1289,7 @@ Thanks,
 
 
 
-<script src="runtime.js?v=1.46.61-siri"></script>
-<script type="module" src="app.js?v=1.46.61-siri"></script>
+<script src="runtime.js?v=1.46.63-siri"></script>
+<script type="module" src="app.js?v=1.46.63-siri"></script>
 </body>
 </html>

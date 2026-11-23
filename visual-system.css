@@ -2006,7 +2006,7 @@ html[data-theme] body #manualDiallerModal#manualDiallerModal {
   position:fixed!important;inset:0!important;z-index:2147480000!important;
   width:100%!important;height:var(--app-height,100dvh)!important;min-height:0!important;max-height:none!important;
   box-sizing:border-box!important;padding:max(16px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left))!important;
-  background:var(--ds-canvas)!important;opacity:1!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+  background:var(--ds-canvas)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
   overflow:hidden!important;overscroll-behavior:none!important;transform:none!important;animation:none!important;
 }
 html[data-theme] body #manualDiallerModal#manualDiallerModal.open {display:flex!important;align-items:stretch!important;justify-content:center!important}
@@ -2299,4 +2299,71 @@ html body #app[data-pending-tab="people"] .tabbar.workspace-navigation [data-wor
 html body #app[data-pending-tab="market"] .tabbar.workspace-navigation [data-workspace-area="market"],
 html body #app[data-pending-tab="performance"] .tabbar.workspace-navigation [data-workspace-area="performance"] {
   color:var(--pending-tab-colour)!important;
+}
+
+/* v1.46.62 — short, local motion in the existing app surfaces. */
+:root {
+  --agnt-motion-out:cubic-bezier(.22,1,.36,1);
+  --agnt-sheet-open:165ms;
+  --agnt-sheet-close:110ms;
+  --agnt-ring-sweep:200ms;
+}
+html body #bootGate[aria-hidden="true"],
+html body [data-motion-sheet][aria-hidden="true"] {pointer-events:none!important}
+
+html body #app #todayView .metric-percent.metric-ring,
+html body #app #todayView #scoreBar {transition:none!important;animation:none!important}
+html body #app #todayView .metric.complete::before {animation:none!important}
+html body #app #todayView .metric-copy>strong>i {display:inline-block;font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:no-preference){
+  html:not(.keyboard-open) body #app #todayView .metric-percent.metric-ring[data-metric-sweep] {
+    transition:--actual var(--agnt-ring-sweep) var(--agnt-motion-out)!important;
+  }
+  html:not(.keyboard-open) body #app #todayView #scoreBar[data-metric-sweep] {
+    transition:width var(--agnt-ring-sweep) var(--agnt-motion-out)!important;
+  }
+  /* Both the close and its focus change are immediate. Discrete display keeps only the fading backdrop visible. */
+  @supports (transition-behavior:allow-discrete){
+    html:not(.keyboard-open) body [data-motion-sheet] {
+      opacity:0!important;
+      transition:opacity var(--agnt-sheet-close) var(--agnt-motion-out),display var(--agnt-sheet-close) allow-discrete!important;
+    }
+    html:not(.keyboard-open) body [data-motion-sheet][aria-hidden="false"] {
+      opacity:1!important;
+      transition-duration:var(--agnt-sheet-open)!important;
+    }
+    html:not(.keyboard-open) body [data-motion-sheet][aria-hidden="true"] > * {visibility:hidden}
+    html:not(.keyboard-open) body:has([data-motion-sheet][aria-hidden="false"]) [data-motion-sheet][aria-hidden="true"] {transition:none!important}
+    html:not(.keyboard-open) body :is(#outcomeModal,#followUpModal,#manualCallOutcomeModal)[data-motion-sheet][aria-hidden="true"] {background:var(--ds-canvas)!important}
+    html:not(.keyboard-open) body :is(#outcomeModal,#manualCallOutcomeModal,.hotspot-sms-decision-overlay)[data-motion-sheet][aria-hidden="false"] > :is(.action-sheet,.pipeline-refresh-card) {
+      translate:0 0;
+      transition:translate var(--agnt-sheet-open) var(--agnt-motion-out);
+    }
+    @starting-style {
+      html:not(.keyboard-open) body [data-motion-sheet][aria-hidden="false"] {opacity:0!important}
+      html:not(.keyboard-open) body :is(#outcomeModal,#manualCallOutcomeModal,.hotspot-sms-decision-overlay)[data-motion-sheet][aria-hidden="false"] > :is(.action-sheet,.pipeline-refresh-card) {translate:0 6px}
+    }
+  }
+}
+
+/* v1.46.63 — component feedback and deliberate period changes. */
+@property --score {
+  syntax:'<number>';
+  inherits:false;
+  initial-value:0;
+}
+html body #app .leaderboard-mode-tabs {position:relative}
+html body #app #leaderboardPeriodIndicator {
+  position:absolute;inset:auto auto 0 0;width:1px;height:2px;pointer-events:none;
+  background:var(--ds-ink);transform-origin:left center;
+  transform:translateX(var(--period-x,0px)) scaleX(var(--period-width,0));
+}
+html body #app .leaderboard-period-bar .leaderboard-mode-tabs[data-period-indicator] button.active {box-shadow:none!important}
+html body #app #dailyTimeline .timeline-task-check {display:grid!important;place-items:center;padding:0!important}
+html body #app .completion-check {display:block;width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+html body #app .broadcast-success-mark .completion-check {width:24px;height:24px}
+html body #app .completion-check path {stroke-dasharray:1;stroke-dashoffset:0}
+@media (prefers-reduced-motion:no-preference){
+  html:not(.keyboard-open) body #app #leaderboardPeriodIndicator[data-slide] {transition:transform 170ms var(--agnt-motion-out)}
+  html:not(.keyboard-open) body #app #insightsView #leaderboardRing[data-period-sweep] {transition:--score var(--agnt-ring-sweep) var(--agnt-motion-out)!important}
 }
