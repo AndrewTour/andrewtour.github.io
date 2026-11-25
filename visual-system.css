@@ -296,7 +296,7 @@ html body #app :is(.contacts-head,.buyer-results-head,.appointment-destination-c
 html body #app .contacts-head h3 {font-weight:500!important}
 /* Keep metric copy inside its ledger row, including wrapped pacing text. */
 html body #todayView .metric {padding-block:6px!important}
-html body #todayView .metric-copy>small {margin-top:3px!important;line-height:1.2!important;text-transform:capitalize!important}
+html body #todayView .metric-copy>small {margin-top:3px!important;line-height:1.2!important;text-transform:none!important}
 html body #todayView .metric-copy>em {font-size:10.5px!important;font-weight:500!important;line-height:1.2!important;margin-top:3px!important;text-transform:none!important;letter-spacing:0!important}
 html body #todayView .metric-copy>strong {font-size:25px!important;line-height:1!important;margin-top:4px!important}
 html body #app #scheduleView :is(.timeline-overview,.daily-timeline) {
@@ -2366,4 +2366,20 @@ html body #app .completion-check path {stroke-dasharray:1;stroke-dashoffset:0}
 @media (prefers-reduced-motion:no-preference){
   html:not(.keyboard-open) body #app #leaderboardPeriodIndicator[data-slide] {transition:transform 170ms var(--agnt-motion-out)}
   html:not(.keyboard-open) body #app #insightsView #leaderboardRing[data-period-sweep] {transition:--score var(--agnt-ring-sweep) var(--agnt-motion-out)!important}
+}
+
+html body #app #prospectingSession .seller-session-name {
+  display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0 12px;
+}
+html body #app #prospectingSession .seller-session-name h2 {min-width:0;margin:0!important}
+html body #app #prospectingSession .seller-session-name .seller-session-profile {
+  position:relative;display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;
+  padding:0!important;border:0!important;border-radius:50%!important;
+  background:transparent!important;color:var(--ds-ink)!important;
+}
+html body #app #prospectingSession .seller-session-profile::before {
+  content:"";position:absolute;inset:4px;border:1px solid var(--ds-rule);border-radius:50%;background:var(--ds-soft);
+}
+html body #app #prospectingSession .seller-session-profile svg {
+  position:relative;width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;
 }

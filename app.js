@@ -1,4 +1,4 @@
-import { parseSiriBooking, matchSiriAssignee } from './siri-booking.js?v=1.46.64';
+import { parseSiriBooking, matchSiriAssignee } from './siri-booking.js?v=1.46.65';
 import {createAssociateProfiles} from './associate-profiles.js';
 import {stableSnapshotString,compareSnapshotHeads} from './snapshot-compare.js';
 import {createSyncHealth} from './sync-health.js';
@@ -162,6 +162,12 @@ function returnDetailWorkflow(){
   return false;
 }
 function finishDetailEditor(){const place=workflowDetailReturns.at(-1);return Boolean(place&&(place.detailKind||place.session)&&returnDetailWorkflow())}
+function returnFromSessionContactEditor(){
+  const editorReturn=workflowDetailReturns.at(-1),sessionReturn=workflowDetailReturns.at(-2);
+  if(editorReturn?.detailKind!=='contact'||!sessionReturn?.sessionContactProfile||sessionReturn.owner!==uid)return false;
+  discardDetailReturn();
+  return returnDetailWorkflow();
+}
 function discardDetailReturn(){workflowDetailReturns.pop()}
 function startDetailViewport(){
   if(workflowRestoring)return;
@@ -943,43 +949,43 @@ function welcomeMessage(){
 }
 function metricRemainingText(value,target){
   const remaining=Math.max(0,target-value);
-  return remaining===0?'Target complete':`${remaining} remaining`;
+  return remaining===0?'Target Complete':`${remaining} Remaining`;
 }
 function metricPaceText(value,target,metric){
-  if(selectedDate!==todayKey())return value>=target?'Daily goal achieved':'Final result';
+  if(selectedDate!==todayKey())return value>=target?'Daily Goal Achieved':'Final Result';
   const now=new Date(),start=workdayStart(now),end=workdayEnd(now);
-  if(value>=target)return 'Daily goal achieved';
-  if(now<start)return value>0?`${value} ahead of target`:'Ready to start';
-  if(now>=end)return `${Math.max(0,target-value)} remaining today`;
+  if(value>=target)return 'Daily Goal Achieved';
+  if(now<start)return value>0?`${value} Ahead of Target`:'Ready to Start';
+  if(now>=end)return `${Math.max(0,target-value)} Remaining Today`;
   const expected=expectedAt(metric,target,now),diff=value-expected,checkpoint=nextPaceCheckpoint(now);
   const checkpointExpected=expectedAt(metric,target,checkpoint);
   const action=Math.max(0,Math.min(target-value,checkpointExpected-value));
-  if(diff>0)return `${diff} ahead of target`;
+  if(diff>0)return `${diff} Ahead of Target`;
   if(action>0){
-    const labels={calls:'calls',connects:'connects',data:'data records'};
-    const unit=action===1?{calls:'call',connects:'connect',data:'data record'}[metric]:labels[metric];
-    return `${action} ${unit} needed by ${shortTime(checkpoint)}`;
+    const labels={calls:'Calls',connects:'Connects',data:'Data Records'};
+    const unit=action===1?{calls:'Call',connects:'Connect',data:'Data Record'}[metric]:labels[metric];
+    return `${action} ${unit} Needed by ${shortTime(checkpoint)}`;
   }
-  return 'On track';
+  return 'On Track';
 }
 function knockRemainingText(minutes,target){
   const remaining=Math.max(0,target-minutes);
   if(selectedDate===todayKey()){
     const end=new Date();end.setHours(17,0,0,0);
-    if(new Date()>=end&&remaining>0)return `${remaining} mins added tomorrow`;
+    if(new Date()>=end&&remaining>0)return `${remaining} Mins Added Tomorrow`;
   }
-  return remaining===0?'Target complete':`${remaining} min remaining today`;
+  return remaining===0?'Target Complete':`${remaining} Min Remaining Today`;
 }
 function knockPaceText(minutes,target){
-  if(selectedDate!==todayKey())return minutes>=target?'Daily goal achieved':'Final result';
+  if(selectedDate!==todayKey())return minutes>=target?'Daily Goal Achieved':'Final Result';
   const now=new Date(),start=new Date(now),end=new Date(now);
   start.setHours(14,0,0,0);
   end.setHours(17,0,0,0);
-  if(minutes>=target)return 'Daily goal achieved';
-  if(now>=end)return 'Fell short';
-  if(now<start)return minutes>0?`${minutes} min ahead of target`:'Start at 2:00pm';
+  if(minutes>=target)return 'Daily Goal Achieved';
+  if(now>=end)return 'Fell Short';
+  if(now<start)return minutes>0?`${minutes} Min Ahead of Target`:'Start at 2:00pm';
   const expected=expectedKnockAt(target,now);
-  return minutes>=expected?'On track':'Off track';
+  return minutes>=expected?'On Track':'Off Track';
 }
 
 function expectedKnockAt(target,when=new Date()){
@@ -1111,8 +1117,8 @@ function renderKnockTimerOnly({animate=false}={}){
   const d=dayData(selectedDate),kt=rollingKnockTarget(selectedDate),secs=liveKnockSeconds(d);
   const past=isPastDate(selectedDate),scheduled=isWorkDayKey(selectedDate);
   $('#knockValue').textContent=fmtTimer(secs);
-  $('#knockTargetText').textContent=past?'Final result':(!scheduled?'No target today':knockRemainingText(Math.floor(secs/60),kt));
-  $('#knockRemaining').textContent=past?'Day locked':(!scheduled?'Not scheduled':knockPaceText(Math.floor(secs/60),kt));
+  $('#knockTargetText').textContent=past?'Final Result':(!scheduled?'No Target Today':knockRemainingText(Math.floor(secs/60),kt));
+  $('#knockRemaining').textContent=past?'Day Locked':(!scheduled?'Not Scheduled':knockPaceText(Math.floor(secs/60),kt));
   const knockMinutes=Math.floor(secs/60),knockActual=pct(knockMinutes,kt);
   const knockPaceNow=new Date(),knockPaceEnd=new Date(knockPaceNow);knockPaceEnd.setHours(17,0,0,0);const knockExpected=(selectedDate===todayKey()&&scheduled)?(knockPaceNow>=knockPaceEnd?100:Math.min(100,Math.round(expectedKnockAt(kt,knockPaceNow)/Math.max(1,kt)*100))):0;
   const knockRing=$('#knockPercent');
@@ -1350,7 +1356,7 @@ function renderToday({changedMetric=''}={}){
     const val=d[m],target=targets[m],p=pct(val,target),rem=Math.max(0,target-val);
     updateMetricNumber(`#${m}Value`,val,changedMetric===m);
     $(`#${m}TargetLabel`).textContent=`/${target}`;
-    $(`#${m}TargetText`).textContent=past?'Final result':(!scheduled?'No target today':metricRemainingText(val,target));
+    $(`#${m}TargetText`).textContent=past?'Final Result':(!scheduled?'No Target Today':metricRemainingText(val,target));
     const ring=$(`#${m}Percent`);
     const paceNow=new Date(),pacePct=(selectedDate===todayKey()&&scheduled)?(paceNow>=workdayEnd(paceNow)?100:Math.min(100,Math.round(expectedAt(m,target,paceNow)/Math.max(1,target)*100))):0;
     setRenderedText(`#${m}Percent`,`${p}%`);
@@ -1358,12 +1364,12 @@ function renderToday({changedMetric=''}={}){
     updateMetricRing(ring,p,pacePct,changedMetric===m);
     ring.setAttribute('role','img');
     ring.setAttribute('aria-label',`${m.charAt(0).toUpperCase()+m.slice(1)}: ${p}% complete, expected pace ${pacePct}%, target ${target}`);
-    $(`#${m}Pace`).textContent=past?'Day locked':(!scheduled?'Not scheduled':metricPaceText(val,target,m));
+    $(`#${m}Pace`).textContent=past?'Day Locked':(!scheduled?'Not Scheduled':metricPaceText(val,target,m));
     document.querySelector(`[data-metric="${m}"]`).classList.toggle('complete',rem===0);
   }
   $('#knockValue').textContent=fmtTimer(secs);
-  $('#knockTargetText').textContent=past?'Final result':(!scheduled?'No target today':knockRemainingText(Math.floor(secs/60),kt));
-  $('#knockRemaining').textContent=past?'Day locked':(!scheduled?'Not scheduled':knockPaceText(Math.floor(secs/60),kt));
+  $('#knockTargetText').textContent=past?'Final Result':(!scheduled?'No Target Today':knockRemainingText(Math.floor(secs/60),kt));
+  $('#knockRemaining').textContent=past?'Day Locked':(!scheduled?'Not Scheduled':knockPaceText(Math.floor(secs/60),kt));
   const knockMinutes=Math.floor(secs/60),knockActual=pct(knockMinutes,kt);
   $('#knockingMetricCard')?.classList.toggle('complete',knockActual>=100);
   const knockPaceNow=new Date(),knockPaceEnd=new Date(knockPaceNow);knockPaceEnd.setHours(17,0,0,0);const knockExpected=(selectedDate===todayKey()&&scheduled)?(knockPaceNow>=knockPaceEnd?100:Math.min(100,Math.round(expectedKnockAt(kt,knockPaceNow)/Math.max(1,kt)*100))):0;
@@ -5640,14 +5646,14 @@ function showProspectingSession(){
   const sessionHost=$('#prospectingSession');
   const previousContact=sessionHost.dataset.sessionKind==='pipeline'?sessionHost.dataset.sellerContact:'';
   sessionHost.dataset.sessionView='1';sessionHost.dataset.sessionKind='pipeline';buyerSession.visible=false;saveBuyerSession();$('#prospectingDashboard').classList.add('hidden');$('#prospectDetail').classList.add('hidden');sessionHost?.classList.remove('hidden');while(prospectSessionIndex<prospectSessionIds.length){const current=prospectById(prospectSessionIds[prospectSessionIndex]);if(current&&!current.archived)break;prospectSessionIndex++}saveProspectingSessionState();const remaining=Math.max(0,prospectSessionIds.length-prospectSessionIndex);if(prospectSessionIndex>=prospectSessionIds.length){delete sessionHost.dataset.sellerContact;sessionHost.innerHTML=`<div class="prospect-session-head"><button type="button" data-session-back aria-label="Back">‹</button>${prospectSessionHeaderStatus(0)}<button type="button" data-end-session>End Session</button></div><section class="prospect-session-card glass prospect-session-complete"><span class="prospect-avatar session-avatar">✓</span><h2>Queue complete</h2><p>You’ve worked through every contact in this session.</p><button class="primary" type="button" data-complete-market-session>Review & End Session</button>${!cleanText(prospectSessionContext?.eventId,160)?'<button class="prospect-session-refresh-bottom" type="button" data-refresh-pipeline-session><span aria-hidden="true">↻</span> Refresh Session</button>':''}</section>`;return}const id=prospectSessionIds[prospectSessionIndex],p=prospectById(id);const phone=primaryProspectPhone(p),tel=prospectTel(p),marketEvent=prospectSessionContext?.eventId?(marketPulseEvents.find(event=>event.id===prospectSessionContext.eventId)||prospectSessionContext):null,lastContext=latestProspectContactContext(p);
-  const markup=`<div class="prospect-session-head"><button type="button" data-session-back aria-label="Back">‹</button>${prospectSessionHeaderStatus(remaining)}<button type="button" data-end-session>End Session</button></div>${prospectSessionContextStrip()}<section class="prospect-session-card seller-session-card"><span class="seller-session-status">${escapeHtml(p.stage)} · ${escapeHtml(p.temperature)}</span><h2>${escapeHtml(p.name)}</h2><p>${escapeHtml(formatProspectAddress(p.address||p.company,p.suburb)||p.phone||'No contact detail added')}</p>${marketEvent?marketFollowUpSessionPromptMarkup(marketEvent,p.id):''}<div class="prospect-session-context seller-session-context"><div class="seller-session-last"><span>LAST CONTACT</span><strong>${p.lastContact?shortContactDate(p.lastContact):'Never'}</strong><small>${escapeHtml([lastContext.label,lastContext.note].filter(Boolean).join(' · '))}</small></div><div class="seller-session-followup ${p.nextFollowUp?'is-set':'is-empty'}"><span>NEXT FOLLOW-UP</span><strong>${p.nextFollowUp?shortContactDate(p.nextFollowUp):'Not set'}</strong></div></div>${p.notes?`<blockquote>${escapeHtml(p.notes)}</blockquote>`:''}<div class="prospect-session-actions"><a class="primary ${phone?'':'disabled'}" href="${tel}" data-prospect-call="${p.id}" data-call-from-session="1">Call ${escapeHtml(p.name.split(' ')[0])}</a><button class="primary hotspot-sms-btn ${phone?'':'disabled'}" type="button" data-session-sms="${p.id}" ${phone?'':'disabled'}>SMS ${escapeHtml(hotSpotSmsFirstName(p))}</button></div><button class="secondary" type="button" data-session-log="${p.id}">Log Outcome</button><button class="text-btn" type="button" data-session-skip>Skip for now</button>${!cleanText(prospectSessionContext?.eventId,160)?'<button class="prospect-session-refresh-bottom" type="button" data-refresh-pipeline-session><span aria-hidden="true">↻</span> Refresh Session</button>':''}</section>`;
+  const markup=`<div class="prospect-session-head"><button type="button" data-session-back aria-label="Back">‹</button>${prospectSessionHeaderStatus(remaining)}<button type="button" data-end-session>End Session</button></div>${prospectSessionContextStrip()}<section class="prospect-session-card seller-session-card"><span class="seller-session-status">${escapeHtml(p.stage)} · ${escapeHtml(p.temperature)}</span><div class="seller-session-name"><h2>${escapeHtml(p.name)}</h2><button class="seller-session-profile" type="button" data-session-profile="${escapeHtml(p.id)}" aria-label="Open contact profile for ${escapeHtml(p.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 21v-1a7 7 0 0 1 14 0v1"/></svg></button></div><p>${escapeHtml(formatProspectAddress(p.address||p.company,p.suburb)||p.phone||'No contact detail added')}</p>${marketEvent?marketFollowUpSessionPromptMarkup(marketEvent,p.id):''}<div class="prospect-session-context seller-session-context"><div class="seller-session-last"><span>LAST CONTACT</span><strong>${p.lastContact?shortContactDate(p.lastContact):'Never'}</strong><small>${escapeHtml([lastContext.label,lastContext.note].filter(Boolean).join(' · '))}</small></div><div class="seller-session-followup ${p.nextFollowUp?'is-set':'is-empty'}"><span>NEXT FOLLOW-UP</span><strong>${p.nextFollowUp?shortContactDate(p.nextFollowUp):'Not set'}</strong></div></div>${p.notes?`<blockquote>${escapeHtml(p.notes)}</blockquote>`:''}<div class="prospect-session-actions"><a class="primary ${phone?'':'disabled'}" href="${tel}" data-prospect-call="${p.id}" data-call-from-session="1">Call ${escapeHtml(p.name.split(' ')[0])}</a><button class="primary hotspot-sms-btn ${phone?'':'disabled'}" type="button" data-session-sms="${p.id}" ${phone?'':'disabled'}>SMS ${escapeHtml(hotSpotSmsFirstName(p))}</button></div><button class="secondary" type="button" data-session-log="${p.id}">Log Outcome</button><button class="text-btn" type="button" data-session-skip>Skip for now</button>${!cleanText(prospectSessionContext?.eventId,160)?'<button class="prospect-session-refresh-bottom" type="button" data-refresh-pipeline-session><span aria-hidden="true">↻</span> Refresh Session</button>':''}</section>`;
   if(!sessionHost.querySelector('.seller-session-card'))renderedMarkup.delete(sessionHost);
   sessionHost.dataset.sellerContact=id;
   setRenderedMarkup(sessionHost,markup);
   if(previousContact&&previousContact!==id&&canPlayWorkspaceMotion()){
     cancelWorkspaceMotion();
     const card=sessionHost.querySelector('.seller-session-card');
-    for(const part of card.querySelectorAll(':scope > h2,:scope > p,:scope > .prospect-session-context,:scope > blockquote')){
+    for(const part of card.querySelectorAll(':scope > .seller-session-name,:scope > p,:scope > .prospect-session-context,:scope > blockquote')){
       part.animate?.([{opacity:.72},{opacity:1}],{duration:125,easing:WORKSPACE_MOTION_EASE});
     }
   }
@@ -7214,8 +7220,18 @@ $('#prospectingView').onclick=async e=>{
   if(e.target.closest('#deleteSelectedProspects')){const total=selectedProspectIds.size;if(!total)return;if(confirm(`Delete ${total} selected contact${total===1?'':'s'} and their interaction history?`)){prospects=prospects.filter(p=>!selectedProspectIds.has(p.id));prospectInteractions=prospectInteractions.filter(x=>!selectedProspectIds.has(x.prospectId));selectedProspectIds.clear();prospectBulkMode=false;await saveProspecting();toast(`${total} contact${total===1?'':'s'} deleted`)}return}
   const select=e.target.closest('[data-select-prospect]');if(select){const id=select.dataset.selectProspect;selectedProspectIds.has(id)?selectedProspectIds.delete(id):selectedProspectIds.add(id);renderProspecting();return}
   const completeFollowUp=e.target.closest('[data-complete-prospect-followup]');if(completeFollowUp){await completeProspectFollowUp(completeFollowUp.dataset.completeProspectFollowup);return}
+  const sessionProfile=e.target.closest('[data-session-profile]');
+  if(sessionProfile){
+    const person=prospectById(prospectSessionIds[prospectSessionIndex]);
+    if(prospectSessionActive&&person?.id===sessionProfile.dataset.sessionProfile){
+      openContactProfileFromWorkflow(person.id);
+      const place=workflowDetailReturns.at(-1);
+      if(place?.session)place.sessionContactProfile=true;
+    }
+    return;
+  }
   const open=e.target.closest('[data-open-prospect]');if(open){openContactProfileFromWorkflow(open.dataset.openProspect,{returnView:homeQuickProspectorReturn?'todayView':''});return}
-  if(e.target.closest('[data-close-prospect]')){if($('#prospectEditor')?.dataset.contactDraft==='1')cancelContactEditor();else if(returnDetailWorkflow())return;else if($('#prospectEditor')&&activeProspectId)renderProspectDetail(activeProspectId);else if(buyerSession.active&&buyerSession.visible&&$('#prospectingSession')?.dataset.sessionKind==='buyer'){activeProspectId=null;setProspectorSection('today',{resetSubview:false});showBuyerSession()}else closeProspectDetail();return}
+  if(e.target.closest('[data-close-prospect]')){if($('#prospectEditor')?.dataset.contactDraft==='1')cancelContactEditor();else if(($('#prospectEditor')&&returnFromSessionContactEditor())||returnDetailWorkflow())return;else if($('#prospectEditor')&&activeProspectId)renderProspectDetail(activeProspectId);else if(buyerSession.active&&buyerSession.visible&&$('#prospectingSession')?.dataset.sessionKind==='buyer'){activeProspectId=null;setProspectorSection('today',{resetSubview:false});showBuyerSession()}else closeProspectDetail();return}
   const edit=e.target.closest('[data-edit-prospect]');if(edit){openProspectEditor(edit.dataset.editProspect);return}
   const log=e.target.closest('[data-log-prospect]');if(log){openProspectLog(log.dataset.logProspect);return}
   if(e.target.closest('[data-cancel-log]')){if(returnDetailWorkflow())return;const form=$('#prospectLogForm');if(prospectSessionActive&&form?.dataset.fromSession==='1')showProspectingSession();else if(form?.dataset.returnMode==='followups'){activeProspectId=null;prospectTodayMode='followups';$('#prospectDetail').classList.add('hidden');$('#prospectDetail').innerHTML='';$('#prospectingDashboard').classList.remove('hidden');renderProspecting()}else renderProspectDetail(activeProspectId);return}
@@ -7278,7 +7294,7 @@ $('#prospectingView').onsubmit=async e=>{
   if(e.target.id==='buyerPurchaseForm'){e.preventDefault();const f=new FormData(e.target),submit=e.target.querySelector('button[type=submit]');if(submit){submit.disabled=true;submit.textContent='Converting…'}try{await convertBuyerToOwner(activeProspectId,{address:f.get('buyerPurchaseAddress'),price:f.get('buyerPurchasePrice'),date:f.get('buyerPurchaseDate')})}catch(err){console.error('Buyer conversion failed',err);toast('Could not convert buyer. Please try again.');if(submit){submit.disabled=false;submit.textContent='Convert to Owner'}}return}
   if(e.target.id==='prospectEditor'){
     e.preventDefault();const form=e.target,submit=form.querySelector('button[type=submit]'),editingId=activeProspectId||'',saveId=editingId||cleanText(form.dataset.contactDraftId,80),f=new FormData(form),existing=prospectById(editingId),wasExisting=Boolean(existing),addBuyerBrief=f.get('addBuyerBrief')==='1';if(submit?.disabled)return;if(submit){submit.disabled=true;submit.textContent='Saving…'}
-    try{const result=await upsertProspect({name:f.get('name'),phone:f.get('phone'),email:f.get('email'),address:f.get('address'),source:f.get('source'),stage:f.get('stage'),temperature:f.get('temperature'),motivation:f.get('motivation'),temperatureManual:form.dataset.temperatureManual==='1'||Boolean(existing?.temperatureManual),motivationManual:form.dataset.motivationManual==='1'||Boolean(existing?.motivationManual),tags:f.get('tags'),sellingTimeframe:f.get('sellingTimeframe'),nextFollowUp:f.get('nextFollowUp'),notes:f.get('notes'),archived:Boolean(existing?.archived),archivedAt:existing?.archivedAt||0},saveId);clearContactDraft();const message=result.unified?'Buyer and seller records unified':result.reusedExisting&&!wasExisting?'Existing contact reused · no duplicate created':wasExisting?'Contact saved':'Contact added';if(prospectingFormContextIsCurrent(form)){activeProspectId=result.record.id;if(addBuyerBrief){if(!finishDetailEditor())renderProspectDetail(result.record.id);openBuyerEditor(result.record.id);toast('Contact saved. Add their buyer brief.')}else{if(!finishDetailEditor())renderProspectDetail(result.record.id);toast(message)}}else{discardSavedContactEditor(form);toast(message)}}catch(err){console.error('Contact save failed',err);saveContactDraftFromForm(form);toast('Contact could not be saved. Your draft is still here.');if(submit){submit.disabled=false;submit.textContent=wasExisting?'Save Contact':'Add Contact'}}return
+    try{const result=await upsertProspect({name:f.get('name'),phone:f.get('phone'),email:f.get('email'),address:f.get('address'),source:f.get('source'),stage:f.get('stage'),temperature:f.get('temperature'),motivation:f.get('motivation'),temperatureManual:form.dataset.temperatureManual==='1'||Boolean(existing?.temperatureManual),motivationManual:form.dataset.motivationManual==='1'||Boolean(existing?.motivationManual),tags:f.get('tags'),sellingTimeframe:f.get('sellingTimeframe'),nextFollowUp:f.get('nextFollowUp'),notes:f.get('notes'),archived:Boolean(existing?.archived),archivedAt:existing?.archivedAt||0},saveId);clearContactDraft();const message=result.unified?'Buyer and seller records unified':result.reusedExisting&&!wasExisting?'Existing contact reused · no duplicate created':wasExisting?'Contact saved':'Contact added';if(prospectingFormContextIsCurrent(form)){activeProspectId=result.record.id;if(addBuyerBrief){if(!finishDetailEditor())renderProspectDetail(result.record.id);openBuyerEditor(result.record.id);toast('Contact saved. Add their buyer brief.')}else{if(!returnFromSessionContactEditor()&&!finishDetailEditor())renderProspectDetail(result.record.id);toast(message)}}else{discardSavedContactEditor(form);toast(message)}}catch(err){console.error('Contact save failed',err);saveContactDraftFromForm(form);toast('Contact could not be saved. Your draft is still here.');if(submit){submit.disabled=false;submit.textContent=wasExisting?'Save Contact':'Add Contact'}}return
   }
   if(e.target.id==='prospectLogForm'){
     e.preventDefault();const form=e.target,submit=form.querySelector('button[type=submit]');if(submit?.disabled)return;if(submit){submit.disabled=true;submit.textContent='Saving…'}
@@ -7304,7 +7320,7 @@ $('#settingsView').addEventListener('change',event=>{const field=event.target;if
 $('#saveSettings').onclick=async()=>{const fields=['callsTarget','connectsTarget','dataTarget','weeklyKnockTarget'];const invalid=fields.find(id=>{const value=Number($('#'+id).value);return !Number.isSafeInteger(value)||value<=0});if(invalid){toast('Enter a whole number greater than zero for every target.');$('#'+invalid).focus();return}const savingOwner=uid,savingEpoch=accountStateEpoch;const selectedWorkDays=normaliseWorkDays($$('[name=workDay]:checked').map(el=>Number(el.value)));if(!selectedWorkDays.length)return toast('Choose at least one tracking day');agentName=$('#agentName').value.trim()||displayAgentName();agentMobile=cleanText($('#agentMobile').value,50);targets={calls:+$('#callsTarget').value||50,connects:+$('#connectsTarget').value||25,data:+$('#dataTarget').value||10,weeklyKnock:+$('#weeklyKnockTarget').value||240};workDays=selectedWorkDays;calendarPreference=$('[name=calendarPreference]:checked')?.value==='apple'?'apple':'outlook';appearancePreference=normaliseAppearance($('[name=appearancePreference]:checked')?.value);applyAppearance(appearancePreference);settingsDraftFields.clear();await saveTargets();if(uid!==savingOwner||accountStateEpoch!==savingEpoch)return;if(cloud&&accountMode==='team'&&teamId&&uid){try{await setDoc(doc(db,'teams',teamId,'members',uid),{name:agentName,updatedAt:serverTimestamp()},{merge:true})}catch(err){console.error('Team profile name sync failed',err)}}renderAll();toast('Settings saved')};
 $('#signOut').onclick=async()=>{clearActiveSession();await stopPhoneNotifications().catch(()=>{});if(auth?.currentUser)await firebaseSignOut(auth);location.reload()};
 function mergeBackupRecords(current=[],incoming=[]){const byId=new Map();[...(Array.isArray(current)?current:[]),...(Array.isArray(incoming)?incoming:[])].forEach((item,index)=>{if(!item||typeof item!=='object')return;const id=cleanText(item.id,180)||`backup-record-${index}`;byId.set(id,item)});return[...byId.values()]}
-function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.46.64',exportedAt:new Date().toISOString(),targets,workDays,agentName,agentMobile,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),marketPulseLedger:normaliseLedger(marketPulseLedger),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
+function completeBackupPayload(){return{schemaVersion:2,appVersion:'1.46.65',exportedAt:new Date().toISOString(),targets,workDays,agentName,agentMobile,calendarPreference,appearancePreference,days:normaliseDaysMap(days),prospects:normaliseProspects(prospects),prospectInteractions:normaliseProspectInteractions(prospectInteractions),marketPulseEvents:normaliseMarketPulseEvents(marketPulseEvents),marketPulseHistory:normaliseMarketPulseHistory(marketPulseHistory),marketPulseLedger:normaliseLedger(marketPulseLedger),campaignHistory:[...campaignHistory],bulkSmsTestLaunches:[...bulkSmsTestLaunches],buyerSession:{...buyerSession,contacts:[...(buyerSession.contacts||[])]}}}
 function restoreBuyerSessionBackup(value){if(!value||!Array.isArray(value.contacts))return false;buyerSession={contacts:value.contacts.map((contact,index)=>({id:cleanText(contact.id,80)||`buyer_${index}`,name:cleanText(contact.name,120)||'Unknown buyer',phone:normaliseDialNumber(contact.phone),address:cleanText(contact.address,240),doNotSms:Boolean(contact.doNotSms),status:cleanText(contact.status,40)})).filter(contact=>contact.phone),index:Math.max(0,Number(value.index)||0),active:Boolean(value.active),visible:false,fileName:cleanText(value.fileName,160),importedAt:Number(value.importedAt)||0};buyerSession.index=Math.min(buyerSession.index,buyerSession.contacts.length);return saveBuyerSession()}
 function syncImportedBackup(dayKeys=[],prospectingIncluded=false){if(!cloud)return;saveTargets().catch(err=>console.error('Imported settings sync failed',err));dayKeys.forEach(key=>saveDay(key,{quiet:true,awaitCloud:false,render:false}).catch?.(err=>console.error('Imported day sync failed',err)));if(prospectingIncluded)saveProspecting({render:false,awaitCloud:false}).catch(err=>console.error('Imported prospecting sync failed',err))}
 function missingMarketRecoveryRows(rows){
@@ -7422,7 +7438,7 @@ async function checkCloudSync(){
 $('#checkCloudSync')?.addEventListener('click',checkCloudSync);
 $('#exportDiagnostics')?.addEventListener('click',()=>{
   let runtimeEvents=[];try{runtimeEvents=JSON.parse(window.agntRuntime?.export?.()||'[]')}catch{}
-  const data=JSON.stringify({schemaVersion:2,appVersion:'1.46.64',exportedAt:new Date().toISOString(),runtimeEvents,deviceStorage:deviceStorageDiagnostics(),sync:syncHealth.snapshot(syncDiagnosticContext())},null,2),blob=new Blob([data],{type:'application/json'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='AGNT-runtime-diagnostics.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)
+  const data=JSON.stringify({schemaVersion:2,appVersion:'1.46.65',exportedAt:new Date().toISOString(),runtimeEvents,deviceStorage:deviceStorageDiagnostics(),sync:syncHealth.snapshot(syncDiagnosticContext())},null,2),blob=new Blob([data],{type:'application/json'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='AGNT-runtime-diagnostics.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)
 });
 $('#exportData').onclick=()=>{const blob=new Blob([JSON.stringify(completeBackupPayload(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`agnt-complete-backup-${todayKey()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),0)};
 $('#importData').onchange=async e=>{const file=e.target.files?.[0];e.target.value='';if(!file)return;try{const raw=JSON.parse(await file.text());if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('Invalid backup');if(!confirm('Import this AGNT backup?\n\nExisting records with the same date or ID may be updated.'))return;const importedDays=normaliseDaysMap(raw.days||{}),dayKeys=Object.keys(importedDays),prospectingIncluded=Array.isArray(raw.prospects)||Array.isArray(raw.prospectInteractions)||Array.isArray(raw.marketPulseEvents)||Array.isArray(raw.marketPulseHistory)||Array.isArray(raw.marketPulseLedger);if(raw.targets&&typeof raw.targets==='object')targets=normaliseTargets(raw.targets);if(Array.isArray(raw.workDays)&&raw.workDays.length)workDays=normaliseWorkDays(raw.workDays);if(typeof raw.agentName==='string'&&raw.agentName.trim())agentName=cleanText(raw.agentName,120);if(typeof raw.agentMobile==='string')agentMobile=cleanText(raw.agentMobile,50);if(raw.calendarPreference==='apple'||raw.calendarPreference==='outlook')calendarPreference=raw.calendarPreference;if(['system','light','dark'].includes(raw.appearancePreference))applyAppearance(raw.appearancePreference);days={...days,...importedDays};if(Array.isArray(raw.prospects))prospects=normaliseProspects(mergeBackupRecords(prospects,raw.prospects));if(Array.isArray(raw.prospectInteractions))prospectInteractions=normaliseProspectInteractions(mergeBackupRecords(prospectInteractions,raw.prospectInteractions));if(Array.isArray(raw.marketPulseEvents))marketPulseEvents=normaliseMarketPulseEvents(mergeBackupRecords(marketPulseEvents,raw.marketPulseEvents));if(Array.isArray(raw.marketPulseLedger))marketPulseLedger=normaliseLedger([...marketPulseLedger,...raw.marketPulseLedger]);if(Array.isArray(raw.marketPulseHistory))marketPulseHistory=normaliseMarketPulseHistory(mergeBackupRecords(marketPulseHistory,raw.marketPulseHistory));if(Array.isArray(raw.campaignHistory))campaignHistory=mergeBackupRecords(campaignHistory,raw.campaignHistory).sort((a,b)=>(Number(b.createdAt)||0)-(Number(a.createdAt)||0)).slice(0,20);if(Array.isArray(raw.bulkSmsTestLaunches))bulkSmsTestLaunches=mergeBackupRecords(bulkSmsTestLaunches,raw.bulkSmsTestLaunches).sort((a,b)=>(Number(b.createdAt)||0)-(Number(a.createdAt)||0)).slice(0,10);saveLocal();restoreBuyerSessionBackup(raw.buyerSession);renderAll();syncImportedBackup(dayKeys,prospectingIncluded);toast('Backup restored · cloud sync running')}catch(err){console.error('Backup import failed',err);toast('Backup could not be read')}};
